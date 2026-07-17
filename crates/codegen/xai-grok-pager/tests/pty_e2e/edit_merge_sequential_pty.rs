@@ -57,7 +57,7 @@ fn edit_header_rows(screen: &str) -> usize {
 /// turn 1 out of view by design. (Flag off, coalescing is disabled entirely —
 /// pinned by the tracker unit test.)
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "PTY e2e; run with cargo test -p xai-grok-pager --test pty_e2e -- --ignored"]
+#[ignore = "PTY e2e; run with cargo test -p intelekt-pager --test pty_e2e -- --ignored"]
 async fn edit_merge_sequential_pty() {
     let content = ContentController::start().await.expect("start content");
     seed_ui_config(&content, "collapsed_edit_blocks = true");

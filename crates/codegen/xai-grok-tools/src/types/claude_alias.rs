@@ -1,9 +1,9 @@
 //! Canonical external-settings tool name ↔ Grok tool correspondence: one table
 //! replacing two that drifted apart.
 //!
-//! Two consumers read it independently. The hook matcher (`xai-grok-hooks`) needs the
+//! Two consumers read it independently. The hook matcher (`intelekt-hooks`) needs the
 //! Grok tool **names** an external settings term maps to (and the reverse, for regex
-//! matchers); the agent builder (`xai-grok-agent`) needs the [`ToolKind`] a `tools:`
+//! matchers); the agent builder (`intelekt-agent`) needs the [`ToolKind`] a `tools:`
 //! allowlist entry resolves to. A row may carry a kind without names (`PowerShell`
 //! shares `Execute`, with no distinct tool) or names without a kind (e.g.
 //! `Agent`/`ExitPlanMode`/`Cron*` are matchable but not allowlist-resolvable).
@@ -67,7 +67,7 @@ const CLAUDE_TOOLS: &[ClaudeTool] = &[
     k("TaskStop",        KillTaskAction,       &["kill_command_or_subagent", "kill_terminal_command"]),
     k("KillShell",       KillTaskAction,       &["kill_command_or_subagent", "kill_terminal_command"]),
     k("KillBash",        KillTaskAction,       &["kill_command_or_subagent", "kill_terminal_command"]),
-    k("Skill",           Read,                 &["skill"]),                           // matcher: opencode's `skill` tool; allowlist Read (grok-build reads SKILL.md)
+    k("Skill",           Read,                 &["skill"]),                           // matcher: opencode's `skill` tool; allowlist Read (intelekt-cli reads SKILL.md)
     k("ToolSearch",      SearchTool,           &["search_tool"]),
     match_only("Agent",         &["spawn_subagent"]),                                 // canonical; Task is the legacy alias
     match_only("Task",          &["spawn_subagent"]),
@@ -106,7 +106,7 @@ pub fn claude_names_for(grok_name: &str) -> impl Iterator<Item = &'static str> +
         .map(|t| t.claude)
 }
 
-/// Every distinct Grok name the table references, for the `xai-grok-agent` drift-check
+/// Every distinct Grok name the table references, for the `intelekt-agent` drift-check
 /// test that asserts each is a real client tool name.
 pub fn grok_names() -> impl Iterator<Item = &'static str> {
     let mut seen = std::collections::HashSet::new();

@@ -1,9 +1,9 @@
 [package]
 license = "Apache-2.0"
 edition.workspace = true
-name = "xai-grok-secrets"
+name = "intelekt-secrets"
 version = "0.1.0"
-description = "Regex sanitizer for Grok Build outbound data (Sentry / Mixpanel / product-event scrubbing)"
+description = "Regex sanitizer for Intelekt CLI outbound data (Sentry / Mixpanel / product-event scrubbing)"
 
 [dependencies]
 regex = { workspace = true }

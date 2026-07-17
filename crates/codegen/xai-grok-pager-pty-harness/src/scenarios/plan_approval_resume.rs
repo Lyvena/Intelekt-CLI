@@ -130,7 +130,7 @@ pub async fn assert_plan_approval_restored_after_resume() -> Result<()> {
 /// and flip `awaiting_plan_approval` to `true` in `plan_mode.json` for every
 /// session dir under the sandbox home.
 fn seed_parked_approval(home: &Path) -> Result<usize> {
-    let sessions_root = home.join(".grok").join("sessions");
+    let sessions_root = home.join(".intelekt").join("sessions");
     if !sessions_root.is_dir() {
         bail!(
             "expected sessions under {} after first turn",
@@ -166,7 +166,7 @@ fn seed_parked_approval(home: &Path) -> Result<usize> {
 /// Round-trip the shell-written `plan_mode.json` and flip `awaiting_plan_approval`
 /// to `true`, preserving every other field. Falls back to a fresh Active
 /// snapshot if the shell wrote nothing. The shape mirrors
-/// `xai_grok_shell::session::plan_mode::PlanModeSnapshot`; we only touch the one
+/// `intelekt_shell::session::plan_mode::PlanModeSnapshot`; we only touch the one
 /// field (robust to schema growth) rather than depend on the heavy shell crate
 /// from this test-only harness.
 fn write_awaiting_plan_mode(path: &Path) -> Result<()> {

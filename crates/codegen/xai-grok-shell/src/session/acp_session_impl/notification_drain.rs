@@ -27,7 +27,7 @@ impl SessionActor {
         if state.running_task.is_some() {
             let queue_depth = state.pending_inputs.len();
             if queue_depth > 0 {
-                xai_grok_telemetry::unified_log::debug(
+                intelekt_telemetry::unified_log::debug(
                     "shell.prompt.start_blocked",
                     Some(self.session_info.id.0.as_ref()),
                     Some(serde_json::json!({
@@ -100,7 +100,7 @@ impl SessionActor {
             .borrow()
             .tool_bridge()
             .update_resource(
-                xai_grok_tools::implementations::grok_build::task::types::CurrentPromptIdResource(
+                intelekt_tools::implementations::grok_build::task::types::CurrentPromptIdResource(
                     prompt_id.clone(),
                 ),
             )
@@ -258,7 +258,7 @@ impl SessionActor {
         let Some(buffer) = &self.tool_context.monitor_event_buffer else {
             return;
         };
-        for event in xai_grok_tools::implementations::grok_build::task::types::drain_owned(
+        for event in intelekt_tools::implementations::grok_build::task::types::drain_owned(
             buffer,
             Some(self.session_info.id.0.as_ref()),
         ) {
@@ -317,7 +317,7 @@ impl SessionActor {
         notifications: Vec<PendingNotification>,
         task_output_tool_name: &str,
     ) -> bool {
-        use xai_grok_tools::implementations::grok_build::task::types::MonitorEventNotification;
+        use intelekt_tools::implementations::grok_build::task::types::MonitorEventNotification;
 
         // Collapse monitor entries: collect their text into events, remember
         // where the first one sat so the batch lands in arrival position.
@@ -353,7 +353,7 @@ impl SessionActor {
         }
         if let (Some(idx), Some(batch)) = (
             monitor_section_idx,
-            xai_grok_tools::reminders::task_completion::format_monitor_events(
+            intelekt_tools::reminders::task_completion::format_monitor_events(
                 &monitor_events,
                 Some(task_output_tool_name),
             ),

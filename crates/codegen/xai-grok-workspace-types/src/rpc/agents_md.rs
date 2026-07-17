@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use super::WorkspaceRpc;
 
 /// `workspace.discover_agents_md` — project-instruction files (AGENTS.md /
-/// Claude.md / `.grok/rules/*.md`) discovered from the workspace root up to
-/// the git root, plus `~/.grok` and compat dirs.
+/// Claude.md / `.intelekt/rules/*.md`) discovered from the workspace root up to
+/// the git root, plus `~/.intelekt` and compat dirs.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DiscoverAgentsMdReq {}
 
@@ -15,7 +15,7 @@ impl WorkspaceRpc for DiscoverAgentsMdReq {
     type Response = Vec<AgentConfigFile>;
 }
 
-/// Mirrors the serde shape of `xai-grok-agent`'s `AgentConfigFile`.
+/// Mirrors the serde shape of `intelekt-agent`'s `AgentConfigFile`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentConfigFile {
     pub file_name: String,

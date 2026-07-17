@@ -12,7 +12,7 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::time::Duration;
-use xai_grok_tools::implementations::skills::discovery::extract_first_paragraph;
+use intelekt_tools::implementations::skills::discovery::extract_first_paragraph;
 /// Default freshness window for the proactive bundle sync. Bypassed by `force`.
 pub(crate) const BUNDLE_SYNC_TTL: Duration = Duration::from_secs(60 * 60);
 /// Error message returned when no auth source is available for a bundle sync.
@@ -730,15 +730,15 @@ mod tests {
         let root = bundle::bundled_root();
         bundle::write_bundle_to_cache(&root, &sample_bundle()).unwrap();
         let project_root = tmp.path().join("workspace");
-        std::fs::create_dir_all(project_root.join(".grok/personas")).unwrap();
-        std::fs::create_dir_all(project_root.join(".grok/roles")).unwrap();
+        std::fs::create_dir_all(project_root.join(".intelekt/personas")).unwrap();
+        std::fs::create_dir_all(project_root.join(".intelekt/roles")).unwrap();
         std::fs::write(
-            project_root.join(".grok/personas/researcher.toml"),
+            project_root.join(".intelekt/personas/researcher.toml"),
             "instructions = \"project persona\"\n",
         )
         .unwrap();
         std::fs::write(
-            project_root.join(".grok/roles/reviewer.toml"),
+            project_root.join(".intelekt/roles/reviewer.toml"),
             "description = \"project role\"\n",
         )
         .unwrap();

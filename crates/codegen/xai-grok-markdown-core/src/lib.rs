@@ -1,9 +1,9 @@
-//! Headless markdown analysis sharing Grok Build's exact `pulldown-cmark` config.
+//! Headless markdown analysis sharing Intelekt CLI's exact `pulldown-cmark` config.
 //!
 //! This crate is intentionally lean -- it depends only on `pulldown-cmark` -- so it
 //! can be used without pulling in the terminal-rendering stack (syntect, ratatui,
 //! two-face). [`parser_options`] is the single source of truth for the parser
-//! feature set, shared with `xai-grok-markdown` so analysis matches what Grok
+//! feature set, shared with `intelekt-markdown` so analysis matches what Grok
 //! Build actually renders 1:1.
 //!
 //! After parsing, Grok applies [`offset_events`]: only `~~…~~` is strikethrough.
@@ -13,7 +13,7 @@
 use pulldown_cmark::{CodeBlockKind, Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 use std::ops::Range;
 
-/// The exact `pulldown-cmark` option set Grok Build uses to render markdown.
+/// The exact `pulldown-cmark` option set Intelekt CLI uses to render markdown.
 ///
 /// With `ENABLE_STRIKETHROUGH`, pulldown treats both `~~…~~` and single-`~` pairs as
 /// strike. Callers must consume events via [`offset_events`] so only double-tilde
@@ -294,7 +294,7 @@ fn detect_malformed_tables(
     }
 }
 
-/// Parse `text` with Grok Build's options; count elements and flag structural issues.
+/// Parse `text` with Intelekt CLI's options; count elements and flag structural issues.
 pub fn analyze(text: &str) -> MarkdownAnalysis {
     let mut stats = MarkdownStats::default();
     let mut issues = Vec::new();

@@ -6,12 +6,12 @@ use super::*;
 /// `load_prompt_context`.
 #[test]
 fn test_json_round_trip() {
-    let ctx = xai_grok_agent::PromptContext {
+    let ctx = intelekt_agent::PromptContext {
         ..Default::default()
     };
 
     let json = serde_json::to_string_pretty(&ctx).unwrap();
-    let loaded: xai_grok_agent::PromptContext = serde_json::from_str(&json).unwrap();
+    let loaded: intelekt_agent::PromptContext = serde_json::from_str(&json).unwrap();
 
     assert_eq!(loaded.version, 1);
 }
@@ -26,7 +26,7 @@ fn test_json_round_trip_via_filesystem() {
     let session_dir = tmp.path().join("session-test");
     std::fs::create_dir_all(&session_dir).unwrap();
 
-    let ctx = xai_grok_agent::PromptContext::default();
+    let ctx = intelekt_agent::PromptContext::default();
 
     // Write directly (mimicking save_prompt_context's logic)
     let path = session_dir.join(PROMPT_CONTEXT_FILENAME);
@@ -35,7 +35,7 @@ fn test_json_round_trip_via_filesystem() {
 
     // Read back
     let read_json = std::fs::read_to_string(&path).unwrap();
-    let loaded: xai_grok_agent::PromptContext = serde_json::from_str(&read_json).unwrap();
+    let loaded: intelekt_agent::PromptContext = serde_json::from_str(&read_json).unwrap();
 
     assert_eq!(loaded.version, ctx.version);
     assert_eq!(loaded.build_timestamp_utc, ctx.build_timestamp_utc);
@@ -60,7 +60,7 @@ fn test_system_prompt_write_and_read() {
 
 #[test]
 fn test_system_prompt_is_plain_text_not_json() {
-    let prompt = "You are a Grok Build subagent.";
+    let prompt = "You are a Intelekt CLI subagent.";
     // system_prompt.txt is raw text, NOT JSON-encoded.
     assert!(!prompt.starts_with('"'), "must not be JSON-quoted");
     assert!(!prompt.starts_with('{'), "must not be JSON object");
@@ -74,7 +74,7 @@ fn test_canonical_artifacts_coexist() {
 
     // Write both canonical artifacts.
     let prompt = "You are a test subagent.";
-    let ctx = xai_grok_agent::PromptContext {
+    let ctx = intelekt_agent::PromptContext {
         ..Default::default()
     };
 
@@ -92,7 +92,7 @@ fn test_canonical_artifacts_coexist() {
     let read_prompt = std::fs::read_to_string(session_dir.join(SYSTEM_PROMPT_FILENAME)).unwrap();
     assert_eq!(read_prompt, prompt);
 
-    let read_ctx: xai_grok_agent::PromptContext = serde_json::from_str(
+    let read_ctx: intelekt_agent::PromptContext = serde_json::from_str(
         &std::fs::read_to_string(session_dir.join(PROMPT_CONTEXT_FILENAME)).unwrap(),
     )
     .unwrap();
@@ -107,7 +107,7 @@ fn test_system_prompt_matches_chat_history_system_message() {
     let session_dir = tmp.path().join("session-consistency");
     std::fs::create_dir_all(&session_dir).unwrap();
 
-    let system_prompt = "You are a Grok Build subagent.\n\n<tool_calling>\n...";
+    let system_prompt = "You are a Intelekt CLI subagent.\n\n<tool_calling>\n...";
 
     // Write system_prompt.txt (same string used for chat_history).
     std::fs::write(session_dir.join(SYSTEM_PROMPT_FILENAME), system_prompt).unwrap();
@@ -152,7 +152,7 @@ fn test_corrupt_json_returns_error() {
     std::fs::write(&path, "not valid json {{{").unwrap();
 
     let json = std::fs::read_to_string(&path).unwrap();
-    let result: Result<xai_grok_agent::PromptContext, _> = serde_json::from_str(&json);
+    let result: Result<intelekt_agent::PromptContext, _> = serde_json::from_str(&json);
     assert!(result.is_err(), "corrupt JSON should fail to deserialize");
 }
 
@@ -164,7 +164,7 @@ fn test_load_system_prompt_returns_content_when_present() {
     let session_dir = tmp.path().join("session-load-test");
     std::fs::create_dir_all(&session_dir).unwrap();
 
-    let prompt = "You are a Grok Build subagent.";
+    let prompt = "You are a Intelekt CLI subagent.";
     std::fs::write(session_dir.join(SYSTEM_PROMPT_FILENAME), prompt).unwrap();
 
     let loaded = load_system_prompt_from_dir(&session_dir);
@@ -190,7 +190,7 @@ fn test_load_prompt_context_returns_context_when_present() {
     let session_dir = tmp.path().join("session-ctx-load");
     std::fs::create_dir_all(&session_dir).unwrap();
 
-    let ctx = xai_grok_agent::PromptContext::default();
+    let ctx = intelekt_agent::PromptContext::default();
     std::fs::write(
         session_dir.join(PROMPT_CONTEXT_FILENAME),
         serde_json::to_string_pretty(&ctx).unwrap(),

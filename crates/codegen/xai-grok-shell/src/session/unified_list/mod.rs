@@ -342,7 +342,7 @@ mod tests {
             cwd: "/Users/me/xai".into(),
             hostname: Some("devbox".into()),
             source: "local".into(),
-            model_id: Some("grok-build".into()),
+            model_id: Some("intelekt-cli".into()),
             num_messages: 7,
             last_active_at: Some(updated_at.into()),
             branch: Some("main".into()),
@@ -603,7 +603,7 @@ mod tests {
             .to_string(),
         )
         .await;
-        let _env = xai_grok_test_support::EnvGuard::set(
+        let _env = intelekt_test_support::EnvGuard::set(
             "GROK_CONVERSATIONS_BASE_URL",
             format!("http://{addr}"),
         );
@@ -668,15 +668,15 @@ mod tests {
     #[serial_test::serial]
     fn conversations_lane_env_gating_matrix() {
         {
-            let _off = xai_grok_test_support::EnvGuard::unset("GROK_SESSION_LIST_CONVERSATIONS");
+            let _off = intelekt_test_support::EnvGuard::unset("GROK_SESSION_LIST_CONVERSATIONS");
             assert!(!conversations_lane_enabled());
         }
         {
-            let _on = xai_grok_test_support::EnvGuard::set("GROK_SESSION_LIST_CONVERSATIONS", "1");
+            let _on = intelekt_test_support::EnvGuard::set("GROK_SESSION_LIST_CONVERSATIONS", "1");
             assert_eq!(conversations_lane_enabled(), false);
         }
         {
-            let _off = xai_grok_test_support::EnvGuard::set("GROK_SESSION_LIST_CONVERSATIONS", "0");
+            let _off = intelekt_test_support::EnvGuard::set("GROK_SESSION_LIST_CONVERSATIONS", "0");
             assert!(!conversations_lane_enabled());
         }
     }
@@ -686,20 +686,20 @@ mod tests {
     #[serial_test::serial]
     fn conversations_lane_active_truth_table() {
         use crate::agent::chat_modes::GROK_CHAT_MODE_ENV;
-        let _chat_off = xai_grok_test_support::EnvGuard::unset(GROK_CHAT_MODE_ENV);
+        let _chat_off = intelekt_test_support::EnvGuard::unset(GROK_CHAT_MODE_ENV);
         let _desktop_off =
-            xai_grok_test_support::EnvGuard::unset("GROK_SESSION_LIST_CONVERSATIONS");
+            intelekt_test_support::EnvGuard::unset("GROK_SESSION_LIST_CONVERSATIONS");
         assert!(
             !conversations_lane_active(),
             "no env ⇒ lane off (Build-mode default)"
         );
         {
             let _desktop =
-                xai_grok_test_support::EnvGuard::set("GROK_SESSION_LIST_CONVERSATIONS", "1");
+                intelekt_test_support::EnvGuard::set("GROK_SESSION_LIST_CONVERSATIONS", "1");
             assert_eq!(conversations_lane_active(), false);
         }
         {
-            let _chat = xai_grok_test_support::EnvGuard::set(GROK_CHAT_MODE_ENV, "1");
+            let _chat = intelekt_test_support::EnvGuard::set(GROK_CHAT_MODE_ENV, "1");
             assert_eq!(
                 conversations_lane_active(),
                 false,
@@ -719,7 +719,7 @@ mod tests {
         )
         .to_string();
         {
-            let _off = xai_grok_test_support::EnvGuard::unset(GROK_CHAT_MODE_ENV);
+            let _off = intelekt_test_support::EnvGuard::unset(GROK_CHAT_MODE_ENV);
             let req = parse_list_req(&raw).expect("parse");
             let parsed = ParsedMeta::parse(req.meta.as_ref());
             assert_eq!(
@@ -729,7 +729,7 @@ mod tests {
             );
         }
         {
-            let _on = xai_grok_test_support::EnvGuard::set(GROK_CHAT_MODE_ENV, "1");
+            let _on = intelekt_test_support::EnvGuard::set(GROK_CHAT_MODE_ENV, "1");
             let req = parse_list_req(&raw).expect("parse");
             let parsed = ParsedMeta::parse(req.meta.as_ref());
             let expected = "build";

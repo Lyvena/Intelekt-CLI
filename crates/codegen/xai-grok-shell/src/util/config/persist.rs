@@ -3,9 +3,9 @@ use super::mcp::{Config, user_config_path};
 use anyhow::Result;
 use toml::Value as TomlValue;
 use toml::map::Map as TomlMap;
-use xai_grok_agent::prompt::skills::SkillsConfig;
+use intelekt_agent::prompt::skills::SkillsConfig;
 
-/// Process-wide write lock for `~/.grok/config.toml`.
+/// Process-wide write lock for `~/.intelekt/config.toml`.
 ///
 /// Serializes the read-modify-write in `save_config` so two rapid
 /// settings toggles can't interleave and clobber each other.
@@ -733,7 +733,7 @@ auto_dark_theme = "tokyonight"
 auto_light_theme = "grokday"
 
 [models]
-default = "grok-3"
+default = "intelekt-3"
 
 [cli]
 auto_update = true
@@ -742,7 +742,7 @@ auto_update = true
         let mut cfg = load_config_from_toml(&root);
 
         // User changes default model (unrelated to UI)
-        cfg.models.default = Some("grok-4".to_string());
+        cfg.models.default = Some("intelekt-4".to_string());
 
         // Simulate save_config
         let mut table = root.as_table().unwrap().clone();
@@ -770,7 +770,7 @@ auto_update = true
         let models = table.get("models").unwrap().as_table().unwrap();
         assert_eq!(
             models.get("default").and_then(|v| v.as_str()),
-            Some("grok-4")
+            Some("intelekt-4")
         );
     }
 
@@ -823,7 +823,7 @@ auto_update = true
     #[test]
     fn models_config_serializes_only_some_fields() {
         let m = crate::agent::config::ModelsConfig {
-            default: Some("grok-3".to_string()),
+            default: Some("intelekt-3".to_string()),
             ..Default::default()
         };
         let v = TomlValue::try_from(&m).expect("serialize ModelsConfig");
@@ -837,7 +837,7 @@ auto_update = true
             assert!(!t.contains_key("disabled_models"));
             assert!(!t.contains_key("allowed_models"));
             assert!(!t.contains_key("agent_type"));
-            assert_eq!(t.get("default").and_then(|x| x.as_str()), Some("grok-3"));
+            assert_eq!(t.get("default").and_then(|x| x.as_str()), Some("intelekt-3"));
         } else {
             panic!("expected table from serialization");
         }
@@ -1114,8 +1114,8 @@ auto_update = true
         use crate::agent::config::{Config, ConfigModelOverride, ModelInfo};
         use std::sync::Mutex;
 
-        const TEST_MODEL: &str = "grok-4.5";
-        const OTHER_MODEL: &str = "grok-4.3";
+        const TEST_MODEL: &str = "intelekt-4.5";
+        const OTHER_MODEL: &str = "intelekt-4.3";
 
         /// Serialize tests that mutate `GROK_AUTO_COMPACT_THRESHOLD_PERCENT`.
         static ENV_LOCK: Mutex<()> = Mutex::new(());

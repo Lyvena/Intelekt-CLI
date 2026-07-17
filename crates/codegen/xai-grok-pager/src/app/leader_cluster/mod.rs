@@ -10,18 +10,18 @@
 //! effects run through the real `effects::execute` (the same loop
 //! `event_loop::run` performs, minus the terminal).
 //!
-//! Env sandboxing follows this crate's `serial(GROK_HOME)` idiom; note
+//! Env sandboxing follows this crate's `serial(INTELEKT_HOME)` idiom; note
 //! `grok_home()` is process-cached (OnceLock), so disk assertions always go
 //! through [`effective_grok_home`] rather than assuming the temp dir won.
 //!
 //! The scenarios are `#[ignore]`d in the shared lib test binary: the harness
 //! mutates process-global env (proxy URLs, `XAI_API_KEY`,
-//! `GROK_LEADER_SOCKET`, `GROK_HOME`) for a real agent's whole lifetime, and
+//! `GROK_LEADER_SOCKET`, `INTELEKT_HOME`) for a real agent's whole lifetime, and
 //! in a several-thousand-test process that poisons concurrently-running tests
 //! (and `grok_home()`'s OnceLock is usually already pinned). Run on demand:
 //!
 //! ```bash
-//! cargo test -p xai-grok-pager --lib -- app::leader_cluster --ignored --test-threads=1
+//! cargo test -p intelekt-pager --lib -- app::leader_cluster --ignored --test-threads=1
 //! ```
 //!
 //! Follow-up to un-ignore: move the scenarios to a dedicated test binary
@@ -45,14 +45,14 @@ use xai_acp_lib::{
     AcpAgentGatewayReceiver as GatewayReceiver, AcpAgentGatewaySender as GatewaySender,
     AcpClientRx, LineBufferedRead, acp_send,
 };
-use xai_grok_shell::agent::config::Config as AgentConfig;
-use xai_grok_shell::agent::mvp_agent::MvpAgent;
-use xai_grok_shell::leader::{
+use intelekt_shell::agent::config::Config as AgentConfig;
+use intelekt_shell::agent::mvp_agent::MvpAgent;
+use intelekt_shell::leader::{
     ClientCapabilities as LeaderClientCapabilities, ClientMode, ConnectionStatus,
     LEADER_SOCKET_ENV, LeaderClient, LeaderEnvUrls, LeaderLock, LeaderReconnector,
     LeaderServerControlState, LeaderServerMetadata, ReconnectPolicy, run_leader_server,
 };
-use xai_grok_test_support::MockInferenceServer;
+use intelekt_test_support::MockInferenceServer;
 
 use super::actions::{Action, TaskResult};
 use super::agent::AgentState;
@@ -78,7 +78,7 @@ async fn bounded<T>(what: &str, fut: impl std::future::Future<Output = T>) -> T 
 /// The grok home the agent actually persisted under: `grok_home()` is
 /// process-cached, so an earlier test in this binary may have pinned it.
 fn effective_grok_home() -> PathBuf {
-    xai_grok_config::grok_home()
+    intelekt_config::grok_home()
 }
 
 /// Concatenated agent-message text across a view's scrollback (copy of the
@@ -286,7 +286,7 @@ struct PagerLeaderCluster {
     server_cancel: CancellationToken,
     /// The current generation's server/agent/bridge tasks. `kill_leader`
     /// aborts + drains them so a respawn can never race a still-running old
-    /// agent on the same GROK_HOME (two agents on one updates.jsonl is the
+    /// agent on the same INTELEKT_HOME (two agents on one updates.jsonl is the
     /// corruption class the real leader's flock exists to prevent).
     generation_tasks: Vec<tokio::task::JoinHandle<()>>,
     client_count: Arc<AtomicUsize>,
@@ -305,7 +305,7 @@ struct PagerLeaderCluster {
 }
 
 impl PagerLeaderCluster {
-    /// Stand up the cluster. Callers MUST be `#[serial_test::serial(GROK_HOME)]`
+    /// Stand up the cluster. Callers MUST be `#[serial_test::serial(INTELEKT_HOME)]`
     /// (env mutation) and run inside a current-thread `LocalSet`.
     async fn start() -> Self {
         let _ = rustls::crypto::ring::default_provider().install_default();
@@ -316,7 +316,7 @@ impl PagerLeaderCluster {
         let sock_path = grok_home.path().join("leader-cluster.sock");
 
         let env = vec![
-            crate::test_util::EnvVarGuard::set("GROK_HOME", grok_home.path()),
+            crate::test_util::EnvVarGuard::set("INTELEKT_HOME", grok_home.path()),
             crate::test_util::EnvVarGuard::set("GROK_CLI_CHAT_PROXY_BASE_URL", server.url()),
             crate::test_util::EnvVarGuard::set("GROK_XAI_API_BASE_URL", server.url()),
             crate::test_util::EnvVarGuard::set("XAI_API_KEY", "test-key-for-ci"),
@@ -367,10 +367,10 @@ impl PagerLeaderCluster {
             socket_path: self.sock_path.clone(),
             lock_path: self.sock_path.with_extension("lock"),
             ws_url_suffix: String::new(),
-            // MUST be the client-side comparison source (xai_grok_version), not
+            // MUST be the client-side comparison source (intelekt_version), not
             // this crate's version: a reconnecting client evicts strictly-older
             // leaders, and "evict" here would signal THIS test process.
-            leader_binary_version: xai_grok_version::VERSION.to_string(),
+            leader_binary_version: intelekt_version::VERSION.to_string(),
         });
         let sock_for_server = self.sock_path.clone();
         let cancel_for_server = cancel.clone();
@@ -385,10 +385,10 @@ impl PagerLeaderCluster {
                 true,
                 client_count_for_server,
                 Arc::new(AtomicBool::new(false)),
-                xai_grok_shell::agent::activity::AgentActivity::default(),
+                intelekt_shell::agent::activity::AgentActivity::default(),
                 tokio::sync::watch::channel(true).1,
                 tokio::sync::watch::channel(false).0,
-                tokio::sync::watch::channel(xai_grok_shell::leader::ShutdownReason::Manual).0,
+                tokio::sync::watch::channel(intelekt_shell::leader::ShutdownReason::Manual).0,
                 None,
                 control_state,
             )
@@ -397,9 +397,9 @@ impl PagerLeaderCluster {
 
         // Real agent behind the server. Copied from `run_leader`'s
         // agent-spawn + IPC/stdout bridge blocks in
-        // xai-grok-shell/src/agent/app.rs (inside its LocalSet body) — a
+        // intelekt-shell/src/agent/app.rs (inside its LocalSet body) — a
         // deliberate copy so production stays untouched. Second copy of the
-        // same wiring: xai-grok-shell/tests/test_leader_soak.rs ("Real agent
+        // same wiring: intelekt-shell/tests/test_leader_soak.rs ("Real agent
         // behind it" block) — keep the two copies behaviorally identical.
         let (agent_in_read, agent_in_write) = tokio::io::simplex(SIMPLEX_BUF);
         let (agent_out_read, agent_out_write) = tokio::io::simplex(SIMPLEX_BUF);
@@ -483,7 +483,7 @@ impl PagerLeaderCluster {
         // Abort + drain the generation's agent/bridge tasks (the server task
         // has already run its socket cleanup above). Channel-closure teardown
         // is only eventual; without this drain an old agent task could still
-        // be running against the same GROK_HOME when the next generation's
+        // be running against the same INTELEKT_HOME when the next generation's
         // agent starts — two writers on one updates.jsonl, the corruption
         // class the real leader's flock prevents.
         for task in self.generation_tasks.drain(..) {

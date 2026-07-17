@@ -60,10 +60,10 @@ pub enum WorkspaceError {
     /// Deploy-service error tagged with its gRPC status class; see
     /// [`DeployError`] for how the class crosses the workspace RPC boundary.
     ///
-    /// [`DeployError`]: xai_grok_workspace_types::rpc::deploy::DeployError
+    /// [`DeployError`]: intelekt_workspace_types::rpc::deploy::DeployError
     #[error("deploy error: {message}")]
     DeployError {
-        kind: xai_grok_workspace_types::rpc::deploy::DeployError,
+        kind: intelekt_workspace_types::rpc::deploy::DeployError,
         message: String,
     },
 

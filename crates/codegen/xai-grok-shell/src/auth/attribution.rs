@@ -7,8 +7,8 @@
 //! idle-resume) with the live
 //! [`AuthManager::current_api_key`] value. The two sinks are:
 //!
-//! 1. [`xai_grok_telemetry::unified_log::warn`] for the local
-//!    `~/.grok/logs/unified.jsonl` file (best-effort; ships to GCS
+//! 1. [`intelekt_telemetry::unified_log::warn`] for the local
+//!    `~/.intelekt/logs/unified.jsonl` file (best-effort; ships to GCS
 //!    only on OIDC refresh failure via `auth/refresh.rs`).
 //! 2. A discrete `tracing::warn_span!("auth_401_attribution", ...)`
 //!    captured by the OTel layer in `util/otel_layer.rs` and shipped
@@ -33,11 +33,11 @@
 //!
 //! # Cross-crate plumbing
 //!
-//! [`xai_grok_sampler`] is intentionally decoupled from this crate. It
-//! invokes the trait [`xai_grok_sampler::Auth401AttributionCallback`] at
+//! [`intelekt_sampler`] is intentionally decoupled from this crate. It
+//! invokes the trait [`intelekt_sampler::Auth401AttributionCallback`] at
 //! its six 401 arms; this module provides [`ShellAttribution`], the
 //! concrete impl that the shell wires into
-//! [`xai_grok_sampler::SamplerConfig::attribution_callback`] at every
+//! [`intelekt_sampler::SamplerConfig::attribution_callback`] at every
 //! sampler-construction site. Non-sampler sites (storage / feedback /
 //! registry / idle-resume) call [`record_consumer_401`]
 //! directly with their `(consumer_kind, op)` pair.
@@ -45,8 +45,8 @@
 use std::sync::Arc;
 
 use serde_json::Value as JsonValue;
-use xai_grok_sampler::{Auth401AttributionCallback, SamplingConsumer};
-use xai_grok_tools::{Auth401AttributionCallback as ToolAuth401AttributionCallback, ToolConsumer};
+use intelekt_sampler::{Auth401AttributionCallback, SamplingConsumer};
+use intelekt_tools::{Auth401AttributionCallback as ToolAuth401AttributionCallback, ToolConsumer};
 
 use crate::auth::{AuthManager, TOKEN_TTL, token_suffix};
 
@@ -103,10 +103,10 @@ impl ShellAttribution {
     /// Construct a shareable attribution callback wired to the given
     /// [`AuthManager`]. Returns `Arc<dyn Trait>` for the sampler
     /// trait so callers can drop the value directly into
-    /// [`xai_grok_sampler::SamplerConfig::attribution_callback`].
+    /// [`intelekt_sampler::SamplerConfig::attribution_callback`].
     ///
     /// (Returns `Arc<dyn Trait>` rather than `Self` because the
-    /// `xai_grok_sampler::SamplerConfig` field expects exactly that;
+    /// `intelekt_sampler::SamplerConfig` field expects exactly that;
     /// keeping the boundary in one place avoids `as Arc<dyn _>`
     /// coercions at every call site.)
     #[allow(clippy::new_ret_no_self)]
@@ -121,7 +121,7 @@ impl ShellAttribution {
     }
 
     /// Tool-side counterpart of [`Self::new`]: returns
-    /// `Arc<dyn xai_grok_tools::Auth401AttributionCallback>` for the
+    /// `Arc<dyn intelekt_tools::Auth401AttributionCallback>` for the
     /// `with_attribution_callback(...)` builder on each tool HTTP
     /// client (`ImageGenClient`, `VideoGenClient`, `WebSearchClient`).
     /// The two callbacks share the same underlying impl and emit the
@@ -141,7 +141,7 @@ impl ShellAttribution {
 impl Auth401AttributionCallback for ShellAttribution {
     fn record_401(&self, consumer: SamplingConsumer, sent_bearer_prefix: Option<&str>) {
         // The sampler crate has already truncated `sent_bearer_prefix`
-        // to `xai_grok_sampler::SENT_BEARER_PREFIX_LEN` characters
+        // to `intelekt_sampler::SENT_BEARER_PREFIX_LEN` characters
         // before this trait method fires (see
         // `SamplingClient::extract_sent_bearer`); the truncation
         // inside `compute_attribution_payload` (via `token_suffix`)
@@ -162,7 +162,7 @@ impl Auth401AttributionCallback for ShellAttribution {
 }
 
 /// Tool-side hook: each tool client (image_gen, video_gen, web_search)
-/// in `xai-grok-tools` emits a 401 attribution event through this
+/// in `intelekt-tools` emits a 401 attribution event through this
 /// trait when its HTTP request returns UNAUTHORIZED. Same shape as
 /// the sampler-side impl above; routes to the same pair of sinks.
 ///
@@ -209,16 +209,16 @@ pub(crate) enum ConsumerKind {
     /// No per-op discriminator -- the consumer string is just
     /// `"IdleResumeModelRefresh"`.
     IdleResumeModelRefresh,
-    /// `xai_grok_tools::ToolConsumer::ImageGen` -- Imagine API
+    /// `intelekt_tools::ToolConsumer::ImageGen` -- Imagine API
     /// (`POST /images/generations`). No per-op discriminator;
     /// consumer string is just `"ImageGen"`.
     ImageGen,
-    /// `xai_grok_tools::ToolConsumer::VideoGenStart` and
+    /// `intelekt_tools::ToolConsumer::VideoGenStart` and
     /// `VideoGenPoll` -- Video Generation API. The op string is
     /// `"start"` (`POST /videos/generations`) or `"poll"`
     /// (`GET /videos/{request_id}`).
     VideoGen,
-    /// `xai_grok_tools::ToolConsumer::WebSearch` -- web search via
+    /// `intelekt_tools::ToolConsumer::WebSearch` -- web search via
     /// `POST /responses` with a `WebSearch` tool. No per-op
     /// discriminator; consumer string is just `"WebSearch"`.
     WebSearch,
@@ -265,7 +265,7 @@ fn format_consumer(kind: ConsumerKind, op: &str) -> String {
 ///
 /// Wraps [`record_auth_401`] with the design-doc `consumer` formatting
 /// (e.g., `"StorageClient.upload"`, `"FeedbackClient.submit"`).
-/// All 401 emit sites in `xai-grok-shell` go through this helper -- the
+/// All 401 emit sites in `intelekt-shell` go through this helper -- the
 /// per-client `record_401_attribution` wrappers in
 /// `agent/feedback_client.rs`, `agent/session_registry_client.rs`,
 /// and `upload/storage_client.rs` each
@@ -318,12 +318,12 @@ pub(crate) fn record_auth_401(
 ) {
     let payload = compute_attribution_payload(auth_manager, consumer, sent_bearer);
 
-    // Sink 1 -- local file (~/.grok/logs/unified.jsonl) + scrubbed
+    // Sink 1 -- local file (~/.intelekt/logs/unified.jsonl) + scrubbed
     // tracing event. The local file is reliable but only ships to GCS
     // on OIDC refresh failure (auth/refresh.rs::spawn_diagnostic_upload),
     // so by itself it does not give visibility into the steady-state
     // 401 population. Sink 2 below provides that.
-    xai_grok_telemetry::unified_log::warn(
+    intelekt_telemetry::unified_log::warn(
         "auth 401 attribution",
         session_id,
         Some(payload.clone()),
@@ -454,7 +454,7 @@ mod tests {
     use super::*;
 
     /// Test helper: build a fresh `AuthManager` rooted at a tempdir so
-    /// nothing from a developer's actual `~/.grok/auth.json` leaks in.
+    /// nothing from a developer's actual `~/.intelekt/auth.json` leaks in.
     fn empty_auth_manager() -> (tempfile::TempDir, AuthManager) {
         let dir = tempfile::tempdir().expect("tempdir");
         let cfg = GrokComConfig::default();
@@ -650,7 +650,7 @@ mod tests {
         );
     }
 
-    /// `ShellAttribution` implements `xai_grok_tools::Auth401AttributionCallback`
+    /// `ShellAttribution` implements `intelekt_tools::Auth401AttributionCallback`
     /// by routing each `ToolConsumer` variant to the right
     /// `(ConsumerKind, op)` pair, which formats to the expected
     /// `consumer` string in the emitted payload.

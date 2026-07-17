@@ -3,10 +3,10 @@
 //! payload preparation.
 #![allow(clippy::items_after_test_module)]
 use super::*;
-/// Partition the AGENTS.md / Claude.md / `.grok/rules/*.md` files returned
+/// Partition the AGENTS.md / Claude.md / `.intelekt/rules/*.md` files returned
 /// by `read_agents_config_with_paths` into "workspace" (cwd / repo root /
-/// extra workspace user dir) and "user" (`~/.grok/`, `~/.claude/`,
-/// `~/.grok/bundled/`) buckets, mirroring the split between
+/// extra workspace user dir) and "user" (`~/.intelekt/`, `~/.claude/`,
+/// `~/.intelekt/bundled/`) buckets, mirroring the split between
 /// `<always_applied_workspace_rules>` and `<user_rules>`.
 /// Normalize a free-form name (e.g. an MCP server identifier) into a
 /// single safe filesystem segment.
@@ -40,20 +40,20 @@ pub(super) fn pick_user_image_url(image: &agent_client_protocol::ImageContent) -
     }
 }
 fn partition_rules_by_scope(
-    files: Vec<xai_grok_agent::prompt::agents_md::AgentConfigFile>,
+    files: Vec<intelekt_agent::prompt::agents_md::AgentConfigFile>,
 ) -> (
-    Vec<xai_grok_agent::prompt::user_message::RuleEntry>,
-    Vec<xai_grok_agent::prompt::user_message::RuleEntry>,
+    Vec<intelekt_agent::prompt::user_message::RuleEntry>,
+    Vec<intelekt_agent::prompt::user_message::RuleEntry>,
 ) {
     let home = dirs::home_dir().map(|p| p.to_string_lossy().to_string());
     let user_prefixes: Vec<String> = match home {
-        Some(h) => vec![format!("{h}/.grok/"), format!("{h}/.claude/")],
+        Some(h) => vec![format!("{h}/.intelekt/"), format!("{h}/.claude/")],
         None => vec![],
     };
     let mut workspace = Vec::new();
     let mut user = Vec::new();
     for f in files {
-        let entry = xai_grok_agent::prompt::user_message::RuleEntry::from(f);
+        let entry = intelekt_agent::prompt::user_message::RuleEntry::from(f);
         if user_prefixes.iter().any(|p| entry.path.starts_with(p)) {
             user.push(entry);
         } else {
@@ -112,7 +112,7 @@ pub(super) fn install_system_prompt(
 #[cfg(test)]
 mod install_system_prompt_tests {
     use super::install_system_prompt;
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     fn system_text(item: &ConversationItem) -> &str {
         match item {
             ConversationItem::System(s) => s.content.as_ref(),
@@ -331,7 +331,7 @@ impl SessionActor {
             conversation.retain(|item| {
                 !matches!(
                     item, ConversationItem::User(u) if u.synthetic_reason ==
-                    Some(xai_grok_sampling_types::SyntheticReason::SystemReminder)
+                    Some(intelekt_sampling_types::SyntheticReason::SystemReminder)
                 )
             });
         }
@@ -343,7 +343,7 @@ impl SessionActor {
             .map(|s| s.as_str())
             .unwrap_or(&self.session_info.cwd);
         let cwd = std::path::Path::new(display_path);
-        use xai_grok_agent::prompt::user_message::UserMessageTemplate;
+        use intelekt_agent::prompt::user_message::UserMessageTemplate;
         let template = self
             .agent
             .borrow()
@@ -384,10 +384,10 @@ impl SessionActor {
     async fn build_templated_user_message(
         &self,
         cwd: &std::path::Path,
-        template: xai_grok_agent::prompt::user_message::UserMessageTemplate,
+        template: intelekt_agent::prompt::user_message::UserMessageTemplate,
     ) -> Option<String> {
-        use xai_grok_agent::prompt::agents_md::read_agents_config_with_paths;
-        use xai_grok_agent::prompt::user_message::UserMessageContext;
+        use intelekt_agent::prompt::agents_md::read_agents_config_with_paths;
+        use intelekt_agent::prompt::user_message::UserMessageContext;
         self.wait_for_mcp_templated_prefix_ready(&template).await;
         let cwd_str = cwd.to_string_lossy().to_string();
         let bridge = self.agent.borrow().tool_bridge().clone();
@@ -435,8 +435,8 @@ impl SessionActor {
         &self,
         cwd: &std::path::Path,
     ) -> (Option<std::path::PathBuf>, Option<String>) {
-        use xai_grok_workspace::file_system::{git_status_short, jj_status};
-        use xai_grok_workspace::session::git::VcsKind;
+        use intelekt_workspace::file_system::{git_status_short, jj_status};
+        use intelekt_workspace::session::git::VcsKind;
         if matches!(self.vcs_kind, VcsKind::None) {
             return (None, None);
         }
@@ -477,8 +477,8 @@ impl SessionActor {
     async fn gather_mcp_servers(
         &self,
         workspace: &std::path::Path,
-    ) -> Vec<xai_grok_agent::prompt::user_message::McpServerEntry> {
-        use xai_grok_agent::prompt::user_message::McpServerEntry;
+    ) -> Vec<intelekt_agent::prompt::user_message::McpServerEntry> {
+        use intelekt_agent::prompt::user_message::McpServerEntry;
         let mcps_root = Self::workspace_mcps_root(workspace);
         let clients: Vec<(
             String,
@@ -517,8 +517,8 @@ impl SessionActor {
     async fn gather_gateway_mcp_servers(
         &self,
         mcps_root: Option<&std::path::Path>,
-    ) -> Vec<xai_grok_agent::prompt::user_message::McpServerEntry> {
-        use xai_grok_agent::prompt::user_message::McpServerEntry;
+    ) -> Vec<intelekt_agent::prompt::user_message::McpServerEntry> {
+        use intelekt_agent::prompt::user_message::McpServerEntry;
         let disabled_gateway_tools = crate::util::config::get_all_mcp_disabled_tools(
             std::path::Path::new(&self.session_info.cwd),
         );
@@ -694,7 +694,7 @@ impl SessionActor {
                 self.client_identifier.clone(),
                 Some(self.max_retries),
             );
-        let client = xai_grok_sampler::SamplingClient::new(sampler_config).map_err(|e| {
+        let client = intelekt_sampler::SamplingClient::new(sampler_config).map_err(|e| {
             acp::Error::internal_error().data(format!(
                 "failed to build image-describe sampling client: {e}"
             ))

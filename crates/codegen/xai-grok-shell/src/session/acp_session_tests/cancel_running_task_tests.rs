@@ -3,7 +3,7 @@ use super::*;
 use crate::session::storage::StorageAdapter;
 use crate::terminal::AsyncTerminalRunner;
 use crate::terminal::runner::{TerminalError, TerminalRunRequest, TerminalRunResult};
-use xai_grok_paths::AbsPathBuf;
+use intelekt_paths::AbsPathBuf;
 #[derive(Debug)]
 struct DummyTerminal;
 #[async_trait::async_trait]
@@ -20,7 +20,7 @@ async fn persist_ack_waits_for_disk_flush_before_success() {
             let tmp = tempfile::TempDir::new().unwrap();
             let session_dir = tmp.path().join("session");
             let cwd = AbsPathBuf::new(std::path::PathBuf::from("/tmp")).unwrap();
-            let fs = Arc::new(xai_grok_workspace::file_system::MockFs::new(
+            let fs = Arc::new(intelekt_workspace::file_system::MockFs::new(
                 cwd.to_path_buf(),
             ));
             let terminal = Arc::new(DummyTerminal {});
@@ -38,7 +38,7 @@ async fn persist_ack_waits_for_disk_flush_before_success() {
                 id: acp::SessionId::new("test-persist-ack"),
                 cwd: cwd.as_str().to_string(),
             };
-            let sampling_client = crate::sampling::Client::new(xai_grok_sampler::SamplerConfig {
+            let sampling_client = crate::sampling::Client::new(intelekt_sampler::SamplerConfig {
                 api_key: Some("test-key".to_string()),
                 base_url: "http://localhost".to_string(),
                 model: "test".to_string(),
@@ -86,7 +86,7 @@ async fn persist_ack_waits_for_disk_flush_before_success() {
             let (chat_event_tx, _chat_event_rx) = tokio::sync::mpsc::unbounded_channel();
             let chat_state_handle = xai_chat_state::ChatStateActor::spawn(
                 vec![],
-                xai_grok_sampling_types::SamplingConfig {
+                intelekt_sampling_types::SamplingConfig {
                     base_url: "http://localhost".to_string(),
                     model: "test".to_string(),
                     max_completion_tokens: None,
@@ -260,7 +260,7 @@ async fn persist_ack_waits_for_disk_flush_before_success() {
                 hook_registry: std::cell::RefCell::new(None),
                 client_hooks: Default::default(),
                 hook_resolved_workspace_root: String::new(),
-                vcs_kind: xai_grok_workspace::session::git::VcsKind::Git,
+                vcs_kind: intelekt_workspace::session::git::VcsKind::Git,
                 hook_load_errors: std::cell::RefCell::new(Vec::new()),
                 plugin_registry: std::cell::RefCell::new(None),
                 plugin_registry_handle: None,
@@ -273,7 +273,7 @@ async fn persist_ack_waits_for_disk_flush_before_success() {
                 session_turn_active: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
                 streaming_turn_capture: parking_lot::Mutex::new(StreamingTurnCapture::default()),
                 turn_stream_drained: parking_lot::Mutex::new(None),
-                sampler_handle: xai_grok_sampler::SamplerHandle::noop(),
+                sampler_handle: intelekt_sampler::SamplerHandle::noop(),
                 rebuild_spec: crate::session::agent_rebuild::test_rebuild_spec_default(),
                 image_description_model: crate::test_support::TEST_MODEL.to_owned(),
                 image_describe_cache: Arc::new(
@@ -281,7 +281,7 @@ async fn persist_ack_waits_for_disk_flush_before_success() {
                 ),
                 subagent_spawn_info: parking_lot::Mutex::new(HashMap::new()),
                 subagent_token_records: parking_lot::Mutex::new(HashMap::new()),
-                workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+                workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
                 trace_config_template: std::cell::RefCell::new(None),
             });
             let prompt_blocks = vec![acp::ContentBlock::Text(acp::TextContent::new(
@@ -335,7 +335,7 @@ async fn first_turn_memory_injection_persists_to_chat_history() {
                 id: acp::SessionId::new("persist-memory"),
                 cwd: session_dir.path().to_string_lossy().to_string(),
             };
-            let sampling_client = crate::sampling::Client::new(xai_grok_sampler::SamplerConfig {
+            let sampling_client = crate::sampling::Client::new(intelekt_sampler::SamplerConfig {
                 api_key: Some("test-key".to_string()),
                 base_url: "http://localhost".to_string(),
                 model: "test-model".to_string(),
@@ -384,7 +384,7 @@ async fn first_turn_memory_injection_persists_to_chat_history() {
                     ConversationItem::system("sys"),
                     ConversationItem::user("<user_info>OS Version: macos</user_info>"),
                 ],
-                xai_grok_sampling_types::SamplingConfig {
+                intelekt_sampling_types::SamplingConfig {
                     base_url: "http://localhost".to_string(),
                     model: "test".to_string(),
                     max_completion_tokens: None,
@@ -455,7 +455,7 @@ async fn first_turn_memory_injection_disabled_does_not_persist_to_chat_history()
                 cwd: session_dir.path().to_string_lossy().to_string(),
             };
             let cwd = AbsPathBuf::new(session_dir.path().to_path_buf()).unwrap();
-            let fs = Arc::new(xai_grok_workspace::file_system::MockFs::new(
+            let fs = Arc::new(intelekt_workspace::file_system::MockFs::new(
                 cwd.to_path_buf(),
             ));
             let terminal = Arc::new(DummyTerminal {});
@@ -469,7 +469,7 @@ async fn first_turn_memory_injection_disabled_does_not_persist_to_chat_history()
             );
             let tool_context =
                 ToolContext::new(cwd.clone(), None, None, fs, terminal, hunk_tracker_handle);
-            let sampling_client = crate::sampling::Client::new(xai_grok_sampler::SamplerConfig {
+            let sampling_client = crate::sampling::Client::new(intelekt_sampler::SamplerConfig {
                 api_key: Some("test-key".to_string()),
                 base_url: "http://localhost".to_string(),
                 model: "test-model".to_string(),
@@ -522,7 +522,7 @@ async fn first_turn_memory_injection_disabled_does_not_persist_to_chat_history()
             ];
             let chat_state_handle = xai_chat_state::ChatStateActor::spawn(
                 initial_conversation.clone(),
-                xai_grok_sampling_types::SamplingConfig {
+                intelekt_sampling_types::SamplingConfig {
                     base_url: "http://localhost".to_string(),
                     model: "test".to_string(),
                     max_completion_tokens: None,
@@ -716,7 +716,7 @@ async fn first_turn_memory_injection_disabled_does_not_persist_to_chat_history()
                 hook_registry: std::cell::RefCell::new(None),
                 client_hooks: Default::default(),
                 hook_resolved_workspace_root: String::new(),
-                vcs_kind: xai_grok_workspace::session::git::VcsKind::Git,
+                vcs_kind: intelekt_workspace::session::git::VcsKind::Git,
                 hook_load_errors: std::cell::RefCell::new(Vec::new()),
                 plugin_registry: std::cell::RefCell::new(None),
                 plugin_registry_handle: None,
@@ -729,7 +729,7 @@ async fn first_turn_memory_injection_disabled_does_not_persist_to_chat_history()
                 session_turn_active: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
                 streaming_turn_capture: parking_lot::Mutex::new(StreamingTurnCapture::default()),
                 turn_stream_drained: parking_lot::Mutex::new(None),
-                sampler_handle: xai_grok_sampler::SamplerHandle::noop(),
+                sampler_handle: intelekt_sampler::SamplerHandle::noop(),
                 rebuild_spec: crate::session::agent_rebuild::test_rebuild_spec_default(),
                 image_description_model: crate::test_support::TEST_MODEL.to_owned(),
                 image_describe_cache: Arc::new(
@@ -737,7 +737,7 @@ async fn first_turn_memory_injection_disabled_does_not_persist_to_chat_history()
                 ),
                 subagent_spawn_info: parking_lot::Mutex::new(HashMap::new()),
                 subagent_token_records: parking_lot::Mutex::new(HashMap::new()),
-                workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+                workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
                 trace_config_template: std::cell::RefCell::new(None),
             });
             let _ = actor
@@ -789,7 +789,7 @@ async fn cancel_running_task_teardown_clears_running_and_pending_work() {
             >();
             let cwd = AbsPathBuf::new(std::path::PathBuf::from("/tmp")).unwrap();
             let fs = Arc::new(
-                xai_grok_workspace::file_system::MockFs::new(cwd.to_path_buf()),
+                intelekt_workspace::file_system::MockFs::new(cwd.to_path_buf()),
             );
             let terminal = Arc::new(DummyTerminal {});
             let (hunk_tx, _hunk_rx) = tokio::sync::mpsc::unbounded_channel();
@@ -823,7 +823,7 @@ async fn cancel_running_task_teardown_clears_running_and_pending_work() {
             agent
                 .tool_bridge()
                 .update_resource(
-                    xai_grok_tools::implementations::grok_build::task::types::CurrentPromptIdResource(
+                    intelekt_tools::implementations::grok_build::task::types::CurrentPromptIdResource(
                         "running".to_string(),
                     ),
                 )
@@ -999,7 +999,7 @@ async fn cancel_running_task_teardown_clears_running_and_pending_work() {
                 hook_registry: std::cell::RefCell::new(None),
                 client_hooks: Default::default(),
                 hook_resolved_workspace_root: String::new(),
-                vcs_kind: xai_grok_workspace::session::git::VcsKind::Git,
+                vcs_kind: intelekt_workspace::session::git::VcsKind::Git,
                 hook_load_errors: std::cell::RefCell::new(Vec::new()),
                 plugin_registry: std::cell::RefCell::new(None),
                 plugin_registry_handle: None,
@@ -1018,7 +1018,7 @@ async fn cancel_running_task_teardown_clears_running_and_pending_work() {
                     StreamingTurnCapture::default(),
                 ),
                 turn_stream_drained: parking_lot::Mutex::new(None),
-                sampler_handle: xai_grok_sampler::SamplerHandle::noop(),
+                sampler_handle: intelekt_sampler::SamplerHandle::noop(),
                 rebuild_spec: crate::session::agent_rebuild::test_rebuild_spec_default(),
                 image_description_model: crate::test_support::TEST_MODEL.to_owned(),
                 image_describe_cache: Arc::new(
@@ -1026,7 +1026,7 @@ async fn cancel_running_task_teardown_clears_running_and_pending_work() {
                 ),
                 subagent_spawn_info: parking_lot::Mutex::new(HashMap::new()),
                 subagent_token_records: parking_lot::Mutex::new(HashMap::new()),
-                workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+                workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
                 trace_config_template: std::cell::RefCell::new(None),
             };
             let (tx, rx) = tokio::sync::oneshot::channel();
@@ -1063,7 +1063,7 @@ async fn cancel_running_task_teardown_clears_running_and_pending_work() {
             actor.cancel_running_task(true, true, false, None).await;
             let scoped_prompt_id = bridge
                 .read_resource::<
-                    xai_grok_tools::implementations::grok_build::task::types::CurrentPromptIdResource,
+                    intelekt_tools::implementations::grok_build::task::types::CurrentPromptIdResource,
                 >()
                 .await;
             assert!(
@@ -1260,7 +1260,7 @@ async fn cancel_with_dangling_tool_call_skips_interrupt_reminder() {
                 tokio::sync::mpsc::unbounded_channel::<PersistenceMsg>();
             let actor = create_test_actor(0, 256_000, 85, gateway_tx, persistence_tx).await;
             actor.chat_state_handle.push_assistant_response(
-                ConversationItem::assistant_tool_calls(vec![xai_grok_sampling_types::ToolCall {
+                ConversationItem::assistant_tool_calls(vec![intelekt_sampling_types::ToolCall {
                     id: "call-1".into(),
                     name: "run_terminal_cmd".into(),
                     arguments: "{}".into(),
@@ -1788,14 +1788,14 @@ async fn cancel_propagates_to_sampler_handle_so_no_further_emission() {
             let server_task = tokio::spawn(async move {
                 let _ = axum::serve(listener, app).await;
             });
-            let cfg = xai_grok_sampler::SamplerConfig {
+            let cfg = intelekt_sampler::SamplerConfig {
                 api_key: Some("test-key".to_string()),
                 base_url: format!("http://{addr}/v1"),
                 model: "test-model".to_string(),
                 max_completion_tokens: None,
                 temperature: None,
                 top_p: None,
-                api_backend: xai_grok_sampler::ApiBackend::Responses,
+                api_backend: intelekt_sampler::ApiBackend::Responses,
                 auth_scheme: Default::default(),
                 extra_headers: Default::default(),
                 context_window: 100_000,
@@ -1818,11 +1818,11 @@ async fn cancel_propagates_to_sampler_handle_so_no_further_emission() {
                 header_injector: None,
             };
             let (sampler_event_tx, _sampler_event_rx) = tokio::sync::mpsc::unbounded_channel::<
-                xai_grok_sampler::SamplingEvent,
+                intelekt_sampler::SamplingEvent,
             >();
-            let sampler_handle = xai_grok_sampler::SamplerActor::spawn(
+            let sampler_handle = intelekt_sampler::SamplerActor::spawn(
                 cfg,
-                xai_grok_sampler::RetryPolicy::default(),
+                intelekt_sampler::RetryPolicy::default(),
                 sampler_event_tx,
             );
             let (gateway_tx, _gateway_rx) = tokio::sync::mpsc::unbounded_channel::<
@@ -1833,7 +1833,7 @@ async fn cancel_propagates_to_sampler_handle_so_no_further_emission() {
             >();
             let cwd = AbsPathBuf::new(std::path::PathBuf::from("/tmp")).unwrap();
             let fs = Arc::new(
-                xai_grok_workspace::file_system::MockFs::new(cwd.to_path_buf()),
+                intelekt_workspace::file_system::MockFs::new(cwd.to_path_buf()),
             );
             let terminal = Arc::new(DummyTerminal {});
             let (hunk_tx, _hunk_rx) = tokio::sync::mpsc::unbounded_channel();
@@ -1867,7 +1867,7 @@ async fn cancel_propagates_to_sampler_handle_so_no_further_emission() {
             agent
                 .tool_bridge()
                 .update_resource(
-                    xai_grok_tools::implementations::grok_build::task::types::CurrentPromptIdResource(
+                    intelekt_tools::implementations::grok_build::task::types::CurrentPromptIdResource(
                         "running".to_string(),
                     ),
                 )
@@ -2043,7 +2043,7 @@ async fn cancel_propagates_to_sampler_handle_so_no_further_emission() {
                 hook_registry: std::cell::RefCell::new(None),
                 client_hooks: Default::default(),
                 hook_resolved_workspace_root: String::new(),
-                vcs_kind: xai_grok_workspace::session::git::VcsKind::Git,
+                vcs_kind: intelekt_workspace::session::git::VcsKind::Git,
                 hook_load_errors: std::cell::RefCell::new(Vec::new()),
                 plugin_registry: std::cell::RefCell::new(None),
                 plugin_registry_handle: None,
@@ -2070,16 +2070,16 @@ async fn cancel_propagates_to_sampler_handle_so_no_further_emission() {
                 ),
                 subagent_spawn_info: parking_lot::Mutex::new(HashMap::new()),
                 subagent_token_records: parking_lot::Mutex::new(HashMap::new()),
-                workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+                workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
                 trace_config_template: std::cell::RefCell::new(None),
             };
-            let request_id = xai_grok_sampler::RequestId::random();
+            let request_id = intelekt_sampler::RequestId::random();
             let request_id_for_task = request_id.clone();
             let sampler_for_task = sampler_handle.clone();
             let request = ConversationRequest {
                 items: vec![
-                    ConversationItem::User(xai_grok_sampling_types::UserItem { content :
-                    vec![xai_grok_sampling_types::ContentPart::Text { text : "hi".into(),
+                    ConversationItem::User(intelekt_sampling_types::UserItem { content :
+                    vec![intelekt_sampling_types::ContentPart::Text { text : "hi".into(),
                     }], synthetic_reason : None, ..Default::default() },)
                 ],
                 ..Default::default()
@@ -2122,7 +2122,7 @@ async fn cancel_propagates_to_sampler_handle_so_no_further_emission() {
 }
 #[tokio::test(flavor = "current_thread")]
 async fn skill_reminder_deferred_while_turn_running_flushed_when_idle() {
-    use xai_grok_tools::types::skill_discovery_tracker::{SkillUpdateEffects, SkillUpdateKind};
+    use intelekt_tools::types::skill_discovery_tracker::{SkillUpdateEffects, SkillUpdateKind};
     fn effects() -> SkillUpdateEffects {
         SkillUpdateEffects {
             system_reminder: Some("New skill: pdf-tools".into()),
@@ -2139,7 +2139,7 @@ async fn skill_reminder_deferred_while_turn_running_flushed_when_idle() {
             .filter(|item| {
                 matches!(
                     item, ConversationItem::User(u) if u.content.iter().any(| p |
-                    matches!(p, xai_grok_sampling_types::ContentPart::Text { text } if
+                    matches!(p, intelekt_sampling_types::ContentPart::Text { text } if
                     text.contains("pdf-tools")))
                 )
             })

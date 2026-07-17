@@ -1,5 +1,5 @@
 use super::{PromptResponseMetaArgs, build_prompt_response_meta};
-use xai_grok_sampling_types::TokenUsage;
+use intelekt_sampling_types::TokenUsage;
 
 /// Baseline args with no usage, cancellation, or structured output.
 fn args<'a>(
@@ -23,12 +23,12 @@ fn args<'a>(
 
 #[test]
 fn includes_baseline_keys_without_usage() {
-    let meta = build_prompt_response_meta(args("sess-1", "prompt-1", 42_000, "grok-4.5"));
+    let meta = build_prompt_response_meta(args("sess-1", "prompt-1", 42_000, "intelekt-4.5"));
     assert_eq!(meta["sessionId"], "sess-1");
     assert_eq!(meta["requestId"], "prompt-1");
     assert_eq!(meta["promptId"], "prompt-1");
     assert_eq!(meta["totalTokens"], 42_000);
-    assert_eq!(meta["modelId"], "grok-4.5");
+    assert_eq!(meta["modelId"], "intelekt-4.5");
     // No per-turn keys when usage is absent.
     assert!(meta.get("inputTokens").is_none());
     assert!(meta.get("outputTokens").is_none());
@@ -46,7 +46,7 @@ fn enriches_meta_with_camelcase_token_keys() {
     };
     let meta = build_prompt_response_meta(PromptResponseMetaArgs {
         last_turn_usage: Some(&usage),
-        ..args("sess-1", "prompt-1", 1_700, "grok-4.5")
+        ..args("sess-1", "prompt-1", 1_700, "intelekt-4.5")
     });
     // Bot's _META_TOKEN_KEY_MAP expects exactly these camelCase keys.
     assert_eq!(meta["inputTokens"], 1500);

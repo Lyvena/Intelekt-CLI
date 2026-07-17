@@ -1,5 +1,5 @@
-//! Shared utilities used by both `xai-grok-shell` and its downstream clients
-//! (e.g. `xai-grok-pager-render`). This crate sits upstream of `xai-grok-shell`
+//! Shared utilities used by both `intelekt-shell` and its downstream clients
+//! (e.g. `intelekt-pager-render`). This crate sits upstream of `intelekt-shell`
 //! so it must never depend on it.
 
 pub mod clipboard;

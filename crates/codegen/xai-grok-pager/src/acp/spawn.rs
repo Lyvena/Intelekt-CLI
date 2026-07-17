@@ -13,7 +13,7 @@ use xai_acp_lib::{
     AcpAgentChannel, AcpClientChannel, AcpClientTx, AcpGatewayReceiver, AcpGatewaySender,
     acp_channels,
 };
-use xai_grok_shell::{
+use intelekt_shell::{
     agent::{MvpAgent, config::Config as AgentConfig, models::RefreshStrategy},
     auth::AuthManager,
     util::grok_home::grok_home,
@@ -36,7 +36,7 @@ pub struct SpawnedAgent {
 pub async fn spawn_grok_shell(
     agent_config: AgentConfig,
     cancel: &CancellationToken,
-    memory_config: Option<xai_grok_shell::config::MemoryConfig>,
+    memory_config: Option<intelekt_shell::config::MemoryConfig>,
 ) -> Result<SpawnedAgent> {
     let auth_manager = std::sync::Arc::new(AuthManager::new(
         &grok_home(),
@@ -53,13 +53,13 @@ pub async fn spawn_grok_shell(
 
     // Best-effort refresh of managed policy before bootstrap reads it (repairs a wrong-identity/missing
     // cache). Never errors — the OS-protected system/MDM layers still apply.
-    xai_grok_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
+    intelekt_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
 
     // Run the full bootstrap sequence: config resolution, process-level
     // singletons (including `extract_bundled_files` which writes compiled-in
-    // skills to ~/.grok/skills/), and model catalog construction.
+    // skills to ~/.intelekt/skills/), and model catalog construction.
     let (agent_config, models_manager) =
-        xai_grok_shell::agent::init::bootstrap(&agent_config, &auth_manager, None)
+        intelekt_shell::agent::init::bootstrap(&agent_config, &auth_manager, None)
             .map_err(|e| anyhow::anyhow!(e))?;
     models_manager
         .list_models(RefreshStrategy::OnlineIfUncached)

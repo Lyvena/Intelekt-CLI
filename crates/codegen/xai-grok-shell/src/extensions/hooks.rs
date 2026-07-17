@@ -7,8 +7,8 @@ use std::collections::HashMap;
 
 use agent_client_protocol as acp;
 use serde::Deserialize;
-use xai_grok_hooks::event::{HookEventEnvelope, HookEventName};
-use xai_grok_hooks::matcher::HookMatcher;
+use intelekt_hooks::event::{HookEventEnvelope, HookEventName};
+use intelekt_hooks::matcher::HookMatcher;
 use xai_hooks_plugins_types::{HookEvent, HookHandlerType, HookInfo};
 
 use crate::agent::MvpAgent;
@@ -21,8 +21,8 @@ struct ListRequest {
     session_id: String,
 }
 
-pub fn hook_spec_to_info(spec: &xai_grok_hooks::config::HookSpec) -> HookInfo {
-    use xai_grok_hooks::event::HookEventName;
+pub fn hook_spec_to_info(spec: &intelekt_hooks::config::HookSpec) -> HookInfo {
+    use intelekt_hooks::event::HookEventName;
 
     let event = match spec.event {
         // Session lifecycle
@@ -72,7 +72,7 @@ pub fn hook_spec_to_info(spec: &xai_grok_hooks::config::HookSpec) -> HookInfo {
         url: url_display,
         timeout_ms: spec.timeout_ms,
         source_dir: spec.source_dir.display().to_string(),
-        disabled: xai_grok_hooks::trust::is_hook_disabled(&spec.name),
+        disabled: intelekt_hooks::trust::is_hook_disabled(&spec.name),
     }
 }
 
@@ -254,8 +254,8 @@ mod tests {
     use super::*;
     use std::collections::HashMap;
     use std::path::PathBuf;
-    use xai_grok_hooks::config::HookSpec;
-    use xai_grok_hooks::event::HookEventName;
+    use intelekt_hooks::config::HookSpec;
+    use intelekt_hooks::event::HookEventName;
 
     /// Minimal `HookSpec` for `hook_spec_to_info` tests (`handler_type` is unused;
     /// the DTO derives it from `url`).
@@ -441,7 +441,7 @@ mod tests {
     /// `hookEventName` snake_case); the one shape sent for both run and event.
     #[test]
     fn client_hook_dispatch_serializes_envelope() {
-        use xai_grok_hooks::event::{HookEventEnvelope, HookPayload};
+        use intelekt_hooks::event::{HookEventEnvelope, HookPayload};
 
         let envelope = HookEventEnvelope {
             hook_event_name: HookEventName::PreToolUse,

@@ -1,14 +1,14 @@
 //! Git worktree operations: create, list, remove, apply.
 //!
-//! Core worktree lifecycle logic lives in [`xai_grok_workspace::worktree`].
+//! Core worktree lifecycle logic lives in [`intelekt_workspace::worktree`].
 //! This module re-exports everything from there and adds session-aware
 //! functions that depend on shell-specific infrastructure (persistence,
 //! auth, registry client, storage client, session restore).
 use crate::util::config::WorktreeType as ShellWorktreeType;
 use anyhow::{Context, Result};
 use std::path::Path;
-use xai_grok_workspace::session::git::find_git_root_from_path;
-pub use xai_grok_workspace::worktree::*;
+use intelekt_workspace::session::git::find_git_root_from_path;
+pub use intelekt_workspace::worktree::*;
 const WORKTREE_LOG: &str = "xai_worktree";
 impl From<ShellWorktreeType> for WorktreeType {
     fn from(t: ShellWorktreeType) -> Self {
@@ -56,7 +56,7 @@ async fn create_worktree_for_resume(
     let source = std::path::Path::new(source_cwd);
     if find_git_root_from_path(source)
         .ok()
-        .is_some_and(|root| xai_grok_workspace::session::git::detect_vcs_kind(&root).is_jj())
+        .is_some_and(|root| intelekt_workspace::session::git::detect_vcs_kind(&root).is_jj())
     {
         create_jj_workspace(&wt_req).await
     } else {
@@ -71,7 +71,7 @@ async fn cleanup_worktree_on_failure(source_cwd: &str, worktree_path: &str) {
     }
     let is_jj = find_git_root_from_path(std::path::Path::new(source_cwd))
         .ok()
-        .is_some_and(|root| xai_grok_workspace::session::git::detect_vcs_kind(&root).is_jj());
+        .is_some_and(|root| intelekt_workspace::session::git::detect_vcs_kind(&root).is_jj());
     if is_jj {
         if let Err(e) = remove_jj_workspace(worktree_path).await {
             tracing::warn!(error = % e, "failed to clean up jj workspace after failure");
@@ -97,7 +97,7 @@ async fn cleanup_worktree_on_failure(source_cwd: &str, worktree_path: &str) {
             }
         }
         if let Ok(root) = find_git_root_from_path(std::path::Path::new(source_cwd)) {
-            let _ = xai_grok_workspace::session::git::git_cli(&root, &["worktree", "prune"]).await;
+            let _ = intelekt_workspace::session::git::git_cli(&root, &["worktree", "prune"]).await;
         }
     }
 }
@@ -110,12 +110,12 @@ pub(crate) async fn checkout_persisted_head_in_worktree(
     worktree_path: &str,
     head_commit: Option<&str>,
     session_id: &str,
-) -> xai_grok_workspace::session::git::CheckoutSessionOutcome {
+) -> intelekt_workspace::session::git::CheckoutSessionOutcome {
     let sha = match head_commit {
         Some(s) if !s.is_empty() => s,
-        _ => return xai_grok_workspace::session::git::CheckoutSessionOutcome::default(),
+        _ => return intelekt_workspace::session::git::CheckoutSessionOutcome::default(),
     };
-    xai_grok_workspace::session::git::checkout_session_commit(
+    intelekt_workspace::session::git::checkout_session_commit(
         Path::new(worktree_path),
         sha,
         true,
@@ -128,16 +128,16 @@ pub(crate) async fn checkout_persisted_head_in_worktree(
 pub(crate) struct WorktreeRestoreDecision {
     pub code_restored: bool,
     pub restore_summary: Option<String>,
-    pub restore_degree: Option<xai_grok_workspace::session::git::RestoreDegree>,
+    pub restore_degree: Option<intelekt_workspace::session::git::RestoreDegree>,
 }
 /// Thin wire-format adapter over the shared
-/// [`xai_grok_workspace::session::git::build_restore_decision`] helper.
+/// [`intelekt_workspace::session::git::build_restore_decision`] helper.
 pub(crate) fn build_worktree_restore_outcome(
     head_commit: Option<&str>,
-    outcome: &xai_grok_workspace::session::git::CheckoutSessionOutcome,
-    kind: xai_grok_workspace::session::git::RestoreKind,
+    outcome: &intelekt_workspace::session::git::CheckoutSessionOutcome,
+    kind: intelekt_workspace::session::git::RestoreKind,
 ) -> WorktreeRestoreDecision {
-    let d = xai_grok_workspace::session::git::build_restore_decision(head_commit, outcome, kind);
+    let d = intelekt_workspace::session::git::build_restore_decision(head_commit, outcome, kind);
     WorktreeRestoreDecision {
         code_restored: d.restored,
         restore_summary: d.summary,
@@ -162,14 +162,14 @@ pub fn resolve_session_repo_wide(
 /// dispatched through `WorkspaceOps`.
 pub async fn resume_session_in_worktree(
     req: &ResumeSessionInWorktreeRequest,
-    ops: &xai_grok_workspace::WorkspaceOps,
+    ops: &intelekt_workspace::WorkspaceOps,
     worktree_type_default: ShellWorktreeType,
     restore_code_default: bool,
     registry_client: Option<&crate::agent::session_registry_client::SessionRegistryClient>,
     auth_manager: Option<std::sync::Arc<crate::auth::AuthManager>>,
     agent_id: &str,
 ) -> Result<ResumeSessionInWorktreeResponse> {
-    use xai_grok_workspace::session::git::effective_worktree_path;
+    use intelekt_workspace::session::git::effective_worktree_path;
     tracing::info!(
         target : WORKTREE_LOG, session_id = % req.session_id, restore_code = ? req
         .restore_code, restore_code_default, effective_restore_code = req.restore_code
@@ -262,7 +262,7 @@ pub async fn resume_session_in_worktree(
         .to_string();
     let restore_summary = None;
     let restore_degree = if codebase_ok {
-        Some(xai_grok_workspace::session::git::RestoreDegree::Full)
+        Some(intelekt_workspace::session::git::RestoreDegree::Full)
     } else {
         None
     };
@@ -286,7 +286,7 @@ pub async fn resume_session_in_worktree(
 /// Local-session resume: create worktree from source, fork session into it.
 async fn resume_local_session_in_worktree(
     req: &ResumeSessionInWorktreeRequest,
-    #[allow(unused_variables)] ops: &xai_grok_workspace::WorkspaceOps,
+    #[allow(unused_variables)] ops: &intelekt_workspace::WorkspaceOps,
     resolved_session_id: &str,
     resolved_source_cwd: &str,
     worktree_type_default: ShellWorktreeType,
@@ -296,7 +296,7 @@ async fn resume_local_session_in_worktree(
     agent_id: &str,
 ) -> Result<ResumeSessionInWorktreeResponse> {
     use crate::session::fork::{ForkSessionRequest, fork_session};
-    use xai_grok_workspace::session::git::effective_worktree_path;
+    use intelekt_workspace::session::git::effective_worktree_path;
     let worktree_type = req
         .worktree_type
         .map(ShellWorktreeType::from)
@@ -323,13 +323,13 @@ async fn resume_local_session_in_worktree(
     if req.restore_code.unwrap_or(restore_code_default) {
         let is_jj = find_git_root_from_path(std::path::Path::new(resolved_source_cwd))
             .ok()
-            .is_some_and(|root| xai_grok_workspace::session::git::detect_vcs_kind(&root).is_jj());
+            .is_some_and(|root| intelekt_workspace::session::git::detect_vcs_kind(&root).is_jj());
         if !is_jj {
-            if xai_grok_workspace::session::git::should_warn_registry_disabled(
+            if intelekt_workspace::session::git::should_warn_registry_disabled(
                 is_jj,
                 registry_client.is_some(),
             ) {
-                xai_grok_workspace::session::git::warn_registry_disabled_restore(
+                intelekt_workspace::session::git::warn_registry_disabled_restore(
                     resolved_session_id,
                 );
             }
@@ -355,7 +355,7 @@ async fn resume_local_session_in_worktree(
                 resolved_session_id,
             )
             .await;
-            use xai_grok_workspace::session::git::RestoreKind;
+            use intelekt_workspace::session::git::RestoreKind;
             let kind = if !outcome.checked_out {
                 RestoreKind::CheckoutFailed
             } else {
@@ -414,7 +414,7 @@ async fn resume_local_session_in_worktree(
 ///
 pub async fn rehydrate_session_in_worktree(
     req: &RehydrateSessionRequest,
-    #[allow(unused_variables)] ops: &xai_grok_workspace::WorkspaceOps,
+    #[allow(unused_variables)] ops: &intelekt_workspace::WorkspaceOps,
     registry_client: Option<&crate::agent::session_registry_client::SessionRegistryClient>,
 ) -> Result<RehydrateSessionResponse> {
     let worktree_path_str = req.worktree_path.as_deref().unwrap_or(&req.source_cwd);
@@ -568,7 +568,7 @@ mod tests {
             restore_summary: Some(
                 "checked out abc12345, staged: true, unstaged: false, untracked: 3".into(),
             ),
-            restore_degree: Some(xai_grok_workspace::session::git::RestoreDegree::Full),
+            restore_degree: Some(intelekt_workspace::session::git::RestoreDegree::Full),
         };
         let json = serde_json::to_string(&resp).unwrap();
         let deser: ResumeSessionInWorktreeResponse = serde_json::from_str(&json).unwrap();
@@ -585,15 +585,15 @@ mod tests {
         );
         assert_eq!(
             deser.restore_degree,
-            Some(xai_grok_workspace::session::git::RestoreDegree::Full)
+            Some(intelekt_workspace::session::git::RestoreDegree::Full)
         );
     }
     fn ck_outcome(
         checked_out: bool,
         stash_ref: Option<&str>,
         skipped: Option<&str>,
-    ) -> xai_grok_workspace::session::git::CheckoutSessionOutcome {
-        xai_grok_workspace::session::git::CheckoutSessionOutcome {
+    ) -> intelekt_workspace::session::git::CheckoutSessionOutcome {
+        intelekt_workspace::session::git::CheckoutSessionOutcome {
             checked_out,
             stash_ref: stash_ref.map(str::to_owned),
             stash_skipped_reason: skipped.map(str::to_owned),
@@ -604,7 +604,7 @@ mod tests {
     /// going silent.
     #[test]
     fn worktree_restore_outcome_checkout_failed_surfaces_stash_skipped_reason() {
-        use xai_grok_workspace::session::git::RestoreKind;
+        use intelekt_workspace::session::git::RestoreKind;
         let d = build_worktree_restore_outcome(
             Some("0123456789abcdef"),
             &ck_outcome(false, None, Some("MERGE_HEAD present")),
@@ -618,7 +618,7 @@ mod tests {
     }
     #[test]
     fn worktree_restore_outcome_surfaces_stash_skipped_reason_on_success() {
-        use xai_grok_workspace::session::git::RestoreKind;
+        use intelekt_workspace::session::git::RestoreKind;
         let d = build_worktree_restore_outcome(
             Some("0123456789abcdef"),
             &ck_outcome(true, None, Some("MERGE_HEAD present")),
@@ -639,7 +639,7 @@ mod tests {
             updates_copied: 0,
             code_restored: true,
             restore_summary: Some("checked out abc".into()),
-            restore_degree: Some(xai_grok_workspace::session::git::RestoreDegree::HeadOnly),
+            restore_degree: Some(intelekt_workspace::session::git::RestoreDegree::HeadOnly),
         };
         let json = serde_json::to_string(&resp).unwrap();
         assert!(json.contains("\"restoreDegree\":\"head_only\""));
@@ -647,7 +647,7 @@ mod tests {
         let deser: ResumeSessionInWorktreeResponse = serde_json::from_str(&json).unwrap();
         assert_eq!(
             deser.restore_degree,
-            Some(xai_grok_workspace::session::git::RestoreDegree::HeadOnly)
+            Some(intelekt_workspace::session::git::RestoreDegree::HeadOnly)
         );
         assert_eq!(deser.restore_summary.as_deref(), Some("checked out abc"));
     }
@@ -901,7 +901,7 @@ mod tests {
             restore_code: Some(true),
             git_ref: None,
         };
-        let ops = xai_grok_workspace::WorkspaceOps::for_test();
+        let ops = intelekt_workspace::WorkspaceOps::for_test();
         let result = resume_session_in_worktree(
             &req,
             &ops,

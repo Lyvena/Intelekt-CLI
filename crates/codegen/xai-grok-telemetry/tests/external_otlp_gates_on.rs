@@ -18,11 +18,11 @@
 mod otlp_collector;
 
 use otlp_collector as col;
-use xai_grok_telemetry::external::{self, ExternalOtelRemotePolicy, IdentityAttrs};
+use intelekt_telemetry::external::{self, ExternalOtelRemotePolicy, IdentityAttrs};
 
 // Secret shapes — MUST be scrubbed everywhere, even inside gated content.
 const SECRET_KEY: &str = "sk-LEAKaaaaaaaaaaaaaaaa1234567890";
-const SECRET_MODEL: &str = "grok-4-sk-LEAKmodel1234567890abcd";
+const SECRET_MODEL: &str = "intelekt-4-sk-LEAKmodel1234567890abcd";
 // Benign markers — with the gate ON these MUST appear on the wire (proving the
 // gated field is actually exported, not just that the scrub ran).
 const PROMPT_MARK: &str = "promptbodymarker";
@@ -70,14 +70,14 @@ fn external_stream_gates_on_end_to_end() {
 
     // Product events disabled — pins the "external active while product telemetry off"
     // half of the independence matrix through the real funnel.
-    assert!(!xai_grok_telemetry::is_enabled());
+    assert!(!intelekt_telemetry::is_enabled());
 
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::SessionHarness {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::SessionHarness {
         session_id: "sess-gates-on".into(),
         client_identifier: Some("grok-pager".into()),
-        model_id: "grok-4".into(),
-        agent_name: "grok-build-plan".into(),
-        permission_mode: xai_grok_telemetry::enums::PermissionMode::Ask,
+        model_id: "intelekt-4".into(),
+        agent_name: "intelekt-cli-plan".into(),
+        permission_mode: intelekt_telemetry::enums::PermissionMode::Ask,
         mcp_server_names: vec!["internal-mcp".into()],
         plugin_names: vec![],
         skill_names: vec![],
@@ -88,14 +88,14 @@ fn external_stream_gates_on_end_to_end() {
         is_git_repo: true,
         auto_update: None,
     });
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::PromptSubmitted {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::PromptSubmitted {
         prompt_length: 100,
-        model_id: "grok-4".into(),
+        model_id: "intelekt-4".into(),
         client_identifier: None,
         screen_mode: None,
         prompt_text: Some(format!("refactor {PROMPT_MARK} with key {SECRET_KEY} now")),
     });
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::ModelResponseReceived {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::ModelResponseReceived {
         model_id: SECRET_MODEL.into(),
         duration_ms: 5,
         stop_reason: Some("stop".into()),
@@ -104,7 +104,7 @@ fn external_stream_gates_on_end_to_end() {
         reasoning_tokens: Some(3),
         cached_prompt_tokens: Some(9),
     });
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::ToolCallCompleted {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::ToolCallCompleted {
         tool_name: "github__create_issue".into(),
         outcome: xai_file_utils::events::types::ToolOutcome::Success,
         duration_ms: 12,
@@ -267,9 +267,9 @@ fn external_stream_gates_on_end_to_end() {
         !external::is_active(),
         "kill switch must clear the emission gate"
     );
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::PromptSubmitted {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::PromptSubmitted {
         prompt_length: 1,
-        model_id: "grok-4".into(),
+        model_id: "intelekt-4".into(),
         client_identifier: None,
         screen_mode: None,
         prompt_text: Some("post-kill".into()),

@@ -113,7 +113,7 @@ impl SessionActor {
             x_grok_conv_id: Some(btw_session_id.clone()),
             x_grok_req_id: Some(format!("xai-btw-{}", uuid::Uuid::new_v4())),
             x_grok_session_id: Some(parent_session_id.clone()),
-            x_grok_agent_id: Some(xai_grok_telemetry::id::agent_id()),
+            x_grok_agent_id: Some(intelekt_telemetry::id::agent_id()),
             ..Default::default()
         };
 
@@ -251,7 +251,7 @@ impl SessionActor {
             x_grok_conv_id: Some(x_grok_conv_id.clone()),
             x_grok_req_id: Some(x_grok_req_id.clone()),
             x_grok_session_id: Some(self.session_info.id.to_string()),
-            x_grok_agent_id: Some(xai_grok_telemetry::id::agent_id()),
+            x_grok_agent_id: Some(intelekt_telemetry::id::agent_id()),
             ..Default::default()
         };
 
@@ -507,7 +507,7 @@ impl SessionActor {
 
         let model = match model_override {
             Some(m) => m.to_owned(),
-            None => "grok-build".to_owned(),
+            None => "intelekt-cli".to_owned(),
         };
 
         let request = ConversationRequest {
@@ -519,37 +519,37 @@ impl SessionActor {
             ..Default::default()
         };
 
-        let request_id = xai_grok_sampler::RequestId::random();
+        let request_id = intelekt_sampler::RequestId::random();
         let idle_timeout = std::time::Duration::from_secs(5);
 
         let result = match sampling_client.api_backend() {
             crate::sampling::ApiBackend::ChatCompletions => {
                 let (raw, meta) = sampling_client.conversation_stream(request).await.ok()?;
                 let events =
-                    xai_grok_sampler::stream_chat_completions(raw, meta, request_id, idle_timeout);
-                xai_grok_sampler::collect_response(events).await
+                    intelekt_sampler::stream_chat_completions(raw, meta, request_id, idle_timeout);
+                intelekt_sampler::collect_response(events).await
             }
             crate::sampling::ApiBackend::Responses => {
                 let (raw, meta, doom_loop) = sampling_client
                     .conversation_stream_responses(request)
                     .await
                     .ok()?;
-                let events = xai_grok_sampler::stream_responses(
+                let events = intelekt_sampler::stream_responses(
                     raw,
                     meta,
                     request_id,
                     idle_timeout,
                     doom_loop,
                 );
-                xai_grok_sampler::collect_response(events).await
+                intelekt_sampler::collect_response(events).await
             }
             crate::sampling::ApiBackend::Messages => {
                 let (raw, meta) = sampling_client
                     .conversation_stream_messages(request)
                     .await
                     .ok()?;
-                let events = xai_grok_sampler::stream_messages(raw, meta, request_id, idle_timeout);
-                xai_grok_sampler::collect_response(events).await
+                let events = intelekt_sampler::stream_messages(raw, meta, request_id, idle_timeout);
+                intelekt_sampler::collect_response(events).await
             }
         };
 
@@ -574,16 +574,16 @@ impl SessionActor {
     /// (`GROK_PROMPT_SUGGESTIONS_MODEL`) > `[models] prompt_suggestion`
     /// (config.toml) > remote `prompt_suggestion_model` (remote settings) >
     /// (config.toml) > remote `prompt_suggestion_model` (remote settings) >
-    /// [`prompt_suggest::DEFAULT_SUGGEST_MODEL`] (`grok-build-0.1`). Every
+    /// [`prompt_suggest::DEFAULT_SUGGEST_MODEL`] (`intelekt-cli-0.1`). Every
     /// tier except env is catalog-guarded against this shell's own model
     /// catalog — when the effective model is not sampleable here (e.g.
-    /// `grok-build-0.1` for OAuth users) the request is **skipped
+    /// `intelekt-cli-0.1` for OAuth users) the request is **skipped
     /// entirely** instead of fired doomed. The session model is never used:
     /// a per-turn background call must stay on the small model.
     /// Temperature, max_output_tokens, and
     /// reasoning_effort are left unset — mirrors [`Self::handle_recap`]: the
     /// proxy may inject provider defaults, a small token cap silently empties
-    /// a reasoning model's response, and some models (e.g. `grok-build`)
+    /// a reasoning model's response, and some models (e.g. `intelekt-cli`)
     /// reject an explicit `reasoningEffort` with a 400. Output is filtered
     /// through [`prompt_suggest::sanitize_suggestion`]; any failure returns
     /// through [`prompt_suggest::sanitize_suggestion`]; any failure returns
@@ -651,7 +651,7 @@ impl SessionActor {
             x_grok_conv_id: Some(format!("promptsuggest-{}", uuid::Uuid::new_v4())),
             x_grok_req_id: Some(format!("xai-promptsuggest-{}", uuid::Uuid::new_v4())),
             x_grok_session_id: Some(self.session_info.id.to_string()),
-            x_grok_agent_id: Some(xai_grok_telemetry::id::agent_id()),
+            x_grok_agent_id: Some(intelekt_telemetry::id::agent_id()),
             ..Default::default()
         };
 
@@ -675,7 +675,7 @@ impl SessionActor {
             suggestion = None;
         }
         tracing::debug!(
-            raw_preview = %xai_grok_tools::util::truncate_str(raw.trim(), 60),
+            raw_preview = %intelekt_tools::util::truncate_str(raw.trim(), 60),
             accepted = suggestion.is_some(),
             "prompt suggest: response"
         );

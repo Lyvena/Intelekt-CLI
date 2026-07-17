@@ -1,7 +1,7 @@
 //! Client-registered hooks for [`SessionActor`].
 //!
 //! Hooks registered at `session/new` (`_meta["x.ai/hooks"]`) come in two flavors,
-//! both matched by the agent ([`xai_grok_hooks::matcher::HookMatcher`], shared with
+//! both matched by the agent ([`intelekt_hooks::matcher::HookMatcher`], shared with
 //! file hooks):
 //! - **`PreToolUse` gate**: an awaited reverse *request* `x.ai/hooks/run`; a `deny`
 //!   blocks the tool.
@@ -15,8 +15,8 @@ use agent_client_protocol as acp;
 use agent_client_protocol::Client as _;
 use futures::stream::{FuturesUnordered, StreamExt as _};
 use serde_json::value::RawValue;
-use xai_grok_hooks::event::{HookEventEnvelope, HookEventName, HookPayload};
-use xai_grok_telemetry::events::ClientHookGateOutcome;
+use intelekt_hooks::event::{HookEventEnvelope, HookEventName, HookPayload};
+use intelekt_telemetry::events::ClientHookGateOutcome;
 
 use super::{SessionActor, ToolLoop};
 use crate::extensions::hooks::{
@@ -182,7 +182,7 @@ impl SessionActor {
         reason: String,
     ) -> Result<ToolLoop, acp::Error> {
         tracing::info!(%tool_name, %hook_name, %reason, "tool call denied by pre_tool_use hook");
-        xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::HookBlocked {
+        intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::HookBlocked {
             hook_name: hook_name.clone(),
         });
         self.handle_tool_not_executed(
@@ -223,7 +223,7 @@ impl SessionActor {
         // Match on the resolved target (in the envelope) so a client deny matcher
         // keyed on the real MCP tool gates a meta-dispatch call, matching the
         // observe path (`notify_client_hooks`). Equals `function.name` otherwise.
-        let tool_name = xai_grok_hooks::dispatcher::extract_tool_name(envelope)
+        let tool_name = intelekt_hooks::dispatcher::extract_tool_name(envelope)
             .unwrap_or_else(|| call.function.name.clone());
         let tool_name = tool_name.as_str();
 
@@ -251,8 +251,8 @@ impl SessionActor {
                     let started = tokio::time::Instant::now();
                     let (response, gate_outcome) =
                         classify(self.send_hook_run(&dispatch, timeout).await);
-                    xai_grok_telemetry::session_ctx::log_event(
-                        xai_grok_telemetry::events::ClientHookGate {
+                    intelekt_telemetry::session_ctx::log_event(
+                        intelekt_telemetry::events::ClientHookGate {
                             callback_id: callback_id.to_string(),
                             tool_name: Some(tool_name.to_string()),
                             outcome: gate_outcome,
@@ -314,7 +314,7 @@ impl SessionActor {
         let Some(groups) = hooks.get(&envelope.hook_event_name.canonical()) else {
             return;
         };
-        let tool_name = xai_grok_hooks::dispatcher::extract_tool_name(envelope);
+        let tool_name = intelekt_hooks::dispatcher::extract_tool_name(envelope);
         for callback_id in matching_callback_ids(groups, tool_name.as_deref()) {
             let dispatch = ClientHookDispatch {
                 hook_callback_id: callback_id,
@@ -383,7 +383,7 @@ mod tests {
     /// and `true` for any event whenever a file registry is present.
     #[tokio::test(flavor = "current_thread")]
     async fn hook_event_active_inert_vs_active() {
-        use xai_grok_hooks::event::HookEventName;
+        use intelekt_hooks::event::HookEventName;
 
         let local = tokio::task::LocalSet::new();
         local
@@ -418,7 +418,7 @@ mod tests {
 
                 // A present file registry activates every event, even ones with no client hook.
                 *actor.hook_registry.borrow_mut() = Some(std::sync::Arc::new(
-                    xai_grok_hooks::discovery::HookRegistry::default(),
+                    intelekt_hooks::discovery::HookRegistry::default(),
                 ));
                 assert!(actor.hook_event_active(HookEventName::Stop));
                 assert!(actor.hook_event_active(HookEventName::PostCompact));
@@ -430,7 +430,7 @@ mod tests {
     /// event (`None`) fires every group regardless of its matcher.
     #[test]
     fn matching_callback_ids_filters_by_matcher() {
-        use xai_grok_hooks::matcher::HookMatcher;
+        use intelekt_hooks::matcher::HookMatcher;
 
         let groups = vec![
             ClientHookGroup {

@@ -2539,7 +2539,7 @@ mod tests {
         activate_tracker(&mut t);
         t.update_live_progress(
             100,
-            vec![("grok-4".to_owned(), 60), ("grok-3".to_owned(), 40)],
+            vec![("intelekt-4".to_owned(), 60), ("intelekt-3".to_owned(), 40)],
             200_000,
             50,
             3,
@@ -3081,11 +3081,11 @@ mod tests {
         let mut o = make_base_orchestration();
         o.skeptic_model_assignment = vec![
             crate::util::config::GoalRoleModel {
-                model: "grok-4".to_string(),
+                model: "intelekt-4".to_string(),
                 agent_type: "general-purpose".to_string(),
             },
             crate::util::config::GoalRoleModel {
-                model: "grok-4.5".to_string(),
+                model: "intelekt-4.5".to_string(),
                 agent_type: "cursor".to_string(),
             },
         ];
@@ -3132,7 +3132,7 @@ mod tests {
             activate_tracker(&mut t);
             t.snapshot_mut().unwrap().skeptic_model_assignment =
                 vec![crate::util::config::GoalRoleModel {
-                    model: "grok-4".to_string(),
+                    model: "intelekt-4".to_string(),
                     agent_type: "general-purpose".to_string(),
                 }];
             let applied = match ending {

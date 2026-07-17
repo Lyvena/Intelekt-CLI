@@ -1,6 +1,6 @@
 [package]
 license = "Apache-2.0"
-name = "xai-grok-subagent-resolution"
+name = "intelekt-subagent-resolution"
 version = "0.1.0"
 edition.workspace = true
 description = "Subagent configuration resolution: merges persona, role, and spawn-time overrides into a resolved spec"
@@ -10,11 +10,11 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
-xai-grok-sampling-types = { path = "../xai-grok-sampling-types" }
-xai-grok-tools = { path = "../xai-grok-tools" }
+intelekt-sampling-types = { path = "../intelekt-sampling-types" }
+intelekt-tools = { path = "../intelekt-tools" }
 xai-tool-types.workspace = true
 # TODO(phase2): add these when resolve_subagent_spec() composition is implemented:
-# xai-grok-agent = { path = "../xai-grok-agent" }  # AgentDefinition lookup
+# intelekt-agent = { path = "../intelekt-agent" }  # AgentDefinition lookup
 # xai-fast-worktree = { path = "../xai-fast-worktree" }  # worktree creation
 
 [dev-dependencies]

@@ -1,4 +1,4 @@
-//! Integration tests for xai-grok-sandbox.
+//! Integration tests for intelekt-sandbox.
 //!
 //! Note: `Sandbox::apply()` is irreversible and process-wide, so we cannot
 //! test actual kernel enforcement in standard `#[test]` functions (they share
@@ -11,7 +11,7 @@
 #[cfg(all(feature = "enforce", unix))]
 fn test_support_info() {
     // Verify that nono can report platform support status without applying
-    let support = xai_grok_sandbox::SandboxManager::support_info();
+    let support = intelekt_sandbox::SandboxManager::support_info();
     // On macOS and Linux 5.13+, this should be supported
     // On other platforms, it gracefully reports unsupported
     println!(
@@ -25,7 +25,7 @@ fn test_support_info() {
 #[test]
 #[cfg(all(feature = "enforce", unix))]
 fn test_profile_capability_set_construction() {
-    use xai_grok_sandbox::ProfileName;
+    use intelekt_sandbox::ProfileName;
 
     // Use CWD as workspace — guaranteed to exist
     let workspace = std::env::current_dir().expect("cwd");
@@ -49,7 +49,7 @@ fn test_profile_capability_set_construction() {
 
 #[test]
 fn test_sandbox_manager_lifecycle() {
-    use xai_grok_sandbox::{ProfileName, SandboxManager};
+    use intelekt_sandbox::{ProfileName, SandboxManager};
 
     let workspace = std::env::current_dir().expect("cwd");
 
@@ -66,7 +66,7 @@ fn test_sandbox_manager_lifecycle() {
 
 #[test]
 fn test_sandbox_logger() {
-    use xai_grok_sandbox::{SandboxEvent, SandboxLogger};
+    use intelekt_sandbox::{SandboxEvent, SandboxLogger};
 
     let logger = SandboxLogger::new();
 
@@ -101,5 +101,5 @@ fn test_should_restrict_child_network_default() {
     //
     // We can't meaningfully test the "set" path without applying a sandbox
     // (which is irreversible), so we verify the default is false.
-    assert!(!xai_grok_sandbox::should_restrict_child_network());
+    assert!(!intelekt_sandbox::should_restrict_child_network());
 }

@@ -17,7 +17,7 @@ use std::time::SystemTime;
 
 use base64::Engine;
 use ignore::{WalkBuilder, overrides::OverrideBuilder};
-use xai_grok_workspace_types::rpc::fs::FsReadEncoding;
+use intelekt_workspace_types::rpc::fs::FsReadEncoding;
 
 /// Hard cap on entries collected per list call before sorting. A
 /// pathological directory truncates (`truncated = true`) instead of

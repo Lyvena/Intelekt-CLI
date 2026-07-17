@@ -1,11 +1,11 @@
 //! Sampling error types.
 //!
-//! The canonical error types now live in `xai_grok_sampling_types::error`.
+//! The canonical error types now live in `intelekt_sampling_types::error`.
 //! This module re-exports them and adds `map_sampling_err_to_acp` which
 //! depends on `agent_client_protocol::Error` (a grok-shell dependency).
 
 // Re-export everything from the standalone crate.
-pub use xai_grok_sampling_types::error::*;
+pub use intelekt_sampling_types::error::*;
 
 use agent_client_protocol as acp;
 
@@ -41,7 +41,7 @@ pub fn rate_limited_user_message(is_api_key_auth: bool) -> &'static str {
 }
 
 /// Map a `SamplingError` to an ACP `Error` for client-facing responses.
-/// This stays in xai-grok-shell because it depends on `agent_client_protocol::Error`.
+/// This stays in intelekt-shell because it depends on `agent_client_protocol::Error`.
 pub fn map_sampling_err_to_acp(err: SamplingError) -> acp::Error {
     use reqwest::StatusCode;
     match err {
@@ -99,7 +99,7 @@ pub fn map_sampling_err_to_acp(err: SamplingError) -> acp::Error {
             acp::Error::internal_error().data(terminal_error_data(
                 err.to_string(),
                 None,
-                xai_grok_sampler::SamplingErrorKind::MaxTokensTruncation,
+                intelekt_sampler::SamplingErrorKind::MaxTokensTruncation,
             ))
         }
         SamplingError::IdleTimeout { elapsed_secs } => acp::Error::internal_error().data(format!(
@@ -124,9 +124,9 @@ pub fn error_data_with_status(message: String, http_status: Option<u16>) -> serd
 pub fn terminal_error_data(
     message: String,
     http_status: Option<u16>,
-    kind: xai_grok_sampler::SamplingErrorKind,
+    kind: intelekt_sampler::SamplingErrorKind,
 ) -> serde_json::Value {
-    if kind != xai_grok_sampler::SamplingErrorKind::MaxTokensTruncation {
+    if kind != intelekt_sampler::SamplingErrorKind::MaxTokensTruncation {
         return error_data_with_status(message, http_status);
     }
     let mut data = serde_json::json!({ "message": message, "error_kind": kind.as_str() });
@@ -143,7 +143,7 @@ pub fn stop_reason_for_turn_error(err: &acp::Error) -> &'static str {
         .as_ref()
         .and_then(|d| d.get("error_kind"))
         .and_then(|v| v.as_str())
-        .is_some_and(|k| k == xai_grok_sampler::SamplingErrorKind::MaxTokensTruncation.as_str());
+        .is_some_and(|k| k == intelekt_sampler::SamplingErrorKind::MaxTokensTruncation.as_str());
     if is_max_tokens { "MaxTokens" } else { "Error" }
 }
 
@@ -254,7 +254,7 @@ mod tests {
         let mut ledger = xai_chat_state::UsageLedger::default();
         ledger.record_main_loop_call(
             "m",
-            &xai_grok_sampling_types::TokenUsage {
+            &intelekt_sampling_types::TokenUsage {
                 prompt_tokens: 3,
                 completion_tokens: 1,
                 total_tokens: 4,
@@ -269,7 +269,7 @@ mod tests {
             acp::Error::internal_error().data(terminal_error_data(
                 "truncated".into(),
                 None,
-                xai_grok_sampler::SamplingErrorKind::MaxTokensTruncation,
+                intelekt_sampler::SamplingErrorKind::MaxTokensTruncation,
             )),
             Some(usage.clone()),
         );
@@ -473,7 +473,7 @@ mod tests {
         with_api_key_env(Some("xai-test"), || {
             let err = SamplingError::Api {
                 status: StatusCode::FORBIDDEN,
-                message: "The model 'grok-build' requires a Grok subscription.".into(),
+                message: "The model 'intelekt-cli' requires a Grok subscription.".into(),
                 model_metadata: None,
                 retry_after_secs: None,
                 should_retry: None,
@@ -498,7 +498,7 @@ mod tests {
         with_api_key_env(None, || {
             let err = SamplingError::Api {
                 status: StatusCode::FORBIDDEN,
-                message: "The model 'grok-build' requires a Grok subscription.".into(),
+                message: "The model 'intelekt-cli' requires a Grok subscription.".into(),
                 model_metadata: None,
                 retry_after_secs: None,
                 should_retry: None,

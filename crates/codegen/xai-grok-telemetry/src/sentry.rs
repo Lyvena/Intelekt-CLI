@@ -91,7 +91,7 @@ impl Scrubber {
     }
 
     fn scrub(&self, s: &str) -> String {
-        let out = xai_grok_secrets::redact_secrets(s);
+        let out = intelekt_secrets::redact_secrets(s);
         let out = match self.home_dir.as_deref() {
             Some(home) => Cow::Owned(replace_home_prefix(out.as_ref(), home)),
             None => out,
@@ -100,7 +100,7 @@ impl Scrubber {
     }
 
     fn scrub_value(&self, val: &mut Value) {
-        xai_grok_secrets::walk_json_strings(val, &mut |s| *s = self.scrub(s));
+        intelekt_secrets::walk_json_strings(val, &mut |s| *s = self.scrub(s));
     }
 }
 

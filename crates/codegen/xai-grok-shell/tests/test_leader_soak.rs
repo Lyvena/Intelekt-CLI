@@ -9,7 +9,7 @@
 //! lane runs it; a real soak is the long form:
 //!
 //! ```bash
-//! LEADER_SOAK_SECS=1200 cargo test -p xai-grok-shell --test test_leader_soak -- --ignored --nocapture
+//! LEADER_SOAK_SECS=1200 cargo test -p intelekt-shell --test test_leader_soak -- --ignored --nocapture
 //! ```
 
 #![cfg(unix)]
@@ -26,9 +26,9 @@ use xai_acp_lib::{
     AcpAgentGatewayReceiver as GatewayReceiver, AcpAgentGatewaySender as GatewaySender,
     LineBufferedRead,
 };
-use xai_grok_shell::agent::config::Config as AgentConfig;
-use xai_grok_shell::agent::mvp_agent::MvpAgent;
-use xai_grok_shell::leader::{
+use intelekt_shell::agent::config::Config as AgentConfig;
+use intelekt_shell::agent::mvp_agent::MvpAgent;
+use intelekt_shell::leader::{
     ClientCapabilities, ClientMode, LeaderClient, LeaderServerControlState, LeaderServerMetadata,
     run_leader_server,
 };
@@ -79,7 +79,7 @@ fn rss_bytes() -> Option<usize> {
 
 /// `leader.response.send_failed` entries written by THIS process.
 fn send_failed_count() -> usize {
-    let Some(bytes) = xai_grok_telemetry::unified_log::snapshot_log() else {
+    let Some(bytes) = intelekt_telemetry::unified_log::snapshot_log() else {
         return 0;
     };
     String::from_utf8_lossy(&bytes)
@@ -126,7 +126,7 @@ async fn rpc(client: &mut LeaderClient, payload: String, id: u64, what: &str) ->
 async fn leader_soak_churning_clients_no_leaks_no_zombies() {
     let _ = rustls::crypto::ring::default_provider().install_default();
 
-    let server = xai_grok_test_support::MockInferenceServer::start()
+    let server = intelekt_test_support::MockInferenceServer::start()
         .await
         .unwrap();
     let grok_home = TempDir::new().unwrap();
@@ -135,7 +135,7 @@ async fn leader_soak_churning_clients_no_leaks_no_zombies() {
     // SAFETY: single-threaded current-thread runtime; set before any agent
     // code reads these process-globals (same pattern as session_load_perf).
     unsafe {
-        std::env::set_var("GROK_HOME", grok_home.path());
+        std::env::set_var("INTELEKT_HOME", grok_home.path());
         std::env::set_var("GROK_CLI_CHAT_PROXY_BASE_URL", server.url());
         std::env::set_var("GROK_XAI_API_BASE_URL", server.url());
         std::env::set_var("XAI_API_KEY", "test-key-for-ci");
@@ -176,10 +176,10 @@ async fn leader_soak_churning_clients_no_leaks_no_zombies() {
                     true,
                     client_count_for_server,
                     Arc::new(std::sync::atomic::AtomicBool::new(false)),
-                    xai_grok_shell::agent::activity::AgentActivity::default(),
+                    intelekt_shell::agent::activity::AgentActivity::default(),
                     tokio::sync::watch::channel(true).1,
                     tokio::sync::watch::channel(false).0,
-                    tokio::sync::watch::channel(xai_grok_shell::leader::ShutdownReason::Manual).0,
+                    tokio::sync::watch::channel(intelekt_shell::leader::ShutdownReason::Manual).0,
                     None,
                     control_state,
                 )
@@ -190,7 +190,7 @@ async fn leader_soak_churning_clients_no_leaks_no_zombies() {
             // Copied from `run_leader`'s agent-spawn + IPC/stdout bridge
             // blocks in src/agent/app.rs (inside its LocalSet body); kept as
             // a deliberate copy so production stays untouched. Second copy of
-            // the same wiring: xai-grok-pager/src/app/leader_cluster/mod.rs
+            // the same wiring: intelekt-pager/src/app/leader_cluster/mod.rs
             // (`spawn_leader_generation`) — keep the two copies behaviorally
             // identical.
             let (agent_in_read, agent_in_write) = tokio::io::simplex(SIMPLEX_BUF);

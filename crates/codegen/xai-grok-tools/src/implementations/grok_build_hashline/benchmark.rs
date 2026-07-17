@@ -6,7 +6,7 @@
 //! ## Usage
 //!
 //! ```rust,ignore
-//! use xai_grok_tools::implementations::grok_build_hashline::benchmark::*;
+//! use intelekt_tools::implementations::grok_build_hashline::benchmark::*;
 //!
 //! let corpus = vec![
 //!     ("small.rs", "fn main() {}\n"),

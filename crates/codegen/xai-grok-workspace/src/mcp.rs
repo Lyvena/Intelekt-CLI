@@ -12,8 +12,8 @@ use xai_computer_hub_mcp_adapter::{
     McpTransport,
 };
 use xai_computer_hub_sdk::ToolServerHandler;
-use xai_grok_mcp::rmcp;
-use xai_grok_mcp::servers::McpClient;
+use intelekt_mcp::rmcp;
+use intelekt_mcp::servers::McpClient;
 use xai_tool_protocol::ToolId;
 use xai_tool_runtime::{ToolCallContext, ToolStream, TypedToolOutput};
 use xai_tool_types::ToolDescription;
@@ -202,9 +202,9 @@ pub struct McpStartFailure {
     pub error: String,
 }
 
-/// Extract a server name from an [`McpError`](xai_grok_mcp::servers::McpError),
+/// Extract a server name from an [`McpError`](intelekt_mcp::servers::McpError),
 /// falling back to `"unknown"`.
-pub(crate) fn server_name_from_mcp_error(e: &xai_grok_mcp::servers::McpError) -> &str {
+pub(crate) fn server_name_from_mcp_error(e: &intelekt_mcp::servers::McpError) -> &str {
     e.server_name().unwrap_or("unknown")
 }
 

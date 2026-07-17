@@ -18,7 +18,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result, anyhow};
 use serde::{Deserialize, Serialize};
-use xai_grok_sampling_types::{
+use intelekt_sampling_types::{
     ContentPart, ConversationItem, ConversationRequest, SystemItem, UserItem,
 };
 
@@ -293,7 +293,7 @@ struct TodoUpdateArgs {
 
 /// `merge=false`: replace the state entirely. Mirrors production's
 /// `apply_replace`. Split out from the merge path to match the
-/// two-function shape in `xai-grok-tools` (F29).
+/// two-function shape in `intelekt-tools` (F29).
 fn apply_replace(state: &mut TodoState, updates: Vec<TodoUpdateArgs>) {
     state.clear();
     for u in updates {
@@ -302,7 +302,7 @@ fn apply_replace(state: &mut TodoState, updates: Vec<TodoUpdateArgs>) {
 }
 
 /// `merge=true`: upsert by id. Mirrors `apply_merge` in
-/// `xai-grok-tools` — existing items keep their prior content when
+/// `intelekt-tools` — existing items keep their prior content when
 /// the update omits `content`. (F29)
 fn apply_merge(state: &mut TodoState, updates: Vec<TodoUpdateArgs>) {
     for u in updates {
@@ -523,14 +523,14 @@ pub trait ClassifierClient: Send + Sync {
 }
 
 /// Production sampler-backed [`ClassifierClient`] used by the CLI
-/// binary. Wraps a `xai_grok_sampler::SamplingClient` and pulls the
+/// binary. Wraps a `intelekt_sampler::SamplingClient` and pulls the
 /// text content out of the response.
 pub struct SamplerClassifierClient {
-    inner: xai_grok_sampler::SamplingClient,
+    inner: intelekt_sampler::SamplingClient,
 }
 
 impl SamplerClassifierClient {
-    pub fn new(inner: xai_grok_sampler::SamplingClient) -> Self {
+    pub fn new(inner: intelekt_sampler::SamplingClient) -> Self {
         Self { inner }
     }
 }
@@ -602,7 +602,7 @@ pub fn build_classifier_request(
         x_grok_conv_id: session_id_str.clone(),
         x_grok_req_id: Some(format!("{LAZINESS_REQ_ID_PREFIX}{}", uuid::Uuid::new_v4())),
         x_grok_session_id: session_id_str,
-        x_grok_agent_id: Some(xai_grok_telemetry::id::agent_id()),
+        x_grok_agent_id: Some(intelekt_telemetry::id::agent_id()),
         ..ConversationRequest::default()
     }
 }
@@ -959,7 +959,7 @@ pub struct RunArgs {
     pub include_reasoning: Option<bool>,
     /// Grok-home directory containing the `auth.json` to consult as
     /// the third API-key fallback. Defaults to
-    /// `xai_grok_shell::util::grok_home::grok_home()` when `None`.
+    /// `intelekt_shell::util::grok_home::grok_home()` when `None`.
     /// Exposed as a CLI flag for testability.
     pub grok_home: Option<PathBuf>,
 }
@@ -1111,7 +1111,7 @@ async fn build_sampler_client(
     model: String,
     api_key: Option<&str>,
     grok_home: Option<&Path>,
-) -> Result<xai_grok_sampler::SamplingClient> {
+) -> Result<intelekt_sampler::SamplingClient> {
     let default_home;
     let grok_home_path: &Path = match grok_home {
         Some(p) => p,
@@ -1121,14 +1121,14 @@ async fn build_sampler_client(
         }
     };
     let resolved = resolve_api_key(api_key, grok_home_path).await?;
-    let config = xai_grok_sampler::SamplerConfig {
+    let config = intelekt_sampler::SamplerConfig {
         api_key: Some(resolved),
         base_url,
         model,
         max_completion_tokens: Some(LAZINESS_MAX_OUTPUT_TOKENS),
-        ..xai_grok_sampler::SamplerConfig::default()
+        ..intelekt_sampler::SamplerConfig::default()
     };
-    xai_grok_sampler::SamplingClient::new(config).map_err(|e| anyhow!("build SamplingClient: {e}"))
+    intelekt_sampler::SamplingClient::new(config).map_err(|e| anyhow!("build SamplingClient: {e}"))
 }
 
 /// End-to-end entry point used by the binary. Writes one JSONL line
@@ -1270,7 +1270,7 @@ pub async fn run_with_writer<W: std::io::Write + ?Sized>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_sampling_types::{AssistantItem, ToolCall, ToolResultItem};
+    use intelekt_sampling_types::{AssistantItem, ToolCall, ToolResultItem};
 
     /// Tiny synthetic 4-turn fixture so the end-to-end tests can run
     /// in CI without external trace artifacts. (F16)
@@ -1897,7 +1897,7 @@ mod tests {
 
         assert_eq!(
             req.x_grok_agent_id.as_deref(),
-            Some(xai_grok_telemetry::id::agent_id().as_str())
+            Some(intelekt_telemetry::id::agent_id().as_str())
         );
     }
 
@@ -2447,7 +2447,7 @@ mod tests {
     /// * `GROK_AUTH` — inline-JSON credentials override that bypasses
     ///   the on-disk read entirely (`AuthManager::new`).
     /// * `GROK_AUTH_PATH` — overrides the auth.json path; if set to
-    ///   the operator's real `~/.grok/auth.json`, the test would read
+    ///   the operator's real `~/.intelekt/auth.json`, the test would read
     ///   live OIDC credentials instead of the scratch fixture.
     /// * `GROK_AUTH_PROVIDER_COMMAND` — selects an external
     ///   refresher that could mint credentials independent of the

@@ -1,6 +1,6 @@
 [package]
 license = "Apache-2.0"
-name = "xai-grok-memory"
+name = "intelekt-memory"
 version = "0.1.0"
 edition.workspace = true
 
@@ -31,12 +31,12 @@ sqlite-vec = "=0.1.7-alpha.2"
 tar = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "time"] }
 tracing = { workspace = true }
-xai-grok-auth = { workspace = true }
-xai-grok-config-types = { workspace = true }
-xai-grok-http = { workspace = true }
-xai-grok-telemetry = { workspace = true }
-xai-grok-tools = { workspace = true }
-xai-grok-version = { workspace = true }
+intelekt-auth = { workspace = true }
+intelekt-config-types = { workspace = true }
+intelekt-http = { workspace = true }
+intelekt-telemetry = { workspace = true }
+intelekt-tools = { workspace = true }
+intelekt-version = { workspace = true }
 xai-sqlite-journal = { workspace = true }
 
 [target.'cfg(unix)'.dependencies]

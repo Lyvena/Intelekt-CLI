@@ -1,12 +1,12 @@
 //! Runtime override resolution: merges explicit, role, and persona defaults.
 //!
-//! Extracted from `xai-grok-shell/src/agent/subagent/` `resolve_effective_overrides()`.
+//! Extracted from `intelekt-shell/src/agent/subagent/` `resolve_effective_overrides()`.
 
 use std::collections::HashMap;
 use std::path::Path;
 
 use serde::de::DeserializeOwned;
-use xai_grok_tools::implementations::grok_build::task::types::SubagentRuntimeOverrides;
+use intelekt_tools::implementations::grok_build::task::types::SubagentRuntimeOverrides;
 use xai_tool_types::{SubagentCapabilityMode, SubagentIsolationMode};
 
 use crate::config::{SubagentPersona, SubagentRole};
@@ -205,7 +205,7 @@ fn resolve_persona_instructions(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_tools::implementations::grok_build::task::types::ModelOverrideProvenance;
+    use intelekt_tools::implementations::grok_build::task::types::ModelOverrideProvenance;
 
     /// Helper to build an overrides struct with only the fields we care about.
     fn make_overrides(
@@ -238,7 +238,7 @@ mod tests {
     fn explicit_model_overrides_role() {
         let overrides = make_overrides(Some("grok-light"), None, None, None, None);
         let role = SubagentRole {
-            model: Some("grok-3".into()),
+            model: Some("intelekt-3".into()),
             ..Default::default()
         };
         let result =
@@ -250,12 +250,12 @@ mod tests {
     fn role_model_used_when_no_explicit() {
         let overrides = make_overrides(None, None, None, None, None);
         let role = SubagentRole {
-            model: Some("grok-3".into()),
+            model: Some("intelekt-3".into()),
             ..Default::default()
         };
         let result =
             resolve_effective_overrides(&overrides, Some(&role), &empty_personas(), None, None);
-        assert_eq!(result.model.as_deref(), Some("grok-3"));
+        assert_eq!(result.model.as_deref(), Some("intelekt-3"));
     }
 
     #[test]
@@ -265,13 +265,13 @@ mod tests {
         personas.insert(
             "researcher".to_string(),
             SubagentPersona {
-                model: Some("grok-3-fast".into()),
+                model: Some("intelekt-3-fast".into()),
                 instructions: Some("Research things.".into()),
                 ..Default::default()
             },
         );
         let result = resolve_effective_overrides(&overrides, None, &personas, None, None);
-        assert_eq!(result.model.as_deref(), Some("grok-3-fast"));
+        assert_eq!(result.model.as_deref(), Some("intelekt-3-fast"));
     }
 
     #[test]
@@ -625,7 +625,7 @@ mod tests {
     fn persona_not_found_error_is_non_fatal() {
         // "not found" is a config-level error: persona_error is set but
         // other fields still resolve from role/overrides.
-        let overrides = make_overrides(Some("grok-3"), Some("missing"), None, None, None);
+        let overrides = make_overrides(Some("intelekt-3"), Some("missing"), None, None, None);
         let role = SubagentRole {
             model: Some("grok-light".into()),
             default_isolation: Some("worktree".into()),
@@ -640,7 +640,7 @@ mod tests {
         // Non-fatal: other fields ARE resolved (explicit model takes precedence)
         assert_eq!(
             result.model.as_deref(),
-            Some("grok-3"),
+            Some("intelekt-3"),
             "explicit model should resolve despite persona error"
         );
     }
@@ -648,7 +648,7 @@ mod tests {
     #[test]
     fn persona_file_error_returns_early_with_defaults() {
         // File I/O errors ARE fatal: early return with defaults.
-        let overrides = make_overrides(Some("grok-3"), Some("broken"), None, None, None);
+        let overrides = make_overrides(Some("intelekt-3"), Some("broken"), None, None, None);
         let dir = tempfile::tempdir().unwrap();
         let mut personas = HashMap::new();
         personas.insert(

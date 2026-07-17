@@ -59,7 +59,7 @@ impl ApiEmbeddingProvider {
     }
 
     pub fn from_config(
-        config: &xai_grok_config_types::MemoryEmbeddingConfig,
+        config: &intelekt_config_types::MemoryEmbeddingConfig,
         api_base: String,
         client: reqwest_middleware::ClientWithMiddleware,
     ) -> Option<Self> {
@@ -68,7 +68,7 @@ impl ApiEmbeddingProvider {
     }
 
     pub fn from_session(
-        config: &xai_grok_config_types::MemoryEmbeddingConfig,
+        config: &intelekt_config_types::MemoryEmbeddingConfig,
         proxy_base_url: String,
         auth_key: String,
     ) -> Option<Self> {
@@ -78,23 +78,23 @@ impl ApiEmbeddingProvider {
 }
 
 pub(super) fn build_middleware_client(
-    credentials: std::sync::Arc<dyn xai_grok_auth::AuthCredentialProvider>,
+    credentials: std::sync::Arc<dyn intelekt_auth::AuthCredentialProvider>,
 ) -> reqwest_middleware::ClientWithMiddleware {
-    xai_grok_http::with_auth_retry(xai_grok_http::shared_client(), credentials)
+    intelekt_http::with_auth_retry(intelekt_http::shared_client(), credentials)
 }
 
 fn build_static_middleware_client(
     api_key: Option<String>,
 ) -> reqwest_middleware::ClientWithMiddleware {
-    let provider: std::sync::Arc<dyn xai_grok_auth::AuthCredentialProvider> = std::sync::Arc::new(
-        xai_grok_auth::StaticAuthCredentialProvider::new(Box::new(NoopHttpAuth), api_key),
+    let provider: std::sync::Arc<dyn intelekt_auth::AuthCredentialProvider> = std::sync::Arc::new(
+        intelekt_auth::StaticAuthCredentialProvider::new(Box::new(NoopHttpAuth), api_key),
     );
     build_middleware_client(provider)
 }
 
 struct NoopHttpAuth;
 
-impl xai_grok_auth::HttpAuth for NoopHttpAuth {
+impl intelekt_auth::HttpAuth for NoopHttpAuth {
     fn apply(&self, builder: reqwest::RequestBuilder, _base_url: &str) -> reqwest::RequestBuilder {
         builder
     }
@@ -136,11 +136,11 @@ impl EmbeddingProvider for ApiEmbeddingProvider {
                     tokio::time::sleep(std::time::Duration::from_millis(delay)).await;
                 }
 
-                let request = xai_grok_http::shared_client()
+                let request = intelekt_http::shared_client()
                     .post(format!("{}/embeddings", self.api_base))
                     .json(&body_json)
-                    .header("X-XAI-Token-Auth", "xai-grok-cli")
-                    .header("x-grok-client-version", xai_grok_version::VERSION);
+                    .header("X-XAI-Token-Auth", "intelekt-cli")
+                    .header("x-grok-client-version", intelekt_version::VERSION);
 
                 let req = match request.build() {
                     Ok(r) => r,

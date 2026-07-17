@@ -2,14 +2,14 @@
 //!
 //! Handles reading and writing memory files (`.md`) for both global
 //! and workspace-scoped memory. All workspace-scoped memory lives under
-//! `~/.grok/memory/{project-slug}-{hash8}/` to avoid polluting the user's repo.
+//! `~/.intelekt/memory/{project-slug}-{hash8}/` to avoid polluting the user's repo.
 
 use std::path::{Path, PathBuf};
 
-use xai_grok_tools::util::grok_home::grok_home;
+use intelekt_tools::util::grok_home::grok_home;
 
 /// Scope for a memory write operation.
-/// Write-operation scope. Distinct from `xai_grok_agent::config::MemoryScope` (agent memory dir).
+/// Write-operation scope. Distinct from `intelekt_agent::config::MemoryScope` (agent memory dir).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MemoryScope {
     /// Global memory — shared across all workspaces.
@@ -21,13 +21,13 @@ pub enum MemoryScope {
 /// Handles file I/O for the memory storage layer.
 ///
 /// Memory files are human-readable/editable Markdown stored under
-/// `~/.grok/memory/`. Workspace-scoped files live under a directory
-/// named `{project-slug}-{hash8}`, e.g. `~/.grok/memory/xai-a3f7b2c9/`.
+/// `~/.intelekt/memory/`. Workspace-scoped files live under a directory
+/// named `{project-slug}-{hash8}`, e.g. `~/.intelekt/memory/xai-a3f7b2c9/`.
 #[derive(Debug, Clone)]
 pub struct MemoryStorage {
-    /// `~/.grok/memory/`
+    /// `~/.intelekt/memory/`
     global_dir: PathBuf,
-    /// `~/.grok/memory/{project-slug}-{hash8}/`
+    /// `~/.intelekt/memory/{project-slug}-{hash8}/`
     workspace_dir: PathBuf,
     /// The original workspace path (for logging / diagnostics).
     workspace_path: PathBuf,
@@ -36,7 +36,7 @@ pub struct MemoryStorage {
 }
 
 impl MemoryStorage {
-    /// Create a new `MemoryStorage` rooted at `~/.grok/memory/`.
+    /// Create a new `MemoryStorage` rooted at `~/.intelekt/memory/`.
     ///
     /// The workspace directory name is `{slug}-{hash8}` where `slug` is the
     /// project directory name and `hash8` is 8 hex chars from blake3.
@@ -150,7 +150,7 @@ impl MemoryStorage {
 
     /// Write a daily session log file.
     ///
-    /// File path: `~/.grok/memory/{project}-{hash8}/sessions/YYYY-MM-DD-{slug}-{sid8}.md`
+    /// File path: `~/.intelekt/memory/{project}-{hash8}/sessions/YYYY-MM-DD-{slug}-{sid8}.md`
     ///
     /// - `date`: e.g. `"2026-02-23"`
     /// - `slug`: short slug derived from the first user message
@@ -1853,7 +1853,7 @@ mod tests {
         let _idx = crate::index::MemoryIndex::open_or_create(
             &storage.workspace_dir().join("index.sqlite"),
             storage.clone(),
-            xai_grok_config_types::MemoryIndexConfig::default(),
+            intelekt_config_types::MemoryIndexConfig::default(),
             64,
         )
         .unwrap();

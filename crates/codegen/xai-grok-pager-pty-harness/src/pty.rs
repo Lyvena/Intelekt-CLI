@@ -231,7 +231,7 @@ impl Drop for PtyController {
 /// Host terminal identity markers stripped from the child environment.
 ///
 /// The pager's terminal detection
-/// (`xai-grok-pager-render/src/terminal/mod.rs`:
+/// (`intelekt-pager-render/src/terminal/mod.rs`:
 /// `detect_terminal_brand_from_env` / `detect_byobu_from_env` /
 /// `detect_multiplexer_from_env` / `detect_tmux_meta_from_env`, plus
 /// `embedded_editor.rs`'s `embedded_editor_from_env`) reads all of these,

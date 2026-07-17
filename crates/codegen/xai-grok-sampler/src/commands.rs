@@ -6,7 +6,7 @@
 
 use tokio::sync::oneshot;
 
-use xai_grok_sampling_types::{ConversationRequest, ConversationResponse, SamplingError};
+use intelekt_sampling_types::{ConversationRequest, ConversationResponse, SamplingError};
 
 use crate::config::SamplerConfig;
 use crate::metrics::InferenceLatencyStats;

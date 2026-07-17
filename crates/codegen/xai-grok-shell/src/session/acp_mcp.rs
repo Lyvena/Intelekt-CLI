@@ -16,9 +16,9 @@ use std::time::Duration;
 
 use agent_client_protocol as acp;
 use xai_acp_lib::AcpAgentGatewaySender;
-use xai_grok_mcp::acp_transport::AcpReverseInvoker;
-use xai_grok_mcp::servers::AcpServerEntry;
-use xai_grok_mcp::wire;
+use intelekt_mcp::acp_transport::AcpReverseInvoker;
+use intelekt_mcp::servers::AcpServerEntry;
+use intelekt_mcp::wire;
 
 /// Parse `_meta["x.ai/mcp/servers"]` into [`AcpServerEntry`] registrations. Each entry
 /// is deserialized directly into the canonical type (so the `serverId` wire field is

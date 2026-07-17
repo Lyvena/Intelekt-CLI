@@ -1,6 +1,6 @@
-//! ToolBridge: re-exported from `xai-grok-tools`.
+//! ToolBridge: re-exported from `intelekt-tools`.
 //!
-//! The bridge implementation now lives in `xai_grok_tools::bridge`.
+//! The bridge implementation now lives in `intelekt_tools::bridge`.
 //! This module re-exports everything for backward compatibility.
 
-pub use xai_grok_tools::bridge::{ToolBridge, ToolBridgeResult};
+pub use intelekt_tools::bridge::{ToolBridge, ToolBridgeResult};

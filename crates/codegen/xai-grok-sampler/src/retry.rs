@@ -35,7 +35,7 @@
 
 use std::time::Duration;
 
-use xai_grok_sampling_types::SamplingError;
+use intelekt_sampling_types::SamplingError;
 
 /// After this many rate-limit (429) retries, escalate to the caller
 /// instead of waiting again. Rate-limit waits can be long and there is

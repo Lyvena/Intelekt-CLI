@@ -8,7 +8,7 @@
 use futures_util::StreamExt;
 use futures_util::stream::Stream;
 
-use xai_grok_sampling_types::ConversationResponse;
+use intelekt_sampling_types::ConversationResponse;
 
 use crate::events::{SamplingErrorInfo, SamplingErrorKind, SamplingEvent};
 use crate::metrics::InferenceLatencyStats;
@@ -60,13 +60,13 @@ pub async fn collect_response(
 mod tests {
     use super::*;
     use futures_util::stream;
-    use xai_grok_sampling_types::{ConversationItem, SamplingError, StopReason};
+    use intelekt_sampling_types::{ConversationItem, SamplingError, StopReason};
 
     use crate::events::SamplingChannel;
     use crate::stream::stream_chat_completions;
     use crate::types::RequestId;
     use std::time::Duration;
-    use xai_grok_sampling_types::{
+    use intelekt_sampling_types::{
         ChatChunkChoice, ChatChunkDelta, ChatCompletionChunk, FinishReason, Role,
     };
 

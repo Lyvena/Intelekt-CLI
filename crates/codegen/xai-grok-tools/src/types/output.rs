@@ -236,7 +236,7 @@ pub struct FileContent {
 /// This is a local type so it can derive `schemars::JsonSchema` v0.8,
 /// which the `Tool` trait requires for its `Output` associated type.
 /// Conversion to the protocol-level image type happens at the
-/// protocol boundary in `xai-grok-shell`.
+/// protocol boundary in `intelekt-shell`.
 #[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct ImageContent {
     /// Base64-encoded image data

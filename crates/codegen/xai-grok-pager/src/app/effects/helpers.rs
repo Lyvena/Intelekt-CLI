@@ -6,10 +6,10 @@ use xai_acp_lib::{AcpAgentTx, acp_send};
 use super::actions::{PermissionModePersist, SubagentKillOutcome, TaskResult};
 use super::agent::AgentId;
 use crate::unified_log as ulog;
-use xai_grok_shell::sampling::error::{
+use intelekt_shell::sampling::error::{
     RATE_LIMITED_ERROR_CODE, rate_limited_user_message,
 };
-use xai_grok_shell::session::ExtMethodResult;
+use intelekt_shell::session::ExtMethodResult;
 /// Typed progress message for session restore.
 /// Keeps the progress channel from accepting arbitrary `TaskResult` variants.
 pub(crate) struct RestoreProgressMsg {
@@ -91,7 +91,7 @@ pub(super) fn format_acp_error(err: &acp::Error, is_api_key_auth: bool) -> Strin
         return rate_limited_user_message(is_api_key_auth).into();
     }
     if err.code == acp::ErrorCode::InvalidParams && let Some(data) = &err.data
-        && let Some(msg) = xai_grok_shell::sampling::error::error_detail_from_data(data)
+        && let Some(msg) = intelekt_shell::sampling::error::error_detail_from_data(data)
         && !msg.is_empty()
     {
         return msg;
@@ -112,7 +112,7 @@ pub(super) fn format_restore_elapsed(d: std::time::Duration) -> String {
 /// MUST go through this function — do not re-implement.
 pub(super) fn parse_worktree_restore_payload(
     result_obj: &serde_json::Value,
-) -> (bool, Option<String>, Option<xai_grok_workspace::session::git::RestoreDegree>) {
+) -> (bool, Option<String>, Option<intelekt_workspace::session::git::RestoreDegree>) {
     let code_restored = result_obj
         .get("codeRestored")
         .and_then(|v| v.as_bool())
@@ -132,7 +132,7 @@ pub(super) fn parse_worktree_restore_payload(
 /// re-implement.
 pub(super) fn parse_session_load_restore_meta(
     resp_meta: Option<&acp::Meta>,
-) -> (bool, Option<String>, Option<xai_grok_workspace::session::git::RestoreDegree>) {
+) -> (bool, Option<String>, Option<intelekt_workspace::session::git::RestoreDegree>) {
     let code_restore = resp_meta.and_then(|m| m.get("codeRestore"));
     let code_restored = code_restore
         .and_then(|r| r.get("restored"))
@@ -212,14 +212,14 @@ pub(crate) fn sanitize_user_error(raw: &str) -> String {
 ///
 /// | plan  | subagents | ask-user | agentProfile                   | askUserQuestion    |
 /// |-------|-----------|----------|--------------------------------|--------------------|
-/// | false | false     | false    | `grok-build` (default)         | `false`            |
-/// | false | true      | false    | `grok-build` (default)         | `false`            |
-/// | false | false     | true     | `grok-build-ask-user`          | omitted (shell gate) |
-/// | false | true      | true     | `grok-build-ask-user`          | omitted (shell gate) |
-/// | true  | false     | false    | `grok-build-plan-no-subagents` | `false`            |
-/// | true  | true      | false    | `grok-build-plan`              | `false`            |
-/// | true  | false     | true     | `grok-build-plan-no-subagents` | omitted (shell gate) |
-/// | true  | true      | true     | `grok-build-plan`              | omitted (shell gate) |
+/// | false | false     | false    | `intelekt-cli` (default)         | `false`            |
+/// | false | true      | false    | `intelekt-cli` (default)         | `false`            |
+/// | false | false     | true     | `intelekt-cli-ask-user`          | omitted (shell gate) |
+/// | false | true      | true     | `intelekt-cli-ask-user`          | omitted (shell gate) |
+/// | true  | false     | false    | `intelekt-cli-plan-no-subagents` | `false`            |
+/// | true  | true      | false    | `intelekt-cli-plan`              | `false`            |
+/// | true  | false     | true     | `intelekt-cli-plan-no-subagents` | omitted (shell gate) |
+/// | true  | true      | true     | `intelekt-cli-plan`              | omitted (shell gate) |
 ///
 /// When [`Self::chat_mode`] is set (gateway light-frontend / `--chat`), Build
 /// `agentProfile` injection is omitted (K12) and `_meta["x.ai/session"].kind`
@@ -255,7 +255,7 @@ pub(crate) struct SessionFlags {
 impl SessionFlags {
     /// Resolve the agent profile name from the flags.
     ///
-    /// Returns `None` for the default `grok-build` profile (no `_meta`
+    /// Returns `None` for the default `intelekt-cli` profile (no `_meta`
     /// needed; it already includes TaskTool). Chat mode never injects a
     /// Build profile (remote owns agent behavior).
     pub(super) fn agent_profile(&self) -> Option<&'static str> {
@@ -263,9 +263,9 @@ impl SessionFlags {
             return None;
         }
         match (self.plan_mode, self.subagents, self.ask_user) {
-            (true, true, _) => Some("grok-build-plan"),
-            (true, false, _) => Some("grok-build-plan-no-subagents"),
-            (false, _, true) => Some("grok-build-ask-user"),
+            (true, true, _) => Some("intelekt-cli-plan"),
+            (true, false, _) => Some("intelekt-cli-plan-no-subagents"),
+            (false, _, true) => Some("intelekt-cli-ask-user"),
             (false, _, false) => None,
         }
     }
@@ -345,10 +345,10 @@ pub(crate) struct EffectMeta {
 /// Returns the first line of the `<user_query>` content (if present),
 /// or the first line of the raw user message text.
 pub(super) fn extract_first_user_prompt(
-    info: &xai_grok_shell::session::info::Info,
+    info: &intelekt_shell::session::info::Info,
 ) -> Option<String> {
     use std::io::BufRead;
-    let history_path = xai_grok_shell::session::persistence::session_dir(info)
+    let history_path = intelekt_shell::session::persistence::session_dir(info)
         .join("chat_history.jsonl");
     let file = std::fs::File::open(history_path).ok()?;
     let reader = std::io::BufReader::new(file);
@@ -388,7 +388,7 @@ pub(super) fn extract_first_user_prompt(
 /// Synthetic user messages (auto-continue, doom-loop) are excluded.
 pub(super) fn count_chat_history_stats(history_path: &Path) -> (usize, usize) {
     use std::io::BufRead;
-    use xai_grok_shell::sampling::{AssistantItem, ConversationItem, UserItem};
+    use intelekt_shell::sampling::{AssistantItem, ConversationItem, UserItem};
     let mut turn_count = 0usize;
     let mut tool_call_count = 0usize;
     let Ok(file) = std::fs::File::open(history_path) else {
@@ -508,7 +508,7 @@ pub(super) fn parse_session_picker_entries(
                     parsed_created.unwrap_or(chrono::DateTime::<chrono::Utc>::UNIX_EPOCH)
                 }
             };
-            use xai_grok_tools::implementations::skills::skill::extract_skill_display_text;
+            use intelekt_tools::implementations::skills::skill::extract_skill_display_text;
             let display = if let Some(ref fp) = first_prompt {
                 if let Some(d) = extract_skill_display_text(fp) {
                     d
@@ -525,7 +525,7 @@ pub(super) fn parse_session_picker_entries(
                     .and_then(|s| s.as_str())
                     .unwrap_or_default()
                     .to_string();
-                let info = xai_grok_shell::session::info::Info {
+                let info = intelekt_shell::session::info::Info {
                     id: acp::SessionId::new(id.clone()),
                     cwd: info_cwd,
                 };
@@ -592,7 +592,7 @@ pub(super) fn parse_session_picker_entries(
                 }
             }
             if e.source == "remote"
-                && xai_grok_shell::session::resolve_local_session_any_cwd(&e.id)
+                && intelekt_shell::session::resolve_local_session_any_cwd(&e.id)
                     .is_some()
             {
                 e.source = "local".to_string();
@@ -757,7 +757,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("compact_mode", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_compact_mode(b)
+            intelekt_shell::util::config::set_compact_mode(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -765,7 +765,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("show_timestamps", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_show_timestamps(b)
+            intelekt_shell::util::config::set_show_timestamps(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -773,7 +773,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("show_timeline", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_show_timeline(b)
+            intelekt_shell::util::config::set_show_timeline(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -781,7 +781,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("simple_mode", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_simple_mode(b)
+            intelekt_shell::util::config::set_simple_mode(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -789,7 +789,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("contextual_hints.undo", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_contextual_hint_undo(b)
+            intelekt_shell::util::config::set_contextual_hint_undo(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -797,7 +797,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("contextual_hints.plan_mode", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_contextual_hint_plan_mode(b)
+            intelekt_shell::util::config::set_contextual_hint_plan_mode(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -807,7 +807,7 @@ pub(crate) async fn persist_setting(
                     kind_mismatch("contextual_hints.image_input", "Bool", &value),
                 );
             };
-            xai_grok_shell::util::config::set_contextual_hint_image_input(b)
+            intelekt_shell::util::config::set_contextual_hint_image_input(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -815,7 +815,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("contextual_hints.send_now", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_contextual_hint_send_now(b)
+            intelekt_shell::util::config::set_contextual_hint_send_now(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -825,7 +825,7 @@ pub(crate) async fn persist_setting(
                     kind_mismatch("contextual_hints.small_screen", "Bool", &value),
                 );
             };
-            xai_grok_shell::util::config::set_contextual_hint_small_screen(b)
+            intelekt_shell::util::config::set_contextual_hint_small_screen(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -835,7 +835,7 @@ pub(crate) async fn persist_setting(
                     kind_mismatch("contextual_hints.word_select", "Bool", &value),
                 );
             };
-            xai_grok_shell::util::config::set_contextual_hint_word_select(b)
+            intelekt_shell::util::config::set_contextual_hint_word_select(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -843,7 +843,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Enum(s) = value else {
                 return Err(kind_mismatch("theme", "Enum", &value));
             };
-            xai_grok_shell::util::config::set_theme(s.to_string())
+            intelekt_shell::util::config::set_theme(s.to_string())
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -851,7 +851,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Enum(s) = value else {
                 return Err(kind_mismatch("auto_dark_theme", "Enum", &value));
             };
-            xai_grok_shell::util::config::set_auto_dark_theme(s.to_string())
+            intelekt_shell::util::config::set_auto_dark_theme(s.to_string())
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -859,7 +859,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Enum(s) = value else {
                 return Err(kind_mismatch("auto_light_theme", "Enum", &value));
             };
-            xai_grok_shell::util::config::set_auto_light_theme(s.to_string())
+            intelekt_shell::util::config::set_auto_light_theme(s.to_string())
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -867,7 +867,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::String(s) = value else {
                 return Err(kind_mismatch("default_model", "String", &value));
             };
-            xai_grok_shell::util::config::set_default_model(s)
+            intelekt_shell::util::config::set_default_model(s)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -875,7 +875,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Int(i) = value else {
                 return Err(kind_mismatch("scroll_speed", "Int", &value));
             };
-            xai_grok_shell::util::config::set_scroll_speed(i)
+            intelekt_shell::util::config::set_scroll_speed(i)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -883,7 +883,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Enum(s) = value else {
                 return Err(kind_mismatch("scroll_mode", "Enum", &value));
             };
-            xai_grok_shell::util::config::set_scroll_mode(s.to_string())
+            intelekt_shell::util::config::set_scroll_mode(s.to_string())
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -891,7 +891,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("invert_scroll", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_invert_scroll(b)
+            intelekt_shell::util::config::set_invert_scroll(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -901,7 +901,7 @@ pub(crate) async fn persist_setting(
                     kind_mismatch("display_refresh_auto_cadence", "Bool", &value),
                 );
             };
-            xai_grok_shell::util::config::set_display_refresh_auto_cadence(b)
+            intelekt_shell::util::config::set_display_refresh_auto_cadence(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -909,7 +909,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Int(i) = value else {
                 return Err(kind_mismatch("scroll_lines", "Int", &value));
             };
-            xai_grok_shell::util::config::set_scroll_lines(i)
+            intelekt_shell::util::config::set_scroll_lines(i)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -917,7 +917,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Enum(s) = value else {
                 return Err(kind_mismatch("default_selected_permission", "Enum", &value));
             };
-            xai_grok_shell::util::config::set_default_selected_permission(s.to_string())
+            intelekt_shell::util::config::set_default_selected_permission(s.to_string())
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -927,7 +927,7 @@ pub(crate) async fn persist_setting(
                     kind_mismatch("cancel_subagents_on_turn_cancel", "Enum", &value),
                 );
             };
-            xai_grok_shell::util::config::set_cancel_subagents_on_turn_cancel(
+            intelekt_shell::util::config::set_cancel_subagents_on_turn_cancel(
                     s.to_string(),
                 )
                 .await
@@ -937,7 +937,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("vim_mode", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_vim_mode(b)
+            intelekt_shell::util::config::set_vim_mode(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -945,7 +945,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("remember_tool_approvals", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_remember_tool_approvals(b)
+            intelekt_shell::util::config::set_remember_tool_approvals(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -959,7 +959,7 @@ pub(crate) async fn persist_setting(
                     ),
                 );
             };
-            xai_grok_shell::util::config::set_ask_user_question_timeout_enabled(b)
+            intelekt_shell::util::config::set_ask_user_question_timeout_enabled(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -967,7 +967,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("show_thinking_blocks", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_show_thinking_blocks(b)
+            intelekt_shell::util::config::set_show_thinking_blocks(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -975,7 +975,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("group_tool_verbs", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_group_tool_verbs(b)
+            intelekt_shell::util::config::set_group_tool_verbs(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -983,7 +983,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("collapsed_edit_blocks", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_collapsed_edit_blocks(b)
+            intelekt_shell::util::config::set_collapsed_edit_blocks(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -991,7 +991,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("prompt_suggestions", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_prompt_suggestions(b)
+            intelekt_shell::util::config::set_prompt_suggestions(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -999,7 +999,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Enum(s) = value else {
                 return Err(kind_mismatch("keep_text_selection", "Enum", &value));
             };
-            xai_grok_shell::util::config::set_keep_text_selection(s.to_string())
+            intelekt_shell::util::config::set_keep_text_selection(s.to_string())
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -1018,7 +1018,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Enum(s) = value else {
                 return Err(kind_mismatch("render_mermaid", "Enum", &value));
             };
-            xai_grok_shell::util::config::set_render_mermaid(s.to_string())
+            intelekt_shell::util::config::set_render_mermaid(s.to_string())
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -1026,7 +1026,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Enum(s) = value else {
                 return Err(kind_mismatch("hunk_tracker_mode", "Enum", &value));
             };
-            xai_grok_shell::util::config::set_hunk_tracker_mode(s.to_string())
+            intelekt_shell::util::config::set_hunk_tracker_mode(s.to_string())
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -1034,7 +1034,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Enum(s) = value else {
                 return Err(kind_mismatch("screen_mode", "Enum", &value));
             };
-            xai_grok_shell::util::config::set_screen_mode(s.to_string())
+            intelekt_shell::util::config::set_screen_mode(s.to_string())
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -1042,7 +1042,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Enum(s) = value else {
                 return Err(kind_mismatch("voice_capture_mode", "Enum", &value));
             };
-            xai_grok_shell::util::config::set_voice_capture_mode(s.to_string())
+            intelekt_shell::util::config::set_voice_capture_mode(s.to_string())
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -1050,7 +1050,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Enum(s) = value else {
                 return Err(kind_mismatch("voice_stt_language", "Enum", &value));
             };
-            xai_grok_shell::util::config::set_voice_stt_language(s.to_string())
+            intelekt_shell::util::config::set_voice_stt_language(s.to_string())
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -1058,7 +1058,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Int(i) = value else {
                 return Err(kind_mismatch("max_thoughts_width", "Int", &value));
             };
-            xai_grok_shell::util::config::set_max_thoughts_width(i)
+            intelekt_shell::util::config::set_max_thoughts_width(i)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -1066,7 +1066,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("show_tips", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_show_tips(b)
+            intelekt_shell::util::config::set_show_tips(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -1074,7 +1074,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::Bool(b) = value else {
                 return Err(kind_mismatch("auto_update", "Bool", &value));
             };
-            xai_grok_shell::util::config::set_auto_update(b)
+            intelekt_shell::util::config::set_auto_update(b)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -1082,7 +1082,7 @@ pub(crate) async fn persist_setting(
             let SettingValue::String(s) = value else {
                 return Err(kind_mismatch("fork_secondary_model", "String", &value));
             };
-            xai_grok_shell::util::config::set_fork_secondary_model(s)
+            intelekt_shell::util::config::set_fork_secondary_model(s)
                 .await
                 .map_err(|e| e.to_string())
         }
@@ -1104,7 +1104,7 @@ pub(crate) async fn persist_permission_mode_and_notify(
     let enabled = canonical == "always-approve";
     let auto_mode = canonical == "auto";
     let config_str: &'static str = canonical;
-    let disk_result = xai_grok_shell::util::config::update_config(|cfg| {
+    let disk_result = intelekt_shell::util::config::update_config(|cfg| {
             cfg.ui.permission_mode = Some(config_str.to_string());
         })
         .await;
@@ -1150,8 +1150,8 @@ pub(super) fn marketplace_outcome_succeeded(
 /// The agent serializes `ExtMethodResult<KillTaskResponse>`, so the outcome
 /// lives at `result.outcome` (`{"result":{"taskId":..,"outcome":
 /// "not_found"}}`). Deserializes through the same wire DTOs the agent
-/// serializes (`xai_grok_shell::extensions::task::KillTaskResponse` +
-/// `xai_grok_shell::session::result::ExtMethodResult`) so the contract stays
+/// serializes (`intelekt_shell::extensions::task::KillTaskResponse` +
+/// `intelekt_shell::session::result::ExtMethodResult`) so the contract stays
 /// typed end-to-end. Returns `None` — which the dispatcher treats as "clear
 /// pending state, keep the row" — for error envelopes (`result: null`) or
 /// unparseable payloads. Probing the top level with untyped JSON here was
@@ -1159,9 +1159,9 @@ pub(super) fn marketplace_outcome_succeeded(
 /// session resume.
 pub(super) fn parse_kill_outcome(
     resp: &str,
-) -> Option<xai_grok_tools::types::KillOutcome> {
-    use xai_grok_shell::extensions::task::KillTaskResponse;
-    use xai_grok_shell::session::result::ExtMethodResult;
+) -> Option<intelekt_tools::types::KillOutcome> {
+    use intelekt_shell::extensions::task::KillTaskResponse;
+    use intelekt_shell::session::result::ExtMethodResult;
     serde_json::from_str::<ExtMethodResult<KillTaskResponse>>(resp)
         .ok()
         .and_then(|envelope| envelope.result)
@@ -1172,7 +1172,7 @@ pub(super) fn parse_kill_outcome(
 /// bool for an older shell or an unknown future `kind`. An error/unparseable
 /// body is `RpcFailed` (subagent may still be running — leave the row alone).
 pub(super) fn parse_subagent_kill_outcome(resp: &str) -> SubagentKillOutcome {
-    use xai_grok_shell::extensions::task::{
+    use intelekt_shell::extensions::task::{
         CancelSubagentResponse, SubagentCancelOutcomeDto,
     };
     let Some(payload) = serde_json::from_str::<
@@ -1270,7 +1270,7 @@ pub(super) fn persist_hint(
 /// and `Effect::FetchAppBilling` so every pager UI path derives identical usage
 /// values from the same config.
 pub(super) fn credit_balance_from_config(
-    c: xai_grok_shell::extensions::billing::BillingConfig,
+    c: intelekt_shell::extensions::billing::BillingConfig,
 ) -> crate::views::credit_bar::CreditBalance {
     let limit = c.monthly_limit.map(|v| v.val).unwrap_or(0);
     let used = c.used.map(|v| v.val).unwrap_or(0);
@@ -1363,7 +1363,7 @@ pub(super) fn parse_auto_topup_response(
     result: &serde_json::Value,
 ) -> crate::views::credit_bar::AutoTopupFetch {
     use crate::views::credit_bar::{AutoTopupFetch, AutoTopupInfo};
-    use xai_grok_shell::extensions::billing::GetAutoTopupRuleResponse;
+    use intelekt_shell::extensions::billing::GetAutoTopupRuleResponse;
     match serde_json::from_value::<GetAutoTopupRuleResponse>(result.clone()) {
         Ok(parsed) => {
             AutoTopupFetch::Resolved(
@@ -1382,12 +1382,12 @@ pub(super) fn parse_auto_topup_response(
         Err(_) => AutoTopupFetch::Unchanged,
     }
 }
-/// A blocking flock on the shared, possibly-network `~/.grok` lock must never
+/// A blocking flock on the shared, possibly-network `~/.intelekt` lock must never
 /// stall the event-loop thread (and would hang exit on `/quit`); the registry
 /// is best-effort, so skip on contention.
 pub(super) fn unregister_active_session_best_effort(session_id: &acp::SessionId) {
     unregister_active_session_best_effort_in(
-        &xai_grok_shell::util::grok_home::grok_home(),
+        &intelekt_shell::util::grok_home::grok_home(),
         session_id,
     );
 }
@@ -1395,7 +1395,7 @@ pub(super) fn unregister_active_session_best_effort_in(
     root: &Path,
     session_id: &acp::SessionId,
 ) {
-    match xai_grok_shell::active_sessions::try_unregister_in(root, session_id) {
+    match intelekt_shell::active_sessions::try_unregister_in(root, session_id) {
         Ok(true) => {}
         Ok(false) => {
             tracing::debug!(

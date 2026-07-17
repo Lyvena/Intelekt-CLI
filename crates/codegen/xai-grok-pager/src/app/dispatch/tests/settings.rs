@@ -176,9 +176,9 @@ fn plugin_cta_catalog_reload_empty_candidates_resets_matched_phase() {
     }
     let response = xai_hooks_plugins_types::MarketplaceListResponse {
         sources: vec![xai_hooks_plugins_types::MarketplaceScanResult {
-            source_name: xai_grok_plugin_marketplace::OFFICIAL_SOURCE_NAME.into(),
+            source_name: intelekt_plugin_marketplace::OFFICIAL_SOURCE_NAME.into(),
             source_kind: "git".into(),
-            source_url_or_path: xai_grok_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL.into(),
+            source_url_or_path: intelekt_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL.into(),
             plugins: vec![cta_entry("figma", "installed")],
             error: None,
         }],
@@ -266,7 +266,7 @@ fn set_default_model_allowed_when_agent_chat_kind() {
 fn slash_model_valid_dispatches_set_default_model_with_switch_and_persist() {
     let mut app = test_app_with_agent();
     let id = AgentId(0);
-    let model_id = acp::ModelId::new(std::sync::Arc::from("grok-4.5"));
+    let model_id = acp::ModelId::new(std::sync::Arc::from("intelekt-4.5"));
     app.agents
         .get_mut(&id)
         .unwrap()
@@ -988,7 +988,7 @@ fn set_default_model_resolves_known_name() {
     use agent_client_protocol as acp;
     use std::sync::Arc;
     let mut app = test_app_with_agent();
-    let id = acp::ModelId::new(Arc::from("grok-4.5"));
+    let id = acp::ModelId::new(Arc::from("intelekt-4.5"));
     let info = acp::ModelInfo::new(id.clone(), "Grok 4.5".to_string());
     let agent_id = AgentId(0);
     app.agents
@@ -1002,7 +1002,7 @@ fn set_default_model_resolves_known_name() {
     assert_eq!(effects.len(), 2);
     assert!(
         matches!(& effects[0], Effect::PersistSetting { key : "default_model", value :
-        crate ::settings::SettingValue::String(s), .. } if s == "grok-4.5")
+        crate ::settings::SettingValue::String(s), .. } if s == "intelekt-4.5")
     );
     assert!(matches!(& effects[1], Effect::SwitchModel { model_id : mid, .. } if mid == & id));
     assert_eq!(app.agents[&agent_id].session.models.current, Some(id));

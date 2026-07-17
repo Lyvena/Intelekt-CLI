@@ -42,16 +42,16 @@ impl SessionActor {
     /// in `Resources` (inserted by the caller before calling this method).
     pub(super) async fn register_memory_tools(
         &self,
-        bridge: &xai_grok_tools::bridge::ToolBridge,
+        bridge: &intelekt_tools::bridge::ToolBridge,
     ) -> Result<(), String> {
-        use xai_grok_tools::implementations::memory::{
+        use intelekt_tools::implementations::memory::{
             MEMORY_GET_TOOL_NAME, MEMORY_SEARCH_TOOL_NAME,
         };
 
         bridge
             .register_mcp_tools(
                 MEMORY_SEARCH_TOOL_NAME.to_owned(),
-                xai_grok_tools::implementations::memory::search_tool::MemorySearchImpl,
+                intelekt_tools::implementations::memory::search_tool::MemorySearchImpl,
                 None,
             )
             .await
@@ -59,7 +59,7 @@ impl SessionActor {
         bridge
             .register_mcp_tools(
                 MEMORY_GET_TOOL_NAME.to_owned(),
-                xai_grok_tools::implementations::memory::get_tool::MemoryGetImpl,
+                intelekt_tools::implementations::memory::get_tool::MemoryGetImpl,
                 None,
             )
             .await
@@ -73,8 +73,8 @@ impl SessionActor {
         total_chunks_at_end: usize,
         session_end_result: &str,
     ) {
-        xai_grok_telemetry::session_ctx::log_event(
-            xai_grok_telemetry::memory_telemetry::MemorySessionSummary {
+        intelekt_telemetry::session_ctx::log_event(
+            intelekt_telemetry::memory_telemetry::MemorySessionSummary {
                 session_id: self.session_info.id.to_string(),
                 session_duration_secs: self.session_start.elapsed().as_secs(),
                 flush_count: telem.flush_count,
@@ -127,7 +127,7 @@ impl SessionActor {
     pub(super) async fn maybe_run_dream(&self) {
         if self.startup_hints.is_subagent {
             tracing::debug!(
-                target: xai_grok_telemetry::memory_log::TARGET,
+                target: intelekt_telemetry::memory_log::TARGET,
                 "MEMORY_SUBAGENT_SKIP: skipping dream for subagent session"
             );
             return;
@@ -144,7 +144,7 @@ impl SessionActor {
             DreamGate::Open { sessions } => sessions,
             other => {
                 tracing::info!(
-                    target: xai_grok_telemetry::memory_log::TARGET,
+                    target: intelekt_telemetry::memory_log::TARGET,
                     gate = ?other,
                     "MEMORY_DREAM: gate check result, skipping"
                 );
@@ -153,7 +153,7 @@ impl SessionActor {
         };
 
         tracing::info!(
-            target: xai_grok_telemetry::memory_log::TARGET,
+            target: intelekt_telemetry::memory_log::TARGET,
             session_count = sessions.len(),
             "MEMORY_DREAM: gates passed, starting consolidation"
         );
@@ -177,7 +177,7 @@ impl SessionActor {
         ) {
             Ok(s) if s.is_empty() => {
                 tracing::info!(
-                    target: xai_grok_telemetry::memory_log::TARGET,
+                    target: intelekt_telemetry::memory_log::TARGET,
                     "MEMORY_DREAM_SLASH: no session logs found, nothing to consolidate"
                 );
                 return;
@@ -185,7 +185,7 @@ impl SessionActor {
             Ok(s) => s,
             Err(e) => {
                 tracing::warn!(
-                    target: xai_grok_telemetry::memory_log::TARGET,
+                    target: intelekt_telemetry::memory_log::TARGET,
                     error = %e,
                     "MEMORY_DREAM_SLASH: failed to list sessions"
                 );
@@ -194,7 +194,7 @@ impl SessionActor {
         };
 
         tracing::info!(
-            target: xai_grok_telemetry::memory_log::TARGET,
+            target: intelekt_telemetry::memory_log::TARGET,
             session_count = sessions.len(),
             "MEMORY_DREAM_SLASH: starting manual consolidation"
         );
@@ -227,7 +227,7 @@ impl SessionActor {
                 Some(msg) => msg,
                 None => {
                     tracing::info!(
-                        target: xai_grok_telemetry::memory_log::TARGET,
+                        target: intelekt_telemetry::memory_log::TARGET,
                         "{log_prefix}: no readable session content, skipping"
                     );
                     return;
@@ -243,7 +243,7 @@ impl SessionActor {
             Ok(Ok(r)) => r,
             Ok(Err(e)) => {
                 tracing::warn!(
-                    target: xai_grok_telemetry::memory_log::TARGET,
+                    target: intelekt_telemetry::memory_log::TARGET,
                     error = %e,
                     "{log_prefix}: model call failed"
                 );
@@ -252,7 +252,7 @@ impl SessionActor {
             }
             Err(_) => {
                 tracing::warn!(
-                    target: xai_grok_telemetry::memory_log::TARGET,
+                    target: intelekt_telemetry::memory_log::TARGET,
                     "{log_prefix}: model call timed out (30m)"
                 );
                 self.memory.record_dream_result(false);
@@ -310,7 +310,7 @@ impl SessionActor {
         .await;
 
         tracing::info!(
-            target: xai_grok_telemetry::memory_log::TARGET,
+            target: intelekt_telemetry::memory_log::TARGET,
             status = ?result.status,
             sessions_eligible = result.sessions_eligible,
             sessions_cleaned = result.cleaned_stems.len(),
@@ -337,7 +337,7 @@ impl SessionActor {
             x_grok_conv_id: Some(session_id.clone()),
             x_grok_req_id: Some(format!("xai-dream-{}", uuid::Uuid::new_v4())),
             x_grok_session_id: Some(session_id),
-            x_grok_agent_id: Some(xai_grok_telemetry::id::agent_id()),
+            x_grok_agent_id: Some(intelekt_telemetry::id::agent_id()),
             ..Default::default()
         };
         let response = sampling_client
@@ -367,13 +367,13 @@ impl SessionActor {
         // running (idle timer, pre-compaction, or user-requested), skip.
         if !self.memory.try_acquire_flush_lock() {
             tracing::info!(
-                target: xai_grok_telemetry::memory_log::TARGET,
+                target: intelekt_telemetry::memory_log::TARGET,
                 "MEMORY_FLUSH: skipped — another flush is already in progress (trigger={trigger})"
             );
             return false;
         }
 
-        tracing::info!(target: xai_grok_telemetry::memory_log::TARGET, "MEMORY_FLUSH: starting");
+        tracing::info!(target: intelekt_telemetry::memory_log::TARGET, "MEMORY_FLUSH: starting");
         let flush_start = std::time::Instant::now();
 
         self.send_xai_notification(XaiSessionUpdate::MemoryFlushStarted)
@@ -388,8 +388,8 @@ impl SessionActor {
                 Some(snapshot) => snapshot,
                 None => self.snapshot_memory_flush_state().await,
             };
-            xai_grok_telemetry::session_ctx::log_event(
-                xai_grok_telemetry::memory_telemetry::MemoryFlushStart {
+            intelekt_telemetry::session_ctx::log_event(
+                intelekt_telemetry::memory_telemetry::MemoryFlushStart {
                     session_id: self.session_info.id.to_string(),
                     trigger: trigger.to_owned(),
                     conversation_len: counts.total,
@@ -397,7 +397,7 @@ impl SessionActor {
                 },
             );
             tracing::info!(
-                target: xai_grok_telemetry::memory_log::TARGET,
+                target: intelekt_telemetry::memory_log::TARGET,
                 "MEMORY_FLUSH: conversation has {user} user, {assistant} assistant, {tool} tool messages ({total} total)",
                 user = counts.user,
                 assistant = counts.assistant,
@@ -418,7 +418,7 @@ impl SessionActor {
             };
             let mut items: Vec<ConversationItem> = vec![ConversationItem::system(system_prompt)];
             tracing::info!(
-                target: xai_grok_telemetry::memory_log::TARGET,
+                target: intelekt_telemetry::memory_log::TARGET,
                 "MEMORY_FLUSH: sending {n} recent messages to model (+ system prompt + user closer)",
                 n = recent.len(),
             );
@@ -434,7 +434,7 @@ impl SessionActor {
                     .unwrap_or_default(),
             };
             tracing::info!(
-                target: xai_grok_telemetry::memory_log::TARGET,
+                target: intelekt_telemetry::memory_log::TARGET,
                 "MEMORY_FLUSH: using model={model}"
             );
             let session_id = self.session_info.id.to_string();
@@ -444,7 +444,7 @@ impl SessionActor {
                 x_grok_conv_id: Some(session_id.clone()),
                 x_grok_req_id: Some(format!("xai-flush-{}", uuid::Uuid::new_v4())),
                 x_grok_session_id: Some(session_id.clone()),
-                x_grok_agent_id: Some(xai_grok_telemetry::id::agent_id()),
+                x_grok_agent_id: Some(intelekt_telemetry::id::agent_id()),
                 ..Default::default()
             };
 
@@ -587,7 +587,7 @@ impl SessionActor {
             }
         };
 
-        tracing::info!(target: xai_grok_telemetry::memory_log::TARGET, outcome = %outcome, "MEMORY_FLUSH: completed");
+        tracing::info!(target: intelekt_telemetry::memory_log::TARGET, outcome = %outcome, "MEMORY_FLUSH: completed");
         let flush_outcome = if outcome.starts_with("written") {
             "written"
         } else if outcome.starts_with("nothing") {
@@ -600,8 +600,8 @@ impl SessionActor {
             "error"
         };
         self.memory.record_flush_result(flush_outcome);
-        xai_grok_telemetry::session_ctx::log_event(
-            xai_grok_telemetry::memory_telemetry::MemoryFlushComplete {
+        intelekt_telemetry::session_ctx::log_event(
+            intelekt_telemetry::memory_telemetry::MemoryFlushComplete {
                 session_id: self.session_info.id.to_string(),
                 trigger: trigger.to_owned(),
                 outcome: flush_outcome.to_owned(),
@@ -623,12 +623,12 @@ impl SessionActor {
         self.emit_memory_session_summary(&telem, total_chunks, "flush_checkpoint");
 
         let flush_trigger = match trigger {
-            "slash_command" => xai_grok_telemetry::events::MemoryFlushTrigger::SlashCommand,
-            "interval" => xai_grok_telemetry::events::MemoryFlushTrigger::Interval,
-            "pre_compaction" => xai_grok_telemetry::events::MemoryFlushTrigger::PreCompaction,
-            _ => xai_grok_telemetry::events::MemoryFlushTrigger::UserRequested,
+            "slash_command" => intelekt_telemetry::events::MemoryFlushTrigger::SlashCommand,
+            "interval" => intelekt_telemetry::events::MemoryFlushTrigger::Interval,
+            "pre_compaction" => intelekt_telemetry::events::MemoryFlushTrigger::PreCompaction,
+            _ => intelekt_telemetry::events::MemoryFlushTrigger::UserRequested,
         };
-        xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::MemoryFlushed {
+        intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::MemoryFlushed {
             trigger: flush_trigger,
             success: flush_outcome == "written",
             duration_ms: flush_start.elapsed().as_millis() as u64,
@@ -660,7 +660,7 @@ impl SessionActor {
     }
 
     /// Rewrite a raw memory note into well-structured markdown via a one-shot
-    /// LLM call using the `grok-build` model.
+    /// LLM call using the `intelekt-cli` model.
     ///
     /// Follows the same streaming pattern as [`handle_ai_suggest`]: prepares
     /// a sampling client, builds a system+user prompt, streams the response,
@@ -707,13 +707,13 @@ impl SessionActor {
         let request = ConversationRequest {
             items,
             tools: vec![],
-            model: Some("grok-build".to_owned()),
+            model: Some("intelekt-cli".to_owned()),
             temperature: Some(0.3),
             max_output_tokens: Some(1024),
             ..Default::default()
         };
 
-        let request_id = xai_grok_sampler::RequestId::random();
+        let request_id = intelekt_sampler::RequestId::random();
         let idle_timeout = std::time::Duration::from_secs(15);
 
         let result = match sampling_client.api_backend() {
@@ -723,30 +723,30 @@ impl SessionActor {
                     .await
                     .map_err(|e| format!("rewrite stream failed: {e}"))?;
                 let events =
-                    xai_grok_sampler::stream_chat_completions(raw, meta, request_id, idle_timeout);
-                xai_grok_sampler::collect_response(events).await
+                    intelekt_sampler::stream_chat_completions(raw, meta, request_id, idle_timeout);
+                intelekt_sampler::collect_response(events).await
             }
             crate::sampling::ApiBackend::Responses => {
                 let (raw, meta, doom_loop) = sampling_client
                     .conversation_stream_responses(request)
                     .await
                     .map_err(|e| format!("rewrite stream failed: {e}"))?;
-                let events = xai_grok_sampler::stream_responses(
+                let events = intelekt_sampler::stream_responses(
                     raw,
                     meta,
                     request_id,
                     idle_timeout,
                     doom_loop,
                 );
-                xai_grok_sampler::collect_response(events).await
+                intelekt_sampler::collect_response(events).await
             }
             crate::sampling::ApiBackend::Messages => {
                 let (raw, meta) = sampling_client
                     .conversation_stream_messages(request)
                     .await
                     .map_err(|e| format!("rewrite stream failed: {e}"))?;
-                let events = xai_grok_sampler::stream_messages(raw, meta, request_id, idle_timeout);
-                xai_grok_sampler::collect_response(events).await
+                let events = intelekt_sampler::stream_messages(raw, meta, request_id, idle_timeout);
+                intelekt_sampler::collect_response(events).await
             }
         };
 

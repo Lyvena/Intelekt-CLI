@@ -19,10 +19,10 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Instant;
-use xai_grok_workspace::session::git::{
+use intelekt_workspace::session::git::{
     self, DiscardScope, GIT_STATUS_CACHE_TTL, GitDiffsData, GitStatusData, check_diff_size_limits,
 };
-use xai_grok_workspace::workspace_ops::{
+use intelekt_workspace::workspace_ops::{
     GitBranchesReq, GitCheckoutCommitReq, GitCheckoutReq, GitCommitReq, GitCurrentCommitReq,
     GitDiffReq, GitDiscardReq, GitFilesReq, GitInfoReq, GitStageContentReq, GitStageReq,
     GitStashReq, GitStatusExtReq, GitStatusFormat, GitUnstageReq,
@@ -250,7 +250,7 @@ pub struct GitCheckoutCommitRequest {
 /// Resolve git_root from explicit value or session lookup via [`WorkspaceOps`].
 async fn resolve_git_root(
     agent: &MvpAgent,
-    ops: &xai_grok_workspace::WorkspaceOps,
+    ops: &intelekt_workspace::WorkspaceOps,
     git_root: Option<String>,
     session_id: Option<&acp::SessionId>,
 ) -> Result<PathBuf, acp::Error> {
@@ -261,7 +261,7 @@ async fn resolve_git_root(
         if let Some(cwd) = agent.get_session_cwd(sid) {
             let result = ops
                 .dispatch(
-                    &xai_grok_workspace::workspace_ops::GitResolveRootReq { cwd },
+                    &intelekt_workspace::workspace_ops::GitResolveRootReq { cwd },
                     None,
                 )
                 .await
@@ -281,7 +281,7 @@ async fn resolve_git_root(
 /// Try to extract a git_root from the request params (best-effort, for jj routing).
 async fn try_resolve_git_root(
     agent: &MvpAgent,
-    ops: &xai_grok_workspace::WorkspaceOps,
+    ops: &intelekt_workspace::WorkspaceOps,
     args: &acp::ExtRequest,
 ) -> Option<PathBuf> {
     #[derive(serde::Deserialize)]
@@ -299,7 +299,7 @@ async fn try_resolve_git_root(
     {
         return ops
             .dispatch(
-                &xai_grok_workspace::workspace_ops::GitResolveRootReq { cwd },
+                &intelekt_workspace::workspace_ops::GitResolveRootReq { cwd },
                 None,
             )
             .await
@@ -310,19 +310,19 @@ async fn try_resolve_git_root(
 }
 pub async fn handle(
     agent: &MvpAgent,
-    ops: &xai_grok_workspace::WorkspaceOps,
+    ops: &intelekt_workspace::WorkspaceOps,
     args: &acp::ExtRequest,
 ) -> ExtResult {
     if let Some(git_root) = try_resolve_git_root(agent, ops, args).await {
         let vcs_kind = ops
             .dispatch(
-                &xai_grok_workspace::workspace_ops::DetectVcsKindReq {
+                &intelekt_workspace::workspace_ops::DetectVcsKindReq {
                     path: git_root.clone(),
                 },
                 None,
             )
             .await
-            .unwrap_or(xai_grok_workspace::session::git::VcsKind::Git);
+            .unwrap_or(intelekt_workspace::session::git::VcsKind::Git);
         if vcs_kind.is_jj()
             && let Some(result) =
                 super::jj::try_handle(args.method.as_ref(), &git_root, &args.params).await
@@ -354,7 +354,7 @@ pub async fn handle(
             if let Some(ref git_root) = git_root {
                 let current_commit = ops
                     .dispatch(
-                        &xai_grok_workspace::workspace_ops::GitCurrentCommitReq {
+                        &intelekt_workspace::workspace_ops::GitCurrentCommitReq {
                             git_root: git_root.clone(),
                         },
                         None,
@@ -626,13 +626,13 @@ pub async fn handle(
                 resolve_git_root(agent, ops, req.git_root, Some(&req.session_id)).await?;
             let vcs_kind = ops
                 .dispatch(
-                    &xai_grok_workspace::workspace_ops::DetectVcsKindReq {
+                    &intelekt_workspace::workspace_ops::DetectVcsKindReq {
                         path: git_root.clone(),
                     },
                     None,
                 )
                 .await
-                .unwrap_or(xai_grok_workspace::session::git::VcsKind::Git);
+                .unwrap_or(intelekt_workspace::session::git::VcsKind::Git);
             if vcs_kind.is_jj() {
                 return Err(acp::Error::invalid_request()
                     .data("checkout_session_head is not supported in jj repositories"));
@@ -651,7 +651,7 @@ pub async fn handle(
             })?;
             let result = ops
                 .dispatch(
-                    &xai_grok_workspace::workspace_ops::GitCheckoutCommitReq {
+                    &intelekt_workspace::workspace_ops::GitCheckoutCommitReq {
                         git_root: git_root.clone(),
                         head_commit,
                         head_branch: summary.head_branch,
@@ -670,13 +670,13 @@ pub async fn handle(
                 resolve_git_root(agent, ops, req.git_root, req.session_id.as_ref()).await?;
             let vcs_kind = ops
                 .dispatch(
-                    &xai_grok_workspace::workspace_ops::DetectVcsKindReq {
+                    &intelekt_workspace::workspace_ops::DetectVcsKindReq {
                         path: git_root.clone(),
                     },
                     None,
                 )
                 .await
-                .unwrap_or(xai_grok_workspace::session::git::VcsKind::Git);
+                .unwrap_or(intelekt_workspace::session::git::VcsKind::Git);
             if vcs_kind.is_jj() {
                 return Err(acp::Error::invalid_request().data(
                     "checkout_commit is not supported in jj repos; use `jj new` or `jj edit`",

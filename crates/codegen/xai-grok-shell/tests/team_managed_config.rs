@@ -3,7 +3,7 @@
 //! the cli-chat-proxy deployment-config route.
 //!
 //! Every test here MUST be `#[serial]`: they share one process-global
-//! `GROK_HOME` (the `grok_home` `OnceLock` allows a single value per process)
+//! `INTELEKT_HOME` (the `grok_home` `OnceLock` allows a single value per process)
 //! and mutate that directory + process env, so concurrent tests would race.
 
 use std::io::{BufRead, BufReader, Write};
@@ -12,15 +12,15 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex, OnceLock};
 
 use serial_test::serial;
-use xai_grok_shell::config::ServingIdentity;
-use xai_grok_test_support::spawn_counting_server;
+use intelekt_shell::config::ServingIdentity;
+use intelekt_test_support::spawn_counting_server;
 
 /// The serving identity for a team id (the staleness checks key on this).
 fn team_identity(id: &str) -> ServingIdentity {
     ServingIdentity::Team(id.to_owned())
 }
 
-/// Shared temp dir used as GROK_HOME for the whole test binary (the grok_home
+/// Shared temp dir used as INTELEKT_HOME for the whole test binary (the grok_home
 /// `OnceLock` only allows one value per process). Also scrubs/installs the env
 /// this suite depends on, before any test thread reads it.
 fn test_home() -> &'static PathBuf {
@@ -29,12 +29,12 @@ fn test_home() -> &'static PathBuf {
         let path = tempfile::TempDir::new().unwrap().keep();
         // SAFETY: set once at init before other threads read the vars.
         unsafe {
-            std::env::set_var("GROK_HOME", &path);
+            std::env::set_var("INTELEKT_HOME", &path);
             // Ambient env must not shadow the scenarios under test: a real
             // deployment key, a managed-config opt-out, or a proxy that would
             // intercept the 127.0.0.1 mocks.
             for var in [
-                "GROK_DEPLOYMENT_KEY",
+                "INTELEKT_DEPLOYMENT_KEY",
                 "GROK_MANAGED_CONFIG",
                 "GROK_DEPLOYMENT_CONFIG_REFRESH_INTERVAL_SECS",
                 "GROK_DEPLOYMENT_CONFIG_CACHE_TTL_SECS",
@@ -277,7 +277,7 @@ fn write_team_auth(home: &std::path::Path, team_id: &str) {
 /// Like [`write_team_auth`] but with an explicit `expires_at`, so tests can
 /// simulate a routine cold-start where the persisted access token is expired.
 fn write_team_auth_expiry(home: &std::path::Path, team_id: &str, expires_at: &str) {
-    let scope = xai_grok_shell::auth::GrokComConfig::default().auth_scope();
+    let scope = intelekt_shell::auth::GrokComConfig::default().auth_scope();
     let auth = serde_json::json!({
         scope: {
             "key": "team-session-token",
@@ -295,7 +295,7 @@ fn write_team_auth_expiry(home: &std::path::Path, team_id: &str, expires_at: &st
 /// Write an `auth.json` with an EXPIRED `external`-mode team principal, so a configured refresher
 /// drives `AuthManager::auth()`. Models the cold-start where the persisted token is expired but refreshable.
 fn write_expired_external_team_auth(home: &std::path::Path, team_id: &str) {
-    let scope = xai_grok_shell::auth::GrokComConfig::default().auth_scope();
+    let scope = intelekt_shell::auth::GrokComConfig::default().auth_scope();
     let auth = serde_json::json!({
         scope: {
             "key": "stale-team-token",
@@ -338,7 +338,7 @@ async fn team_sync_writes_files() {
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("sync should succeed");
     assert!(wrote, "expected team config to be written");
@@ -376,11 +376,11 @@ async fn marker_dir_squat_is_cleared_and_marker_written() {
     write_team_auth(&home, "team-007");
 
     // Dir-squat the marker (with a child, like a real squat).
-    let marker_path = home.join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE);
+    let marker_path = home.join(intelekt_config::MANAGED_CONFIG_CACHE_FILE);
     std::fs::create_dir(&marker_path).unwrap();
     std::fs::write(marker_path.join("junk"), "x").unwrap();
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("sync should succeed");
     assert!(
@@ -415,15 +415,15 @@ async fn padded_team_id_is_one_identity() {
     write_team_auth(&home, "  team-007  ");
 
     assert_eq!(
-        xai_grok_shell::managed_config::current_serving_identity(),
+        intelekt_shell::managed_config::current_serving_identity(),
         team_identity("team-007"),
         "the serving identity must be the trimmed team id"
     );
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("sync should succeed");
     let marker =
-        std::fs::read_to_string(home.join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE)).unwrap();
+        std::fs::read_to_string(home.join(intelekt_config::MANAGED_CONFIG_CACHE_FILE)).unwrap();
     let v: serde_json::Value = serde_json::from_str(&marker).unwrap();
     assert_eq!(
         v["principal"].as_str(),
@@ -431,7 +431,7 @@ async fn padded_team_id_is_one_identity() {
         "the marker stores the trimmed identity: {marker}"
     );
     assert_eq!(
-        xai_grok_config::confirmed_team_switch("team-007"),
+        intelekt_config::confirmed_team_switch("team-007"),
         None,
         "padding is not a tenant switch"
     );
@@ -451,7 +451,7 @@ async fn team_switch_evicts_prior_teams_policy() {
     let (url_a, _auths_a) = spawn_mock(team_config_body());
     write_config(&home, &url_a);
     write_team_auth(&home, "team-a");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("team A sync should succeed");
     assert!(home.join("requirements.toml").exists());
@@ -470,7 +470,7 @@ async fn team_switch_evicts_prior_teams_policy() {
     write_config(&home, &url_b);
     write_team_auth(&home, "team-b");
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("team B sync must not fail the session");
     assert!(!wrote, "team B serves no artifacts, so nothing is written");
@@ -509,7 +509,7 @@ async fn team_switch_evicts_prior_teams_policy() {
     );
 
     // Team B's cache reads fresh + identity-matched (no missing-artifact stale).
-    assert!(!xai_grok_shell::config::is_managed_config_stale_for(
+    assert!(!intelekt_shell::config::is_managed_config_stale_for(
         &team_identity("team-b")
     ));
 }
@@ -527,7 +527,7 @@ async fn withdrawn_artifact_is_removed_on_next_sync() {
     let (url_full, _a) = spawn_mock(team_config_body());
     write_config(&home, &url_full);
     write_team_auth(&home, "team-007");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("initial sync should succeed");
     assert!(home.join("requirements.toml").exists());
@@ -542,7 +542,7 @@ async fn withdrawn_artifact_is_removed_on_next_sync() {
     .to_string();
     let (url_partial, _a2) = spawn_mock(body);
     write_config(&home, &url_partial);
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("second sync should succeed");
     assert!(wrote, "removing the withdrawn artifact is a change");
@@ -563,7 +563,7 @@ async fn withdrawn_artifact_is_removed_on_next_sync() {
         "the marker stops claiming the withdrawn artifact: {marker}"
     );
     assert!(
-        !xai_grok_shell::config::is_managed_config_stale_for(&team_identity("team-007")),
+        !intelekt_shell::config::is_managed_config_stale_for(&team_identity("team-007")),
         "the converged cache is not stale"
     );
 }
@@ -581,7 +581,7 @@ async fn empty_dk_response_with_failing_team_leaves_team_policy_intact() {
     let (url, _a) = spawn_mock(team_config_body());
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("team seed sync should succeed");
     assert!(home.join("requirements.toml").exists());
@@ -594,7 +594,7 @@ async fn empty_dk_response_with_failing_team_leaves_team_policy_intact() {
     )
     .unwrap();
 
-    let err = xai_grok_shell::managed_config::sync()
+    let err = intelekt_shell::managed_config::sync()
         .await
         .expect_err("the team fetch fails after the dk fallthrough");
     assert!(err.is_retryable(), "5xx is a transient failure: {err}");
@@ -627,38 +627,38 @@ async fn served_then_deleted_refetches_best_effort() {
     let (url, _auths) = spawn_mock(team_config_body());
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("initial sync should succeed");
     assert!(home.join("requirements.toml").exists());
     assert!(
-        !xai_grok_shell::config::is_managed_config_stale_for(&team_identity("team-007")),
+        !intelekt_shell::config::is_managed_config_stale_for(&team_identity("team-007")),
         "a fresh, identity-matched, complete cache is not stale"
     );
 
     // Tamper: delete the served file but keep the fresh marker.
     std::fs::remove_file(home.join("requirements.toml")).unwrap();
     assert!(
-        xai_grok_shell::config::is_managed_config_stale_for(&team_identity("team-007")),
+        intelekt_shell::config::is_managed_config_stale_for(&team_identity("team-007")),
         "a served-but-now-missing artifact must read stale"
     );
     // Identity mismatch also reads stale (team switch).
-    assert!(xai_grok_shell::config::is_managed_config_stale_for(
+    assert!(intelekt_shell::config::is_managed_config_stale_for(
         &team_identity("team-other")
     ));
 
     // Best-effort refresh restores it; the session is never refused. Here the on-disk token is unexpired
     // (cache hit). The expired-refreshable path is covered by `expired_refreshable_team_token_heals_after_auth_refresh`.
-    let auth_manager = std::sync::Arc::new(xai_grok_shell::auth::AuthManager::new(
+    let auth_manager = std::sync::Arc::new(intelekt_shell::auth::AuthManager::new(
         &home,
-        xai_grok_shell::auth::GrokComConfig::default(),
+        intelekt_shell::auth::GrokComConfig::default(),
     ));
-    xai_grok_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
+    intelekt_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
     assert!(
         home.join("requirements.toml").exists(),
         "the best-effort refresh restored the deleted artifact"
     );
-    assert!(!xai_grok_shell::config::is_managed_config_stale_for(
+    assert!(!intelekt_shell::config::is_managed_config_stale_for(
         &team_identity("team-007")
     ));
 }
@@ -684,7 +684,7 @@ async fn expired_refreshable_team_token_heals_after_auth_refresh() {
 
     // Establish a served, identity-matched cache (writes the sync marker).
     write_team_auth(&home, "team-007");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("initial sync should succeed");
     assert!(home.join("requirements.toml").exists());
@@ -693,25 +693,25 @@ async fn expired_refreshable_team_token_heals_after_auth_refresh() {
     write_expired_external_team_auth(&home, "team-007");
     std::fs::remove_file(home.join("requirements.toml")).unwrap();
     assert!(
-        !xai_grok_shell::managed_config::has_principal(),
+        !intelekt_shell::managed_config::has_principal(),
         "the expired token leaves no eligible managed principal — the expiry-filtered heal path can't see it (the brick)"
     );
     assert!(
-        xai_grok_shell::config::is_managed_config_stale_for(&team_identity("team-007")),
+        intelekt_shell::config::is_managed_config_stale_for(&team_identity("team-007")),
         "a served-but-now-missing artifact reads stale"
     );
 
     // A real AuthManager whose refresher mints a fresh team token, persisted by `auth()`.
-    let auth_manager = std::sync::Arc::new(xai_grok_shell::auth::AuthManager::new(
+    let auth_manager = std::sync::Arc::new(intelekt_shell::auth::AuthManager::new(
         &home,
-        xai_grok_shell::auth::GrokComConfig::default(),
+        intelekt_shell::auth::GrokComConfig::default(),
     ));
     auth_manager.configure_refresher(
         Some(r#"echo '{"access_token":"refreshed-team-token","expires_in":3600}'"#.to_string()),
         None,
     );
 
-    xai_grok_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
+    intelekt_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
 
     // The refresh re-enabled the heal: policy restored, refetched with the fresh token.
     assert!(
@@ -719,7 +719,7 @@ async fn expired_refreshable_team_token_heals_after_auth_refresh() {
         "the token refresh let the best-effort heal restore the deleted policy"
     );
     assert!(
-        xai_grok_shell::managed_config::has_principal(),
+        intelekt_shell::managed_config::has_principal(),
         "the refreshed token is a live, eligible managed (team) principal"
     );
     assert!(
@@ -743,20 +743,20 @@ async fn expired_team_token_without_successful_refresh_stays_failed_closed() {
     let (url, _auths) = spawn_mock(team_config_body());
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("initial sync should succeed");
     std::fs::remove_file(home.join("requirements.toml")).unwrap();
     write_expired_external_team_auth(&home, "team-007");
 
     // A refresher that always fails -> `auth()` cannot produce a principal.
-    let auth_manager = std::sync::Arc::new(xai_grok_shell::auth::AuthManager::new(
+    let auth_manager = std::sync::Arc::new(intelekt_shell::auth::AuthManager::new(
         &home,
-        xai_grok_shell::auth::GrokComConfig::default(),
+        intelekt_shell::auth::GrokComConfig::default(),
     ));
     auth_manager.configure_refresher(Some("false".to_string()), None);
 
-    xai_grok_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
+    intelekt_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
 
     assert!(
         !home.join("requirements.toml").exists(),
@@ -783,36 +783,36 @@ async fn managed_policy_gate_fails_closed_on_deleted_policy_offline() {
     let (url, _auths) = spawn_mock(body);
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("initial sync should succeed");
     // Intact, identity-matched policy → the gate proceeds.
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "an intact served policy must not be refused"
     );
 
     // Tamper: delete the served file but keep the marker → gate fails closed.
     std::fs::remove_file(home.join("requirements.toml")).unwrap();
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_err(),
+        intelekt_shell::managed_config::managed_policy_gate().is_err(),
         "a served-then-deleted policy must fail closed"
     );
 
     // Offline: the 5xx refetch can't restore the file → gate stays fail-closed (far-future token makes auth a cache hit).
     let (err_url, _c, _a) = spawn_mock_seq(vec![(500, "{}".to_string())]);
     write_config(&home, &err_url);
-    let auth_manager = std::sync::Arc::new(xai_grok_shell::auth::AuthManager::new(
+    let auth_manager = std::sync::Arc::new(intelekt_shell::auth::AuthManager::new(
         &home,
-        xai_grok_shell::auth::GrokComConfig::default(),
+        intelekt_shell::auth::GrokComConfig::default(),
     ));
-    xai_grok_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
+    intelekt_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
     assert!(
         !home.join("requirements.toml").exists(),
         "a failed refetch cannot restore the deleted policy"
     );
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_err(),
+        intelekt_shell::managed_config::managed_policy_gate().is_err(),
         "still missing after a failed refetch → gate stays fail-closed"
     );
 
@@ -820,7 +820,7 @@ async fn managed_policy_gate_fails_closed_on_deleted_policy_offline() {
     reset(&home);
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
-    xai_grok_shell::config::mark_managed_config_synced(xai_grok_shell::config::SyncMarker {
+    intelekt_shell::config::mark_managed_config_synced(intelekt_shell::config::SyncMarker {
         principal: Some("team-007"),
         had_managed_config: false,
         had_requirements: false,
@@ -828,7 +828,7 @@ async fn managed_policy_gate_fails_closed_on_deleted_policy_offline() {
         fail_closed: false,
     });
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "a config-less principal must not be refused"
     );
 }
@@ -853,19 +853,19 @@ async fn bootstrap_fails_closed_when_managed_policy_compromised() {
     let (url, _auths) = spawn_mock(body);
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("initial sync should succeed");
     std::fs::remove_file(home.join("requirements.toml")).unwrap();
 
     // The gate is bootstrap's first step, so it refuses before any config/model work.
-    let cfg = xai_grok_shell::agent::config::Config::default();
-    let auth_manager = std::sync::Arc::new(xai_grok_shell::auth::AuthManager::new(
+    let cfg = intelekt_shell::agent::config::Config::default();
+    let auth_manager = std::sync::Arc::new(intelekt_shell::auth::AuthManager::new(
         &home,
-        xai_grok_shell::auth::GrokComConfig::default(),
+        intelekt_shell::auth::GrokComConfig::default(),
     ));
     // `bootstrap`'s Ok type isn't `Debug`, so match rather than `expect_err`.
-    let err = match xai_grok_shell::agent::init::bootstrap(&cfg, &auth_manager, None) {
+    let err = match intelekt_shell::agent::init::bootstrap(&cfg, &auth_manager, None) {
         Err(e) => e,
         Ok(_) => {
             panic!("a compromised fail_closed policy must fail bootstrap closed, but it succeeded")
@@ -877,7 +877,7 @@ async fn bootstrap_fails_closed_when_managed_policy_compromised() {
     );
 }
 
-/// Live wiring guard: an offline `GROK_DEPLOYMENT_KEY` switch on a fail_closed install must FAIL CLOSED, else a
+/// Live wiring guard: an offline `INTELEKT_DEPLOYMENT_KEY` switch on a fail_closed install must FAIL CLOSED, else a
 /// regression returning `None` silently disables deploy-key-switch detection. Same-key ALLOW checks the lib's own `blake3(KEY-AAA)` exactly.
 #[tokio::test]
 #[serial]
@@ -896,8 +896,8 @@ async fn managed_policy_gate_fails_closed_on_deployment_key_switch_offline() {
     write_config(&home, &url);
 
     // SAFETY: #[serial] test; the env is restored before any assertion below.
-    unsafe { std::env::set_var("GROK_DEPLOYMENT_KEY", "KEY-AAA") };
-    xai_grok_shell::managed_config::sync()
+    unsafe { std::env::set_var("INTELEKT_DEPLOYMENT_KEY", "KEY-AAA") };
+    intelekt_shell::managed_config::sync()
         .await
         .expect("deployment-key sync should record the fail_closed marker");
 
@@ -915,16 +915,16 @@ async fn managed_policy_gate_fails_closed_on_deployment_key_switch_offline() {
     unsafe { std::env::set_var("GROK_MANAGED_CONFIG", "0") };
 
     // Same key A → matching fingerprint → ALLOW (exact-equality vs recorded blake3).
-    let gate_same_key = xai_grok_shell::managed_config::managed_policy_gate();
+    let gate_same_key = intelekt_shell::managed_config::managed_policy_gate();
 
     // Switch to a different key B → REFUSE: exercises the full offline wiring.
     // SAFETY: #[serial] test; restored immediately below.
-    unsafe { std::env::set_var("GROK_DEPLOYMENT_KEY", "KEY-BBB") };
-    let gate_switched_key = xai_grok_shell::managed_config::managed_policy_gate();
+    unsafe { std::env::set_var("INTELEKT_DEPLOYMENT_KEY", "KEY-BBB") };
+    let gate_switched_key = intelekt_shell::managed_config::managed_policy_gate();
 
     // SAFETY: #[serial] test; restore env BEFORE asserting so a failed assert can't leak it to later tests.
     unsafe {
-        std::env::remove_var("GROK_DEPLOYMENT_KEY");
+        std::env::remove_var("INTELEKT_DEPLOYMENT_KEY");
         std::env::remove_var("GROK_MANAGED_CONFIG");
     }
 
@@ -967,7 +967,7 @@ fn former_managed_user_signed_out_is_not_locked_out() {
     // No deployment key in config, and `reset` removed auth.json → no principal.
     std::fs::write(home.join("config.toml"), "[endpoints]\n").unwrap();
     // A stale, opted-in marker that reads tampered: it recorded a served requirements.toml that's now absent.
-    xai_grok_shell::config::mark_managed_config_synced(xai_grok_shell::config::SyncMarker {
+    intelekt_shell::config::mark_managed_config_synced(intelekt_shell::config::SyncMarker {
         principal: Some("team-007"),
         had_managed_config: false,
         had_requirements: true,
@@ -976,7 +976,7 @@ fn former_managed_user_signed_out_is_not_locked_out() {
     });
 
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "a signed-out user with a leftover fail_closed marker must not be refused (no principal to enforce)"
     );
 }
@@ -994,7 +994,7 @@ fn unreadable_auth_without_marker_is_not_refused() {
     // No managed_config_cache.json marker at all.
 
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "unreadable auth (fail-safe present) with no fail_closed marker must not be refused"
     );
 }
@@ -1019,7 +1019,7 @@ async fn deployment_key_served_then_deleted_heals_online() {
         format!("[endpoints]\nmanaged_config_url = \"{url}\"\ndeployment_key = \"KEY-AAA\"\n"),
     )
     .unwrap();
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("initial deploy-key sync should succeed");
     assert!(home.join("requirements.toml").exists());
@@ -1028,17 +1028,17 @@ async fn deployment_key_served_then_deleted_heals_online() {
     std::fs::remove_file(home.join("requirements.toml")).unwrap();
 
     // The mock still serves, so the best-effort session-start refresh restores it; the gate then allows.
-    let auth_manager = std::sync::Arc::new(xai_grok_shell::auth::AuthManager::new(
+    let auth_manager = std::sync::Arc::new(intelekt_shell::auth::AuthManager::new(
         &home,
-        xai_grok_shell::auth::GrokComConfig::default(),
+        intelekt_shell::auth::GrokComConfig::default(),
     ));
-    xai_grok_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
+    intelekt_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
     assert!(
         home.join("requirements.toml").exists(),
         "the online refetch must restore the deleted deploy-key policy"
     );
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "after a successful heal the deploy-key gate must allow"
     );
 }
@@ -1062,12 +1062,12 @@ async fn identity_change_permits_offline_team_switch_and_purges_prior_team() {
     let (url, _auths) = spawn_mock(body);
     write_config(&home, &url);
     write_team_auth(&home, "team-a");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("team-a sync should succeed");
     assert!(home.join("requirements.toml").exists());
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "team A's intact fail_closed policy must start"
     );
 
@@ -1076,19 +1076,19 @@ async fn identity_change_permits_offline_team_switch_and_purges_prior_team() {
     let (err_url, _c, _a) = spawn_mock_seq(vec![(500, "{}".to_string())]);
     write_config(&home, &err_url);
     write_team_auth(&home, "team-b");
-    let auth_manager = std::sync::Arc::new(xai_grok_shell::auth::AuthManager::new(
+    let auth_manager = std::sync::Arc::new(intelekt_shell::auth::AuthManager::new(
         &home,
-        xai_grok_shell::auth::GrokComConfig::default(),
+        intelekt_shell::auth::GrokComConfig::default(),
     ));
-    xai_grok_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
+    intelekt_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
 
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "a legitimate offline team switch must not fail closed"
     );
-    for f in xai_grok_shell::managed_config::MANAGED_ARTIFACT_FILES
+    for f in intelekt_shell::managed_config::MANAGED_ARTIFACT_FILES
         .into_iter()
-        .chain([xai_grok_config::MANAGED_CONFIG_CACHE_FILE])
+        .chain([intelekt_config::MANAGED_CONFIG_CACHE_FILE])
     {
         assert!(
             !home.join(f).exists(),
@@ -1117,7 +1117,7 @@ async fn gate_purge_skips_while_lock_contended() {
     let (url, _auths) = spawn_mock(body);
     write_config(&home, &url);
     write_team_auth(&home, "team-a");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("team A sync should succeed");
     assert!(home.join("requirements.toml").exists());
@@ -1136,7 +1136,7 @@ async fn gate_purge_skips_while_lock_contended() {
     lock.lock().unwrap();
 
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "a contended purge skip leaves a pure identity mismatch, which must not refuse"
     );
     assert!(
@@ -1151,7 +1151,7 @@ async fn gate_purge_skips_while_lock_contended() {
     // Release the lock: the next gate call acquires it and purges team A.
     lock.unlock().unwrap();
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "after the lock releases, the gate purges team A and team B starts"
     );
     assert!(
@@ -1184,7 +1184,7 @@ async fn gate_purge_retries_past_a_transient_lock_holder() {
     let (url, _auths) = spawn_mock(body);
     write_config(&home, &url);
     write_team_auth(&home, "team-a");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("team A sync should succeed");
     assert!(home.join("requirements.toml").exists());
@@ -1207,7 +1207,7 @@ async fn gate_purge_retries_past_a_transient_lock_holder() {
     });
 
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "a pure identity mismatch never refuses, purged or not"
     );
     holder.join().unwrap();
@@ -1218,7 +1218,7 @@ async fn gate_purge_retries_past_a_transient_lock_holder() {
     );
     assert!(
         !home
-            .join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE)
+            .join(intelekt_config::MANAGED_CONFIG_CACHE_FILE)
             .exists(),
         "team A's marker goes with the retried purge"
     );
@@ -1244,7 +1244,7 @@ async fn blank_team_id_neither_fails_closed_nor_purges() {
     let (url, _auths) = spawn_mock(body);
     write_config(&home, &url);
     write_team_auth(&home, "team-a");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("team A sync should succeed");
     assert!(home.join("requirements.toml").exists());
@@ -1253,7 +1253,7 @@ async fn blank_team_id_neither_fails_closed_nor_purges() {
     write_team_auth(&home, "");
 
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "a blank team_id must read as unknown, not a foreign substituted cache"
     );
     assert!(
@@ -1266,7 +1266,7 @@ async fn blank_team_id_neither_fails_closed_nor_purges() {
     );
     assert!(
         matches!(
-            xai_grok_shell::managed_config::current_serving_identity(),
+            intelekt_shell::managed_config::current_serving_identity(),
             ServingIdentity::None
         ),
         "a blank team_id must resolve to no identity, not Team(\"\") (spurious refetch input)"
@@ -1293,7 +1293,7 @@ async fn fail_closed_env_cannot_disarm_the_gate() {
         format!("[endpoints]\nmanaged_config_url = \"{url}\"\ndeployment_key = \"KEY-AAA\"\n"),
     )
     .unwrap();
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("deploy-key sync should succeed");
 
@@ -1305,7 +1305,7 @@ async fn fail_closed_env_cannot_disarm_the_gate() {
         std::env::set_var("GROK_MANAGED_CONFIG", "0"); // offline (the gate is sync anyway)
         std::env::set_var("GROK_MANAGED_CONFIG_FAIL_CLOSED", "0"); // attempt a local disarm
     }
-    let gate = xai_grok_shell::managed_config::managed_policy_gate();
+    let gate = intelekt_shell::managed_config::managed_policy_gate();
     unsafe {
         std::env::remove_var("GROK_MANAGED_CONFIG");
         std::env::remove_var("GROK_MANAGED_CONFIG_FAIL_CLOSED");
@@ -1328,7 +1328,7 @@ async fn logout_clears_team_config() {
     let (url, _last_auth) = spawn_mock(team_config_body());
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("sync should succeed");
     assert!(home.join("managed_config.toml").exists());
@@ -1339,7 +1339,7 @@ async fn logout_clears_team_config() {
 
     // `AuthManager::clear` deletes auth.json when the last scope is removed.
     std::fs::remove_file(home.join("auth.json")).unwrap();
-    xai_grok_shell::managed_config::clear_orphan();
+    intelekt_shell::managed_config::clear_orphan();
 
     assert!(
         !home.join("managed_config.toml").exists(),
@@ -1366,7 +1366,7 @@ fn cold_start_expired_token_keeps_config() {
     std::fs::write(home.join("managed_config.toml"), TEAM_MANAGED).unwrap();
     std::fs::write(home.join("requirements.toml"), TEAM_REQUIREMENTS).unwrap();
     write_team_auth_expiry(&home, "team-007", PAST);
-    xai_grok_shell::managed_config::clear_orphan();
+    intelekt_shell::managed_config::clear_orphan();
 
     assert!(
         home.join("managed_config.toml").exists(),
@@ -1388,7 +1388,7 @@ fn unreadable_auth_keeps_config() {
 
     std::fs::write(home.join("requirements.toml"), TEAM_REQUIREMENTS).unwrap();
     std::fs::write(home.join("auth.json"), "{corrupt json").unwrap();
-    xai_grok_shell::managed_config::clear_orphan();
+    intelekt_shell::managed_config::clear_orphan();
 
     assert!(
         home.join("requirements.toml").exists(),
@@ -1410,7 +1410,7 @@ async fn deployment_key_wins_over_team_when_both_present() {
     .unwrap();
     write_team_auth(&home, "team-007");
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("sync should succeed");
     assert!(wrote);
@@ -1444,7 +1444,7 @@ async fn deployment_key_sync_records_principal_and_key_fingerprint() {
     )
     .unwrap();
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("deployment-key sync should succeed");
     assert!(wrote);
@@ -1487,7 +1487,7 @@ fn deployment_key_config_survives_clear() {
     .unwrap();
     let _ = std::fs::remove_file(home.join("auth.json"));
 
-    xai_grok_shell::managed_config::clear_orphan();
+    intelekt_shell::managed_config::clear_orphan();
 
     assert!(
         home.join("managed_config.toml").exists(),
@@ -1506,7 +1506,7 @@ async fn personal_login_is_noop() {
     let (url, count, _) = spawn_mock_seq(vec![(200, team_config_body())]);
     write_config(&home, &url);
     // A signed-in USER principal (no team_id, principal_type absent).
-    let scope = xai_grok_shell::auth::GrokComConfig::default().auth_scope();
+    let scope = intelekt_shell::auth::GrokComConfig::default().auth_scope();
     let auth = serde_json::json!({
         scope: {
             "key": "personal-token",
@@ -1518,7 +1518,7 @@ async fn personal_login_is_noop() {
     });
     std::fs::write(home.join("auth.json"), auth.to_string()).unwrap();
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("personal login → no-op, not an error");
     assert!(!wrote, "a personal login must not fetch team config");
@@ -1554,7 +1554,7 @@ async fn lock_contention_does_not_fall_through_to_team() {
         .unwrap();
     lock.lock().unwrap();
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("contended sync is a no-op, not an error");
     lock.unlock().unwrap();
@@ -1592,13 +1592,13 @@ async fn setup_lock_skip_is_not_reported_as_no_config() {
         .unwrap();
     lock.lock().unwrap();
 
-    let outcome = xai_grok_shell::managed_config::run_setup().await;
+    let outcome = intelekt_shell::managed_config::run_setup().await;
     lock.unlock().unwrap();
 
     assert!(
         matches!(
             outcome,
-            xai_grok_shell::managed_config::SetupOutcome::Skipped
+            intelekt_shell::managed_config::SetupOutcome::Skipped
         ),
         "a lock skip persisted nothing: it must report Skipped, not Installed or \
          NothingConfigured, got {outcome:?}"
@@ -1618,7 +1618,7 @@ async fn sync_retries_after_transient_error() {
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("should retry the 500 then succeed");
     assert!(wrote);
@@ -1644,7 +1644,7 @@ async fn sync_retries_after_body_phase_drop() {
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("a mid-body drop must be retried on a fresh connection, then succeed");
     assert!(wrote);
@@ -1669,7 +1669,7 @@ async fn connection_drop_is_not_reported_as_unreachable() {
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
 
-    let err = xai_grok_shell::managed_config::sync()
+    let err = intelekt_shell::managed_config::sync()
         .await
         .expect_err("all connections dropped → the fetch fails");
     let msg = err.to_string().to_lowercase();
@@ -1697,7 +1697,7 @@ async fn sync_fails_terminally_on_malformed_payload() {
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
 
-    let err = xai_grok_shell::managed_config::sync()
+    let err = intelekt_shell::managed_config::sync()
         .await
         .expect_err("a malformed payload must fail, not write config");
     assert_eq!(
@@ -1727,7 +1727,7 @@ async fn shared_client_reuses_pooled_connection() {
     // can't intercept the 127.0.0.1 mock and break the accept count regardless of test ordering.
     let _ = test_home();
     let (base_url, accepts, _heads) = spawn_counting_server().await;
-    let client = xai_grok_shell::http::shared_client();
+    let client = intelekt_shell::http::shared_client();
 
     client
         .get(base_url.as_str())
@@ -1767,7 +1767,7 @@ async fn sync_fails_fast_on_auth_error_without_retry() {
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
 
-    let err = xai_grok_shell::managed_config::sync()
+    let err = intelekt_shell::managed_config::sync()
         .await
         .expect_err("401 should be an error");
     assert_eq!(*count.lock().unwrap(), 1, "auth error must not be retried");
@@ -1794,7 +1794,7 @@ async fn rejected_deployment_key_falls_back_to_team() {
     .unwrap();
     write_team_auth(&home, "team-007");
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("team fallback should succeed after the key is rejected");
 
@@ -1826,7 +1826,7 @@ async fn empty_deployment_response_falls_through_to_team() {
     .unwrap();
     write_team_auth(&home, "team-007");
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("team fallthrough should succeed");
 
@@ -1863,7 +1863,7 @@ async fn empty_content_deployment_row_does_not_fall_through_to_team() {
     .unwrap();
     write_team_auth(&home, "team-007");
 
-    let wrote = xai_grok_shell::managed_config::sync()
+    let wrote = intelekt_shell::managed_config::sync()
         .await
         .expect("degraded dk row is a no-op, not an error");
 
@@ -1895,12 +1895,12 @@ async fn managed_config_opt_out_makes_no_requests() {
 
     // SAFETY: #[serial] test; restored before returning.
     unsafe { std::env::set_var("GROK_MANAGED_CONFIG", "0") };
-    let outcome = xai_grok_shell::managed_config::post_login_sync(None).await;
+    let outcome = intelekt_shell::managed_config::post_login_sync(None).await;
     unsafe { std::env::remove_var("GROK_MANAGED_CONFIG") };
 
     assert_eq!(
         outcome,
-        xai_grok_shell::managed_config::ManagedConfigSync::Skipped
+        intelekt_shell::managed_config::ManagedConfigSync::Skipped
     );
 
     assert_eq!(*count.lock().unwrap(), 0, "opt-out must suppress the fetch");
@@ -1921,7 +1921,7 @@ async fn post_login_pins_authenticated_team_over_disk() {
     write_team_auth(&home, "team-disk");
 
     // But we just authenticated as a different team with a distinct token.
-    let pinned: xai_grok_shell::auth::GrokAuth = serde_json::from_value(serde_json::json!({
+    let pinned: intelekt_shell::auth::GrokAuth = serde_json::from_value(serde_json::json!({
         "key": "pinned-token",
         "auth_mode": "oidc",
         "create_time": "2026-01-01T00:00:00Z",
@@ -1932,10 +1932,10 @@ async fn post_login_pins_authenticated_team_over_disk() {
     }))
     .unwrap();
 
-    let outcome = xai_grok_shell::managed_config::post_login_sync(Some(pinned)).await;
+    let outcome = intelekt_shell::managed_config::post_login_sync(Some(pinned)).await;
     assert_eq!(
         outcome,
-        xai_grok_shell::managed_config::ManagedConfigSync::Updated { is_team: true }
+        intelekt_shell::managed_config::ManagedConfigSync::Updated { is_team: true }
     );
     assert_eq!(
         auths.lock().unwrap().last().map(String::as_str),
@@ -1956,11 +1956,11 @@ async fn post_login_sync_is_latency_bounded() {
     write_config(&home, &url);
     write_team_auth(&home, "team-007");
 
-    let outcome = xai_grok_shell::managed_config::post_login_sync(None).await;
+    let outcome = intelekt_shell::managed_config::post_login_sync(None).await;
 
     assert_eq!(
         outcome,
-        xai_grok_shell::managed_config::ManagedConfigSync::Failed
+        intelekt_shell::managed_config::ManagedConfigSync::Failed
     );
     assert_eq!(
         *count.lock().unwrap(),
@@ -1990,7 +1990,7 @@ async fn deploy_key_machine_never_gate_purges_on_team_switch() {
     let (url, _auths) = spawn_mock(body);
     write_config(&home, &url);
     write_team_auth(&home, "team-a");
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("team-a sync should succeed");
     assert!(home.join("managed_config.toml").exists());
@@ -2006,15 +2006,15 @@ async fn deploy_key_machine_never_gate_purges_on_team_switch() {
     )
     .unwrap();
     write_team_auth(&home, "team-b");
-    let auth_manager = std::sync::Arc::new(xai_grok_shell::auth::AuthManager::new(
+    let auth_manager = std::sync::Arc::new(intelekt_shell::auth::AuthManager::new(
         &home,
-        xai_grok_shell::auth::GrokComConfig::default(),
+        intelekt_shell::auth::GrokComConfig::default(),
     ));
-    xai_grok_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
+    intelekt_shell::managed_config::ensure_managed_policy_present(&auth_manager).await;
 
     // The gate is the purge's only caller — without this call the guard is unexercised.
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "dk gate must permit"
     );
     assert!(
@@ -2035,7 +2035,7 @@ async fn deploy_key_machine_never_gate_purges_on_team_switch() {
 #[serial]
 async fn purge_crash_prefixes_stay_armed_and_converge() {
     let home = test_home().clone();
-    let artifacts = xai_grok_shell::managed_config::MANAGED_ARTIFACT_FILES;
+    let artifacts = intelekt_shell::managed_config::MANAGED_ARTIFACT_FILES;
     // 0..=len: every proper prefix of the 4-step removal order, up to and including
     // "all artifacts removed, marker still present" (a crash right before the marker step).
     for prefix_len in 0..=artifacts.len() {
@@ -2050,7 +2050,7 @@ async fn purge_crash_prefixes_stay_armed_and_converge() {
         let (url, _auths) = spawn_mock(body);
         write_config(&home, &url);
         write_team_auth(&home, "team-a");
-        xai_grok_shell::managed_config::sync()
+        intelekt_shell::managed_config::sync()
             .await
             .expect("team-a sync should succeed");
 
@@ -2059,7 +2059,7 @@ async fn purge_crash_prefixes_stay_armed_and_converge() {
             let _ = std::fs::remove_file(home.join(name));
         }
         assert!(
-            home.join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE)
+            home.join(intelekt_config::MANAGED_CONFIG_CACHE_FILE)
                 .exists(),
             "marker must outlive every artifact prefix (prefix_len={prefix_len})"
         );
@@ -2067,12 +2067,12 @@ async fn purge_crash_prefixes_stay_armed_and_converge() {
         // Team B arrives offline: the detector must still confirm and the purge converge.
         write_team_auth(&home, "team-b");
         assert_eq!(
-            xai_grok_config::confirmed_team_switch("team-b").as_deref(),
+            intelekt_config::confirmed_team_switch("team-b").as_deref(),
             Some("team-a"),
             "detector must stay armed after a crash prefix (prefix_len={prefix_len})"
         );
         assert!(
-            xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+            intelekt_shell::managed_config::managed_policy_gate().is_ok(),
             "offline switch over a crash prefix must not refuse (prefix_len={prefix_len})"
         );
         for name in artifacts {
@@ -2083,7 +2083,7 @@ async fn purge_crash_prefixes_stay_armed_and_converge() {
         }
         assert!(
             !home
-                .join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE)
+                .join(intelekt_config::MANAGED_CONFIG_CACHE_FILE)
                 .exists(),
             "the converged purge drops the marker last (prefix_len={prefix_len})"
         );
@@ -2117,7 +2117,7 @@ async fn contended_sync_writes_no_marker() {
         .open(home.join("managed_config.lock"))
         .unwrap();
     lock.lock().unwrap();
-    let synced = xai_grok_shell::managed_config::sync()
+    let synced = intelekt_shell::managed_config::sync()
         .await
         .expect("sync should succeed (skip, not error)");
     assert!(!synced, "a lock-contended apply must not report a write");
@@ -2131,7 +2131,7 @@ async fn contended_sync_writes_no_marker() {
     );
     assert!(
         !home
-            .join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE)
+            .join(intelekt_config::MANAGED_CONFIG_CACHE_FILE)
             .exists(),
         "a contended sync must not write a marker for files it never persisted"
     );
@@ -2178,7 +2178,7 @@ async fn credential_gone_mid_fetch_writes_no_marker() {
         .unwrap();
     });
 
-    let synced = xai_grok_shell::managed_config::sync()
+    let synced = intelekt_shell::managed_config::sync()
         .await
         .expect("sync should succeed (skip, not error)");
     clearer.join().unwrap();
@@ -2190,7 +2190,7 @@ async fn credential_gone_mid_fetch_writes_no_marker() {
     );
     assert!(
         !home
-            .join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE)
+            .join(intelekt_config::MANAGED_CONFIG_CACHE_FILE)
             .exists(),
         "credential-gone must not write a marker for an unapplied body"
     );
@@ -2219,7 +2219,7 @@ async fn dk_synced_marker_survives_config_blip_with_team_signed_in() {
         format!("[endpoints]\nmanaged_config_url = \"{url}\"\ndeployment_key = \"KEY-AAA\"\n"),
     )
     .unwrap();
-    xai_grok_shell::managed_config::sync()
+    intelekt_shell::managed_config::sync()
         .await
         .expect("deploy-key sync should succeed");
     assert!(home.join("requirements.toml").exists());
@@ -2230,12 +2230,12 @@ async fn dk_synced_marker_survives_config_blip_with_team_signed_in() {
     write_config(&home, &url);
     write_team_auth(&home, "team-b");
     assert_eq!(
-        xai_grok_config::confirmed_team_switch("team-b"),
+        intelekt_config::confirmed_team_switch("team-b"),
         None,
         "a key-scoped marker must never confirm a team switch"
     );
     assert!(
-        xai_grok_shell::managed_config::managed_policy_gate().is_ok(),
+        intelekt_shell::managed_config::managed_policy_gate().is_ok(),
         "the blip must not refuse: the key-scoped marker still matches the on-disk policy"
     );
     assert!(
@@ -2243,7 +2243,7 @@ async fn dk_synced_marker_survives_config_blip_with_team_signed_in() {
         "the machine's enforced policy must survive the blip"
     );
     assert!(
-        home.join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE)
+        home.join(intelekt_config::MANAGED_CONFIG_CACHE_FILE)
             .exists(),
         "the dk marker must survive the blip"
     );

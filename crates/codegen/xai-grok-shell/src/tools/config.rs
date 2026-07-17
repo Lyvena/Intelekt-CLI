@@ -1,10 +1,10 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
-use xai_grok_sampler::SamplerConfig;
-use xai_grok_tools::implementations::grok_build;
-use xai_grok_tools::registry::types::ToolConfig;
+use intelekt_sampler::SamplerConfig;
+use intelekt_tools::implementations::grok_build;
+use intelekt_tools::registry::types::ToolConfig;
 
-/// Production grok-build foreground command-timeout ceiling (seconds). The
+/// Production intelekt-cli foreground command-timeout ceiling (seconds). The
 /// tool-server binary defaults to a 5-minute foreground ceiling
 /// (`DEFAULT_MAX_TIMEOUT_MS`); production opts *up* to 10h by sending this
 /// explicitly (overridable via config.toml). Bounds only foreground commands —
@@ -56,7 +56,7 @@ impl BashToolConfig {
             map.insert("timeout_secs".into(), t.into());
         }
         // The tool-server binary defaults the foreground ceiling to 5 min;
-        // production grok-build opts up to 10h by sending it explicitly
+        // production intelekt-cli opts up to 10h by sending it explicitly
         // (overridable via config.toml). Foreground-only; background stays unbounded.
         let max_timeout_secs = self.max_timeout_secs.unwrap_or(PRODUCTION_MAX_TIMEOUT_SECS);
         map.insert("max_timeout_secs".into(), max_timeout_secs.into());
@@ -126,7 +126,7 @@ impl WebFetchToolConfig {
         remote_proxy: Option<&str>,
         remote_domains: Option<&[String]>,
         context_window_tokens: Option<u64>,
-    ) -> xai_grok_tools::implementations::grok_build::web_fetch::WebFetchParams {
+    ) -> intelekt_tools::implementations::grok_build::web_fetch::WebFetchParams {
         use crate::agent::config::env_string;
 
         let proxy_endpoint = self
@@ -142,7 +142,7 @@ impl WebFetchToolConfig {
             .cloned()
             .or_else(|| remote_domains.map(|d| d.to_vec()));
 
-        xai_grok_tools::implementations::grok_build::web_fetch::WebFetchParams {
+        intelekt_tools::implementations::grok_build::web_fetch::WebFetchParams {
             proxy_endpoint,
             allowed_domains,
             context_window_tokens,
@@ -155,7 +155,7 @@ impl WebFetchToolConfig {
 ///
 /// This is the *shell-side* config that holds sampling-level settings
 /// (e.g., web search API key from the sampling client). It is distinct
-/// from `xai_grok_tools::registry::types::ToolsetConfig` which holds
+/// from `intelekt_tools::registry::types::ToolsetConfig` which holds
 /// tool-implementation-level config (bash limits, web search mode).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
@@ -457,8 +457,8 @@ mod tests {
             .unwrap();
 
         for mut def in [
-            xai_grok_agent::config::AgentDefinition::plan(),
-            xai_grok_agent::config::AgentDefinition::explore(),
+            intelekt_agent::config::AgentDefinition::plan(),
+            intelekt_agent::config::AgentDefinition::explore(),
         ] {
             let name = def.name.clone();
             assert!(
@@ -681,7 +681,7 @@ mod tests {
         assert_eq!(
             max_timeout(&local.to_bash_params_json(None, None)),
             Some(PRODUCTION_MAX_TIMEOUT_SECS),
-            "production grok-build must set the 10h foreground ceiling"
+            "production intelekt-cli must set the 10h foreground ceiling"
         );
     }
 

@@ -5,7 +5,7 @@
 //! already quantized to the terminal's color capability level.
 
 use anstyle::{Ansi256Color, AnsiColor, Color, Style};
-use xai_grok_markdown::MarkdownStyle;
+use intelekt_markdown::MarkdownStyle;
 
 /// Convert `ratatui::style::Color` → `anstyle::Color` (type conversion only).
 ///
@@ -135,7 +135,7 @@ fn build_style() -> MarkdownStyle {
         strikethrough_outer: Style::new().dimmed().hidden(),
         inline_code_inner: fg(theme.md_code).bold(),
         inline_code_outer: fg(theme.md_code).dimmed().hidden(),
-        // Selection-side bar detection (xai-grok-pager scrollback/blocks/
+        // Selection-side bar detection (intelekt-pager scrollback/blocks/
         // quote_bar.rs quote_bar_style) mirrors this exact style; its
         // end-to-end tests fail if this line changes.
         blockquote_outer: fg(theme.md_muted).dimmed(),

@@ -10,12 +10,12 @@ use serde_json::json;
 use std::path::PathBuf;
 use tempfile::TempDir;
 
-use xai_grok_shell::extensions::notification::{
+use intelekt_shell::extensions::notification::{
     DiffContent, SessionNotification, SessionUpdate as XaiSessionUpdate,
 };
-use xai_grok_shell::session::info::Info as SessionInfo;
-use xai_grok_shell::session::persistence::default_model_id;
-use xai_grok_shell::session::storage::{JsonlStorageAdapter, SessionUpdate, StorageAdapter};
+use intelekt_shell::session::info::Info as SessionInfo;
+use intelekt_shell::session::persistence::default_model_id;
+use intelekt_shell::session::storage::{JsonlStorageAdapter, SessionUpdate, StorageAdapter};
 
 /// Test that xAI session notifications round-trip through storage correctly.
 #[tokio::test]

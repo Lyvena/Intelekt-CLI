@@ -58,8 +58,8 @@ pub use session::{WorkspaceSession, WorkspaceShared};
 pub use session::{file_state, git, jj};
 pub use upload::environment::{WorkspaceEnvironment, WorkspaceIdentity};
 pub use workspace_ops::{WorkspaceOp, WorkspaceOps};
-pub use xai_grok_workspace_client::WorkspaceClient;
-pub use xai_grok_workspace_types::WorkspaceEvent;
+pub use intelekt_workspace_client::WorkspaceClient;
+pub use intelekt_workspace_types::WorkspaceEvent;
 pub use xai_hunk_tracker::HunkTrackerHandle;
 /// Zero-init every workspace metric family so idle panels render a `0` baseline
 /// instead of "No data". Idempotent; call once at workspace-server startup.
@@ -72,10 +72,10 @@ pub fn init_metrics() {
     hub_server::init_metrics();
 }
 /// Crate-wide lock serializing every test that mutates the process-global
-/// environment (`GROK_HOME`, `HOME`, …). nextest isolates each test in its own
+/// environment (`INTELEKT_HOME`, `HOME`, …). nextest isolates each test in its own
 /// process, but `cargo test --lib` shares ONE process across threads, so
 /// per-module locks don't serialize cross-module — a peer test in another module
-/// can clobber `GROK_HOME` mid-test. A single shared lock (used by every
+/// can clobber `INTELEKT_HOME` mid-test. A single shared lock (used by every
 /// env-mutating test module) is required for that single-process run to be
 /// race-free.
 #[cfg(test)]

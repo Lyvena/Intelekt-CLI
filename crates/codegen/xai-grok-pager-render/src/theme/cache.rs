@@ -1,12 +1,12 @@
 //! In-memory theme cache + resolution.
 //!
 //! The pager reads the active `ThemeKind` on every render frame, so the
-//! lookup must be cheaper than re-loading from `~/.grok/config.toml`.
+//! lookup must be cheaper than re-loading from `~/.intelekt/config.toml`.
 //! [`current_kind`] returns the in-memory value, lazily seeding from the
 //! shell's layered effective config on first call.
 //!
 //! Disk writes are NOT performed here — they live in
-//! `xai_grok_shell::util::config::set_theme()` (and friends), invoked
+//! `intelekt_shell::util::config::set_theme()` (and friends), invoked
 //! via `Effect::PersistSetting` from the dispatcher. This module is a
 //! pager-side in-memory cache + resolution layer only.
 
@@ -72,7 +72,7 @@ pub struct AutoThemeConfig {
 
 /// Get the current theme kind.
 ///
-/// On the first call, reads from `~/.grok/config.toml` (via the shell's
+/// On the first call, reads from `~/.intelekt/config.toml` (via the shell's
 /// `load_effective_config`). After that, returns the in-memory value
 /// (updated by [`set`]).
 pub fn current_kind() -> ThemeKind {
@@ -113,10 +113,10 @@ pub fn terminal_native_locked() -> bool {
 /// Engage or clear the terminal-native theme lock.
 pub fn set_terminal_native_lock(locked: bool) {
     TERMINAL_NATIVE_LOCK.store(locked, Ordering::Relaxed);
-    xai_grok_markdown::set_color_level_cap(if locked {
-        xai_grok_markdown::ColorLevel::Basic
+    intelekt_markdown::set_color_level_cap(if locked {
+        intelekt_markdown::ColorLevel::Basic
     } else {
-        xai_grok_markdown::ColorLevel::TrueColor
+        intelekt_markdown::ColorLevel::TrueColor
     });
 }
 
@@ -220,7 +220,7 @@ pub fn resolve_initial_theme_no_osc11() -> ThemeKind {
 
 // -- Disk reads --------------------------------------------------------------
 //
-// All writes go through `xai_grok_shell::util::config::set_theme()` (and
+// All writes go through `intelekt_shell::util::config::set_theme()` (and
 // friends) via `Effect::PersistSetting`. This module only READS from the
 // shell's layered effective config.
 
@@ -230,7 +230,7 @@ pub fn resolve_initial_theme_no_osc11() -> ThemeKind {
 /// Checks `[ui].theme` first (the canonical location), then falls back
 /// to a top-level `theme` key for backwards compatibility.
 fn load_from_disk() -> Option<ThemeKind> {
-    let root = xai_grok_config::load_effective_config_disk_only().ok()?;
+    let root = intelekt_config::load_effective_config_disk_only().ok()?;
     let table = root.as_table()?;
     // Canonical: [ui] section
     let value = table
@@ -247,7 +247,7 @@ fn load_from_disk() -> Option<ThemeKind> {
 /// Reads `[ui].auto_dark_theme` and `[ui].auto_light_theme`, parsing them
 /// as theme names. Filters out `Auto` to prevent circular reference.
 fn load_auto_theme_config() -> AutoThemeConfig {
-    let Ok(root) = xai_grok_config::load_effective_config_disk_only() else {
+    let Ok(root) = intelekt_config::load_effective_config_disk_only() else {
         return AutoThemeConfig::default();
     };
     let Some(table) = root.as_table() else {

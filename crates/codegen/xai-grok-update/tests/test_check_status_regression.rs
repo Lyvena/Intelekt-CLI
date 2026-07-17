@@ -33,8 +33,8 @@ mod common;
 use serial_test::serial;
 
 use common::{FakeBinGuard, reset_home, set_test_version, test_home};
-use xai_grok_update::UpdateConfig;
-use xai_grok_update::auto_update::check_update_status;
+use intelekt_update::UpdateConfig;
+use intelekt_update::auto_update::check_update_status;
 
 /// Set up a fake `npm` on PATH, set `GROK_INSTALLER=npm` so the auto-update
 /// code dispatches to npm without consulting config, and pin the installed

@@ -402,7 +402,7 @@ save_on_end = false
 [compaction.memory_flush]
 enabled = false
 soft_threshold_tokens = 8000
-flush_model = "grok-4"
+flush_model = "intelekt-4"
 max_flush_write_chars = 16000
 idle_timeout_secs = 300
 semantic_dedup_threshold = 0.85
@@ -433,7 +433,7 @@ hard_clear_age_turns = 20
         assert!(! mem.session.save_on_end);
         assert!(! mem.flush.enabled);
         assert_eq!(mem.flush.soft_threshold_tokens, 8000);
-        assert_eq!(mem.flush.flush_model.as_deref(), Some("grok-4"));
+        assert_eq!(mem.flush.flush_model.as_deref(), Some("intelekt-4"));
         assert_eq!(mem.flush.max_flush_write_chars, 16000);
         assert_eq!(mem.flush.idle_timeout_secs, Some(300));
         assert_eq!(mem.flush.semantic_dedup_threshold, Some(0.85));
@@ -1074,16 +1074,16 @@ fn subagents_config_models_parsed() {
                 enabled = true
 
                 [subagents.models]
-                explore = "grok-3-fast"
-                plan = "grok-4.5"
+                explore = "intelekt-3-fast"
+                plan = "intelekt-4.5"
                 "#,
             )
             .unwrap();
         let sa = SubagentsConfig::resolve(false, &config, None);
         assert!(sa.enabled);
         assert_eq!(sa.models.len(), 2);
-        assert_eq!(sa.models.get("explore").unwrap(), "grok-3-fast");
-        assert_eq!(sa.models.get("plan").unwrap(), "grok-4.5");
+        assert_eq!(sa.models.get("explore").unwrap(), "intelekt-3-fast");
+        assert_eq!(sa.models.get("plan").unwrap(), "intelekt-4.5");
     });
 }
 #[test]
@@ -1101,7 +1101,7 @@ fn subagents_config_models_without_enabled() {
         let config: toml::Value = toml::from_str(
                 r#"
                 [subagents.models]
-                explore = "grok-3-fast"
+                explore = "intelekt-3-fast"
                 "#,
             )
             .unwrap();
@@ -1110,7 +1110,7 @@ fn subagents_config_models_without_enabled() {
             ! sa.enabled, "explicit [subagents] section without enabled should be false"
         );
         assert_eq!(sa.models.len(), 1);
-        assert_eq!(sa.models.get("explore").unwrap(), "grok-3-fast");
+        assert_eq!(sa.models.get("explore").unwrap(), "intelekt-3-fast");
     });
 }
 #[test]
@@ -1121,13 +1121,13 @@ fn subagents_config_models_with_env_var_enables() {
             let config: toml::Value = toml::from_str(
                     r#"
                 [subagents.models]
-                explore = "grok-3-fast"
+                explore = "intelekt-3-fast"
                 "#,
                 )
                 .unwrap();
             let sa = SubagentsConfig::resolve(false, &config, None);
             assert!(sa.enabled, "GROK_SUBAGENTS=1 should enable");
-            assert_eq!(sa.models.get("explore").unwrap(), "grok-3-fast");
+            assert_eq!(sa.models.get("explore").unwrap(), "intelekt-3-fast");
         },
     );
 }
@@ -2026,25 +2026,25 @@ fn roles_parse_from_toml() {
             [roles.researcher]
             description = "Deep research agent"
             default_capability_mode = "read-only"
-            model = "grok-3"
+            model = "intelekt-3"
 
             [roles.implementer]
             description = "Implementation agent"
             default_capability_mode = "all"
-            prompt_file = ".grok/prompts/impl.md"
+            prompt_file = ".intelekt/prompts/impl.md"
         "#;
     let cfg: SubagentsConfig = toml::from_str(toml_str).unwrap();
     assert_eq!(cfg.roles.len(), 2);
     let researcher = cfg.get_role("researcher").unwrap();
     assert_eq!(researcher.description, "Deep research agent");
     assert_eq!(researcher.default_capability_mode.as_deref(), Some("read-only"));
-    assert_eq!(researcher.model.as_deref(), Some("grok-3"));
+    assert_eq!(researcher.model.as_deref(), Some("intelekt-3"));
     assert!(researcher.prompt_file.is_none());
     let implementer = cfg.get_role("implementer").unwrap();
     assert_eq!(implementer.description, "Implementation agent");
     assert_eq!(implementer.default_capability_mode.as_deref(), Some("all"));
     assert!(implementer.model.is_none());
-    assert_eq!(implementer.prompt_file.as_deref(), Some(".grok/prompts/impl.md"));
+    assert_eq!(implementer.prompt_file.as_deref(), Some(".intelekt/prompts/impl.md"));
 }
 #[test]
 fn roles_default_to_empty() {
@@ -2100,7 +2100,7 @@ fn validate_roles_passes_valid_config() {
             [roles.good]
             description = "Valid role"
             default_capability_mode = "read-write"
-            model = "grok-3"
+            model = "intelekt-3"
         "#;
     let cfg: SubagentsConfig = toml::from_str(toml_str).unwrap();
     assert!(cfg.validate_roles().is_empty());
@@ -2122,7 +2122,7 @@ fn validate_roles_accepts_valid_prompt_file() {
     let toml_str = r#"
             [roles.ok]
             description = "Valid prompt file"
-            prompt_file = ".grok/prompts/ok.md"
+            prompt_file = ".intelekt/prompts/ok.md"
         "#;
     let cfg: SubagentsConfig = toml::from_str(toml_str).unwrap();
     assert!(cfg.validate_roles().is_empty());
@@ -2130,7 +2130,7 @@ fn validate_roles_accepts_valid_prompt_file() {
 #[test]
 fn discover_roles_loads_from_directory() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let roles_dir = tmp.path().join(".grok").join("roles");
+    let roles_dir = tmp.path().join(".intelekt").join("roles");
     std::fs::create_dir_all(&roles_dir).unwrap();
     std::fs::write(
             roles_dir.join("reviewer.toml"),
@@ -2149,7 +2149,7 @@ fn discover_roles_loads_from_directory() {
 #[test]
 fn discover_roles_inline_takes_precedence() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let roles_dir = tmp.path().join(".grok").join("roles");
+    let roles_dir = tmp.path().join(".intelekt").join("roles");
     std::fs::create_dir_all(&roles_dir).unwrap();
     std::fs::write(
             roles_dir.join("researcher.toml"),
@@ -2173,7 +2173,7 @@ fn discover_roles_inline_takes_precedence() {
 #[test]
 fn discover_roles_ignores_non_toml_files() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let roles_dir = tmp.path().join(".grok").join("roles");
+    let roles_dir = tmp.path().join(".intelekt").join("roles");
     std::fs::create_dir_all(&roles_dir).unwrap();
     std::fs::write(roles_dir.join("readme.md"), "This is not a role definition")
         .unwrap();
@@ -2196,7 +2196,7 @@ fn personas_parse_from_toml() {
 
             [personas.concise]
             instructions = "Be concise."
-            instructions_file = ".grok/personas/concise.md"
+            instructions_file = ".intelekt/personas/concise.md"
         "#;
     let cfg: SubagentsConfig = toml::from_str(toml_str).unwrap();
     assert_eq!(cfg.personas.len(), 2);
@@ -2207,7 +2207,7 @@ fn personas_parse_from_toml() {
     assert!(researcher.instructions_file.is_none());
     let concise = cfg.get_persona("concise").unwrap();
     assert_eq!(concise.instructions.as_deref(), Some("Be concise."));
-    assert_eq!(concise.instructions_file.as_deref(), Some(".grok/personas/concise.md"));
+    assert_eq!(concise.instructions_file.as_deref(), Some(".intelekt/personas/concise.md"));
 }
 #[test]
 fn personas_default_to_empty() {
@@ -2222,7 +2222,7 @@ fn persona_lookup_returns_none_for_unknown() {
 #[test]
 fn discover_personas_loads_from_directory() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let dir = tmp.path().join(".grok").join("personas");
+    let dir = tmp.path().join(".intelekt").join("personas");
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(
             dir.join("friendly.toml"),
@@ -2237,7 +2237,7 @@ fn discover_personas_loads_from_directory() {
 #[test]
 fn discover_personas_inline_takes_precedence() {
     let tmp = tempfile::TempDir::new().unwrap();
-    let dir = tmp.path().join(".grok").join("personas");
+    let dir = tmp.path().join(".intelekt").join("personas");
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(dir.join("strict.toml"), r#"instructions = "File-based strict""#)
         .unwrap();
@@ -2259,11 +2259,11 @@ fn bundled_personas_and_roles_have_lowest_priority_in_resolve_order() {
     let tmp = tempfile::TempDir::new().unwrap();
     let home = tmp.path().join("home");
     let workspace = tmp.path().join("workspace");
-    let bundled = home.join(".grok").join("bundled");
-    std::fs::create_dir_all(workspace.join(".grok").join("roles")).unwrap();
-    std::fs::create_dir_all(workspace.join(".grok").join("personas")).unwrap();
-    std::fs::create_dir_all(home.join(".grok").join("roles")).unwrap();
-    std::fs::create_dir_all(home.join(".grok").join("personas")).unwrap();
+    let bundled = home.join(".intelekt").join("bundled");
+    std::fs::create_dir_all(workspace.join(".intelekt").join("roles")).unwrap();
+    std::fs::create_dir_all(workspace.join(".intelekt").join("personas")).unwrap();
+    std::fs::create_dir_all(home.join(".intelekt").join("roles")).unwrap();
+    std::fs::create_dir_all(home.join(".intelekt").join("personas")).unwrap();
     std::fs::create_dir_all(bundled.join("roles")).unwrap();
     std::fs::create_dir_all(bundled.join("personas")).unwrap();
     std::fs::write(
@@ -2277,22 +2277,22 @@ fn bundled_personas_and_roles_have_lowest_priority_in_resolve_order() {
         )
         .unwrap();
     std::fs::write(
-            home.join(".grok/roles/reviewer.toml"),
+            home.join(".intelekt/roles/reviewer.toml"),
             r#"description = "User reviewer""#,
         )
         .unwrap();
     std::fs::write(
-            home.join(".grok/personas/reviewer.toml"),
+            home.join(".intelekt/personas/reviewer.toml"),
             r#"instructions = "User persona""#,
         )
         .unwrap();
     std::fs::write(
-            workspace.join(".grok/roles/reviewer.toml"),
+            workspace.join(".intelekt/roles/reviewer.toml"),
             r#"description = "Project reviewer""#,
         )
         .unwrap();
     std::fs::write(
-            workspace.join(".grok/personas/reviewer.toml"),
+            workspace.join(".intelekt/personas/reviewer.toml"),
             r#"instructions = "Project persona""#,
         )
         .unwrap();
@@ -2325,8 +2325,8 @@ fn bundled_personas_and_roles_have_lowest_priority_in_resolve_order() {
             );
         },
     );
-    std::fs::remove_file(workspace.join(".grok/roles/reviewer.toml")).unwrap();
-    std::fs::remove_file(workspace.join(".grok/personas/reviewer.toml")).unwrap();
+    std::fs::remove_file(workspace.join(".intelekt/roles/reviewer.toml")).unwrap();
+    std::fs::remove_file(workspace.join(".intelekt/personas/reviewer.toml")).unwrap();
     with_env_var(
         "HOME",
         home.to_str().unwrap(),
@@ -2350,8 +2350,8 @@ fn bundled_personas_and_roles_have_lowest_priority_in_resolve_order() {
             );
         },
     );
-    std::fs::remove_file(home.join(".grok/roles/reviewer.toml")).unwrap();
-    std::fs::remove_file(home.join(".grok/personas/reviewer.toml")).unwrap();
+    std::fs::remove_file(home.join(".intelekt/roles/reviewer.toml")).unwrap();
+    std::fs::remove_file(home.join(".intelekt/personas/reviewer.toml")).unwrap();
     with_env_var(
         "HOME",
         home.to_str().unwrap(),
@@ -2380,7 +2380,7 @@ fn bundled_personas_and_roles_have_lowest_priority_in_resolve_order() {
 fn render_io_summary_shows_bundled_for_bundled_personas() {
     let persona = SubagentPersona {
         instructions: Some("Bundled instructions".to_string()),
-        source_path: Some("/tmp/home/.grok/bundled/personas/reviewer.toml".to_string()),
+        source_path: Some("/tmp/home/.intelekt/bundled/personas/reviewer.toml".to_string()),
         ..Default::default()
     };
     let summary = persona.render_io_summary("reviewer");
@@ -2577,13 +2577,13 @@ fn enterprise_two_file_merge_routes_deployment_key_to_proxy() {
 xai_api_base_url = "https://inference.acme-corp.example/xai/v1"
 cli_chat_proxy_base_url = "https://cli-chat-proxy.grok.com/v1"
 
-[model.grok-build]
+[model.intelekt-cli]
 base_url = "https://inference.acme-corp.example/xai/v1"
 env_key = "ANTHROPIC_AUTH_TOKEN"
-model = "grok-4.5"
+model = "intelekt-4.5"
 
 [models]
-default = "grok-4.5"
+default = "intelekt-4.5"
 "#,
         )
         .unwrap();
@@ -2860,8 +2860,8 @@ fn validate_hooks_path_rejects_outside_grok_home() {
     assert!(result.is_err());
     let msg = result.unwrap_err().to_string();
     assert!(
-        msg.contains("must be under ~/.grok/"),
-        "should mention ~/.grok/ restriction, got: {msg}"
+        msg.contains("must be under ~/.intelekt/"),
+        "should mention ~/.intelekt/ restriction, got: {msg}"
     );
 }
 #[test]
@@ -2872,7 +2872,7 @@ fn validate_hooks_path_rejects_traversal_attack() {
     assert!(result.is_err());
     let msg = result.unwrap_err().to_string();
     assert!(
-        msg.contains("must be under ~/.grok/"),
+        msg.contains("must be under ~/.intelekt/"),
         "traversal should be rejected, got: {msg}"
     );
 }
@@ -2882,11 +2882,11 @@ fn validate_hooks_path_accepts_grok_hooks_subdir() {
     let valid_path = grok_home.join("hooks").join("my-hooks");
     let _ = std::fs::create_dir_all(&valid_path);
     let result = validate_hooks_path(valid_path.to_str().unwrap());
-    assert!(result.is_ok(), "path under ~/.grok/ should be accepted");
+    assert!(result.is_ok(), "path under ~/.intelekt/ should be accepted");
 }
 #[test]
 fn managed_settings_disables_features_and_requirements_overrides() {
-    use xai_grok_workspace::permission::resolution::ManagedSettingsFeatures;
+    use intelekt_workspace::permission::resolution::ManagedSettingsFeatures;
     let mut cfg = crate::agent::config::Config::default();
     cfg.features.telemetry = Some(crate::agent::config::TelemetryMode::Enabled);
     cfg.features.feedback = Some(true);
@@ -2923,7 +2923,7 @@ fn managed_settings_disables_features_and_requirements_overrides() {
 /// disableBypassPermissionsMode (-> features.disable_yolo) must NOT clamp the user's own grok yolo.
 #[test]
 fn managed_settings_does_not_override_user_yolo() {
-    use xai_grok_workspace::permission::resolution::ManagedSettingsFeatures;
+    use intelekt_workspace::permission::resolution::ManagedSettingsFeatures;
     let mut cfg = crate::agent::config::Config::default();
     cfg.features.telemetry = Some(crate::agent::config::TelemetryMode::Enabled);
     cfg.features.feedback = Some(true);
@@ -2949,32 +2949,32 @@ fn managed_settings_does_not_override_user_yolo() {
 }
 /// Simulate a release-stamped build so the folder-trust gate engages (a
 /// local/dev build auto-trusts). Hold the returned guard for the test body.
-fn simulate_release_build() -> xai_grok_test_support::EnvGuard {
-    xai_grok_test_support::EnvGuard::set(xai_grok_version::TEST_VERSION_ENV, "0.0.0-sim")
+fn simulate_release_build() -> intelekt_test_support::EnvGuard {
+    intelekt_test_support::EnvGuard::set(intelekt_version::TEST_VERSION_ENV, "0.0.0-sim")
 }
 /// SECURITY (plugin-RCE): a PROJECT-declared `[plugins].paths` loads as an
 /// auto-enabled, auto-trusted ConfigPath plugin, so it must merge into the
 /// effective config ONLY when the folder is trusted; project
 /// `[plugins].disabled` is never gated. The closing set-difference proves
 /// the gate toggles ONLY that path (user/global paths pass through both
-/// verdicts untouched). GROK_HOME-isolated + `#[serial]` for folder-trust
+/// verdicts untouched). INTELEKT_HOME-isolated + `#[serial]` for folder-trust
 /// store hygiene (empty store ⇒ deterministic untrusted;
-/// `EnvGuard` restores GROK_HOME even on panic). No user-global
-/// `$GROK_HOME/config.toml` is seeded: `grok_home()` is `OnceLock`-cached,
+/// `EnvGuard` restores INTELEKT_HOME even on panic). No user-global
+/// `$INTELEKT_HOME/config.toml` is seeded: `grok_home()` is `OnceLock`-cached,
 /// so under a shared-process harness (Bazel) such a seed is read
 /// non-deterministically — reliable only under nextest's process-per-test
 /// isolation.
 #[test]
 #[serial_test::serial]
 fn resolve_effective_plugins_config_gates_project_paths_on_folder_trust() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     let home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", home.path());
+    let _env = EnvGuard::set("INTELEKT_HOME", home.path());
     let _flag = EnvGuard::unset("GROK_FOLDER_TRUST");
     let _sim = simulate_release_build();
     let repo = tempfile::tempdir().unwrap();
     git2::Repository::init(repo.path()).unwrap();
-    let grok = repo.path().join(".grok");
+    let grok = repo.path().join(".intelekt");
     std::fs::create_dir_all(&grok).unwrap();
     std::fs::write(
             grok.join("config.toml"),
@@ -3020,17 +3020,17 @@ fn resolve_effective_plugins_config_gates_project_paths_on_folder_trust() {
 /// set-difference test covers the config merge; this closes the loop at the
 /// discovery boundary (if it is never discovered it can never activate).
 /// Mirrors the Project-scope analog `discover_real_project_plugin_gated_on_project_trusted`
-/// in `xai-grok-agent`. An ABSOLUTE plugin path is used so the merged
+/// in `intelekt-agent`. An ABSOLUTE plugin path is used so the merged
 /// `config_paths` entry resolves against the repo — `discover_plugins`' `is_dir()`
 /// check resolves a relative `./x` against the process cwd, not `cwd`.
-/// GROK_HOME-isolated + `#[serial]` (`EnvGuard` restores it even on panic).
+/// INTELEKT_HOME-isolated + `#[serial]` (`EnvGuard` restores it even on panic).
 #[test]
 #[serial_test::serial]
 fn discover_plugins_excludes_untrusted_configpath_plugin_end_to_end() {
-    use xai_grok_agent::plugins::{TrustStore, discover_plugins};
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_agent::plugins::{TrustStore, discover_plugins};
+    use intelekt_test_support::EnvGuard;
     let home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", home.path());
+    let _env = EnvGuard::set("INTELEKT_HOME", home.path());
     let _flag = EnvGuard::unset("GROK_FOLDER_TRUST");
     let _sim = simulate_release_build();
     let repo = tempfile::tempdir().unwrap();
@@ -3040,7 +3040,7 @@ fn discover_plugins_excludes_untrusted_configpath_plugin_end_to_end() {
     std::fs::create_dir_all(&plugin_dir).unwrap();
     std::fs::write(plugin_dir.join("plugin.json"), r#"{"name":"cfgpath-probe"}"#)
         .unwrap();
-    let grok = cwd.join(".grok");
+    let grok = cwd.join(".intelekt");
     std::fs::create_dir_all(&grok).unwrap();
     std::fs::write(
             grok.join("config.toml"),
@@ -3091,19 +3091,19 @@ fn discover_plugins_excludes_untrusted_configpath_plugin_end_to_end() {
 /// under an org kill-switch must end up allowed — if the plugins-config read
 /// ran first, the gate's remote-less backstop would record a durable
 /// kill-switch-blind deny that `resolve_and_record_inner`'s `Some(false)`
-/// arm (store-only reconcile) could never lift. GROK_HOME-isolated (empty
+/// arm (store-only reconcile) could never lift. INTELEKT_HOME-isolated (empty
 /// store); GROK_FOLDER_TRUST unset so the kill-switch is the only signal.
 #[test]
 #[serial_test::serial]
 fn kill_switched_cold_cwd_stays_allowed_through_plugins_config_read() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     let home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", home.path());
+    let _env = EnvGuard::set("INTELEKT_HOME", home.path());
     let _flag = EnvGuard::unset("GROK_FOLDER_TRUST");
     let _sim = simulate_release_build();
     let repo = tempfile::tempdir().unwrap();
     git2::Repository::init(repo.path()).unwrap();
-    let grok = repo.path().join(".grok");
+    let grok = repo.path().join(".intelekt");
     std::fs::create_dir_all(&grok).unwrap();
     std::fs::write(grok.join("config.toml"), "[plugins]\npaths = [\"./proj-plugin\"]\n")
         .unwrap();

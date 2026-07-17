@@ -12,8 +12,8 @@
 
 use std::time::Duration;
 
-use xai_grok_pager_pty_harness::PtyHarness;
-pub(crate) use xai_grok_pager_pty_harness::{SGR_SCROLL_DOWN, SGR_SCROLL_UP};
+use intelekt_pager_pty_harness::PtyHarness;
+pub(crate) use intelekt_pager_pty_harness::{SGR_SCROLL_DOWN, SGR_SCROLL_UP};
 
 use super::common::{
     ContentController, DEFAULT_COLS, DEFAULT_ROWS, MOCK_RESPONSE_SENTINEL, PROMPT,
@@ -56,7 +56,7 @@ pub(crate) const WHEEL_COL: u16 = 39;
 /// afterwards and assert on screen state / frame captures.
 ///
 /// Harness mirror: the scroll-matrix runner's gesture-replay loop
-/// (`xai-grok-pager-pty-harness/src/scroll_matrix/runner.rs`) ports this
+/// (`intelekt-pager-pty-harness/src/scroll_matrix/runner.rs`) ports this
 /// send loop onto `WheelStep` tables — apply fixes there too.
 pub(crate) fn send_wheel_sequence(
     h: &mut PtyHarness,
@@ -152,7 +152,7 @@ pub(crate) fn topmost_visible_marker(h: &PtyHarness) -> Option<usize> {
 /// confusing 60s stream timeout instead of an obvious failure.
 ///
 /// Harness mirror: `spawn_settled_marker_session` in
-/// `xai-grok-pager-pty-harness/src/scroll_matrix/session.rs` is a port of
+/// `intelekt-pager-pty-harness/src/scroll_matrix/session.rs` is a port of
 /// this preamble — fixes must flow both ways.
 pub(crate) async fn spawn_bottom_pinned_marker_scrollback(
     marker_count: usize,
@@ -264,7 +264,7 @@ fn streaming_marker_turn_text(marker_count: usize, tail_words: usize) -> String 
 /// mid-test and surfacing as a confusing stream timeout.
 ///
 /// Harness mirror: `spawn_streaming_marker_session` in
-/// `xai-grok-pager-pty-harness/src/scroll_matrix/session.rs` is a port of
+/// `intelekt-pager-pty-harness/src/scroll_matrix/session.rs` is a port of
 /// this preamble — fixes must flow both ways.
 pub(crate) async fn spawn_streaming_marker_turn(
     marker_count: usize,

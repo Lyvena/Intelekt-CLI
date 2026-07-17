@@ -77,7 +77,7 @@ pub struct RosterChanged {
 ///
 /// The agent serializes the response through
 /// `ExtMethodResult::success(..).to_ext_response()` (see
-/// `xai-grok-shell/src/agent/handlers/session.rs::handle_roster_list`), which
+/// `intelekt-shell/src/agent/handlers/session.rs::handle_roster_list`), which
 /// wraps the payload in a JSON-RPC-style `{ "result": { "sessions": [...] } }`
 /// envelope. A bare `{ "sessions": [...] }` body (no envelope) is tolerated too.
 ///
@@ -103,14 +103,14 @@ mod tests {
 
     /// Build a representative agent-side roster entry with every field set to
     /// a non-default value so the round-trip exercises name/case mapping.
-    fn agent_entry() -> xai_grok_shell::agent::roster::RosterEntry {
-        use xai_grok_shell::agent::roster as agent;
+    fn agent_entry() -> intelekt_shell::agent::roster::RosterEntry {
+        use intelekt_shell::agent::roster as agent;
         agent::RosterEntry {
             session_id: "sess-abc".to_string(),
             title: Some("Fix the roster".to_string()),
             cwd: "/repo/worktree".to_string(),
             is_worktree: true,
-            model_id: Some("grok-4".to_string()),
+            model_id: Some("intelekt-4".to_string()),
             reasoning_effort: None,
             yolo: true,
             activity: agent::RosterActivity::Working,
@@ -134,8 +134,8 @@ mod tests {
     /// `result` first and PASSES.
     #[test]
     fn roster_list_response_survives_result_envelope() {
-        use xai_grok_shell::agent::roster as agent;
-        use xai_grok_shell::session::ExtMethodResult;
+        use intelekt_shell::agent::roster as agent;
+        use intelekt_shell::session::ExtMethodResult;
 
         let agent_resp = agent::RosterListResponse {
             sessions: vec![agent_entry()],
@@ -172,7 +172,7 @@ mod tests {
         assert_eq!(e.title.as_deref(), Some("Fix the roster"));
         assert_eq!(e.cwd, "/repo/worktree");
         assert!(e.is_worktree);
-        assert_eq!(e.model_id.as_deref(), Some("grok-4"));
+        assert_eq!(e.model_id.as_deref(), Some("intelekt-4"));
         assert!(e.yolo);
         assert_eq!(e.activity, RosterActivity::Working);
         assert!(e.resident);
@@ -197,7 +197,7 @@ mod tests {
     /// the broadcast path's wire shape.
     #[test]
     fn roster_changed_round_trips() {
-        use xai_grok_shell::agent::roster as agent;
+        use intelekt_shell::agent::roster as agent;
 
         let agent_changed = agent::RosterChanged {
             upserted: vec![agent_entry()],

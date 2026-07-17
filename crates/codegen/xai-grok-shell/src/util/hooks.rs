@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use xai_grok_hooks::discovery::HookSource;
+use intelekt_hooks::discovery::HookSource;
 
 /// Owned paths for hook sources. Callers borrow via `as_sources()`.
 pub struct HookSourcePaths {
@@ -35,12 +35,12 @@ fn path_to_source(p: &Path) -> HookSource<'_> {
 /// Callers gate project sources on trust via `as_sources(trusted)`.
 pub fn discover_hook_source_paths(
     git_root: Option<&Path>,
-    compat: &xai_grok_tools::types::compat::CompatConfig,
+    compat: &intelekt_tools::types::compat::CompatConfig,
 ) -> HookSourcePaths {
     // Compat gate: skip .claude hook sources when disabled.
     let skip_claude_compat = !compat.claude.hooks;
     // Phase 2 cutoff: if the user has imported, skip .claude/settings.json
-    // sources. Native .grok/hooks/ directories are still scanned (they hold
+    // sources. Native .intelekt/hooks/ directories are still scanned (they hold
     // any hooks that were imported by /import-claude).
     let skip_claude = skip_claude_compat
         || crate::claude_import::is_claude_import_marked_with_log("discover_hook_source_paths");
@@ -51,7 +51,7 @@ pub fn discover_hook_source_paths(
     let home = dirs::home_dir();
     // user_grok_home() is None when no home resolves, so inspect lists the same
     // sources a live session loads, instead of a cwd-relative .grok.
-    let grok = xai_grok_config::user_grok_home();
+    let grok = intelekt_config::user_grok_home();
     let mut global = Vec::new();
 
     if !skip_claude && let Some(ref h) = home {
@@ -88,7 +88,7 @@ pub fn discover_hook_source_paths(
             project.push(root.join(".claude").join("settings.json"));
             project.push(root.join(".claude").join("settings.local.json"));
         }
-        project.push(root.join(".grok").join("hooks"));
+        project.push(root.join(".intelekt").join("hooks"));
         if !skip_cursor {
             project.push(root.join(".cursor").join("hooks.json"));
         }
@@ -105,13 +105,13 @@ pub fn discover_hook_source_paths(
 /// raw source lists.
 pub fn discover_hooks(
     git_root: Option<&Path>,
-    compat: &xai_grok_tools::types::compat::CompatConfig,
+    compat: &intelekt_tools::types::compat::CompatConfig,
     trusted: bool,
 ) -> (
-    xai_grok_hooks::discovery::HookRegistry,
-    Vec<xai_grok_hooks::error::HookError>,
+    intelekt_hooks::discovery::HookRegistry,
+    Vec<intelekt_hooks::error::HookError>,
 ) {
     let source_paths = discover_hook_source_paths(git_root, compat);
     let (global_sources, project_sources) = source_paths.as_sources(trusted);
-    xai_grok_hooks::discovery::load_hooks_from_sources(&global_sources, &project_sources)
+    intelekt_hooks::discovery::load_hooks_from_sources(&global_sources, &project_sources)
 }

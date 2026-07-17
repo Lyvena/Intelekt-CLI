@@ -65,7 +65,7 @@ impl WorkspacesClient {
         let base_url = first_nonempty_env(&[
             "GROK_WORKSPACES_BASE_URL",
             "GROK_CONVERSATIONS_BASE_URL",
-            "GROK_CODE_WEB_URL",
+            "INTELEKT_CODE_WEB_URL",
         ])
         .unwrap_or_else(|| GROK_WEB_URL.to_string());
         Self {
@@ -103,7 +103,7 @@ impl WorkspacesClient {
                 self.auth.grok_com_config().token_header.clone(),
             )
             .header("x-userid", &auth.user_id)
-            .header("x-grok-client-version", xai_grok_version::VERSION)
+            .header("x-grok-client-version", intelekt_version::VERSION)
             .header(
                 "x-grok-client-identifier",
                 crate::http::process_client_identifier(),

@@ -1,6 +1,6 @@
 //! `x.ai/billing` extension handler.
 //!
-//! Fetches the authenticated user's Grok Build billing configuration
+//! Fetches the authenticated user's Intelekt CLI billing configuration
 //! (credit limit, usage, on-demand cap, billing period, history) from
 //! the backend. Used by the pager/desktop to display credits and usage.
 
@@ -57,7 +57,7 @@ pub struct BillingPeriodUsage {
     pub total_used: Option<Cent>,
 }
 
-/// Current billing configuration for Grok Build coding credits.
+/// Current billing configuration for Intelekt CLI coding credits.
 ///
 /// Carries both the newer credits-config fields (`credit_usage_percent`,
 /// `current_period`) and the deprecated `GrokBuildBillingConfig` fields
@@ -162,7 +162,7 @@ pub async fn handle(agent: &MvpAgent, args: &acp::ExtRequest) -> ExtResult {
 
 /// Structured context for unified-log entries from a successful billing fetch.
 ///
-/// Keeps history to a count + the most recent period so `~/.grok/logs/unified.jsonl`
+/// Keeps history to a count + the most recent period so `~/.intelekt/logs/unified.jsonl`
 /// stays useful without dumping unbounded period arrays.
 fn billing_unified_log_ctx(billing: &BillingConfigResponse) -> serde_json::Value {
     let history_len = billing
@@ -218,7 +218,7 @@ async fn handle_get_billing(agent: &MvpAgent) -> ExtResult {
             crate::auth::GrokComConfig::default().token_header,
         )
         .header("x-userid", &auth.user_id)
-        .header("x-grok-client-version", xai_grok_version::VERSION)
+        .header("x-grok-client-version", intelekt_version::VERSION)
         .header(
             crate::http::CLIENT_MODE_HEADER,
             crate::http::process_client_mode(),
@@ -228,7 +228,7 @@ async fn handle_get_billing(agent: &MvpAgent) -> ExtResult {
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "billing: upstream request failed");
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 "billing: upstream request failed",
                 None,
                 Some(serde_json::json!({ "error": e.to_string() })),
@@ -246,7 +246,7 @@ async fn handle_get_billing(agent: &MvpAgent) -> ExtResult {
             .and_then(|v| v.get("error").and_then(|e| e.as_str()).map(String::from))
             .unwrap_or_else(|| format!("HTTP {status}"));
 
-        xai_grok_telemetry::unified_log::warn(
+        intelekt_telemetry::unified_log::warn(
             "billing: upstream error",
             None,
             Some(serde_json::json!({
@@ -260,7 +260,7 @@ async fn handle_get_billing(agent: &MvpAgent) -> ExtResult {
 
     let mut billing: BillingConfigResponse = credits_resp.json().await.map_err(|e| {
         tracing::error!(error = %e, "billing: failed to parse response");
-        xai_grok_telemetry::unified_log::warn(
+        intelekt_telemetry::unified_log::warn(
             "billing: failed to parse response",
             None,
             Some(serde_json::json!({ "error": e.to_string() })),
@@ -279,7 +279,7 @@ async fn handle_get_billing(agent: &MvpAgent) -> ExtResult {
 
     // Every prompt / /usage / poll path hits `x.ai/billing`; log the fetched
     // credits snapshot so support can correlate limit UX with real balances.
-    xai_grok_telemetry::unified_log::info(
+    intelekt_telemetry::unified_log::info(
         "billing: fetched credits config",
         None,
         Some(billing_unified_log_ctx(&billing)),
@@ -309,7 +309,7 @@ async fn handle_get_auto_topup_rule(agent: &MvpAgent) -> ExtResult {
             crate::auth::GrokComConfig::default().token_header,
         )
         .header("x-userid", &auth.user_id)
-        .header("x-grok-client-version", xai_grok_version::VERSION)
+        .header("x-grok-client-version", intelekt_version::VERSION)
         .header(
             crate::http::CLIENT_MODE_HEADER,
             crate::http::process_client_mode(),

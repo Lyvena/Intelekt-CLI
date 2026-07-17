@@ -1,7 +1,7 @@
 [package]
 license = "Apache-2.0"
 edition.workspace = true
-name = "xai-grok-tools"
+name = "intelekt-tools"
 version = "0.1.220-alpha.4"
 description = "Grok tools library"
 
@@ -15,10 +15,10 @@ fs2 = { workspace = true }
 educe = { workspace = true, features = ["Debug"] }
 async-openai = { workspace = true }
 xai-tty-utils = { workspace = true }
-xai-grok-config = { path = "../xai-grok-config" }
-xai-grok-tools-api = { path = "../xai-grok-tools-api" }
-xai-grok-workspace-types = { path = "../xai-grok-workspace-types" }
-xai-grok-version = { workspace = true }
+intelekt-config = { path = "../intelekt-config" }
+intelekt-tools-api = { path = "../intelekt-tools-api" }
+intelekt-workspace-types = { path = "../intelekt-workspace-types" }
+intelekt-version = { workspace = true }
 xai-interjection-core = { workspace = true }
 xai-token-estimation = { workspace = true }
 async-lsp = { workspace = true }
@@ -74,7 +74,7 @@ tonic = { workspace = true }
 tracing = { workspace = true }
 url = { workspace = true }
 uuid = { workspace = true, features = ["v7"] }
-xai-grok-env = { workspace = true }
+intelekt-env = { workspace = true }
 serde_yaml = { workspace = true }
 shellexpand = "3.1"
 tempfile = { workspace = true }
@@ -82,7 +82,7 @@ which = { workspace = true }
 
 chrono = { workspace = true }
 futures-util = { workspace = true }
-xai-grok-sandbox = { path = "../xai-grok-sandbox", default-features = false }
+intelekt-sandbox = { path = "../intelekt-sandbox", default-features = false }
 xai-file-utils = { path = "../xai-file-utils" }
 
 [target.'cfg(unix)'.dependencies]

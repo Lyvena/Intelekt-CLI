@@ -2522,8 +2522,8 @@ fn apply_user_info_enrichment_preserves_token_fields() {
 #[tokio::test]
 #[serial_test::serial] // reaches `resolve_static_api_key`, which reads the key env vars
 async fn current_api_key_async_drives_refresh_chain() {
-    use xai_grok_test_support::EnvGuard;
-    use xai_grok_tools::types::ApiKeyProvider;
+    use intelekt_test_support::EnvGuard;
+    use intelekt_tools::types::ApiKeyProvider;
 
     let _xai = EnvGuard::unset("XAI_API_KEY");
     let _legacy = EnvGuard::unset("GROK_CODE_XAI_API_KEY");
@@ -3398,7 +3398,7 @@ async fn shared_api_key_provider_resolves_live_bearer() {
 #[tokio::test]
 #[serial_test::serial]
 async fn shared_api_key_provider_static_fallthrough() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
 
     let dir = tempfile::tempdir().unwrap();
     let mgr = Arc::new(AuthManager::new(dir.path(), GrokComConfig::default()));
@@ -3441,7 +3441,7 @@ async fn shared_api_key_provider_static_fallthrough() {
 #[tokio::test]
 #[serial_test::serial]
 async fn shared_api_key_provider_kill_switch_blocks_static() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
 
     let _key = EnvGuard::set("XAI_API_KEY", "blocked");
     let dir = tempfile::tempdir().unwrap();
@@ -3461,7 +3461,7 @@ async fn shared_api_key_provider_kill_switch_blocks_static() {
 #[tokio::test]
 #[serial_test::serial]
 async fn shared_api_key_provider_oidc_preferred_blocks_static() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
 
     let _key = EnvGuard::set("XAI_API_KEY", "should-not-use");
     let dir = tempfile::tempdir().unwrap();
@@ -3482,7 +3482,7 @@ async fn shared_api_key_provider_oidc_preferred_blocks_static() {
 #[tokio::test]
 #[serial_test::serial]
 async fn shared_api_key_provider_api_key_preferred_skips_session() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
 
     let _legacy = EnvGuard::unset("GROK_CODE_XAI_API_KEY");
     let _key = EnvGuard::set("XAI_API_KEY", "static-preferred");
@@ -3513,7 +3513,7 @@ async fn shared_api_key_provider_api_key_preferred_skips_session() {
 #[tokio::test]
 #[serial_test::serial]
 async fn shared_api_key_provider_sync_falls_through_when_session_expired() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
 
     let _legacy = EnvGuard::unset("GROK_CODE_XAI_API_KEY");
     let _key = EnvGuard::set("XAI_API_KEY", "static-after-expiry");
@@ -3543,8 +3543,8 @@ async fn shared_api_key_provider_sync_falls_through_when_session_expired() {
 #[tokio::test]
 #[serial_test::serial]
 async fn shared_api_key_provider_sync_buffered_session_beats_static() {
-    use xai_grok_test_support::EnvGuard;
-    use xai_grok_tools::types::ApiKeyProvider;
+    use intelekt_test_support::EnvGuard;
+    use intelekt_tools::types::ApiKeyProvider;
 
     let _legacy = EnvGuard::unset("GROK_CODE_XAI_API_KEY");
     let _key = EnvGuard::set("XAI_API_KEY", "leftover-static");
@@ -3567,7 +3567,7 @@ async fn shared_api_key_provider_sync_buffered_session_beats_static() {
 #[tokio::test]
 #[serial_test::serial]
 async fn shared_api_key_provider_disk_memo_follows_rewrites() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
 
     let _xai = EnvGuard::unset("XAI_API_KEY");
     let _legacy = EnvGuard::unset("GROK_CODE_XAI_API_KEY");
@@ -4068,7 +4068,7 @@ fn sleep_ack_hold_times_out_when_refresh_never_drains() {
 fn manual_auth_reason_maps_terminal_and_skips_non_forcing() {
     use crate::auth::error::RefreshTokenFailedReason as Reason;
     use crate::auth::recovery::manual_auth_reason;
-    use xai_grok_telemetry::events::ManualAuthReason as R;
+    use intelekt_telemetry::events::ManualAuthReason as R;
 
     let permanent = |reason: Reason| manual_auth_reason(&AuthError::permanent(reason));
     // A revoked refresh token forces a re-login -> counts.
@@ -4145,7 +4145,7 @@ fn relay_should_cancel_gives_up_only_on_terminal_failures() {
 #[tokio::test]
 async fn manual_auth_capture_attributes_and_recorder_debounces() {
     use crate::auth::recovery::{ManualAuthTracker, RejectedAuth};
-    use xai_grok_telemetry::events::{AuthTokenKind, ManualAuthSurface};
+    use intelekt_telemetry::events::{AuthTokenKind, ManualAuthSurface};
 
     let auth = GrokAuth {
         key: "dead-token".into(),
@@ -4232,7 +4232,7 @@ async fn manual_auth_emits_only_for_user_facing_source() {
         .unwrap_err();
     assert!(matches!(err, AuthError::ServerRejectedNoRecovery));
     // Assert the emitted payload, not just that something fired.
-    use xai_grok_telemetry::events::{
+    use intelekt_telemetry::events::{
         AuthTokenKind, ManualAuth, ManualAuthReason, ManualAuthSurface,
     };
     assert_eq!(

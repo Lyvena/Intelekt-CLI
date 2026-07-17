@@ -246,11 +246,11 @@ mod tests {
     fn test_snapshot_to_result_prefers_display_command() {
         let mut snapshot = make_test_snapshot("test-dc", true, Some(0));
         snapshot.command = "unshare -m /bin/bash -c 'mount ...; exec cargo test'".to_string();
-        snapshot.display_command = Some("cargo test -p xai-grok-shell".to_string());
+        snapshot.display_command = Some("cargo test -p intelekt-shell".to_string());
 
         let result = snapshot_to_result(snapshot, "read_file", DEFAULT_TOOL_OUTPUT_BYTES);
         assert_eq!(
-            result.command, "cargo test -p xai-grok-shell",
+            result.command, "cargo test -p intelekt-shell",
             "model-facing command must be the display (original) command"
         );
     }

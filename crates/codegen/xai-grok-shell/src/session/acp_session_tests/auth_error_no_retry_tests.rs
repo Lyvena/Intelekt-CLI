@@ -49,9 +49,9 @@ fn auth_manager_with_refresher(
 /// Build a `SamplingErrorInfo` of kind Auth - the same shape the
 /// inner `OaiCompatClient` emit surfaces after recording its own
 /// attribution.
-fn auth_error() -> xai_grok_sampler::SamplingErrorInfo {
-    xai_grok_sampler::SamplingErrorInfo {
-        kind: xai_grok_sampler::SamplingErrorKind::Auth,
+fn auth_error() -> intelekt_sampler::SamplingErrorInfo {
+    intelekt_sampler::SamplingErrorInfo {
+        kind: intelekt_sampler::SamplingErrorKind::Auth,
         message: "Unauthorized (401)".to_string(),
         status_code: Some(401),
         is_retryable: false,
@@ -356,10 +356,10 @@ async fn proactive_refresh_makes_per_turn_refresh_a_cache_hit() {
         .await;
 }
 
-fn model_not_found_error() -> xai_grok_sampler::SamplingErrorInfo {
-    xai_grok_sampler::SamplingErrorInfo {
-            kind: xai_grok_sampler::SamplingErrorKind::Api,
-            message: "API error (status 404 Not Found): The model grok-build does not exist or your team does not have access".into(),
+fn model_not_found_error() -> intelekt_sampler::SamplingErrorInfo {
+    intelekt_sampler::SamplingErrorInfo {
+            kind: intelekt_sampler::SamplingErrorKind::Api,
+            message: "API error (status 404 Not Found): The model intelekt-cli does not exist or your team does not have access".into(),
             status_code: Some(404),
             is_retryable: false,
             retry_after_secs: None,
@@ -423,10 +423,10 @@ async fn legacy_auth_hint_on_404_model_not_found() {
 /// Using `Api` kind + `status_code: Some(401)` exercises the hint
 /// condition (`status_code == Some(401)`) without triggering
 /// recovery, making the test environment-independent.
-fn unauthorized_401_error() -> xai_grok_sampler::SamplingErrorInfo {
-    xai_grok_sampler::SamplingErrorInfo {
-            kind: xai_grok_sampler::SamplingErrorKind::Api,
-            message: "Unauthorized (401) from https://cli-chat-proxy.grok.com/v1/responses: {\"error\":\"Invalid or expired credentials (auth_kind=bearer, x_xai_token_auth=xai-grok-cli, upstream=Unauthenticated, reason=no auth context)\"}".into(),
+fn unauthorized_401_error() -> intelekt_sampler::SamplingErrorInfo {
+    intelekt_sampler::SamplingErrorInfo {
+            kind: intelekt_sampler::SamplingErrorKind::Api,
+            message: "Unauthorized (401) from https://cli-chat-proxy.grok.com/v1/responses: {\"error\":\"Invalid or expired credentials (auth_kind=bearer, x_xai_token_auth=intelekt-cli, upstream=Unauthenticated, reason=no auth context)\"}".into(),
             status_code: Some(401),
             is_retryable: false,
             retry_after_secs: None,
@@ -925,7 +925,7 @@ async fn set_session_model_invalidates_byok_memo_for_same_model_id() {
 
             // Switch to the same model_id, now a per-model BYOK model on a
             // third-party endpoint.
-            let cfg = xai_grok_sampler::SamplerConfig {
+            let cfg = intelekt_sampler::SamplerConfig {
                 api_key: Some("byok-key".to_string()),
                 base_url: "https://third-party.example/v1".to_string(),
                 model: model.clone(),

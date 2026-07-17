@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use futures_util::StreamExt;
 use futures_util::stream::{BoxStream, Stream};
 
-use xai_grok_sampling_types::{
+use intelekt_sampling_types::{
     AssistantItem, ChatCompletionChunk, ConversationItem, ConversationResponse,
     ResponseModelMetadata, SamplingError, StopReason, TokenUsage, ToolCall,
 };
@@ -131,7 +131,7 @@ pub fn stream_chat_completions<'a>(
             if let Some(u) = chunk.usage.clone() {
                 // Wire cost is cumulative for the response, so last-write-wins.
                 // Never clobber a known cost with missing/unreported.
-                let chunk_cost = xai_grok_sampling_types::reported_cost_ticks(u.cost_in_usd_ticks);
+                let chunk_cost = intelekt_sampling_types::reported_cost_ticks(u.cost_in_usd_ticks);
                 cost_usd_ticks = match (cost_usd_ticks, chunk_cost) {
                     (_, Some(n)) => Some(n),
                     (prev, None) => prev,
@@ -265,7 +265,7 @@ pub fn stream_chat_completions<'a>(
         if first_choice_seen {
             if !reasoning_acc.is_empty() {
                 items.push(ConversationItem::Reasoning(
-                    xai_grok_sampling_types::synthesized_reasoning_item(reasoning_acc),
+                    intelekt_sampling_types::synthesized_reasoning_item(reasoning_acc),
                 ));
             }
             items.push(ConversationItem::Assistant(AssistantItem {
@@ -307,7 +307,7 @@ mod tests {
     use super::*;
     use futures_util::stream;
     use std::pin::pin;
-    use xai_grok_sampling_types::{
+    use intelekt_sampling_types::{
         ChatChunkChoice, ChatChunkDelta, FinishReason, Role, ToolCallDelta as ChunkToolCallDelta,
         ToolCallFunctionDelta, Usage, rs,
     };

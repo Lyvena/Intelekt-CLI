@@ -155,12 +155,12 @@ pub(super) fn drain_prompt_state_to_last_queued(agent: &mut AgentView) {
 
 /// Prepend `<system-reminder>` framing to a cron prompt for the model.
 ///
-/// Delegates to the shared implementation in `xai_grok_tools::reminders`.
+/// Delegates to the shared implementation in `intelekt_tools::reminders`.
 /// The UI shows the raw `prompt` text via `RenderBlock::cron_prompt`; this
 /// wrapped version is only sent to the model via `Effect::SendPrompt` so
 /// the model knows the message is a scheduled task execution, not a human.
 fn format_cron_prompt(prompt: &str, task_id: &str, human_schedule: &str) -> String {
-    xai_grok_tools::reminders::format_scheduled_task_prompt(prompt, task_id, human_schedule)
+    intelekt_tools::reminders::format_scheduled_task_prompt(prompt, task_id, human_schedule)
 }
 
 /// Try to send the next queued entry (prompt, command, bash, or cron) if the agent is idle.

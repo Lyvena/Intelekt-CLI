@@ -3,7 +3,7 @@
 //! All colors come from the `Theme` struct. NO hardcoded colors elsewhere.
 //!
 //! The named constants below match the TokyoNight Night/Storm palette from
-//! `xai-grok-pager/src/ui/style.rs` for consistency. The `Theme` struct maps
+//! `intelekt-pager/src/ui/style.rs` for consistency. The `Theme` struct maps
 //! these constants to semantic roles.
 
 use ratatui::style::{Color, Modifier, Style};
@@ -14,7 +14,7 @@ const fn rgb(r: u8, g: u8, b: u8) -> Color {
 }
 
 // TokyoNight palette constants (Night/Storm variant).
-// Keep in sync with xai-grok-pager TokyoNightNight.
+// Keep in sync with intelekt-pager TokyoNightNight.
 #[allow(dead_code)]
 pub mod palette {
     use super::*;

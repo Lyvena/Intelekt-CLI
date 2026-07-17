@@ -10,13 +10,13 @@
 //! them), listings paginate with stable post-sort slices, and reads are
 //! binary-safe (base64 chunks).
 //!
-//! Wire types live in `xai_grok_workspace_types::rpc::fs` (the
+//! Wire types live in `intelekt_workspace_types::rpc::fs` (the
 //! `ClientFs*` types), shared with the backend caller.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use xai_grok_workspace_types::rpc::fs::{
+use intelekt_workspace_types::rpc::fs::{
     ClientFsListNode as FsListNode, ClientFsListReq as FsListReq, ClientFsListRes as FsListRes,
     ClientFsReadFileReq as FsReadFileReq, ClientFsReadFileRes as FsReadFileRes,
     ClientFsStatReq as FsStatReq, ClientFsStatRes as FsStatRes, FsContentType, FsNodeType,
@@ -341,7 +341,7 @@ pub(crate) async fn read_file(
 #[cfg(test)]
 mod tests {
     use base64::Engine;
-    use xai_grok_workspace_types::rpc::fs::FsReadEncoding;
+    use intelekt_workspace_types::rpc::fs::FsReadEncoding;
 
     use super::*;
     use crate::handle::tests::make_handle;

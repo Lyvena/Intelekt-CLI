@@ -7,13 +7,13 @@ use super::settings::ui::{refresh_open_settings_modals, save_success_toast};
 use crate::app::actions::Effect;
 use crate::app::app_view::{ActiveView, AppView};
 use agent_client_protocol as acp;
-use xai_grok_telemetry::session_ctx::log_event;
+use intelekt_telemetry::session_ctx::log_event;
 
 /// Show the current plan: if a plan file exists, open it in the preview
 /// overlay popover. If no plan has been written yet, show a toast.
 ///
 /// Delegates to `AgentView::show_plan_preview()` which reads the plan file
-/// from `~/.grok/sessions/<urlencoded_cwd>/<session_id>/plan.md`.
+/// from `~/.intelekt/sessions/<urlencoded_cwd>/<session_id>/plan.md`.
 pub(super) fn dispatch_show_plan(app: &mut AppView) -> Vec<Effect> {
     with_active_agent(app, |agent| {
         if agent.plan_approval_view.is_some() {
@@ -176,9 +176,9 @@ pub(super) fn set_plan_mode(
     // If the user was in `Ask` (shell-injection only), that preference
     // is silently dropped. See `PLAN_MODE_CHOICES` in `settings/defs.rs`.
     let mode_id = acp::SessionModeId::new(if new {
-        xai_grok_tools::types::SessionMode::Plan.as_id()
+        intelekt_tools::types::SessionMode::Plan.as_id()
     } else {
-        xai_grok_tools::types::SessionMode::Default.as_id()
+        intelekt_tools::types::SessionMode::Default.as_id()
     });
 
     vec![Effect::SetSessionMode {
@@ -334,10 +334,10 @@ pub(super) fn set_yolo_mode_inner(app: &mut AppView, new: bool) {
 
     // Telemetry + tracing guarded on real state change only.
     if previous_state != new {
-        xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::YoloToggled {
+        intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::YoloToggled {
             enabled: new,
             previous_state,
-            trigger: xai_grok_telemetry::events::YoloTrigger::Pager,
+            trigger: intelekt_telemetry::events::YoloTrigger::Pager,
         });
         tracing::info!(target: "settings", key = "permission_mode", value = new, "setting changed");
     }
@@ -545,9 +545,9 @@ pub(super) fn dispatch_cycle_mode(app: &mut AppView) -> Vec<Effect> {
         && let Some(agent) = app.agents.get_mut(&id)
         && agent.plan_mode_pending.unwrap_or(agent.plan_mode_active)
     {
-        log_event(xai_grok_telemetry::events::ContextualTip {
-            tip: xai_grok_telemetry::events::ContextualTipKind::PlanMode,
-            action: xai_grok_telemetry::events::ContextualTipAction::Accepted,
+        log_event(intelekt_telemetry::events::ContextualTip {
+            tip: intelekt_telemetry::events::ContextualTipKind::PlanMode,
+            action: intelekt_telemetry::events::ContextualTipAction::Accepted,
         });
         // Retire the now-stale nudge so one impression maps to at most one
         // acceptance — a full mode loop back to Plan within the ~3s TTL would
@@ -665,7 +665,7 @@ fn dispatch_cycle_mode_inner(app: &mut AppView) -> Vec<Effect> {
             // Normal → Plan
             (false, false, false) => {
                 agent.plan_mode_pending = Some(true);
-                agent.deferred_session_mode = Some(xai_grok_tools::types::SessionMode::Plan);
+                agent.deferred_session_mode = Some(intelekt_tools::types::SessionMode::Plan);
                 agent.show_mode_switch_banner("Plan");
                 tracing::info!("Mode cycle (pre-session): Normal → Plan");
                 None
@@ -785,7 +785,7 @@ fn dispatch_cycle_mode_inner(app: &mut AppView) -> Vec<Effect> {
             tracing::info!("Mode cycle: Normal → Plan");
             vec![Effect::SetSessionMode {
                 session_id,
-                mode_id: acp::SessionModeId::new(xai_grok_tools::types::SessionMode::Plan.as_id()),
+                mode_id: acp::SessionModeId::new(intelekt_tools::types::SessionMode::Plan.as_id()),
             }]
         }
         // Plan → Auto (classifier mode; exit plan, not always-approve).
@@ -810,7 +810,7 @@ fn dispatch_cycle_mode_inner(app: &mut AppView) -> Vec<Effect> {
                         Effect::SetSessionMode {
                             session_id: session_id.clone(),
                             mode_id: acp::SessionModeId::new(
-                                xai_grok_tools::types::SessionMode::Default.as_id(),
+                                intelekt_tools::types::SessionMode::Default.as_id(),
                             ),
                         },
                         Effect::PersistPermissionMode {
@@ -831,7 +831,7 @@ fn dispatch_cycle_mode_inner(app: &mut AppView) -> Vec<Effect> {
                     Effect::SetSessionMode {
                         session_id: session_id.clone(),
                         mode_id: acp::SessionModeId::new(
-                            xai_grok_tools::types::SessionMode::Default.as_id(),
+                            intelekt_tools::types::SessionMode::Default.as_id(),
                         ),
                     },
                     Effect::PersistPermissionMode {
@@ -852,7 +852,7 @@ fn dispatch_cycle_mode_inner(app: &mut AppView) -> Vec<Effect> {
                 Effect::SetSessionMode {
                     session_id: session_id.clone(),
                     mode_id: acp::SessionModeId::new(
-                        xai_grok_tools::types::SessionMode::Default.as_id(),
+                        intelekt_tools::types::SessionMode::Default.as_id(),
                     ),
                 },
                 Effect::PersistPermissionMode {
@@ -922,7 +922,7 @@ fn dispatch_cycle_mode_inner(app: &mut AppView) -> Vec<Effect> {
                 Effect::SetSessionMode {
                     session_id: session_id.clone(),
                     mode_id: acp::SessionModeId::new(
-                        xai_grok_tools::types::SessionMode::Default.as_id(),
+                        intelekt_tools::types::SessionMode::Default.as_id(),
                     ),
                 },
                 Effect::PersistPermissionMode {
@@ -954,7 +954,7 @@ fn dispatch_cycle_mode_inner(app: &mut AppView) -> Vec<Effect> {
                 effects.push(Effect::SetSessionMode {
                     session_id: session_id.clone(),
                     mode_id: acp::SessionModeId::new(
-                        xai_grok_tools::types::SessionMode::Default.as_id(),
+                        intelekt_tools::types::SessionMode::Default.as_id(),
                     ),
                 });
             }

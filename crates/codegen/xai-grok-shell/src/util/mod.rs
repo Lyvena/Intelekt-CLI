@@ -2,11 +2,11 @@ pub mod config;
 pub mod grok_auth_credentials;
 pub mod hooks;
 
-// The foundation utilities live in `xai-grok-shell-base` (upstream of this
+// The foundation utilities live in `intelekt-shell-base` (upstream of this
 // crate so they build in parallel). Re-exported at the original paths so
-// existing `crate::util::…` / `xai_grok_shell::util::…` users compile
+// existing `crate::util::…` / `intelekt_shell::util::…` users compile
 // unchanged.
-pub use xai_grok_shell_base::util::*;
+pub use intelekt_shell_base::util::*;
 
 /// Aborts the wrapped tokio task when dropped.
 ///

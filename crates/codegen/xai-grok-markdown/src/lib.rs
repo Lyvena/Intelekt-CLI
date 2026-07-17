@@ -13,7 +13,7 @@
 //! # Example
 //!
 //! ```ignore
-//! use xai_grok_markdown::{StreamingMarkdownRenderer, MarkdownStyle, Syntect};
+//! use intelekt_markdown::{StreamingMarkdownRenderer, MarkdownStyle, Syntect};
 //!
 //! let syntect = Syntect::new(include_bytes!("theme.tmTheme"));
 //! let style = MarkdownStyle::default();

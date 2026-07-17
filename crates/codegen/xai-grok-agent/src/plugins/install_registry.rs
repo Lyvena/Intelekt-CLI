@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-/// Default install directory name under `~/.grok/`.
+/// Default install directory name under `~/.intelekt/`.
 const DEFAULT_INSTALL_DIR_NAME: &str = "installed-plugins";
 
 /// Registry of installed repos and their plugins.
@@ -65,7 +65,7 @@ pub struct InstalledRepo {
 }
 
 /// Marketplace provenance — tracks which marketplace a plugin was installed from.
-/// Lives here (not in xai-grok-plugin-marketplace) to keep dependency direction sane.
+/// Lives here (not in intelekt-plugin-marketplace) to keep dependency direction sane.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MarketplaceProvenance {
     /// Canonical source identity (git URL or local path).
@@ -249,19 +249,19 @@ impl InstallRegistry {
     ///
     /// Resolution order:
     /// 1. `[plugins].install_dir` from effective config (requirements > config > managed)
-    /// 2. Default: `~/.grok/installed-plugins/`
+    /// 2. Default: `~/.intelekt/installed-plugins/`
     pub fn resolve_install_dir() -> PathBuf {
         if let Some(dir) = Self::read_install_dir_from_config() {
             return dir;
         }
 
-        xai_grok_config::grok_home().join(DEFAULT_INSTALL_DIR_NAME)
+        intelekt_config::grok_home().join(DEFAULT_INSTALL_DIR_NAME)
     }
 
     /// Read `[plugins].install_dir` from the effective config
     /// (managed_config.toml merged under config.toml — user wins).
     fn read_install_dir_from_config() -> Option<PathBuf> {
-        let root = xai_grok_config::load_effective_config_disk_only().ok()?;
+        let root = intelekt_config::load_effective_config_disk_only().ok()?;
         let value = root.get("plugins")?.get("install_dir")?.as_str()?;
         let expanded = if let Some(stripped) = value.strip_prefix("~/") {
             dirs::home_dir()?.join(stripped)

@@ -38,7 +38,7 @@
 //!
 //! Same underlying engine (`shellexpand::env_with_context_no_errors`)
 //! and same lossless-on-missing semantics as
-//! `xai_grok_config::expand_env_vars_in_string`, but with an additional
+//! `intelekt_config::expand_env_vars_in_string`, but with an additional
 //! per-hook `extra` map consulted before process env, and with the
 //! parameter-expansion-modifier preservation described above.
 //!

@@ -7,11 +7,11 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::process::Command;
 
-use xai_grok_agent::plugins::git_install::{self, InstallSource};
-use xai_grok_agent::plugins::install_registry::{
+use intelekt_agent::plugins::git_install::{self, InstallSource};
+use intelekt_agent::plugins::install_registry::{
     InstallError, InstallKind, InstallRegistry, InstalledRepo, MarketplaceProvenance, RepoPlugin,
 };
-use xai_grok_agent::plugins::manifest::{ManifestLoadResult, load_manifest, name_from_dirname};
+use intelekt_agent::plugins::manifest::{ManifestLoadResult, load_manifest, name_from_dirname};
 
 use crate::types::{MarketplaceEntry, MarketplaceRelativePath};
 
@@ -720,10 +720,10 @@ fn ensure_manifest_for_root_skills(
     plugin_relative_path: &str,
     source_display_name: &str,
 ) {
-    use xai_grok_agent::plugins::manifest::load_manifest;
+    use intelekt_agent::plugins::manifest::load_manifest;
 
     // Skip if a manifest already exists.
-    if let Ok(xai_grok_agent::plugins::manifest::ManifestLoadResult::Found(_)) =
+    if let Ok(intelekt_agent::plugins::manifest::ManifestLoadResult::Found(_)) =
         load_manifest(installed_path)
     {
         return;
@@ -802,7 +802,7 @@ mod tests {
         // Build the registry against an explicit tempdir rather than going through
         // `InstallRegistry::load()`, which resolves the install dir via the
         // process-global `grok_home()` `OnceLock` (first-write-wins). A parallel
-        // test in this binary can cache the real `~/.grok` before this runs,
+        // test in this binary can cache the real `~/.intelekt` before this runs,
         // which would leak the registry tests into the real home and make them
         // order-dependent and flaky.
         let mut registry = InstallRegistry::empty(install_dir);

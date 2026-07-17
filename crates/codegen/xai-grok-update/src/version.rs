@@ -6,12 +6,12 @@ use serde_json::Value;
 use tokio::fs;
 use tokio::process::Command;
 
-use xai_grok_shell::env::GrokBuildEnvironment;
-use xai_grok_shell::util::grok_home::grok_home;
+use intelekt_shell::env::GrokBuildEnvironment;
+use intelekt_shell::util::grok_home::grok_home;
 
 const TTL_SECONDS_BEFORE_AUTO_UPDATE: Duration = Duration::from_secs(60 * 30);
 const NPM_PACKAGE: &str = "@xai-official/grok";
-pub const GH_RELEASE_REPO: &str = "xai-org-shared/grok-build";
+pub const GH_RELEASE_REPO: &str = "xai-org-shared/intelekt-cli";
 
 /// Primary CLI base URL: Cloudflare-fronted x.ai endpoint with edge caching
 /// for binaries and origin-respecting no-cache for channel pointers.
@@ -20,7 +20,7 @@ pub(crate) const CLI_BASE_URL_PRIMARY: &str = "https://x.ai/cli";
 /// Fallback CLI base URL: direct GCS, used when the primary is unreachable
 /// (Cloudflare outage, regional CF egress issue, DNS hijack, etc.).
 pub(crate) const CLI_BASE_URL_FALLBACK: &str =
-    "https://storage.googleapis.com/grok-build-public-artifacts/cli";
+    "https://storage.googleapis.com/intelekt-cli-public-artifacts/cli";
 
 /// CLI base URLs in preference order. Callers (channel-pointer fetch, binary
 /// download, in-app updater) try each in turn and stop at the first success.
@@ -35,9 +35,9 @@ pub(crate) const CLI_BASE_URLS: &[&str] = &[CLI_BASE_URL_PRIMARY, CLI_BASE_URL_F
 pub struct UpdateConfig {
     /// Chat API proxy base URL (versioned `https://cli-chat-proxy.grok.com/v1` endpoint).
     pub proxy_base_url: String,
-    /// Auth scope key for `~/.grok/auth.json`.
+    /// Auth scope key for `~/.intelekt/auth.json`.
     pub auth_scope: String,
-    /// Enterprise deployment key (GROK_DEPLOYMENT_KEY).
+    /// Enterprise deployment key (INTELEKT_DEPLOYMENT_KEY).
     pub deployment_key: Option<String>,
     /// Optional extra auth material forwarded with requests when present.
     pub alpha_test_key: Option<String>,
@@ -51,7 +51,7 @@ impl UpdateConfig {
     pub fn from_environment(env: &GrokBuildEnvironment) -> Self {
         Self {
             proxy_base_url: env.cli_chat_proxy_base_url(),
-            auth_scope: xai_grok_shell::auth::GrokComConfig::default().auth_scope(),
+            auth_scope: intelekt_shell::auth::GrokComConfig::default().auth_scope(),
             deployment_key: None,
             alpha_test_key: None,
             channel: "stable".to_string(),
@@ -149,8 +149,8 @@ async fn fetch_npm_tag(tag: &str, npm_registry: Option<&str>) -> Result<String> 
     }
     let mut cmd = Command::new("npm");
     cmd.args(&args).stdin(std::process::Stdio::null());
-    xai_grok_tools::util::detach_command(&mut cmd);
-    cmd.envs(xai_grok_tools::util::pager_env());
+    intelekt_tools::util::detach_command(&mut cmd);
+    cmd.envs(intelekt_tools::util::pager_env());
     let output = cmd.output().await?;
 
     if !output.status.success() {
@@ -206,8 +206,8 @@ async fn fetch_gh_release_latest(exclude_pre: bool) -> Result<String> {
     }
     let mut cmd = Command::new("gh");
     cmd.args(&args).stdin(std::process::Stdio::null());
-    xai_grok_tools::util::detach_command(&mut cmd);
-    cmd.envs(xai_grok_tools::util::pager_env());
+    intelekt_tools::util::detach_command(&mut cmd);
+    cmd.envs(intelekt_tools::util::pager_env());
     let output = cmd.output().await?;
 
     if !output.status.success() {
@@ -414,10 +414,10 @@ pub async fn is_version_cache_fresh() -> bool {
     false
 }
 
-pub use xai_grok_version::installed as get_installed_grok_version;
+pub use intelekt_version::installed as get_installed_grok_version;
 
 /// Version of the managed grok binary currently on disk, read from the
-/// `~/.grok/bin/grok` symlink target (`../downloads/grok-<version>-<platform>`)
+/// `~/.intelekt/bin/grok` symlink target (`../downloads/grok-<version>-<platform>`)
 /// without exec'ing anything.
 ///
 /// Concurrent updaters (TUI background download, leader hourly checker,
@@ -427,7 +427,7 @@ pub use xai_grok_version::installed as get_installed_grok_version;
 ///
 /// Returns `None` when there is no parseable managed symlink (Windows
 /// copy-based installs, dev builds) or when the symlink is DANGLING — a
-/// link whose target binary was deleted (e.g. manual `~/.grok/downloads`
+/// link whose target binary was deleted (e.g. manual `~/.intelekt/downloads`
 /// cleanup) must not report an installed version, or every updater would
 /// claim "already up to date" forever while no runnable binary exists.
 /// NOTE: the symlink existing does not prove the *active installer*
@@ -438,12 +438,12 @@ pub use xai_grok_version::installed as get_installed_grok_version;
 pub fn installed_on_disk_version() -> Option<String> {
     #[cfg(unix)]
     {
-        let app = xai_grok_shell::util::grok_home::grok_application();
+        let app = intelekt_shell::util::grok_home::grok_application();
         let target = std::fs::read_link(&app).ok()?;
         // metadata() follows the symlink: Err means the target is gone
         // (dangling link) and the version it names is not actually on disk.
         std::fs::metadata(&app).ok()?;
-        version_from_versioned_binary_name(target.file_name()?.to_str()?, "grok")
+        version_from_versioned_binary_name(target.file_name()?.to_str()?, "intelekt")
     }
     #[cfg(not(unix))]
     {
@@ -501,7 +501,7 @@ pub(crate) async fn try_fetch_stable_pointer() -> Option<String> {
     .unwrap_or(None)
 }
 
-/// Read the cached stable version from `~/.grok/version.json` (sync, for display).
+/// Read the cached stable version from `~/.intelekt/version.json` (sync, for display).
 ///
 /// Returns `None` if the file doesn't exist, can't be parsed, or has no
 /// `stable_version` field (e.g. written by an older binary).
@@ -538,14 +538,14 @@ pub fn channel_name() -> Option<&'static str> {
     static NAME: OnceLock<Option<&'static str>> = OnceLock::new();
     *NAME.get_or_init(|| {
         let stable = cached_stable_version()?;
-        derive_channel(xai_grok_version::VERSION, &stable)
+        derive_channel(intelekt_version::VERSION, &stable)
     })
 }
 
 /// Channel label derived from the cached stable pointer.
 ///
 /// Compares the compiled-in `VERSION` against the stable pointer stored in
-/// `~/.grok/version.json` (written by the auto-updater):
+/// `~/.intelekt/version.json` (written by the auto-updater):
 /// - `" [alpha]"` when the current version is ahead of stable,
 /// - `" [stable]"` when at or behind stable,
 /// - `""` when no cached pointer is available (first launch, old cache format).
@@ -559,7 +559,7 @@ pub fn channel_label() -> &'static str {
             Some(s) => s,
             None => return "",
         };
-        match derive_channel(xai_grok_version::VERSION, &stable) {
+        match derive_channel(intelekt_version::VERSION, &stable) {
             Some("alpha") => " [alpha]",
             Some(_) => " [stable]",
             None => "",
@@ -590,32 +590,32 @@ mod tests {
     #[test]
     fn test_version_from_versioned_binary_name() {
         let cases: &[(&str, Option<&str>)] = &[
-            ("grok-0.2.46-darwin-arm64", Some("0.2.46")),
-            ("grok-0.1.220-linux-x86_64", Some("0.1.220")),
-            ("grok-0.2.5-windows-x86_64.exe", Some("0.2.5")),
+            ("intelekt-0.2.46-darwin-arm64", Some("0.2.46")),
+            ("intelekt-0.1.220-linux-x86_64", Some("0.1.220")),
+            ("intelekt-0.2.5-windows-x86_64.exe", Some("0.2.5")),
             // Pre-releases must round-trip whole — truncating to "0.1.220"
             // would make an alpha install masquerade as the release and
             // mask alpha → stable updates.
-            ("grok-0.1.220-alpha.4-linux-x86_64", Some("0.1.220-alpha.4")),
-            ("grok-0.1.220-alpha.4", Some("0.1.220-alpha.4")), // npm layout
+            ("intelekt-0.1.220-alpha.4-linux-x86_64", Some("0.1.220-alpha.4")),
+            ("intelekt-0.1.220-alpha.4", Some("0.1.220-alpha.4")), // npm layout
             ("grok-pager-0.1.5-darwin-arm64", None),           // "pager" is not a version
             ("grok-garbage-darwin-arm64", None),               // unparseable version
-            ("grok-0.2.46", Some("0.2.46")),                   // no platform suffix
+            ("intelekt-0.2.46", Some("0.2.46")),                   // no platform suffix
             ("other-0.2.46-darwin-arm64", None),               // wrong prefix
             ("grok-latest", None),                             // symlink alias, not a version
-            ("grok", None),                                    // bare name
+            ("intelekt", None),                                    // bare name
             ("", None),
         ];
         for (name, expected) in cases {
             assert_eq!(
-                version_from_versioned_binary_name(name, "grok").as_deref(),
+                version_from_versioned_binary_name(name, "intelekt").as_deref(),
                 *expected,
                 "version_from_versioned_binary_name({name:?})"
             );
         }
 
         // bin_prefix discrimination: the pager binary parses under its own
-        // prefix but not under "grok".
+        // prefix but not under "intelekt".
         assert_eq!(
             version_from_versioned_binary_name("grok-pager-0.1.5-darwin-arm64", "grok-pager")
                 .as_deref(),
@@ -777,7 +777,7 @@ mod tests {
 
     #[test]
     fn test_update_config_default_channel_is_stable() {
-        use xai_grok_shell::env::GrokBuildEnvironment;
+        use intelekt_shell::env::GrokBuildEnvironment;
         let cfg = UpdateConfig::from_environment(&GrokBuildEnvironment::Production);
         assert_eq!(cfg.channel, "stable");
     }

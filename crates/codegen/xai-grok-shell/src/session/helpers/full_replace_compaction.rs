@@ -1,9 +1,9 @@
-//! grok-build's L5 wiring onto the shared full-replace engine
-//! (`xai_grok_compaction::code_compaction`).
+//! intelekt-cli's L5 wiring onto the shared full-replace engine
+//! (`intelekt_compaction::code_compaction`).
 //!
 //! The shared engine drives the sample → retry → degenerate/failure
-//! classification loop via [`sample_full_replace_summary`](xai_grok_compaction::sample_full_replace_summary);
-//! this module adapts grok-build's transport and telemetry to its two seams:
+//! classification loop via [`sample_full_replace_summary`](intelekt_compaction::sample_full_replace_summary);
+//! this module adapts intelekt-cli's transport and telemetry to its two seams:
 //!
 //! - [`ShellCompactionSampler`] wraps
 //!   [`generate_session_compact`](crate::session::helpers::session_compact::generate_session_compact)
@@ -18,20 +18,20 @@
 //! The verbatim → fitted → lossy **input ladder** and auto-compaction
 //! suppression stay in L5 (`compaction.rs`), driven by the
 //! `context_overflow` / `deterministic` flags on
-//! [`FullReplaceError`](xai_grok_compaction::FullReplaceError).
+//! [`FullReplaceError`](intelekt_compaction::FullReplaceError).
 
 use std::sync::Mutex;
 use std::time::Duration;
 
 use agent_client_protocol as acp;
 use async_trait::async_trait;
-use xai_grok_compaction::{
+use intelekt_compaction::{
     CompactionPrompt, CompactionSampleError, CompactionSampler, FullReplaceAttemptOutcome,
     FullReplaceObserver, LlmCompactionOutput,
 };
-use xai_grok_sampler::SamplerConfig as SamplingConfig;
-use xai_grok_sampling_types::{ConversationItem, HostedTool, ToolSpec};
-use xai_grok_telemetry::events::{CompactionRetryDegraded, CompactionTrigger};
+use intelekt_sampler::SamplerConfig as SamplingConfig;
+use intelekt_sampling_types::{ConversationItem, HostedTool, ToolSpec};
+use intelekt_telemetry::events::{CompactionRetryDegraded, CompactionTrigger};
 
 use xai_chat_state::compaction_utils::{
     CompactionAttempt, MAX_CAPTURED_SUMMARY_CHARS, bound_captured_output,
@@ -43,7 +43,7 @@ use crate::session::helpers::session_compact::{
 };
 
 /// Wraps `generate_session_compact` as the shared engine's
-/// [`CompactionSampler`] for grok-build's full-replace pass.
+/// [`CompactionSampler`] for intelekt-cli's full-replace pass.
 ///
 /// Holds the per-call request context the seam does not carry (tools, client,
 /// session, config) and stashes the last successful [`CompactOutput`] so the
@@ -52,8 +52,8 @@ use crate::session::helpers::session_compact::{
 ///
 /// The summarization prompt is selected here by `use_short_prompt` (the
 /// short-prompt harness uses the short self-summarization prompt; everyone
-/// else the structured grok-build prompt), so the shared `CompactionPrompt`
-/// the engine passes is ignored — the engine builds the grok-build prompt,
+/// else the structured intelekt-cli prompt), so the shared `CompactionPrompt`
+/// the engine passes is ignored — the engine builds the intelekt-cli prompt,
 /// which equals what `build_compaction_chat_history(.., false)` appends, and
 /// the short-prompt harness needs its own variant the engine can't produce.
 pub(crate) struct ShellCompactionSampler {
@@ -119,7 +119,7 @@ impl CompactionSampler for ShellCompactionSampler {
         _timeout: Duration,
     ) -> Result<LlmCompactionOutput, CompactionSampleError> {
         // Append the harness-selected summarization prompt as the final user
-        // message (compat short vs structured grok-build), ignoring the shared
+        // message (compat short vs structured intelekt-cli), ignoring the shared
         // engine's `_prompt` (see the struct doc).
         let chat_history = build_compaction_chat_history(
             turns.to_vec(),
@@ -152,7 +152,7 @@ impl CompactionSampler for ShellCompactionSampler {
     }
 }
 
-/// Map grok-build's [`CompactFailure`] onto the shared engine's
+/// Map intelekt-cli's [`CompactFailure`] onto the shared engine's
 /// [`CompactionSampleError`] so the shared retry loop classifies it the same
 /// way the in-shell loop did:
 ///
@@ -208,7 +208,7 @@ struct ObserverState {
     last_error_msg: Option<String>,
 }
 
-/// [`FullReplaceObserver`] that reproduces grok-build's per-attempt telemetry:
+/// [`FullReplaceObserver`] that reproduces intelekt-cli's per-attempt telemetry:
 /// `CompactionAttempt` rows, rejection counters, the `CompactionRetryDegraded`
 /// event, and the warn/error tracing — without the shared engine depending on
 /// a telemetry backend.
@@ -313,7 +313,7 @@ impl FullReplaceObserver for ShellFullReplaceObserver {
                     self.estimated_input_tokens
                 ));
                 if *will_retry {
-                    xai_grok_telemetry::session_ctx::log_event(CompactionRetryDegraded {
+                    intelekt_telemetry::session_ctx::log_event(CompactionRetryDegraded {
                         trigger: self.trigger,
                         reason: "degenerate_summary",
                         from_stage: None,

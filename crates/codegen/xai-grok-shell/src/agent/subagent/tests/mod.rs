@@ -8,7 +8,7 @@ use crate::test_support::lsp_runtime::{
 /// `resolve_agent_definition` so the spawn path can't skip them.
 #[tokio::test]
 async fn subagent_inherits_session_cli_overrides() {
-    use xai_grok_agent::config::{AgentDefinition, PermissionMode};
+    use intelekt_agent::config::{AgentDefinition, PermissionMode};
     let mut probe = AgentDefinition::general_purpose();
     probe.name = "session-override-probe".into();
     probe.permission_mode = PermissionMode::Plan;
@@ -40,8 +40,8 @@ async fn subagent_inherits_session_cli_overrides() {
 /// pin and honored without it; other modes and plugin stripping unaffected.
 #[test]
 fn subagent_bypass_permission_mode_gated_by_policy_pin() {
-    use xai_grok_agent::config::PermissionMode;
-    const PIN: &str = xai_grok_workspace::permission::resolution::YOLO_PIN_REASON_REQUIREMENTS;
+    use intelekt_agent::config::PermissionMode;
+    const PIN: &str = intelekt_workspace::permission::resolution::YOLO_PIN_REASON_REQUIREMENTS;
     assert_eq!(
         resolve_subagent_permission_mode(PermissionMode::BypassPermissions, false, None),
         PermissionMode::BypassPermissions,
@@ -131,7 +131,7 @@ fn resume_worktree_action_covers_three_outcomes() {
 }
 #[test]
 fn subagent_inherits_parent_lsp_via_context() {
-    let parent: std::sync::Arc<dyn xai_grok_tools::implementations::lsp::LspBackend> = Arc::new(
+    let parent: std::sync::Arc<dyn intelekt_tools::implementations::lsp::LspBackend> = Arc::new(
         DummyLspDispatch,
     );
     let mut ctx = ctx_with_toggle(HashMap::new());
@@ -591,7 +591,7 @@ fn auto_wake_test_request(id: &str) -> SubagentRequest {
 #[test]
 fn inject_subagent_completed_prompt_sends_prompt_and_marks_delivered() {
     let (cmd_tx, mut cmd_rx) = mpsc::unbounded_channel::<SessionCommand>();
-    let auto_wake = xai_grok_tools::reminders::task_completion::AutoWakeDeliveredIds::default();
+    let auto_wake = intelekt_tools::reminders::task_completion::AutoWakeDeliveredIds::default();
     let request = auto_wake_test_request("sa-1");
     let result = SubagentResult {
         success: true,
@@ -1053,9 +1053,9 @@ fn dummy_tracker(
     use crate::session::signals::SessionSignalsHandle;
     use std::sync::atomic::AtomicBool;
     let gateway = test_gateway();
-    let cwd = xai_grok_paths::AbsPathBuf::new(PathBuf::from("/tmp")).unwrap();
-    let fs: Arc<dyn xai_grok_workspace::file_system::AsyncFileSystem> = Arc::new(
-        xai_grok_workspace::file_system::LocalFs::new(PathBuf::from("/tmp")),
+    let cwd = intelekt_paths::AbsPathBuf::new(PathBuf::from("/tmp")).unwrap();
+    let fs: Arc<dyn intelekt_workspace::file_system::AsyncFileSystem> = Arc::new(
+        intelekt_workspace::file_system::LocalFs::new(PathBuf::from("/tmp")),
     );
     let terminal: Arc<dyn crate::terminal::AsyncTerminalRunner> = Arc::new(
         crate::terminal::TerminalRunner::new(
@@ -1110,14 +1110,14 @@ fn dummy_tracker(
             parking_lot::Mutex::new(PlanModeTracker::new(PathBuf::from("/tmp"))),
         ),
         force_compact: Arc::new(AtomicBool::new(false)),
-        permission_handle: xai_grok_workspace::permission::PermissionHandle::allow_all(),
+        permission_handle: intelekt_workspace::permission::PermissionHandle::allow_all(),
         attribution_callback: None,
-        agent_name: "grok-build".to_string(),
+        agent_name: "intelekt-cli".to_string(),
         managed_mcp_proxy_base_url: String::new(),
         session_default_agent_profile: None,
         allowed_subagent_types: None,
         hook_registry: None,
-        workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+        workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
         terminal_backend: None,
         tools_notification_handle: None,
         scheduler_handle: None,
@@ -1214,7 +1214,7 @@ fn explicit_override_takes_precedence_over_role() {
         capability_mode: Some(xai_tool_types::SubagentCapabilityMode::All),
         ..Default::default()
     };
-    let role = xai_grok_subagent_resolution::config::SubagentRole {
+    let role = intelekt_subagent_resolution::config::SubagentRole {
         description: "test role".into(),
         model: Some("role-model".into()),
         default_capability_mode: Some("read-only".into()),
@@ -1235,7 +1235,7 @@ fn explicit_override_takes_precedence_over_role() {
 #[test]
 fn role_default_used_when_no_explicit_override() {
     let overrides = SubagentRuntimeOverrides::default();
-    let role = xai_grok_subagent_resolution::config::SubagentRole {
+    let role = intelekt_subagent_resolution::config::SubagentRole {
         description: "test role".into(),
         model: Some("role-model".into()),
         default_capability_mode: Some("read-only".into()),
@@ -1273,7 +1273,7 @@ fn partial_override_fills_from_role() {
         model: Some("explicit-model".into()),
         ..Default::default()
     };
-    let role = xai_grok_subagent_resolution::config::SubagentRole {
+    let role = intelekt_subagent_resolution::config::SubagentRole {
         description: "test".into(),
         default_capability_mode: Some("execute".into()),
         ..Default::default()
@@ -1296,7 +1296,7 @@ fn reasoning_effort_explicit_overrides_role() {
         reasoning_effort: Some("high".into()),
         ..Default::default()
     };
-    let role = xai_grok_subagent_resolution::config::SubagentRole {
+    let role = intelekt_subagent_resolution::config::SubagentRole {
         description: "test".into(),
         reasoning_effort: Some("low".into()),
         ..Default::default()
@@ -1313,7 +1313,7 @@ fn reasoning_effort_explicit_overrides_role() {
 #[test]
 fn reasoning_effort_falls_back_to_role() {
     let overrides = SubagentRuntimeOverrides::default();
-    let role = xai_grok_subagent_resolution::config::SubagentRole {
+    let role = intelekt_subagent_resolution::config::SubagentRole {
         description: "test".into(),
         reasoning_effort: Some("medium".into()),
         ..Default::default()
@@ -1330,7 +1330,7 @@ fn reasoning_effort_falls_back_to_role() {
 #[test]
 fn invalid_role_capability_mode_ignored() {
     let overrides = SubagentRuntimeOverrides::default();
-    let role = xai_grok_subagent_resolution::config::SubagentRole {
+    let role = intelekt_subagent_resolution::config::SubagentRole {
         description: "test".into(),
         default_capability_mode: Some("invalid-mode".into()),
         ..Default::default()
@@ -1357,7 +1357,7 @@ fn persona_resolved_from_config() {
     personas
         .insert(
             "researcher".to_string(),
-            xai_grok_subagent_resolution::config::SubagentPersona {
+            intelekt_subagent_resolution::config::SubagentPersona {
                 instructions: Some("Be thorough.".into()),
                 ..Default::default()
             },
@@ -1394,7 +1394,7 @@ fn persona_inline_plus_file_merged_in_order() {
     personas
         .insert(
             "combo".to_string(),
-            xai_grok_subagent_resolution::config::SubagentPersona {
+            intelekt_subagent_resolution::config::SubagentPersona {
                 instructions: Some("Inline first.".into()),
                 instructions_file: Some("extra.md".into()),
                 ..Default::default()
@@ -1417,12 +1417,12 @@ fn model_precedence_explicit_over_role_over_persona() {
     personas
         .insert(
             "dev".to_string(),
-            xai_grok_subagent_resolution::config::SubagentPersona {
+            intelekt_subagent_resolution::config::SubagentPersona {
                 model: Some("persona-model".into()),
                 ..Default::default()
             },
         );
-    let role = xai_grok_subagent_resolution::config::SubagentRole {
+    let role = intelekt_subagent_resolution::config::SubagentRole {
         description: "test".into(),
         model: Some("role-model".into()),
         ..Default::default()
@@ -1440,7 +1440,7 @@ fn model_precedence_explicit_over_role_over_persona() {
     };
     let r = resolve_effective_overrides(&overrides, Some(&role), &personas, None, None);
     assert_eq!(r.model.as_deref(), Some("role-model"));
-    let role_no_model = xai_grok_subagent_resolution::config::SubagentRole {
+    let role_no_model = intelekt_subagent_resolution::config::SubagentRole {
         description: "test".into(),
         ..Default::default()
     };
@@ -1462,12 +1462,12 @@ fn reasoning_effort_precedence_explicit_over_role_over_persona() {
     personas
         .insert(
             "dev".to_string(),
-            xai_grok_subagent_resolution::config::SubagentPersona {
+            intelekt_subagent_resolution::config::SubagentPersona {
                 reasoning_effort: Some("low".into()),
                 ..Default::default()
             },
         );
-    let role = xai_grok_subagent_resolution::config::SubagentRole {
+    let role = intelekt_subagent_resolution::config::SubagentRole {
         description: "test".into(),
         reasoning_effort: Some("medium".into()),
         ..Default::default()
@@ -1485,7 +1485,7 @@ fn reasoning_effort_precedence_explicit_over_role_over_persona() {
     };
     let r = resolve_effective_overrides(&overrides, Some(&role), &personas, None, None);
     assert_eq!(r.reasoning_effort.as_deref(), Some("medium"));
-    let role_no_re = xai_grok_subagent_resolution::config::SubagentRole {
+    let role_no_re = intelekt_subagent_resolution::config::SubagentRole {
         description: "test".into(),
         ..Default::default()
     };
@@ -1571,7 +1571,7 @@ fn initial_context_source_forked_distinct_from_new_and_resumed() {
 }
 #[test]
 fn forked_initial_context_normalizes_parent_history() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let items = vec![
         ConversationItem::system("parent system"),
         ConversationItem::user("UNIQUE_FORK_MARKER_abc123 implement multi-repo fix"),
@@ -1587,7 +1587,7 @@ fn forked_initial_context_normalizes_parent_history() {
             .content
             .iter()
             .filter_map(|p| match p {
-                xai_grok_sampling_types::conversation::ContentPart::Text { text } => {
+                intelekt_sampling_types::conversation::ContentPart::Text { text } => {
                     Some(text.as_ref())
                 }
                 _ => None,
@@ -1604,11 +1604,11 @@ fn forked_initial_context_normalizes_parent_history() {
 }
 #[test]
 fn forked_initial_context_inherits_parent_across_reasoning() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let items = vec![
         ConversationItem::system("parent system"),
         ConversationItem::user("remember UNIQUE_FORK_MARKER_TEST"),
-        ConversationItem::Reasoning(xai_grok_sampling_types::synthesized_reasoning_item("deliberating",)),
+        ConversationItem::Reasoning(intelekt_sampling_types::synthesized_reasoning_item("deliberating",)),
         ConversationItem::assistant("ack"),
     ];
     let ctx = forked_initial_context(items);
@@ -1620,7 +1620,7 @@ fn forked_initial_context_inherits_parent_across_reasoning() {
             .content
             .iter()
             .filter_map(|p| match p {
-                xai_grok_sampling_types::conversation::ContentPart::Text { text } => {
+                intelekt_sampling_types::conversation::ContentPart::Text { text } => {
                     Some(text.as_ref())
                 }
                 _ => None,
@@ -1647,7 +1647,7 @@ fn forked_initial_context_empty_fails_open_to_new() {
 }
 #[test]
 fn resume_vs_fork_helper_shapes_differ() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let resume_items = vec![
         ConversationItem::system("child system"),
         ConversationItem::user("prior subagent work"),
@@ -1661,13 +1661,13 @@ fn resume_vs_fork_helper_shapes_differ() {
     assert!(
         ! matches!(resumed.conversation.get(1), Some(ConversationItem::User(u)) if u
         .content.iter().any(| p | matches!(p,
-        xai_grok_sampling_types::conversation::ContentPart::Text { text } if text
+        intelekt_sampling_types::conversation::ContentPart::Text { text } if text
         .contains("<background_context>"))))
     );
 }
 #[test]
 fn forked_initial_context_applies_fork_filter_before_normalize() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let items = vec![
         ConversationItem::system("sys"), ConversationItem::user("complete user"),
         ConversationItem::assistant("complete asst"),
@@ -1680,7 +1680,7 @@ fn forked_initial_context_applies_fork_filter_before_normalize() {
             .content
             .iter()
             .filter_map(|p| match p {
-                xai_grok_sampling_types::conversation::ContentPart::Text { text } => {
+                intelekt_sampling_types::conversation::ContentPart::Text { text } => {
                     Some(text.as_ref())
                 }
                 _ => None,
@@ -1697,7 +1697,7 @@ fn forked_initial_context_applies_fork_filter_before_normalize() {
 }
 #[test]
 fn verbatim_fork_keeps_items_byte_for_byte_when_small() {
-    use xai_grok_sampling_types::conversation::{
+    use intelekt_sampling_types::conversation::{
         ContentPart, ConversationItem, SyntheticReason, UserItem,
     };
     let items = vec![
@@ -1706,7 +1706,7 @@ fn verbatim_fork_keeps_items_byte_for_byte_when_small() {
         ConversationItem::User(UserItem { content : vec![ContentPart::Text { text :
         "SYNTHETIC_KEEP_ME".into(), }], synthetic_reason :
         Some(SyntheticReason::SystemReminder), ..Default::default() }),
-        ConversationItem::Reasoning(xai_grok_sampling_types::synthesized_reasoning_item("thinking",)),
+        ConversationItem::Reasoning(intelekt_sampling_types::synthesized_reasoning_item("thinking",)),
         ConversationItem::assistant("ack"),
     ];
     let ctx = verbatim_or_normalize_fork(items, 256_000);
@@ -1744,7 +1744,7 @@ fn verbatim_fork_keeps_items_byte_for_byte_when_small() {
 }
 #[test]
 fn verbatim_fork_falls_back_to_summary_on_incomplete_tail() {
-    use xai_grok_sampling_types::conversation::{
+    use intelekt_sampling_types::conversation::{
         AssistantItem, ContentPart, ConversationItem, ToolCall,
     };
     let items = vec![
@@ -1772,7 +1772,7 @@ fn verbatim_fork_falls_back_to_summary_on_incomplete_tail() {
 }
 #[test]
 fn summarized_fork_is_not_a_verbatim_mirror() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let items = vec![
         ConversationItem::system("parent system prompt"),
         ConversationItem::user("turn one UNIQUE_FORK_MARKER_TEST"),
@@ -1790,7 +1790,7 @@ fn summarized_fork_is_not_a_verbatim_mirror() {
 }
 #[test]
 fn verbatim_fork_falls_back_to_summary_when_oversize() {
-    use xai_grok_sampling_types::conversation::{ContentPart, ConversationItem};
+    use intelekt_sampling_types::conversation::{ContentPart, ConversationItem};
     let items = vec![
         ConversationItem::system("parent system"),
         ConversationItem::user("turn one UNIQUE_FORK_MARKER_TEST with some text"),
@@ -1813,7 +1813,7 @@ fn verbatim_fork_falls_back_to_summary_when_oversize() {
 }
 #[test]
 fn verbatim_fork_empty_after_filter_fails_open_to_new() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let items = vec![ConversationItem::user("/goal do the thing")];
     let ctx = verbatim_or_normalize_fork(items, 256_000);
     assert_eq!(ctx.source, InitialContextSource::New);
@@ -1822,7 +1822,7 @@ fn verbatim_fork_empty_after_filter_fails_open_to_new() {
 }
 #[test]
 fn verbatim_or_normalize_fork_system_only_fails_open_to_new() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     for items in [
         vec![ConversationItem::system("sys")],
         vec![ConversationItem::system("a"), ConversationItem::system("b")],
@@ -1838,7 +1838,7 @@ fn verbatim_or_normalize_fork_system_only_fails_open_to_new() {
 }
 #[test]
 fn forked_initial_context_system_only_fails_open_to_new() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let ctx = forked_initial_context(vec![ConversationItem::system("sys")]);
     assert_eq!(ctx.source, InitialContextSource::New);
     assert!(! ctx.verbatim_fork);
@@ -1851,7 +1851,7 @@ fn fork_context_normalized_only_for_summarized() {
     assert!(fork_context_normalized(& InitialContextSource::Forked, false));
     assert!(! fork_context_normalized(& InitialContextSource::New, false));
     assert!(! fork_context_normalized(& InitialContextSource::Resumed, false));
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let verbatim = verbatim_or_normalize_fork(
         vec![
             ConversationItem::system("sys"), ConversationItem::user("q"),
@@ -1948,11 +1948,11 @@ async fn bootstrap_fork_without_parent_fails_open() {
 }
 #[tokio::test]
 async fn bootstrap_fork_live_parent_chat_state_is_forked_with_marker() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     const MARKER: &str = "UNIQUE_LIVE_FORK_MARKER_xyz789";
     let req = bootstrap_test_request(true);
     let mut ctx = ctx_with_toggle(HashMap::new());
-    let chat = spawn_test_parent_chat_state("grok-4.5");
+    let chat = spawn_test_parent_chat_state("intelekt-4.5");
     chat.replace_conversation(
         vec![
             ConversationItem::system("parent system"),
@@ -1996,7 +1996,7 @@ async fn bootstrap_fork_live_parent_chat_state_is_forked_with_marker() {
                                 .content
                                 .iter()
                                 .filter_map(|p| match p {
-                                    xai_grok_sampling_types::conversation::ContentPart::Text {
+                                    intelekt_sampling_types::conversation::ContentPart::Text {
                                         text,
                                     } => Some(text.as_ref()),
                                     _ => None,
@@ -2371,8 +2371,8 @@ fn subagent_await_budget_default_and_override() {
 }
 #[test]
 fn summarize_tool_config_uses_name_override_and_strips_namespace() {
-    use xai_grok_tools::registry::types::{ToolConfig, ToolServerConfig};
-    use xai_grok_tools::types::tool::ToolKind;
+    use intelekt_tools::registry::types::{ToolConfig, ToolServerConfig};
+    use intelekt_tools::types::tool::ToolKind;
     let mut read = ToolConfig::from_id("GrokBuild:read_file");
     read.kind = Some(ToolKind::Read);
     let mut read_dup = ToolConfig::from_id("Codex:read_file");
@@ -2424,7 +2424,7 @@ fn describe_subagent_type_not_allowed_outside_allow_list() {
         other => panic!("expected NotAllowed, got {other:?}"),
     }
 }
-/// Regression: on the DEFAULT grok-build host —
+/// Regression: on the DEFAULT intelekt-cli host —
 /// the primary `/goal` host — the `general-purpose` toolset's only
 /// file-mutator is `search_replace` (`ToolKind::Edit`); the `write`
 /// tool (`ToolKind::Write`) is injection-only and absent from the
@@ -2432,7 +2432,7 @@ fn describe_subagent_type_not_allowed_outside_allow_list() {
 /// the Edit-class capability, which this asserts is present.
 #[test]
 fn describe_default_host_general_purpose_has_edit_not_write() {
-    use xai_grok_tools::types::tool::ToolKind;
+    use intelekt_tools::types::tool::ToolKind;
     let ctx = ctx_with_toggle(HashMap::new());
     let SubagentDescribeOutcome::Ok(summary) = describe_subagent_type(
         "general-purpose",
@@ -2475,7 +2475,7 @@ fn goal_harness_override_unresolvable_returns_unknown() {
 /// they keep native image input.
 #[test]
 fn subagent_keeps_default_flavor_when_parent_model_is_non_strict() {
-    use xai_grok_agent::config::BuiltinAgentName;
+    use intelekt_agent::config::BuiltinAgentName;
     let mut ctx = ctx_with_toggle(HashMap::new());
     ctx.parent_agent_name = Some("ai-oncall-bot".to_string());
     ctx.parent_model_agent_type = Some(
@@ -3145,14 +3145,14 @@ fn subagent_auth_type_rule() {
 #[test]
 fn fresh_tool_model_accepts_visible_key_and_internal_id() {
     let mut models = indexmap::IndexMap::new();
-    models.insert("grok-3".to_string(), test_model_entry("grok-3-2025-02-15"));
+    models.insert("intelekt-3".to_string(), test_model_entry("intelekt-3-2025-02-15"));
     assert!(
-        super::handle_request::task_model_override_error(Some("grok-3"),
+        super::handle_request::task_model_override_error(Some("intelekt-3"),
         ModelOverrideProvenance::Tool, false, & models, false,).is_none(),
         "key lookup should succeed"
     );
     assert!(
-        super::handle_request::task_model_override_error(Some("grok-3-2025-02-15"),
+        super::handle_request::task_model_override_error(Some("intelekt-3-2025-02-15"),
         ModelOverrideProvenance::Tool, false, & models, false,).is_none(),
         "info().model lookup should succeed"
     );
@@ -3261,9 +3261,9 @@ fn harness_model_override_keeps_internal_fallback_behavior() {
 }
 #[test]
 fn normalize_forked_context_empty_parent() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let items = vec![ConversationItem::system("sys prompt")];
-    let (conv, prefix_len) = xai_grok_subagent_resolution::context::normalize_forked_context(
+    let (conv, prefix_len) = intelekt_subagent_resolution::context::normalize_forked_context(
         items,
     );
     assert_eq!(conv.len(), 1);
@@ -3272,12 +3272,12 @@ fn normalize_forked_context_empty_parent() {
 }
 #[test]
 fn normalize_forked_context_short_conversation() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let items = vec![
         ConversationItem::system("sys"), ConversationItem::user("hello"),
         ConversationItem::assistant("hi back"),
     ];
-    let (conv, prefix_len) = xai_grok_subagent_resolution::context::normalize_forked_context(
+    let (conv, prefix_len) = intelekt_subagent_resolution::context::normalize_forked_context(
         items,
     );
     assert_eq!(prefix_len, 2);
@@ -3288,7 +3288,7 @@ fn normalize_forked_context_short_conversation() {
             .content
             .iter()
             .filter_map(|p| match p {
-                xai_grok_sampling_types::conversation::ContentPart::Text { text } => {
+                intelekt_sampling_types::conversation::ContentPart::Text { text } => {
                     Some(text.as_ref())
                 }
                 _ => None,
@@ -3304,9 +3304,9 @@ fn normalize_forked_context_short_conversation() {
         panic!("expected User message at position 1");
     }
 }
-fn test_sampling_config(model_slug: &str) -> xai_grok_sampling_types::SamplingConfig {
+fn test_sampling_config(model_slug: &str) -> intelekt_sampling_types::SamplingConfig {
     use std::num::NonZeroU64;
-    xai_grok_sampling_types::SamplingConfig {
+    intelekt_sampling_types::SamplingConfig {
         base_url: "https://api.test/v1".to_string(),
         model: model_slug.to_string(),
         max_completion_tokens: None,

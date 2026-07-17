@@ -1,6 +1,6 @@
 //! Input flight recorder — rolling buffer of recent key events.
 //!
-//! Ctrl+Shift+D dumps to `~/.grok/logs/input-debug-<timestamp>.json`.
+//! Ctrl+Shift+D dumps to `~/.intelekt/logs/input-debug-<timestamp>.json`.
 //! Can be better utilized once input bugs are fully resolved.
 use crossterm::event::{KeyCode, KeyEventKind, KeyModifiers};
 use serde::Serialize;
@@ -161,7 +161,7 @@ pub struct InputDump {
     pub dumped_at: String,
     pub session_id: Option<String>,
     pub pager_version: &'static str,
-    pub terminal: xai_grok_telemetry::events::TerminalTelemetry,
+    pub terminal: intelekt_telemetry::events::TerminalTelemetry,
     pub active_pane: String,
     pub textarea_cursor: usize,
     pub textarea_text_len: usize,

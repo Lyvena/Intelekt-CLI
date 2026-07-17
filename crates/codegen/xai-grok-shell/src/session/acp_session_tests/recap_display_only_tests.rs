@@ -7,7 +7,7 @@
 
 use super::support::*;
 use super::*;
-use xai_grok_sampling_types::ConversationItem;
+use intelekt_sampling_types::ConversationItem;
 
 #[tokio::test(flavor = "current_thread")]
 async fn new_prompt_cancels_in_flight_recap_epoch() {
@@ -539,8 +539,8 @@ async fn manual_recap_over_budget_trims_persisted_request_and_is_display_only() 
 #[test]
 fn over_budget_recap_serializes_to_well_formed_messages_request() {
     use crate::session::helpers::session_recap;
-    use xai_grok_sampling_types::messages::{ContentBlock, MessageContent, MessageRole};
-    use xai_grok_sampling_types::{ConversationRequest, ToolCall, rs};
+    use intelekt_sampling_types::messages::{ContentBlock, MessageContent, MessageRole};
+    use intelekt_sampling_types::{ConversationRequest, ToolCall, rs};
 
     let mk_reasoning = |id: &str| {
         ConversationItem::Reasoning(rs::ReasoningItem {
@@ -577,7 +577,7 @@ fn over_budget_recap_serializes_to_well_formed_messages_request() {
     // grok backend => strip_reasoning=false; the over-budget branch strips anyway.
     let items = session_recap::budget_recap_items(conv, "system-reminder", false, 8_000);
     let req = ConversationRequest::from_items(items);
-    let msg = xai_grok_sampling_types::build_messages_request(&req);
+    let msg = intelekt_sampling_types::build_messages_request(&req);
 
     assert!(msg.system.is_some(), "system prompt must be preserved");
 

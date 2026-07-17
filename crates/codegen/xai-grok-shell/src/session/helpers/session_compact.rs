@@ -13,14 +13,14 @@ pub use xai_chat_state::compaction_utils::{
     AUTO_CONTINUE_PROMPT, extract_last_real_user_query, extract_last_user_query,
     extract_messages_since_last_user, extract_real_user_queries, is_synthetic_extracted_query,
 };
-use xai_grok_sampler::SamplerConfig as SamplingConfig;
+use intelekt_sampler::SamplerConfig as SamplingConfig;
 /// Short, self-narrating compaction prompt used by the short-prompt harness only.
 /// Frames the call as "summarize for a successor assistant who only sees
 /// the user's original query plus this summary." Wrapped in
 /// `<summary_request>` only -- the surrounding `<user_query>` is implicit
 /// because we push this as a `ConversationItem::user`.
 ///
-/// All other agents (grok-build, etc.) continue to use the detailed
+/// All other agents (intelekt-cli, etc.) continue to use the detailed
 /// structured prompt built inline in `generate_session_compact`.
 pub(crate) const SELF_SUMMARIZATION_PROMPT: &str = r#"<summary_request>
 Please summarize the conversation so far. This summary (everything after your
@@ -46,7 +46,7 @@ pub(crate) enum CompactFailure {
     /// N-attempt + backoff loop.
     Transient(acp::Error),
 }
-pub(crate) use xai_grok_sampling_types::is_context_length_error;
+pub(crate) use intelekt_sampling_types::is_context_length_error;
 /// Classify an upstream `SamplingError` for the compaction retry loop.
 ///
 /// `Auth`, `InvalidConfiguration`, `Serialization` and
@@ -379,7 +379,7 @@ pub(crate) async fn generate_session_compact(
             message.x_grok_conv_id = Some(sid.clone());
             message.x_grok_req_id = Some(format!("xai-compact-{}", uuid::Uuid::new_v4()));
             message.x_grok_session_id = Some(sid);
-            message.x_grok_agent_id = Some(xai_grok_telemetry::id::agent_id());
+            message.x_grok_agent_id = Some(intelekt_telemetry::id::agent_id());
             tracing::info!(
                 compact_model = % sampling_config.model, num_messages = num_messages,
                 "Sending compact request (streaming)"
@@ -444,9 +444,9 @@ pub(crate) async fn generate_session_compact(
                                 content.push_str(delta_content);
                             }
                             if let Some(fr) = choice.finish_reason {
-                                let sr = xai_grok_sampling_types::StopReason::from(fr);
+                                let sr = intelekt_sampling_types::StopReason::from(fr);
                                 truncated =
-                                    matches!(sr, xai_grok_sampling_types::StopReason::Length);
+                                    matches!(sr, intelekt_sampling_types::StopReason::Length);
                                 stop_reason = Some(sr.as_str().to_string());
                             }
                         }
@@ -475,7 +475,7 @@ pub(crate) async fn generate_session_compact(
                 x_grok_conv_id: Some(session_id.to_string()),
                 x_grok_req_id: Some(format!("xai-compact-{}", uuid::Uuid::new_v4())),
                 x_grok_session_id: Some(session_id.to_string()),
-                x_grok_agent_id: Some(xai_grok_telemetry::id::agent_id()),
+                x_grok_agent_id: Some(intelekt_telemetry::id::agent_id()),
                 ..Default::default()
             };
             let stream_result = client.conversation_stream_responses(request).await;
@@ -597,7 +597,7 @@ pub(crate) async fn generate_session_compact(
                 x_grok_conv_id: Some(session_id.to_string()),
                 x_grok_req_id: Some(format!("xai-compact-{}", uuid::Uuid::new_v4())),
                 x_grok_session_id: Some(session_id.to_string()),
-                x_grok_agent_id: Some(xai_grok_telemetry::id::agent_id()),
+                x_grok_agent_id: Some(intelekt_telemetry::id::agent_id()),
                 ..Default::default()
             };
             let stream_result = client.conversation_stream_messages(request).await;
@@ -645,13 +645,13 @@ pub(crate) async fn generate_session_compact(
                     Ok(event) => {
                         if !matches!(
                             &event,
-                            xai_grok_sampling_types::messages::MessageStreamEvent::Ping
+                            intelekt_sampling_types::messages::MessageStreamEvent::Ping
                         ) {
                             last_progress_at = std::time::Instant::now();
                         }
                         match event {
-                            xai_grok_sampling_types::messages::MessageStreamEvent::ContentBlockDelta {
-                                delta: xai_grok_sampling_types::messages::StreamDelta::TextDelta {
+                            intelekt_sampling_types::messages::MessageStreamEvent::ContentBlockDelta {
+                                delta: intelekt_sampling_types::messages::StreamDelta::TextDelta {
                                     text,
                                 },
                                 ..
@@ -659,40 +659,40 @@ pub(crate) async fn generate_session_compact(
                                 timing.record_delta();
                                 content.push_str(&text);
                             }
-                            xai_grok_sampling_types::messages::MessageStreamEvent::MessageDelta {
+                            intelekt_sampling_types::messages::MessageStreamEvent::MessageDelta {
                                 delta,
                                 ..
                             } => {
                                 if let Some(sr) = delta.stop_reason {
                                     truncated = matches!(
-                                        sr, xai_grok_sampling_types::messages::StopReason::MaxTokens
+                                        sr, intelekt_sampling_types::messages::StopReason::MaxTokens
                                         |
-                                        xai_grok_sampling_types::messages::StopReason::ModelContextWindowExceeded
+                                        intelekt_sampling_types::messages::StopReason::ModelContextWindowExceeded
                                     );
                                     stop_reason = Some(
                                         match sr {
-                                            xai_grok_sampling_types::messages::StopReason::EndTurn => {
+                                            intelekt_sampling_types::messages::StopReason::EndTurn => {
                                                 "end_turn".to_string()
                                             }
-                                            xai_grok_sampling_types::messages::StopReason::MaxTokens => {
+                                            intelekt_sampling_types::messages::StopReason::MaxTokens => {
                                                 "max_tokens".to_string()
                                             }
-                                            xai_grok_sampling_types::messages::StopReason::ToolUse => {
+                                            intelekt_sampling_types::messages::StopReason::ToolUse => {
                                                 "tool_use".to_string()
                                             }
-                                            xai_grok_sampling_types::messages::StopReason::StopSequence => {
+                                            intelekt_sampling_types::messages::StopReason::StopSequence => {
                                                 "stop_sequence".to_string()
                                             }
-                                            xai_grok_sampling_types::messages::StopReason::Refusal => {
+                                            intelekt_sampling_types::messages::StopReason::Refusal => {
                                                 "refusal".to_string()
                                             }
-                                            xai_grok_sampling_types::messages::StopReason::PauseTurn => {
+                                            intelekt_sampling_types::messages::StopReason::PauseTurn => {
                                                 "pause_turn".to_string()
                                             }
-                                            xai_grok_sampling_types::messages::StopReason::ModelContextWindowExceeded => {
+                                            intelekt_sampling_types::messages::StopReason::ModelContextWindowExceeded => {
                                                 "model_context_window_exceeded".to_string()
                                             }
-                                            xai_grok_sampling_types::messages::StopReason::Unknown(
+                                            intelekt_sampling_types::messages::StopReason::Unknown(
                                                 s,
                                             ) => s,
                                         },
@@ -1132,10 +1132,10 @@ mod compacted_history_shape_tests {
         );
         assert_eq!(compacted.len(), 5);
     }
-    /// Regression guard: grok-build must DROP the working
-    /// tail post-compaction. A prior change routed grok-build to keep `recent_messages`,
+    /// Regression guard: intelekt-cli must DROP the working
+    /// tail post-compaction. A prior change routed intelekt-cli to keep `recent_messages`,
     /// which survive only as `Tool call omitted...` stubs (dead tokens). Mirrors
-    /// `summary_before_recent_compaction_with_no_user_query_yields_three_messages` for grok-build
+    /// `summary_before_recent_compaction_with_no_user_query_yields_three_messages` for intelekt-cli
     /// (`summary_before_recent = false`).
     #[tokio::test]
     async fn grok_build_compaction_drops_working_tail_regression_206460() {
@@ -1168,7 +1168,7 @@ mod compacted_history_shape_tests {
         let dropped = full.for_compaction();
         assert!(
             dropped.recent_messages.is_empty(),
-            "grok-build must drop recent_messages post-compaction",
+            "intelekt-cli must drop recent_messages post-compaction",
         );
         let compacted = build_compacted_history(
             "You are a helpful assistant.",
@@ -1182,7 +1182,7 @@ mod compacted_history_shape_tests {
                 .iter()
                 .any(|i| matches!(i, ConversationItem::ToolResult(_))
                     || i.text_content() == "Tool call omitted..."),
-            "no tail (ToolResult or stub) may leak into the grok-build compacted history",
+            "no tail (ToolResult or stub) may leak into the intelekt-cli compacted history",
         );
     }
     /// Verify that the auto-continue prompt (sent after compaction) is also

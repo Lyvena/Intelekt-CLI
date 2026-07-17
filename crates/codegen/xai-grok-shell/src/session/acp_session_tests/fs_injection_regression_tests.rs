@@ -1,7 +1,7 @@
-use xai_grok_tools::computer::local::{LocalTerminalBackend, MockFs};
-use xai_grok_tools::computer::types::{AsyncFileSystem, TerminalBackend};
-use xai_grok_tools::notification::ToolNotificationHandle;
-use xai_grok_tools::registry::types::{SessionContext, ToolConfig, ToolServerConfig};
+use intelekt_tools::computer::local::{LocalTerminalBackend, MockFs};
+use intelekt_tools::computer::types::{AsyncFileSystem, TerminalBackend};
+use intelekt_tools::notification::ToolNotificationHandle;
+use intelekt_tools::registry::types::{SessionContext, ToolConfig, ToolServerConfig};
 
 /// A ToolBridge built with a custom FileSystem must route writes through it.
 #[tokio::test]
@@ -64,7 +64,7 @@ async fn tool_bridge_routes_writes_through_injected_fs() {
         api_key_provider: None,
         auth_provider: None,
         attribution_callback: None,
-        system_reminder_tag: xai_grok_tools::reminders::DEFAULT_REMINDER_TAG,
+        system_reminder_tag: intelekt_tools::reminders::DEFAULT_REMINDER_TAG,
     };
     let bridge = crate::tools::bridge::ToolBridge::finalize_builder(builder, config, ctx)
         .await

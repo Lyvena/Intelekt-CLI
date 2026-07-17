@@ -12,13 +12,13 @@
 //! (auto-built locally when missing):
 //!
 //! ```bash
-//! cargo test -p xai-grok-shell --test test_refusal_stop_reason -- --ignored
+//! cargo test -p intelekt-shell --test test_refusal_stop_reason -- --ignored
 //! ```
 
 use std::future::Future;
 
 use agent_client_protocol as acp;
-use xai_grok_test_support::*;
+use intelekt_test_support::*;
 
 /// Run an async test body inside a `LocalSet` (required by ACP's `!Send` futures).
 async fn with_local_set<F, Fut>(f: F)
@@ -122,8 +122,8 @@ mod leader {
 
     use agent_client_protocol as acp;
 
-    use xai_grok_test_support::leader::{LeaderStdioClient, wait_for_live_leader};
-    use xai_grok_test_support::*;
+    use intelekt_test_support::leader::{LeaderStdioClient, wait_for_live_leader};
+    use intelekt_test_support::*;
 
     use super::{refusal_messages_server, turn_messages_request_count, with_local_set};
 
@@ -137,7 +137,7 @@ mod leader {
             let server = refusal_messages_server().await;
             let workdir = git_workdir();
             let home = tempfile::tempdir().unwrap();
-            std::fs::create_dir_all(home.path().join(".grok")).unwrap();
+            std::fs::create_dir_all(home.path().join(".intelekt")).unwrap();
 
             let client = LeaderStdioClient::spawn(&server, workdir.path(), home.path()).await;
             client.initialize().await;

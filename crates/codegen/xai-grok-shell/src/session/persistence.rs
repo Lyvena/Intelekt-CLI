@@ -10,7 +10,7 @@ use crate::remote::RemoteSync;
 use crate::sampling::Client as OaiCompatClient;
 use crate::sampling::ConversationItem;
 use crate::session::export::ExportedMetadata;
-use xai_grok_workspace::session::file_state::RewindPoint;
+use intelekt_workspace::session::file_state::RewindPoint;
 
 use crate::session::signals::SessionSignals;
 use crate::session::storage::{JsonlStorageAdapter, StorageAdapter};
@@ -18,7 +18,7 @@ use crate::tools::todo::TodoState;
 use crate::util::grok_home::grok_home;
 use agent_client_protocol as acp;
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
-use xai_grok_sampling_types::ReasoningEffort;
+use intelekt_sampling_types::ReasoningEffort;
 
 use crate::session::info::Info;
 use tokio::sync::mpsc;
@@ -76,7 +76,7 @@ pub struct BtwEntry {
 
 // Local feedback persistence types
 
-/// A feedback entry persisted to `~/.grok/sessions/.../feedback.jsonl`.
+/// A feedback entry persisted to `~/.intelekt/sessions/.../feedback.jsonl`.
 ///
 /// Uses a tagged enum so different feedback types are self-describing in the
 /// JSONL file (currently only `UserFeedback`).
@@ -140,8 +140,8 @@ mod feedback_tests {
             },
             feedback_categories: vec![],
             message_id: None,
-            model_id: Some("grok-3-fast".into()),
-            resolved_model_id: Some("grok-4.5".into()),
+            model_id: Some("intelekt-3-fast".into()),
+            resolved_model_id: Some("intelekt-4.5".into()),
             model_fingerprint: None,
             context_type: None,
             feature_name: None,
@@ -312,7 +312,7 @@ pub enum PersistenceMsg {
     ReplaceChatHistory(Vec<ConversationItem>),
     CurrentModel {
         model_id: acp::ModelId,
-        /// The active agent definition name (e.g. `"grok-build"`).
+        /// The active agent definition name (e.g. `"intelekt-cli"`).
         /// Persisted in `summary.agent_name` so session resume doesn't depend
         /// on the mutable model catalog.
         agent_name: Option<String>,
@@ -390,7 +390,7 @@ pub enum PersistenceMsg {
     },
 }
 
-pub use xai_grok_shared::session::session_dir;
+pub use intelekt_shared::session::session_dir;
 
 /// Check if a session exists locally under the given cwd.
 ///
@@ -579,11 +579,11 @@ fn find_local_child_for_remote_in_root(
 }
 
 /// Check if a session exists locally by session ID.
-/// Searches across ALL cwd directories under `~/.grok/sessions/`.
+/// Searches across ALL cwd directories under `~/.intelekt/sessions/`.
 ///
 /// Use `session_exists_for_cwd` instead when the target cwd is known
 /// (e.g., the `-r` resume path) to avoid false-positive matches.
-/// Find a session by ID across **all** CWD directories under `~/.grok/sessions/`.
+/// Find a session by ID across **all** CWD directories under `~/.intelekt/sessions/`.
 ///
 /// Unlike [`resolve_local_session`] which only checks a single CWD,
 /// this scans every encoded-CWD subdirectory. Returns the decoded CWD path
@@ -906,7 +906,7 @@ pub fn default_model_id() -> acp::ModelId {
 impl Summary {
     pub fn new(info: &Info, model_id: acp::ModelId) -> std::io::Result<Self> {
         let git_metadata =
-            xai_grok_workspace::session::git::resolve_persisted_session_git_metadata_sync(
+            intelekt_workspace::session::git::resolve_persisted_session_git_metadata_sync(
                 std::path::Path::new(&info.cwd),
             );
         Ok(Self {
@@ -1854,9 +1854,9 @@ impl SessionPersistence {
     }
 }
 
-/// Collect MCP server stderr logs from `~/.grok/logs/mcp/` for inclusion in the session archive.
+/// Collect MCP server stderr logs from `~/.intelekt/logs/mcp/` for inclusion in the session archive.
 fn collect_mcp_stderr_logs(files: &mut Vec<CopiedSessionFile>) {
-    let mcp_log_dir = xai_grok_config::grok_home().join("logs").join("mcp");
+    let mcp_log_dir = intelekt_config::grok_home().join("logs").join("mcp");
     let Ok(entries) = std::fs::read_dir(&mcp_log_dir) else {
         return;
     };
@@ -2605,7 +2605,7 @@ static CLEANUP_SESSIONS_ONCE: std::sync::Once = std::sync::Once::new();
 /// Default TTL for stale session files (30 days).
 const DEFAULT_CLEANUP_TTL_DAYS: u32 = 30;
 
-/// Walk `~/.grok/sessions/` and delete files with mtime older than `ttl_days`.
+/// Walk `~/.intelekt/sessions/` and delete files with mtime older than `ttl_days`.
 /// Removes empty session directories after file cleanup.
 /// Skips `skip_session_dir` if provided (current session).
 ///
@@ -2618,7 +2618,7 @@ pub fn cleanup_stale_sessions(skip_session_dir: Option<&Path>) {
         let sessions_root = grok_home().join("sessions");
 
         tracing::info!(
-            target: "xai_grok_shell::session::persistence",
+            target: "intelekt_shell::session::persistence",
             sessions_root = %sessions_root.display(),
             ttl_days,
             skip = ?skip_session_dir.map(|p| p.display().to_string()),
@@ -2628,7 +2628,7 @@ pub fn cleanup_stale_sessions(skip_session_dir: Option<&Path>) {
         let stats = cleanup_stale_sessions_inner(&sessions_root, ttl_days, skip_session_dir);
 
         tracing::info!(
-            target: "xai_grok_shell::session::persistence",
+            target: "intelekt_shell::session::persistence",
             sessions_root = %sessions_root.display(),
             files_deleted = stats.files_deleted,
             dirs_removed = stats.dirs_removed,
@@ -2680,7 +2680,7 @@ fn cleanup_stale_sessions_inner(root: &Path, ttl_days: u32, skip: Option<&Path>)
             Ok(e) => e,
             Err(e) => {
                 tracing::debug!(
-                    target: "xai_grok_shell::session::persistence",
+                    target: "intelekt_shell::session::persistence",
                     error = %e,
                     "SESSION_CLEANUP_READ_ERROR"
                 );
@@ -2708,7 +2708,7 @@ fn cleanup_stale_sessions_inner(root: &Path, ttl_days: u32, skip: Option<&Path>)
             if child_stats.files_deleted > 0 && std::fs::remove_dir(&path).is_ok() {
                 stats.dirs_removed += 1;
                 tracing::debug!(
-                    target: "xai_grok_shell::session::persistence",
+                    target: "intelekt_shell::session::persistence",
                     dir = %path.display(),
                     "SESSION_CLEANUP_RMDIR"
                 );
@@ -2720,7 +2720,7 @@ fn cleanup_stale_sessions_inner(root: &Path, ttl_days: u32, skip: Option<&Path>)
             if std::fs::remove_file(&path).is_ok() {
                 stats.files_deleted += 1;
                 tracing::debug!(
-                    target: "xai_grok_shell::session::persistence",
+                    target: "intelekt_shell::session::persistence",
                     file = %path.display(),
                     "SESSION_CLEANUP_DELETE"
                 );
@@ -2817,8 +2817,8 @@ mod agent_name_persistence_tests {
     fn summary_round_trips_various_agent_names() {
         for name in [
             "cursor",
-            "grok-build",
-            "grok-build-plan",
+            "intelekt-cli",
+            "intelekt-cli-plan",
             "codex",
             "browser-use",
         ] {
@@ -3048,7 +3048,7 @@ mod find_summary_by_session_id_tests {
             "created_at": "2026-01-01T00:00:00Z",
             "updated_at": "2026-01-01T00:00:00Z",
             "num_messages": 0,
-            "current_model_id": "grok-3",
+            "current_model_id": "intelekt-3",
             "head_commit": head_commit,
             "head_branch": head_branch
         })
@@ -3128,7 +3128,7 @@ mod resumed_sandbox_profile_tests {
             "created_at": "2026-01-01T00:00:00Z",
             "updated_at": updated_at,
             "num_messages": 0,
-            "current_model_id": "grok-3",
+            "current_model_id": "intelekt-3",
         });
         if let Some(la) = last_active_at {
             summary["last_active_at"] = serde_json::Value::String(la.to_string());
@@ -3199,7 +3199,7 @@ mod resumed_sandbox_profile_tests {
             "created_at": "2026-01-01T00:00:00Z",
             "updated_at": "2026-01-01T00:00:00Z",
             "num_messages": 0,
-            "current_model_id": "grok-3",
+            "current_model_id": "intelekt-3",
             "parent_session_id": "remote-xyz",
             "sandbox_profile": "workspace",
         });

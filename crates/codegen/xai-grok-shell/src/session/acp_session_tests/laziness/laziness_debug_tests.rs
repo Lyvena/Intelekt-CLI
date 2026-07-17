@@ -12,7 +12,7 @@ use super::{
     flatten_transcript_for_classifier,
 };
 use crate::session::events::{LAZINESS_ABORT_USER_INPUT, LazinessCategory};
-use xai_grok_sampling_types::{
+use intelekt_sampling_types::{
     AssistantItem, ContentPart, ConversationItem, SystemItem, ToolCall, ToolResultItem, UserItem,
 };
 
@@ -67,10 +67,10 @@ fn assistant_with_reasoning_items(
     let mut out = Vec::new();
     if !reasoning_text.is_empty() {
         out.push(ConversationItem::Reasoning(
-            xai_grok_sampling_types::rs::ReasoningItem {
+            intelekt_sampling_types::rs::ReasoningItem {
                 id: String::new(),
-                summary: vec![xai_grok_sampling_types::rs::SummaryPart::SummaryText(
-                    xai_grok_sampling_types::rs::SummaryTextContent {
+                summary: vec![intelekt_sampling_types::rs::SummaryPart::SummaryText(
+                    intelekt_sampling_types::rs::SummaryTextContent {
                         text: reasoning_text.to_string(),
                     },
                 )],
@@ -192,7 +192,7 @@ fn flatten_skips_reasoning_when_encrypted_only() {
     // Encrypted reasoning is opaque to a text classifier — drop it
     // rather than emit a meaningless line.
     let items = vec![
-        ConversationItem::Reasoning(xai_grok_sampling_types::rs::ReasoningItem {
+        ConversationItem::Reasoning(intelekt_sampling_types::rs::ReasoningItem {
             id: String::new(),
             summary: vec![],
             content: None,
@@ -220,10 +220,10 @@ fn flatten_skips_reasoning_when_text_is_empty() {
     // Empty-string reasoning is treated as "no reasoning" — a
     // zero-info line would just waste tokens.
     let items = vec![
-        ConversationItem::Reasoning(xai_grok_sampling_types::rs::ReasoningItem {
+        ConversationItem::Reasoning(intelekt_sampling_types::rs::ReasoningItem {
             id: String::new(),
-            summary: vec![xai_grok_sampling_types::rs::SummaryPart::SummaryText(
-                xai_grok_sampling_types::rs::SummaryTextContent {
+            summary: vec![intelekt_sampling_types::rs::SummaryPart::SummaryText(
+                intelekt_sampling_types::rs::SummaryTextContent {
                     text: String::new(),
                 },
             )],
@@ -369,7 +369,7 @@ fn flatten_keeps_reasoning_when_include_reasoning_is_true() {
 
 fn synthetic_user_text(
     text: &str,
-    reason: xai_grok_sampling_types::SyntheticReason,
+    reason: intelekt_sampling_types::SyntheticReason,
 ) -> ConversationItem {
     ConversationItem::User(UserItem {
         content: vec![ContentPart::Text { text: text.into() }],
@@ -481,7 +481,7 @@ fn window_ignores_synthetic_user_items_when_pinning() {
     // SystemReminder / AutoContinue user items
     // are synthesised by the runtime, not typed by the user.
     // They MUST NOT count toward `min_user_turns`.
-    use xai_grok_sampling_types::SyntheticReason;
+    use intelekt_sampling_types::SyntheticReason;
     let mut items = vec![user_text("real user prompt")]; // idx 0
     for _ in 0..29 {
         items.push(assistant_text("tool work"));
@@ -504,7 +504,7 @@ fn window_ignores_synthetic_user_items_when_pinning() {
 fn window_falls_back_to_tail_when_no_real_user_prompt_present() {
     // No real user items at all → user pin is None → falls back
     // to plain tail-30 (and assistant pin if applicable).
-    use xai_grok_sampling_types::SyntheticReason;
+    use intelekt_sampling_types::SyntheticReason;
     let mut items: Vec<ConversationItem> = Vec::new();
     for _ in 0..40 {
         items.push(assistant_text("solo"));
@@ -532,9 +532,9 @@ fn window_assistant_text_pin_skips_empty_assistant_turns() {
     // Assistant items with empty `.content` (tool-call-only
     // routing turns) MUST NOT count toward min_assistant_turns
     // — they have no prose for the classifier to interpret.
-    let empty_asst = ConversationItem::Assistant(xai_grok_sampling_types::AssistantItem {
+    let empty_asst = ConversationItem::Assistant(intelekt_sampling_types::AssistantItem {
         content: String::new().into(),
-        tool_calls: vec![xai_grok_sampling_types::ToolCall {
+        tool_calls: vec![intelekt_sampling_types::ToolCall {
             id: "c".into(),
             name: "read_file".into(),
             arguments: "{}".into(),
@@ -622,7 +622,7 @@ fn sample_line() -> LazinessDebugLogLine {
     LazinessDebugLogLine {
         timestamp: "2026-05-21T22:14:01.123Z".to_string(),
         session_id: "019e4c65-434b-7d62-9d4b-8137d1d413e4".to_string(),
-        model_id: "grok-4.5".to_string(),
+        model_id: "intelekt-4.5".to_string(),
         items_sent: 28,
         todo_snapshot: vec![DebugTodoSnapshot {
             id: "turn-finish-test-1".to_string(),

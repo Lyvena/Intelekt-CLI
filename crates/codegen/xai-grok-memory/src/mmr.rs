@@ -15,7 +15,7 @@
 use std::collections::HashSet;
 
 use super::search::SearchResult;
-use xai_grok_config_types::MmrConfig;
+use intelekt_config_types::MmrConfig;
 
 /// Tokenize text into a set of alphanumeric words for Jaccard comparison.
 ///

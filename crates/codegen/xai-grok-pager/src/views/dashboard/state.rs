@@ -312,7 +312,7 @@ pub enum FilterValue {
 }
 
 /// Persisted dashboard configuration stored under `[dashboard]` in
-/// `~/.grok/config.toml`. Lenient — corrupted fields fall back to
+/// `~/.intelekt/config.toml`. Lenient — corrupted fields fall back to
 /// defaults (edge case 12).
 ///
 /// Pinned + reorder are keyed by stable session ids (see
@@ -694,7 +694,7 @@ impl DashboardDispatchMode {
 #[derive(Debug, Clone)]
 pub struct PendingDispatchModel {
     pub id: agent_client_protocol::ModelId,
-    pub effort: Option<xai_grok_shell::sampling::types::ReasoningEffort>,
+    pub effort: Option<intelekt_shell::sampling::types::ReasoningEffort>,
     pub display: String,
 }
 
@@ -2875,7 +2875,7 @@ impl DashboardState {
         // so "which surface" stays orthogonal to "was it keyboard".
         if self.pinned_upgrade_cta_live && key!('o', CONTROL).matches(key) {
             return InputOutcome::Action(Action::AnnouncementsOpenCta(
-                xai_grok_telemetry::events::AnnouncementCtaSurface::Keyboard,
+                intelekt_telemetry::events::AnnouncementCtaSurface::Keyboard,
             ));
         }
 
@@ -3657,7 +3657,7 @@ impl DashboardState {
             // (resolved through the slot gate at dispatch time).
             if self.upgrade_cta_hit.contains(mouse.column, mouse.row) {
                 return InputOutcome::Action(Action::AnnouncementsOpenCta(
-                    xai_grok_telemetry::events::AnnouncementCtaSurface::Dashboard,
+                    intelekt_telemetry::events::AnnouncementCtaSurface::Dashboard,
                 ));
             }
 
@@ -4428,7 +4428,7 @@ pub fn load_persisted_enabled() -> Option<bool> {
         .and_then(|v| v.as_bool())
 }
 
-/// Load the full persisted dashboard from `~/.grok/config.toml`.
+/// Load the full persisted dashboard from `~/.intelekt/config.toml`.
 ///
 /// Returns `None` only when the file is missing or completely unreadable.
 /// Malformed individual fields fall back to defaults silently (edge case
@@ -4483,7 +4483,7 @@ pub fn load_persisted_from_path(path: &std::path::Path) -> Option<PersistedDashb
 /// non-empty AND unparseable, meaning we MUST NOT overwrite it (the
 /// file may contain user data we cannot interpret). Without this
 /// guard, a single dashboard pin would clobber every other table in
-/// `~/.grok/config.toml` (`[ui]`, `[hints]`, `[mcpServers]`, …).
+/// `~/.intelekt/config.toml` (`[ui]`, `[hints]`, `[mcpServers]`, …).
 ///
 /// Atomic write via `<path>.dashboard.tmp.<pid>`
 /// + rename, so concurrent readers never observe a half-truncated file.
@@ -4584,7 +4584,7 @@ fn atomic_write(path: &std::path::Path, bytes: &[u8]) -> std::io::Result<()> {
 }
 
 fn config_path() -> Option<PathBuf> {
-    let home = xai_grok_shell::util::grok_home::grok_home();
+    let home = intelekt_shell::util::grok_home::grok_home();
     Some(home.join("config.toml"))
 }
 

@@ -13,17 +13,17 @@ curl -fsSL https://x.ai/cli/install.sh | bash
 Or install with npm:
 
 ```bash
-npm i -g @xai-official/grok
+npm i -g @xai-official/intelekt
 ```
 
 ## Get Started
 
 ```bash
 # Launch the interactive TUI
-grok
+intelekt
 
 # Run a single task
-grok -p "Explain this codebase"
+intelekt -p "Explain this codebase"
 ```
 
 On first launch, Grok opens your browser to authenticate. For CI or headless environments, use an API key from [console.x.ai](https://console.x.ai):
@@ -35,13 +35,13 @@ export XAI_API_KEY="xai-..."
 ## Update
 
 ```bash
-grok update
+intelekt update
 ```
 
 Or if installed via npm:
 
 ```bash
-npm i -g @xai-official/grok@latest
+npm i -g @xai-official/intelekt@latest
 ```
 
 ## Supported Platforms

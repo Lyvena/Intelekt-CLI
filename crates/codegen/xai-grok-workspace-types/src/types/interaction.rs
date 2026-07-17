@@ -8,7 +8,7 @@
 //! `Vec<UserAnswer>` on the tool's bidi response sender.
 //!
 //! TODO(workspace): align with the canonical question/answer types in
-//! `xai-grok-tools` once the `ask_user_question` tool is extracted
+//! `intelekt-tools` once the `ask_user_question` tool is extracted
 //! into the workspace crate.
 
 use serde::{Deserialize, Serialize};

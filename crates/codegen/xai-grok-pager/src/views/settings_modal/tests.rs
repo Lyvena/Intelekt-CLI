@@ -15,7 +15,7 @@ use crate::settings::{
     SettingOwner, SettingValue, SettingsRegistry, StringValidator,
 };
 use crate::theme::Theme;
-use xai_grok_shell::agent::config::UiConfig;
+use intelekt_shell::agent::config::UiConfig;
 
 fn make_state() -> SettingsModalState {
     SettingsModalState::new(
@@ -4036,8 +4036,8 @@ fn editing_value_esc_returns_to_browse() {
     let mut s = make_state();
     s.mode = SettingsModalMode::EditingValue {
         key: "default_model",
-        buffer: "grok-4".to_string(),
-        cursor_byte: "grok-4".len(),
+        buffer: "intelekt-4".to_string(),
+        cursor_byte: "intelekt-4".len(),
         validation_error: None,
     };
     let outcome = handle_settings_key(&mut s, &KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));

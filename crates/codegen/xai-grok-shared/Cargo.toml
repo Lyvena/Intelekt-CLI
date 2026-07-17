@@ -1,6 +1,6 @@
 [package]
 license = "Apache-2.0"
-name = "xai-grok-shared"
+name = "intelekt-shared"
 edition.workspace = true
 
 [dependencies]
@@ -19,9 +19,9 @@ tempfile = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 urlencoding = { workspace = true }
-xai-grok-config-types = { workspace = true }
-xai-grok-models = { workspace = true }
-xai-grok-tools = { workspace = true }
+intelekt-config-types = { workspace = true }
+intelekt-models = { workspace = true }
+intelekt-tools = { workspace = true }
 xai-tty-utils = { workspace = true }
 
 [dev-dependencies]

@@ -105,7 +105,7 @@ pub(super) fn set_coding_data_sharing_inner(app: &mut AppView, opted_in: bool) {
 }
 
 /// Set coding-data-sharing preference. SHELL-owned, auth-metadata-backed
-/// (persists via ACP ext-request, NOT `~/.grok/config.toml`).
+/// (persists via ACP ext-request, NOT `~/.intelekt/config.toml`).
 pub(super) fn set_coding_data_sharing(app: &mut AppView, opted_in: bool) -> Vec<Effect> {
     // ── Guard 1: Enterprise ZDR ──────────────────────────────────────
     if app.is_zdr {
@@ -421,7 +421,7 @@ pub(super) fn handle_coding_data_sharing_failed(
 pub(super) fn handle_context_info_complete(
     app: &mut AppView,
     agent_id: AgentId,
-    info: Box<xai_grok_shell::session::SessionInfoResponse>,
+    info: Box<intelekt_shell::session::SessionInfoResponse>,
 ) -> Vec<Effect> {
     if let Some(agent) = app.agents.get_mut(&agent_id) {
         let model = info.data.model.as_deref().unwrap_or("unknown").to_string();

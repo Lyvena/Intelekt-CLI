@@ -32,7 +32,7 @@ use tokio::sync::{mpsc, watch};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, trace, warn};
 use xai_computer_hub_sdk::{AuthCredential, AuthIdentity, AuthProvider};
-use xai_grok_workspace::WorkspaceHandle;
+use intelekt_workspace::WorkspaceHandle;
 const REGISTRATION_TIMEOUT: Duration = Duration::from_secs(30);
 /// Separator for namespacing request IDs. Using pipe character which is:
 /// - Valid in JSON strings (no escaping needed)
@@ -1075,7 +1075,7 @@ async fn handle_workspace_start(
     }
     let allow_insecure_ws =
         url.scheme() == "ws" && matches!(url.host_str(), Some("localhost" | "127.0.0.1" | "::1"));
-    let status_config = xai_grok_workspace::StatusConfig::from_env();
+    let status_config = intelekt_workspace::StatusConfig::from_env();
     let alpha_test_key = None;
     let auth = wait_for_leader_auth(ws, &cancel).await?;
     let server_id = workspace_server_id();
@@ -1087,7 +1087,7 @@ async fn handle_workspace_start(
         std::env::var("GROK_WORKSPACE_UPLOAD_QUEUE_ENABLED").as_deref() != Ok("false");
     crate::agent::folder_trust::resolve_and_record(&cwd_path, None, false);
     let project_lsp_trusted = crate::agent::folder_trust::project_scope_allowed(&cwd_path);
-    let handle = xai_grok_workspace::connect_local_workspace(
+    let handle = intelekt_workspace::connect_local_workspace(
         cwd_path.clone(),
         url,
         auth,
@@ -1546,7 +1546,7 @@ pub async fn run_leader_server(
             client.registered = true; client_count.fetch_add(1, Ordering::Relaxed);
             debug!(client_id = id.0, ? mode, yolo_mode = client.capabilities.yolo_mode,
             client_type = % client.client_type, "Client registered");
-            xai_grok_telemetry::unified_log::info("leader.client.registered", None,
+            intelekt_telemetry::unified_log::info("leader.client.registered", None,
             Some(serde_json::json!({ "client_id" : id.0, "client_type" : client
             .client_type, })),); if mode == ClientMode::Headless { let newly_demanded =
             relay_demand_tx.send_if_modified(| demanded | { let changed = !* demanded; *
@@ -1562,7 +1562,7 @@ pub async fn run_leader_server(
             ServerEvent::Disconnected(id) => { let was_registered = clients.get(& id)
             .is_some_and(| c | c.registered); clients.remove(& id); if was_registered {
             client_count.fetch_sub(1, Ordering::Relaxed);
-            xai_grok_telemetry::unified_log::info("leader.client.disconnected", None,
+            intelekt_telemetry::unified_log::info("leader.client.disconnected", None,
             Some(serde_json::json!({ "client_id" : id.0 })),); } pending_load_by_req
             .retain(| _, (c, _) | * c != id); load_live_buffer.retain(| (c, _), _ | * c
             != id); load_replay_max_seq.retain(| (c, _), _ | * c != id); let mut
@@ -1661,7 +1661,7 @@ pub async fn run_leader_server(
             parsed_response && ! clients.contains_key(& orphan_client) { warn!(client_id
             = orphan_client.0, request_id = orphan_req_id.as_str(),
             "Dropping RPC response: requesting client disconnected (response orphaned)");
-            xai_grok_telemetry::unified_log::warn("leader.response.orphaned", None,
+            intelekt_telemetry::unified_log::warn("leader.response.orphaned", None,
             Some(serde_json::json!({ "client_id" : orphan_client.0, "request_id" :
             orphan_req_id, })),); } if let Some((client_id, ref raw_response_id)) =
             parsed_response && let Some(client) = clients.get_mut(& client_id) && let
@@ -1679,11 +1679,11 @@ pub async fn run_leader_server(
             trace!(client_id = client_id.0, "Routed response via request ID"); }
             Ok(false) => { warn!(client_id = client_id.0,
             "Failed to send response to client (channel full)");
-            xai_grok_telemetry::unified_log::warn("leader.response.send_failed", None,
+            intelekt_telemetry::unified_log::warn("leader.response.send_failed", None,
             Some(serde_json::json!({ "client_id" : client_id.0, "reason" :
             "channel_full", })),); } Err(e) => { warn!(client_id = client_id.0, error = %
             e, "Failed to send response to client (channel closed)");
-            xai_grok_telemetry::unified_log::warn("leader.response.send_failed", None,
+            intelekt_telemetry::unified_log::warn("leader.response.send_failed", None,
             Some(serde_json::json!({ "client_id" : client_id.0, "reason" :
             "channel_closed", })),); } } if let Some((buf_client, buf_sid)) =
             pending_load_by_req.remove(raw_response_id) { let replay_cutoff : Option <
@@ -3228,7 +3228,7 @@ mod tests {
         );
         let caps = ClientCapabilities {
             yolo_mode: false,
-            default_model: Some("grok-3-fast".to_string()),
+            default_model: Some("intelekt-3-fast".to_string()),
             ..Default::default()
         };
         let mut json = pv(&payload);
@@ -3238,7 +3238,7 @@ mod tests {
             "",
             ClientId(1)
         ));
-        assert_eq!(json["params"]["_meta"]["modelId"], "grok-3-fast");
+        assert_eq!(json["params"]["_meta"]["modelId"], "intelekt-3-fast");
         assert!(json["params"]["_meta"].get("yoloMode").is_none());
     }
     #[test]
@@ -3249,7 +3249,7 @@ mod tests {
         );
         let caps = ClientCapabilities {
             yolo_mode: true,
-            default_model: Some("grok-3-fast".to_string()),
+            default_model: Some("intelekt-3-fast".to_string()),
             ..Default::default()
         };
         let mut json = pv(&payload);
@@ -3260,7 +3260,7 @@ mod tests {
             ClientId(1)
         ));
         assert_eq!(json["params"]["_meta"]["yoloMode"], true);
-        assert_eq!(json["params"]["_meta"]["modelId"], "grok-3-fast");
+        assert_eq!(json["params"]["_meta"]["modelId"], "intelekt-3-fast");
     }
     #[test]
     fn inject_capabilities_does_not_override_existing_model_id() {
@@ -3270,7 +3270,7 @@ mod tests {
         );
         let caps = ClientCapabilities {
             yolo_mode: false,
-            default_model: Some("grok-3-fast".to_string()),
+            default_model: Some("intelekt-3-fast".to_string()),
             ..Default::default()
         };
         let mut json = pv(&payload);
@@ -3332,29 +3332,29 @@ mod tests {
     #[test]
     fn extract_model_id_from_set_model_returns_value() {
         let payload = format!(
-            r#"{{"jsonrpc":"2.0","method":"{}","id":1,"params":{{"sessionId":"sess-123","modelId":"grok-3-fast"}}}}"#,
+            r#"{{"jsonrpc":"2.0","method":"{}","id":1,"params":{{"sessionId":"sess-123","modelId":"intelekt-3-fast"}}}}"#,
             AGENT_METHOD_NAMES.session_set_model
         );
         assert_eq!(
             extract_model_id_from_set_model(&pv(&payload)),
-            Some("grok-3-fast".to_string())
+            Some("intelekt-3-fast".to_string())
         );
     }
     #[test]
     fn extract_model_id_from_set_model_handles_snake_case() {
         let payload = format!(
-            r#"{{"jsonrpc":"2.0","method":"{}","id":1,"params":{{"session_id":"sess-123","model_id":"grok-3"}}}}"#,
+            r#"{{"jsonrpc":"2.0","method":"{}","id":1,"params":{{"session_id":"sess-123","model_id":"intelekt-3"}}}}"#,
             AGENT_METHOD_NAMES.session_set_model
         );
         assert_eq!(
             extract_model_id_from_set_model(&pv(&payload)),
-            Some("grok-3".to_string())
+            Some("intelekt-3".to_string())
         );
     }
     #[test]
     fn extract_model_id_from_set_model_returns_none_for_other_methods() {
         let payload =
-            r#"{"jsonrpc":"2.0","method":"other/method","id":1,"params":{"modelId":"grok-3"}}"#;
+            r#"{"jsonrpc":"2.0","method":"other/method","id":1,"params":{"modelId":"intelekt-3"}}"#;
         assert_eq!(extract_model_id_from_set_model(&pv(payload)), None);
     }
     #[test]
@@ -3376,26 +3376,26 @@ mod tests {
     #[test]
     fn patch_initialize_response_patches_current_model_id() {
         let mut json = pv(
-            r#"{"jsonrpc":"2.0","id":1,"result":{"meta":{"modelState":{"currentModelId":"grok-3","availableModels":[]}}}}"#,
+            r#"{"jsonrpc":"2.0","id":1,"result":{"meta":{"modelState":{"currentModelId":"intelekt-3","availableModels":[]}}}}"#,
         );
-        let default_model = Some("grok-3-fast".to_string());
+        let default_model = Some("intelekt-3-fast".to_string());
         assert!(patch_initialize_response_model(&mut json, &default_model));
         assert_eq!(
             json["result"]["meta"]["modelState"]["currentModelId"],
-            "grok-3-fast"
+            "intelekt-3-fast"
         );
     }
     #[test]
     fn patch_initialize_response_preserves_other_fields() {
         let mut json = pv(
-            r#"{"jsonrpc":"2.0","id":1,"result":{"meta":{"grokShell":true,"modelState":{"currentModelId":"grok-3","availableModels":[{"modelId":"grok-3"},{"modelId":"grok-3-fast"}]}}}}"#,
+            r#"{"jsonrpc":"2.0","id":1,"result":{"meta":{"grokShell":true,"modelState":{"currentModelId":"intelekt-3","availableModels":[{"modelId":"intelekt-3"},{"modelId":"intelekt-3-fast"}]}}}}"#,
         );
-        let default_model = Some("grok-3-fast".to_string());
+        let default_model = Some("intelekt-3-fast".to_string());
         assert!(patch_initialize_response_model(&mut json, &default_model));
         assert_eq!(json["result"]["meta"]["grokShell"], true);
         assert_eq!(
             json["result"]["meta"]["modelState"]["currentModelId"],
-            "grok-3-fast"
+            "intelekt-3-fast"
         );
         assert_eq!(
             json["result"]["meta"]["modelState"]["availableModels"]
@@ -3408,7 +3408,7 @@ mod tests {
     #[test]
     fn patch_initialize_response_noop_when_no_default_model() {
         let mut json = pv(
-            r#"{"jsonrpc":"2.0","id":1,"result":{"meta":{"modelState":{"currentModelId":"grok-3"}}}}"#,
+            r#"{"jsonrpc":"2.0","id":1,"result":{"meta":{"modelState":{"currentModelId":"intelekt-3"}}}}"#,
         );
         let before = json.clone();
         assert!(!patch_initialize_response_model(&mut json, &None));
@@ -3417,7 +3417,7 @@ mod tests {
     #[test]
     fn patch_initialize_response_noop_when_empty_default_model() {
         let mut json = pv(
-            r#"{"jsonrpc":"2.0","id":1,"result":{"meta":{"modelState":{"currentModelId":"grok-3"}}}}"#,
+            r#"{"jsonrpc":"2.0","id":1,"result":{"meta":{"modelState":{"currentModelId":"intelekt-3"}}}}"#,
         );
         let before = json.clone();
         assert!(!patch_initialize_response_model(
@@ -3429,24 +3429,24 @@ mod tests {
     #[test]
     fn patch_initialize_response_noop_when_already_matches() {
         let mut json = pv(
-            r#"{"jsonrpc":"2.0","id":1,"result":{"meta":{"modelState":{"currentModelId":"grok-3"}}}}"#,
+            r#"{"jsonrpc":"2.0","id":1,"result":{"meta":{"modelState":{"currentModelId":"intelekt-3"}}}}"#,
         );
         let before = json.clone();
         assert!(!patch_initialize_response_model(
             &mut json,
-            &Some("grok-3".to_string())
+            &Some("intelekt-3".to_string())
         ));
         assert_eq!(json, before);
     }
     #[test]
     fn patch_initialize_response_noop_for_non_initialize_response() {
         let mut json = pv(
-            r#"{"jsonrpc":"2.0","id":1,"result":{"session_id":"sess-1","models":{"currentModelId":"grok-3","availableModels":[]}}}"#,
+            r#"{"jsonrpc":"2.0","id":1,"result":{"session_id":"sess-1","models":{"currentModelId":"intelekt-3","availableModels":[]}}}"#,
         );
         let before = json.clone();
         assert!(!patch_initialize_response_model(
             &mut json,
-            &Some("grok-3-fast".to_string())
+            &Some("intelekt-3-fast".to_string())
         ));
         assert_eq!(json, before);
     }
@@ -3854,7 +3854,7 @@ mod tests {
         .unwrap();
         let _: ServerMessage = read_message(&mut reader).await.unwrap();
         let set_model_payload = format!(
-            r#"{{"jsonrpc":"2.0","method":"{}","id":1,"params":{{"sessionId":"sess-1","modelId":"grok-4.5"}}}}"#,
+            r#"{{"jsonrpc":"2.0","method":"{}","id":1,"params":{{"sessionId":"sess-1","modelId":"intelekt-4.5"}}}}"#,
             AGENT_METHOD_NAMES.session_set_model
         );
         write_message(
@@ -3881,7 +3881,7 @@ mod tests {
         let forwarded = acp_rx.recv().await.unwrap();
         let json: serde_json::Value = serde_json::from_str(&forwarded).unwrap();
         assert_eq!(
-            json["params"]["_meta"]["modelId"], "grok-4.5",
+            json["params"]["_meta"]["modelId"], "intelekt-4.5",
             "Leader should inject the updated model after session/setModel, not the stale registration model"
         );
         cancel.cancel();

@@ -1,7 +1,7 @@
 //! Subagent configuration resolution crate.
 //!
 //! Extracts the pure-logic "resolution" phase of subagent spawning from
-//! `xai-grok-shell` into a reusable library. Given a spawn request and a
+//! `intelekt-shell` into a reusable library. Given a spawn request and a
 //! resolution context (roles, personas, parent state), this crate resolves:
 //!
 //! - Effective runtime config (model, persona, capability mode, isolation)
@@ -11,7 +11,7 @@
 //! - Resume identity validation (type/persona match checks; model is soft-ignored).
 //!
 //! This crate has no dependency on session, coordinator, or transport types.
-//! Designed to be consumed by local hosts (e.g. `xai-grok-shell`) and any
+//! Designed to be consumed by local hosts (e.g. `intelekt-shell`) and any
 //! future remote spawn path that only needs pure resolution logic.
 //!
 //! ## Planned composition API

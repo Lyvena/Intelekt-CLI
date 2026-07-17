@@ -82,7 +82,7 @@ fn is_github_host(host: &str) -> bool {
 }
 
 /// Whether the `gh` CLI is available on `PATH`, via the same `which` lookup the
-/// rest of the codebase uses for binary discovery (e.g. `xai-grok-mcp`).
+/// rest of the codebase uses for binary discovery (e.g. `intelekt-mcp`).
 fn gh_available() -> bool {
     which::which("gh").is_ok()
 }

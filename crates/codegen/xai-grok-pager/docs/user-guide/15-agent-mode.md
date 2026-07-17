@@ -32,11 +32,11 @@ Clients that use this mode include:
 
 ### Options
 
-These options belong to the `grok agent` command and apply to every mode. Pass them before the mode name, for example `grok agent --model grok-build stdio`. The `stdio` subcommand itself takes no options.
+These options belong to the `grok agent` command and apply to every mode. Pass them before the mode name, for example `grok agent --model intelekt-cli stdio`. The `stdio` subcommand itself takes no options.
 
 | Flag                       | Description                                                       |
 | -------------------------- | ---------------------------------------------------------------- |
-| `-m, --model <MODEL>`      | Set the model ID (for example, `grok-build`).                    |
+| `-m, --model <MODEL>`      | Set the model ID (for example, `intelekt-cli`).                    |
 | `--always-approve`         | Auto-approve every tool execution. (Alias: `--yolo`.)            |
 | `--reauth`                 | Run authentication before starting the agent.                    |
 | `--agent-profile <PATH>`   | Load an agent profile from a file.                               |

@@ -28,8 +28,8 @@ use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::PathBuf;
 
 use clap::Parser;
-use xai_grok_shell::sampling::conversation::{ConversationItem, conversation_item_to_chat_message};
-use xai_grok_shell::sampling::types::{ChatRequestMessage, Role};
+use intelekt_shell::sampling::conversation::{ConversationItem, conversation_item_to_chat_message};
+use intelekt_shell::sampling::types::{ChatRequestMessage, Role};
 
 /// normalize chat_history.jsonl, convert any v1 (ConversationItem) to v0 (ChatRequestMessage) format.
 #[derive(Parser)]
@@ -250,13 +250,13 @@ mod tests {
     /// it from the raw JSON to preserve downstream data fidelity.
     #[test]
     fn test_assistant_with_reasoning() {
-        let v1 = r#"{"type":"assistant","content":"The answer is 42.","reasoning":{"text":"Let me think..."},"tool_calls":[],"model_id":"grok-3"}"#;
+        let v1 = r#"{"type":"assistant","content":"The answer is 42.","reasoning":{"text":"Let me think..."},"tool_calls":[],"model_id":"intelekt-3"}"#;
         let out = convert_line_for_test(v1);
         let v = v0_value(&out);
         assert_eq!(v["role"], "assistant");
         assert_eq!(v["content"], "The answer is 42.");
         assert_eq!(v["reasoning_content"], "Let me think...");
-        assert_eq!(v["model_id"], "grok-3");
+        assert_eq!(v["model_id"], "intelekt-3");
     }
 
     /// Current shape: reasoning is a sibling line
@@ -274,7 +274,7 @@ mod tests {
         );
         assert_eq!(pending.len(), 1);
 
-        let a_line = r#"{"type":"assistant","content":"The answer is 42.","tool_calls":[],"model_id":"grok-3"}"#;
+        let a_line = r#"{"type":"assistant","content":"The answer is 42.","tool_calls":[],"model_id":"intelekt-3"}"#;
         let a = convert_line(a_line, &mut pending)
             .unwrap()
             .expect("assistant line produces a v0 message");

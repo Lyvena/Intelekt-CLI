@@ -96,7 +96,7 @@ fn enqueue_permission(
     perm: xai_acp_lib::AcpArgs<acp::RequestPermissionRequest>,
     agent: &mut AgentView,
 ) -> bool {
-    // 1. Parse bash highlights from request meta (imported from xai-grok-shell).
+    // 1. Parse bash highlights from request meta (imported from intelekt-shell).
     let bash_highlights: Option<BashCommandHighlights> = perm
         .request
         .meta
@@ -104,7 +104,7 @@ fn enqueue_permission(
         .and_then(|meta| serde_json::from_value(serde_json::Value::Object(meta.clone())).ok());
     let bash_selection_count = bash_highlights
         .as_ref()
-        .map(|h| xai_grok_workspace::permission::default_always_allow_scope(&h.highlighted_words))
+        .map(|h| intelekt_workspace::permission::default_always_allow_scope(&h.highlighted_words))
         .unwrap_or(0);
 
     // 1b. Parse MCP scope state from the `allow-always-mcp` option's meta.
@@ -117,7 +117,7 @@ fn enqueue_permission(
         .find(|o| o.option_id.0.as_ref() == "allow-always-mcp")
         .and_then(|opt| opt.meta.as_ref())
         .and_then(|m| {
-            serde_json::from_value::<xai_grok_workspace::permission::McpToolPermission>(
+            serde_json::from_value::<intelekt_workspace::permission::McpToolPermission>(
                 serde_json::Value::Object(m.clone()),
             )
             .ok()
@@ -220,7 +220,7 @@ fn resolve_subagent_label(agent: &AgentView, session_id: &acp::SessionId) -> Opt
 /// Build title, description lines, and optional raw command for a permission request.
 ///
 /// Deserializes `raw_input` into the shared [`BashToolInput`] from
-/// `xai-grok-tools` for typed access to `command` and `description`.
+/// `intelekt-tools` for typed access to `command` and `description`.
 /// Falls back to ACP-level `title`/`kind` fields when deserialization fails.
 ///
 /// Returns `(title, description, bash_command_raw)`.
@@ -231,7 +231,7 @@ fn build_permission_display(
     let is_bash = bash_highlights.is_some();
 
     let bash_input = req.tool_call.fields.raw_input.as_ref().and_then(|v| {
-        serde_json::from_value::<xai_grok_tools::implementations::BashToolInput>(v.clone()).ok()
+        serde_json::from_value::<intelekt_tools::implementations::BashToolInput>(v.clone()).ok()
     });
 
     let raw_command = bash_input.as_ref().map(|b| b.command.clone()).or_else(|| {
@@ -275,7 +275,7 @@ fn build_permission_display(
         } else if let Some(ref t) = req.tool_call.fields.title {
             format!(
                 "Allow {}?",
-                xai_grok_workspace::permission::mcp_pretty_name_if_qualified(t)
+                intelekt_workspace::permission::mcp_pretty_name_if_qualified(t)
             )
         } else {
             "Allow Edit?".to_string()
@@ -283,7 +283,7 @@ fn build_permission_display(
     } else if let Some(ref t) = req.tool_call.fields.title {
         format!(
             "Allow {}?",
-            xai_grok_workspace::permission::mcp_pretty_name_if_qualified(t)
+            intelekt_workspace::permission::mcp_pretty_name_if_qualified(t)
         )
     } else {
         match req.tool_call.fields.kind {

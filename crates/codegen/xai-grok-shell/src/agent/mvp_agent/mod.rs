@@ -57,7 +57,7 @@ use crate::agent::feedback_client::FeedbackClient;
 use crate::agent::folder_trust;
 use crate::agent::models::{resolve_catalog_key, selectable_catalog_key_for_persisted};
 use crate::agent::session_config;
-use xai_grok_sampling_types::{
+use intelekt_sampling_types::{
     REASONING_EFFORT_META_KEY, ReasoningEffortOption, reasoning_effort_meta_value,
     supports_reasoning_effort_meta,
 };
@@ -65,14 +65,14 @@ use crate::agent::update_chunk_merge;
 use crate::auth::{AuthManager, AuthUrlInfo};
 use crate::config::StorageMode;
 use crate::extensions::notification::{SessionNotification, SessionUpdate};
-use xai_grok_telemetry::id::{agent_id, agent_instance_id};
-use xai_grok_telemetry::session_ctx::log_event;
-use xai_grok_workspace::file_system::{AcpSessionFs, CodebaseIndexManager, LocalFs};
-use xai_grok_workspace::permission::{ClientType, PermissionEvent};
+use intelekt_telemetry::id::{agent_id, agent_instance_id};
+use intelekt_telemetry::session_ctx::log_event;
+use intelekt_workspace::file_system::{AcpSessionFs, CodebaseIndexManager, LocalFs};
+use intelekt_workspace::permission::{ClientType, PermissionEvent};
 use crate::sampling::Client as OaiCompatClient;
 use crate::sampling::error::map_sampling_err_to_acp;
 use crate::session::mcp_servers::{McpMetaConfigMap, parse_mcp_meta_config};
-use xai_grok_sampler::SamplerConfig as SamplingConfig;
+use intelekt_sampler::SamplerConfig as SamplingConfig;
 use crate::session::persistence::PersistenceHandle;
 use crate::session::worktree::BackgroundCopyContext;
 use crate::session::{
@@ -97,8 +97,8 @@ use crate::upload::turn::{
     parse_agent_profile_from_meta,
 };
 use tokio_util::sync::CancellationToken;
-use xai_grok_paths::AbsPathBuf;
-use xai_grok_workspace::session::git::GitDiscoveryResult;
+use intelekt_paths::AbsPathBuf;
+use intelekt_workspace::session::git::GitDiscoveryResult;
 use xai_hunk_tracker::HunkTrackerActor;
 /// Hard-error message for legacy Direct hub-bind sessions (`x.ai/cloud_server_id`).
 pub(crate) const DIRECT_HUB_CLOUD_REMOVED_MSG: &str = "Direct hub cloud removed; use Gateway (envId or existing-workspace attach)";
@@ -433,7 +433,7 @@ pub(crate) struct PromptResponseMetaArgs<'a> {
     pub prompt_id: &'a str,
     pub total_tokens: u64,
     pub model_id: &'a str,
-    pub last_turn_usage: Option<&'a xai_grok_sampling_types::TokenUsage>,
+    pub last_turn_usage: Option<&'a intelekt_sampling_types::TokenUsage>,
     pub prompt_usage: Option<crate::extensions::notification::PromptUsage>,
     pub cancellation_category: Option<String>,
     pub cancel_trigger: Option<String>,
@@ -490,7 +490,7 @@ struct SettingsUpdateNotification {
     sharing_enabled: Option<bool>,
     session_picker_grouped: Option<bool>,
     tips: Option<Vec<String>>,
-    announcements: Option<Vec<xai_grok_announcements::RemoteAnnouncement>>,
+    announcements: Option<Vec<intelekt_announcements::RemoteAnnouncement>>,
     gate_message: Option<String>,
     gate_url: Option<String>,
     gate_label: Option<String>,
@@ -532,12 +532,12 @@ pub(crate) enum AnnouncementsPushMode {
 /// `mode` decides when an unchanged list still pushes — see
 /// [`AnnouncementsPushMode`].
 fn announcements_push_payload(
-    stored: Option<&[xai_grok_announcements::RemoteAnnouncement]>,
-    last_emitted: &[xai_grok_announcements::RemoteAnnouncement],
+    stored: Option<&[intelekt_announcements::RemoteAnnouncement]>,
+    last_emitted: &[intelekt_announcements::RemoteAnnouncement],
     now: chrono::DateTime<chrono::Utc>,
     mode: AnnouncementsPushMode,
-) -> Option<Vec<xai_grok_announcements::RemoteAnnouncement>> {
-    let current = xai_grok_announcements::filter_expired_at(
+) -> Option<Vec<intelekt_announcements::RemoteAnnouncement>> {
+    let current = intelekt_announcements::filter_expired_at(
         stored.map(|s| s.to_vec()).unwrap_or_default(),
         now,
     );
@@ -715,7 +715,7 @@ pub struct MvpAgent {
     /// the session's cwd to the watcher task spawned in
     /// `agent/app.rs`, which calls
     /// [`crate::config::watcher::ConfigFileWatcher::watch_path`] (a
-    /// **non-recursive** watch on `<cwd>/` and `<cwd>/.grok/`).
+    /// **non-recursive** watch on `<cwd>/` and `<cwd>/.intelekt/`).
     ///
     /// `None` outside leader mode and in tests — the registration is a
     /// no-op in that case, which is fine: the existing per-extra-path
@@ -779,14 +779,14 @@ pub struct MvpAgent {
     /// Unified sender for all subagent coordinator events.
     /// LEADER-SAFE(shared): channel is multi-producer, coordinator drains.
     subagent_event_tx: tokio::sync::mpsc::UnboundedSender<
-        xai_grok_tools::implementations::grok_build::task::types::SubagentEvent,
+        intelekt_tools::implementations::grok_build::task::types::SubagentEvent,
     >,
     /// Receiver for subagent events. Taken once by `start_subagent_coordinator()`.
     /// `None` after the coordinator drain task has been spawned.
     subagent_event_rx: RefCell<
         Option<
             tokio::sync::mpsc::UnboundedReceiver<
-                xai_grok_tools::implementations::grok_build::task::types::SubagentEvent,
+                intelekt_tools::implementations::grok_build::task::types::SubagentEvent,
             >,
         >,
     >,
@@ -797,7 +797,7 @@ pub struct MvpAgent {
     /// Pushed by the `InjectNotification` handler when a turn is active and the
     /// notification has `Next` priority. Drained by the session turn loop
     /// (`inject_pending_monitor_events`) into a hidden synthetic user message.
-    monitor_event_buffer: xai_grok_tools::implementations::grok_build::task::types::MonitorEventBuffer,
+    monitor_event_buffer: intelekt_tools::implementations::grok_build::task::types::MonitorEventBuffer,
     /// Per-subagent model ID overrides from config.toml `[subagents.models]`.
     /// Populated from `SubagentsConfig.models` during `with_models()`.
     subagent_model_overrides: std::collections::HashMap<String, String>,
@@ -806,11 +806,11 @@ pub struct MvpAgent {
     subagent_toggle: std::collections::HashMap<String, bool>,
     subagent_roles: std::collections::HashMap<
         String,
-        xai_grok_subagent_resolution::config::SubagentRole,
+        intelekt_subagent_resolution::config::SubagentRole,
     >,
     subagent_personas: std::collections::HashMap<
         String,
-        xai_grok_subagent_resolution::config::SubagentPersona,
+        intelekt_subagent_resolution::config::SubagentPersona,
     >,
     /// The process launch directory, captured once at construction so the
     /// deferred launch-dir init paths share one source of truth instead of each
@@ -821,7 +821,7 @@ pub struct MvpAgent {
     /// the launch dir; see it for the dedup + TOCTOU contract.
     launch_dir_trust: std::cell::OnceCell<bool>,
     /// Shared plugin registry handle.
-    pub(crate) plugin_registry_handle: xai_grok_agent::plugins::SharedPluginRegistryHandle,
+    pub(crate) plugin_registry_handle: intelekt_agent::plugins::SharedPluginRegistryHandle,
     /// One-shot guard for the lazy launch-dir population of
     /// `plugin_registry_handle`.
     ///
@@ -860,7 +860,7 @@ pub struct MvpAgent {
     /// Local workspace ops, built lazily via [`Self::ensure_local_workspace_ops`].
     /// The agent never opens Computer Hub as a harness/client; remote cloud
     /// sandboxes are gateway-owned (`gateway_bridge` / `computer_sessions`).
-    workspace_ops: RefCell<Option<xai_grok_workspace::WorkspaceOps>>,
+    workspace_ops: RefCell<Option<intelekt_workspace::WorkspaceOps>>,
     /// Sessions opened with `require_gateway` / chat light-frontend (K13).
     /// Prompt-time guard consults this when the bridge map entry is missing,
     /// independent of prompt `_meta` (pager often omits kind on prompt).
@@ -885,7 +885,7 @@ pub struct MvpAgent {
     /// Owned by the emit gate — full-settings refreshes move `remote_settings`
     /// without touching this, so their changes still get pushed on the next
     /// gate call. LEADER-SAFE(shared): one agent-wide push stream.
-    last_emitted_announcements: RefCell<Vec<xai_grok_announcements::RemoteAnnouncement>>,
+    last_emitted_announcements: RefCell<Vec<intelekt_announcements::RemoteAnnouncement>>,
     /// Idempotency guard: the periodic announcements refresh task is spawned
     /// at most once (on the first `initialize`). See
     /// `spawn_announcements_refresh`.
@@ -944,19 +944,19 @@ pub(crate) fn resolve_required_agent_type(
 /// a strict harness, and that harness is non-default. Pure, so the decision is
 /// unit-testable without a live catalog.
 pub(crate) fn inherited_harness_template(
-    current: &xai_grok_agent::prompt::user_message::UserMessageTemplate,
+    current: &intelekt_agent::prompt::user_message::UserMessageTemplate,
     pinned_model_agent_type: Option<&str>,
     cwd: &std::path::Path,
-) -> Option<xai_grok_agent::prompt::user_message::UserMessageTemplate> {
-    use xai_grok_agent::prompt::user_message::UserMessageTemplate;
+) -> Option<intelekt_agent::prompt::user_message::UserMessageTemplate> {
+    use intelekt_agent::prompt::user_message::UserMessageTemplate;
     if !matches!(current, UserMessageTemplate::Default) {
         return None;
     }
     let agent_type = pinned_model_agent_type?;
-    if !xai_grok_agent::config::is_strict_harness_agent_type(agent_type) {
+    if !intelekt_agent::config::is_strict_harness_agent_type(agent_type) {
         return None;
     }
-    let harness = xai_grok_agent::discovery::by_name_in_cwd(agent_type, cwd)?;
+    let harness = intelekt_agent::discovery::by_name_in_cwd(agent_type, cwd)?;
     (!matches!(harness.user_message_template, UserMessageTemplate::Default))
         .then_some(harness.user_message_template)
 }
@@ -971,8 +971,8 @@ pub(crate) fn inherited_harness_template(
 ///
 /// When a zero-turn switch rebuilds the harness (`did_rebuild`), the handle
 /// must adopt the rebuilt harness's agent type. Otherwise the name is left
-/// unchanged — compatible stock switches (e.g. `grok-build` →
-/// `grok-build-plan`) intentionally preserve the session's original ACP
+/// unchanged — compatible stock switches (e.g. `intelekt-cli` →
+/// `intelekt-cli-plan`) intentionally preserve the session's original ACP
 /// `agentProfile`.
 pub(crate) fn agent_name_after_model_switch(
     did_rebuild: bool,
@@ -988,14 +988,14 @@ pub(crate) fn agent_name_after_model_switch(
 /// Harness compatibility for zero-turn / mid-turn model switching.
 ///
 /// Two stock (non-strict) agents are interchangeable — they share the
-/// default wire format and toolset, so switching e.g. `grok-build` →
-/// `grok-build-plan` doesn't require rebuilding the harness and would
+/// default wire format and toolset, so switching e.g. `intelekt-cli` →
+/// `intelekt-cli-plan` doesn't require rebuilding the harness and would
 /// destroy a client-supplied `_meta.agentProfile` if it did.
 ///
 /// Strict harnesses (`codex`, …) are only compatible with
 /// themselves. Strict↔stock transitions are never compatible.
 pub(crate) fn harnesses_are_compatible(active: &str, required: &str) -> bool {
-    use xai_grok_agent::config::is_strict_harness_agent_type;
+    use intelekt_agent::config::is_strict_harness_agent_type;
     match (
         is_strict_harness_agent_type(active),
         is_strict_harness_agent_type(required),
@@ -1174,12 +1174,12 @@ fn inject_proxy_headers(
         .or_insert_with(|| {
             client_version
                 .map(String::from)
-                .unwrap_or_else(|| xai_grok_version::VERSION.to_string())
+                .unwrap_or_else(|| intelekt_version::VERSION.to_string())
         });
     if crate::util::is_cli_chat_proxy_url(base_url) {
         headers
             .entry("X-XAI-Token-Auth".to_string())
-            .or_insert_with(|| "xai-grok-cli".to_string());
+            .or_insert_with(|| "intelekt-cli".to_string());
         headers
             .entry("x-authenticateresponse".to_string())
             .or_insert_with(|| "authenticate-response".to_string());
@@ -1665,7 +1665,7 @@ impl MvpAgent {
         }
         let mut completions = Vec::with_capacity(orphaned.len());
         for task in &orphaned {
-            let snapshot = xai_grok_tools::types::TaskSnapshot {
+            let snapshot = intelekt_tools::types::TaskSnapshot {
                 task_id: task.task_id.clone(),
                 command: task.command.clone(),
                 display_command: None,
@@ -1678,7 +1678,7 @@ impl MvpAgent {
                 exit_code: None,
                 signal: Some("session_restart".to_string()),
                 completed: true,
-                kind: xai_grok_tools::computer::types::TaskKind::Bash,
+                kind: intelekt_tools::computer::types::TaskKind::Bash,
                 block_waited: false,
                 explicitly_killed: false,
                 owner_session_id: None,
@@ -1814,7 +1814,7 @@ impl MvpAgent {
             tracing::info!(
                 new_tier = % unblocked.new_tier, "subscription detected, lifting gate"
             );
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "paywall_check_gate_lifting",
                 None,
                 Some(
@@ -1842,7 +1842,7 @@ impl MvpAgent {
                     new_tier = % unblocked.new_tier,
                     "subscription detected but allow_access still false, keeping gate"
                 );
-                xai_grok_telemetry::unified_log::warn(
+                intelekt_telemetry::unified_log::warn(
                     "paywall_check_gate_kept_allow_access_false",
                     None,
                     Some(
@@ -1864,7 +1864,7 @@ impl MvpAgent {
             {
                 Ok(_) => {
                     tracing::info!("post-unblock: JWT refresh_chain succeeded");
-                    xai_grok_telemetry::unified_log::info(
+                    intelekt_telemetry::unified_log::info(
                         "paywall_check_jwt_refreshed",
                         None,
                         Some(serde_json::json!({ "user_id" : user_id })),
@@ -1876,7 +1876,7 @@ impl MvpAgent {
                         error = % e,
                         "post-unblock: JWT refresh failed, user may need to re-login on next restart"
                     );
-                    xai_grok_telemetry::unified_log::warn(
+                    intelekt_telemetry::unified_log::warn(
                         "paywall_check_error",
                         None,
                         Some(
@@ -1905,7 +1905,7 @@ impl MvpAgent {
                 let new_tier = unblocked.new_tier.clone();
                 let jwt_claim_log = jwt_claim.clone();
                 tokio::task::spawn(async move {
-                    xai_grok_telemetry::unified_log::info(
+                    intelekt_telemetry::unified_log::info(
                         "model catalog: post_subscription_unblock refresh",
                         None,
                         Some(
@@ -1923,7 +1923,7 @@ impl MvpAgent {
                     refresh_ok, jwt_claim = ? jwt_claim, new_tier = % unblocked.new_tier,
                     "post-unblock: JWT tier claim missing or stale vs live tier; deferring model catalog refresh with retry"
                 );
-                xai_grok_telemetry::unified_log::warn(
+                intelekt_telemetry::unified_log::warn(
                     "model catalog: post_subscription_unblock deferred (jwt tier missing or stale)",
                     None,
                     Some(
@@ -1942,7 +1942,7 @@ impl MvpAgent {
                 );
             }
         } else {
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "paywall_check_no_subscription",
                 None,
                 Some(serde_json::json!({ "user_id" : user_id, })),
@@ -1977,7 +1977,7 @@ impl MvpAgent {
                     Some(crate::auth::GateInfo {
                         message,
                         url: Some(
-                            "https://grok.com/supergrok?referrer=grok-build".to_string(),
+                            "https://grok.com/supergrok?referrer=intelekt-cli".to_string(),
                         ),
                         label: Some("Subscribe".to_string()),
                     })
@@ -2158,7 +2158,7 @@ impl MvpAgent {
     ///    initialize + cached_token + oidc fired in quick succession before
     ///    the first sync's tar extract finished), drop this call to avoid
     ///    racing concurrent extracts that would interleave per-file writes
-    ///    against `~/.grok/bundled/` and the manifest.
+    ///    against `~/.intelekt/bundled/` and the manifest.
     pub(crate) fn maybe_sync_bundle_in_background(&self, force: bool) {
         use crate::extensions::bundle::{
             BUNDLE_SYNC_TTL, bundle_cache_is_fresh, has_bundle_credentials,
@@ -2324,7 +2324,7 @@ async fn handle_synthetic_turn_trace(
         prompt_verbatim: Some(true),
         cwd: Some(info.cwd.clone()),
         agent_type: None,
-        shell_version: Some(xai_grok_version::VERSION.to_string()),
+        shell_version: Some(intelekt_version::VERSION.to_string()),
         workspace_type: None,
         sandbox: local_sandbox_telemetry(),
     };
@@ -2520,7 +2520,7 @@ fn spawn_post_unblock_jwt_and_catalog_retry(
         tracing::debug!(
             "post-unblock JWT/catalog retry already in flight, skipping duplicate spawn"
         );
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "model catalog: post_subscription_unblock jwt retry skipped (already in flight)",
             None,
             Some(serde_json::json!({ "user_id" : user_id, "new_tier" : new_tier, })),
@@ -2578,7 +2578,7 @@ fn spawn_post_unblock_jwt_and_catalog_retry(
                     let user_id = user_id.clone();
                     let new_tier = new_tier.clone();
                     async move {
-                        xai_grok_telemetry::unified_log::warn(
+                        intelekt_telemetry::unified_log::warn(
                             "model catalog: post_subscription_unblock jwt retry scheduled",
                             None,
                             Some(
@@ -2595,7 +2595,7 @@ fn spawn_post_unblock_jwt_and_catalog_retry(
             .await;
         match result {
             Ok(()) => {
-                xai_grok_telemetry::unified_log::info(
+                intelekt_telemetry::unified_log::info(
                     "model catalog: post_subscription_unblock refresh (after jwt retry)",
                     None,
                     Some(
@@ -2607,7 +2607,7 @@ fn spawn_post_unblock_jwt_and_catalog_retry(
                 models_manager.on_auth_changed().await;
             }
             Err(e) => {
-                xai_grok_telemetry::unified_log::warn(
+                intelekt_telemetry::unified_log::warn(
                     "model catalog: post_subscription_unblock jwt retry exhausted",
                     None,
                     Some(

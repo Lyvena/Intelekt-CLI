@@ -2,7 +2,7 @@
 //! `OpsChunk::ProjectConfig` / `OpsChunk::Permissions`.
 //!
 //! TODO(workspace): align with the canonical project / permission /
-//! agent-session config types in `xai-grok-config` and friends.
+//! agent-session config types in `intelekt-config` and friends.
 
 use std::collections::BTreeMap;
 
@@ -51,7 +51,7 @@ pub enum CapabilityMode {
 /// Per-tool-server configuration knob.
 ///
 /// TODO(workspace): align with the actual MCP/tool-server config in
-/// `xai-grok-tools` once the wire surface is firm.
+/// `intelekt-tools` once the wire surface is firm.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ToolServerConfig {
     /// Tool server identifier.
@@ -104,7 +104,7 @@ pub struct AgentSessionConfig {
 
 /// Project configuration returned by `OpsChunk::ProjectConfig`.
 ///
-/// TODO(workspace): align with `xai_grok_config::ProjectConfig`.
+/// TODO(workspace): align with `intelekt_config::ProjectConfig`.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProjectConfig {
     /// Free-form key/value config (placeholder).

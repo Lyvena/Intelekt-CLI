@@ -2,7 +2,7 @@ use agent_client_protocol as acp;
 use serde::{Deserialize, Serialize};
 
 use crate::util::config as cli_config;
-use xai_grok_agent::prompt::skills::{
+use intelekt_agent::prompt::skills::{
     CompatConfig, SkillInfo, SkillsConfig, list_skills_with_plugins,
 };
 
@@ -116,7 +116,7 @@ pub struct SkillsConfigResponse {
 #[tracing::instrument(skip_all, fields(cwd))]
 async fn reload_skills(
     cwd: &str,
-    plugin_registry: Option<&xai_grok_agent::plugins::PluginRegistry>,
+    plugin_registry: Option<&intelekt_agent::plugins::PluginRegistry>,
     compat: CompatConfig,
 ) -> Vec<SkillInfo> {
     let config = cli_config::load_config().await.skills;
@@ -177,7 +177,7 @@ fn resolve_skill_path(raw: &str, cwd: &str) -> String {
 /// Collect auto-discovered skill source directories and their counts.
 fn discover_auto_sources(cwd: &str, skills: &[SkillInfo]) -> Vec<(String, usize)> {
     let cwd_path = std::path::PathBuf::from(cwd);
-    let grok_home = xai_grok_tools::util::grok_home::grok_home();
+    let grok_home = intelekt_tools::util::grok_home::grok_home();
     let git_root = git2::Repository::discover(&cwd_path)
         .ok()
         .and_then(|repo| repo.workdir().map(|p| p.to_path_buf()));
@@ -187,9 +187,9 @@ fn discover_auto_sources(cwd: &str, skills: &[SkillInfo]) -> Vec<(String, usize)
     // [paths] extra_skill_dirs in config.toml (written by /import-claude).
     let imported = crate::claude_import::is_claude_import_marked();
     let local_dir_names: &[&str] = if imported {
-        &[".grok", ".agents"]
+        &[".intelekt", ".agents"]
     } else {
-        &[".grok", ".agents", ".claude"]
+        &[".intelekt", ".agents", ".claude"]
     };
 
     let mut sources: Vec<(String, usize)> = Vec::new();
@@ -278,7 +278,7 @@ fn extra_skill_dirs_from_config() -> Vec<String> {
 #[tracing::instrument(skip_all, fields(method = %args.method))]
 pub async fn handle(
     args: &acp::ExtRequest,
-    plugin_registry: Option<&xai_grok_agent::plugins::PluginRegistry>,
+    plugin_registry: Option<&intelekt_agent::plugins::PluginRegistry>,
     compat: CompatConfig,
 ) -> ExtResult {
     match args.method.as_ref() {
@@ -300,8 +300,8 @@ pub async fn handle(
             })
             .await
             {
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::events::SkillAdded {
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::events::SkillAdded {
                         added_count: 0,
                         total_skills: 0,
                         success: false,
@@ -326,7 +326,7 @@ pub async fn handle(
                 total,
             );
 
-            xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::SkillAdded {
+            intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::SkillAdded {
                 added_count: added_count as u32,
                 total_skills: total as u32,
                 success: true,
@@ -353,8 +353,8 @@ pub async fn handle(
             })
             .await
             {
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::events::SkillRemoved { success: false },
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::events::SkillRemoved { success: false },
                 );
                 return super::to_ext_response(Err::<SkillsRemoveResponse, _>(anyhow::anyhow!(
                     "Failed to save config: {e}"
@@ -370,7 +370,7 @@ pub async fn handle(
                 if total == 1 { "" } else { "s" },
             );
 
-            xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::SkillRemoved {
+            intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::SkillRemoved {
                 success: true,
             });
             super::to_ext_response(Ok(SkillsRemoveResponse {

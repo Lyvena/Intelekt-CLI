@@ -1,7 +1,7 @@
 //! Backend-agnostic trait for tool search/discovery.
 //!
-//! `ToolSearchIndex` is defined in `xai-grok-tools` to keep the tool crate
-//! backend-agnostic. The concrete implementation lives in `xai-grok-shell`
+//! `ToolSearchIndex` is defined in `intelekt-tools` to keep the tool crate
+//! backend-agnostic. The concrete implementation lives in `intelekt-shell`
 //! (which has access to `McpState` and `FinalizedToolset`).
 //!
 //! Same pattern as `MemoryBackend` for `memory_search`.
@@ -54,7 +54,7 @@ pub struct ServerSummary {
 ///
 /// Implementations must be `Send + Sync` to be stored as `Arc<dyn ToolSearchIndex>`
 /// in `Resources`. No MCP-specific concepts — the concrete implementation
-/// in `xai-grok-shell` maps `mcp_initialized` to `is_ready`.
+/// in `intelekt-shell` maps `mcp_initialized` to `is_ready`.
 pub trait ToolSearchIndex: Send + Sync {
     /// Search and return results + metadata from a single consistent snapshot.
     fn search_snapshot(&self, query: &str, limit: usize) -> SearchSnapshot;
@@ -69,7 +69,7 @@ pub trait ToolSearchIndex: Send + Sync {
 /// Resource wrapper for injecting a `ToolSearchIndex` into `Resources`.
 ///
 /// Same pattern as `MemoryBackend` — stored as an ephemeral resource (not
-/// serialized), injected by `xai-grok-shell` after MCP initialization.
+/// serialized), injected by `intelekt-shell` after MCP initialization.
 #[derive(Clone)]
 pub struct ToolIndex(pub Arc<dyn ToolSearchIndex>);
 

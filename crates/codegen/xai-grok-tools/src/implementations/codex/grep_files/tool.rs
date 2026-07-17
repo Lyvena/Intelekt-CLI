@@ -3,7 +3,7 @@
 //! This is a faithful port of `codex-rs/core/src/tools/handlers/grep_files.rs`.
 //! It returns **file paths only** (`--files-with-matches`), sorted by
 //! modification time. See the plan document for the full diff vs the
-//! grok-build `GrepTool`.
+//! intelekt-cli `GrepTool`.
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -59,7 +59,7 @@ pub struct CodexGrepFilesInput {
 
 /// Codex-namespace grep_files tool — file-path-only regex search.
 ///
-/// Shares `ToolKind::Search` with the grok-build `GrepTool`. These tools are
+/// Shares `ToolKind::Search` with the intelekt-cli `GrepTool`. These tools are
 /// namespace-exclusive — consumers enable either `GrokBuild` or `Codex` search,
 /// never both simultaneously. This follows the same pattern as
 /// `CodexListDirTool`/`ListDirTool` (`ToolKind::ListDir`) and

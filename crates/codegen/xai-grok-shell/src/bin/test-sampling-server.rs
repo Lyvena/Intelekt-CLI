@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-/// Usage: cargo run -p xai-grok-shell --bin test-sampling-server
+/// Usage: cargo run -p intelekt-shell --bin test-sampling-server
 #[derive(Debug, clap::Parser)]
 pub struct Cli {
     #[arg(long, default_value = "127.0.0.1:55345")]
@@ -21,7 +21,7 @@ async fn handler(_: axum::http::Request<axum::body::Body>) -> impl axum::respons
     let (tx, rx) = tokio::sync::mpsc::channel::<Result<axum::response::sse::Event, String>>(10);
 
     tokio::spawn(async move {
-        let chunk1 = xai_grok_shell::sampling::ChatCompletionChunk {
+        let chunk1 = intelekt_shell::sampling::ChatCompletionChunk {
             id: "chat-123".to_string(),
             object: "chat.completion.chunk".to_string(),
             created: 1,

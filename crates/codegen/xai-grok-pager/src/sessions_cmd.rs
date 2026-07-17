@@ -1,9 +1,9 @@
 use anyhow::Result;
 use clap::Subcommand;
-use xai_grok_shell::agent::config::Config as AgentConfig;
-use xai_grok_shell::auth::{AuthManager, try_ensure_fresh_auth};
-use xai_grok_shell::session::merge::MergedSession;
-use xai_grok_shell::util::grok_home::grok_home;
+use intelekt_shell::agent::config::Config as AgentConfig;
+use intelekt_shell::auth::{AuthManager, try_ensure_fresh_auth};
+use intelekt_shell::session::merge::MergedSession;
+use intelekt_shell::util::grok_home::grok_home;
 #[derive(Debug, clap::Args, Clone)]
 pub struct SessionsArgs {
     #[command(subcommand)]
@@ -47,7 +47,7 @@ pub async fn run(args: SessionsArgs, agent_config: &AgentConfig) -> Result<()> {
         agent_config.grok_com_config.clone(),
     ));
 
-    let client = xai_grok_shell::agent::session_registry_client::SessionRegistryClient::new(
+    let client = intelekt_shell::agent::session_registry_client::SessionRegistryClient::new(
         agent_config.endpoints.proxy_url(),
         String::new(),
     )
@@ -59,7 +59,7 @@ pub async fn run(args: SessionsArgs, agent_config: &AgentConfig) -> Result<()> {
 
     match args.command {
         SessionsCommand::List { limit } => {
-            let sessions = xai_grok_shell::session::merge::fetch_merged(
+            let sessions = intelekt_shell::session::merge::fetch_merged(
                 Some(&client),
                 cwd.to_str(),
                 None,
@@ -70,8 +70,8 @@ pub async fn run(args: SessionsArgs, agent_config: &AgentConfig) -> Result<()> {
         }
         SessionsCommand::Search { query, limit } => {
             use std::collections::HashSet;
-            use xai_grok_shell::session::merge::REMOTE_TIMEOUT;
-            use xai_grok_shell::session::storage::search::{SessionSearchRequest, execute_search};
+            use intelekt_shell::session::merge::REMOTE_TIMEOUT;
+            use intelekt_shell::session::storage::search::{SessionSearchRequest, execute_search};
 
             let req = SessionSearchRequest {
                 query,
@@ -178,7 +178,7 @@ pub async fn run(args: SessionsArgs, agent_config: &AgentConfig) -> Result<()> {
             // Pass `cwd = None` so the session is found by id regardless of
             // which workspace it was created in; the local delete still uses
             // the resolved per-session cwd.
-            let deletion = xai_grok_shell::session::persistence::delete_session_history(
+            let deletion = intelekt_shell::session::persistence::delete_session_history(
                 &id,
                 None,
                 needs_remote,

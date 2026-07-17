@@ -17,11 +17,11 @@
 //!
 //! # Wiring
 //!
-//! `xai-grok-pager` (the lib) does **not** depend on this crate — that would be
+//! `intelekt-pager` (the lib) does **not** depend on this crate — that would be
 //! a cargo dependency cycle, since this crate reads deeply into the pager's
 //! [`AppView`] / view model. Instead the pager exposes an inversion-of-control
-//! seam ([`xai_grok_pager::minimal_hook`]) of function pointers, and the
-//! composition-root binary (`xai-grok-pager-bin`) calls [`install`] once at
+//! seam ([`intelekt_pager::minimal_hook`]) of function pointers, and the
+//! composition-root binary (`intelekt-pager-bin`) calls [`install`] once at
 //! startup to register this crate's [`draw`] entry point. When the seam is not
 //! installed the pager's minimal-mode branches are inert.
 
@@ -41,8 +41,8 @@ mod guard;
 use crossterm::QueueableCommand;
 use crossterm::terminal::BeginSynchronizedUpdate;
 
-use xai_grok_pager::app::PagerTerminal;
-use xai_grok_pager::app::app_view::AppView;
+use intelekt_pager::app::PagerTerminal;
+use intelekt_pager::app::app_view::AppView;
 
 /// Per-frame entry point for minimal mode, called from [`AppView::draw`].
 ///
@@ -107,12 +107,12 @@ pub fn draw(app: &mut AppView, terminal: &mut PagerTerminal) {
     live::draw_live(app, terminal);
 }
 
-/// Register the minimal-mode render hooks with `xai-grok-pager`.
+/// Register the minimal-mode render hooks with `intelekt-pager`.
 ///
 /// Call this exactly once, early in the binary's `main`, before any frame is
 /// drawn. It installs the function-pointer seam so the pager's
 /// `ScreenMode::Minimal` branches dispatch into this crate. Idempotent:
-/// subsequent calls are ignored (see [`xai_grok_pager::minimal_hook`]).
+/// subsequent calls are ignored (see [`intelekt_pager::minimal_hook`]).
 pub fn install() {
-    xai_grok_pager::minimal_hook::install(xai_grok_pager::minimal_hook::MinimalHooks { draw });
+    intelekt_pager::minimal_hook::install(intelekt_pager::minimal_hook::MinimalHooks { draw });
 }

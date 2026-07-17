@@ -1,18 +1,18 @@
-//! `pty-scenario` — scripted TUI regression runner for xai-grok-pager.
+//! `pty-scenario` — scripted TUI regression runner for intelekt-pager.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 use anyhow::{Context, Result, bail};
 use clap::Parser as ClapParser;
-use xai_grok_pager_pty_harness::{
+use intelekt_pager_pty_harness::{
     ScriptedRunConfig, ScriptedRunStatus, ScriptedScenario, ScriptedScenarioRunner, pager_binary,
 };
 
 #[derive(ClapParser, Debug)]
 #[command(
     name = "pty-scenario",
-    about = "Run declarative TUI regression scenarios against xai-grok-pager",
+    about = "Run declarative TUI regression scenarios against intelekt-pager",
     long_about = None,
 )]
 struct Cli {
@@ -20,7 +20,7 @@ struct Cli {
     #[arg(long, value_name = "PATH")]
     scenario: PathBuf,
 
-    /// Pager binary. Defaults to PAGER_BINARY, CARGO_BIN_EXE_xai-grok-pager,
+    /// Pager binary. Defaults to PAGER_BINARY, CARGO_BIN_EXE_intelekt-pager,
     /// or a locally-built debug binary.
     #[arg(long, value_name = "PATH")]
     binary: Option<PathBuf>,

@@ -2,10 +2,10 @@
 //!
 //! Two install modes, chosen by env precedence (see `resolve_debug_target_inner`):
 //! - PerSession (`GROK_DEBUG_LOG=1`): a routing layer fans each session's
-//!   firehose to `~/.grok/debug/<session_id>.txt` (one file per session), with a
+//!   firehose to `~/.intelekt/debug/<session_id>.txt` (one file per session), with a
 //!   `<role>-<pid>.txt` catch-all for events fired outside any session span, and
 //!   a `latest.txt` symlink pointing at the most-recently-opened session file.
-//! - SingleFile (explicit path via `GROK_LOG_FILE` or `GROK_DEBUG_LOG=<path>`):
+//! - SingleFile (explicit path via `INTELEKT_LOG_FILE` or `GROK_DEBUG_LOG=<path>`):
 //!   one flat `fmt` file, routing bypassed. Disk IO stays off the tracing hot
 //!   path via `tracing_appender`'s non-blocking writer in both modes.
 
@@ -23,7 +23,7 @@ use tracing_subscriber::layer::{Context, Layer};
 use tracing_subscriber::registry::LookupSpan;
 
 use crate::session_ctx::SESSION_ID_FIELD;
-use xai_grok_config::grok_home;
+use intelekt_config::grok_home;
 
 /// Which env var requested a single-file debug log (drives filter and diagnostics).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -35,7 +35,7 @@ pub(crate) enum DebugSource {
 impl DebugSource {
     fn label(self) -> &'static str {
         match self {
-            Self::GrokLogFile => "GROK_LOG_FILE",
+            Self::GrokLogFile => "INTELEKT_LOG_FILE",
             Self::GrokDebugLog => "GROK_DEBUG_LOG",
         }
     }
@@ -44,7 +44,7 @@ impl DebugSource {
 /// Target for the pager's always-on compact ACP update summary line
 /// (kind, ids, status, payload sizes).
 ///
-/// Lives here (not in `xai-grok-pager`) so the firehose directives below and
+/// Lives here (not in `intelekt-pager`) so the firehose directives below and
 /// the pager's own filter are built from the same constants — a rename can't
 /// silently desync them into a no-op directive.
 pub const ACP_UPDATE_TARGET: &str = "acp_update";
@@ -53,7 +53,7 @@ pub const ACP_UPDATE_TARGET: &str = "acp_update";
 ///
 /// Off in the pager's release filter; the firehose is the always-available
 /// subscriber for full payloads, and it writes to disk, where the volume is
-/// safe. See `xai-grok-pager/src/tracing.rs` for the consumer side.
+/// safe. See `intelekt-pager/src/tracing.rs` for the consumer side.
 pub const ACP_UPDATE_PAYLOAD_TARGET: &str = "acp_update_payload";
 
 /// Module path of rmcp 2.1's per-reconnect SSE warn (`sse stream error: ...`),
@@ -64,7 +64,7 @@ pub const RMCP_SSE_NOISE_TARGET: &str = "rmcp::transport::common::client_side_ss
 // crates at debug regardless of a narrowing RUST_LOG, with deps at info so they
 // don't flood. Curated first-party allowlist: new grok crates default to `info`
 // until added here.
-const FIREHOSE_BASE_DIRECTIVES: &str = "info,xai_grok_pager=debug,xai_grok_shell=debug,xai_grok_tools=debug,xai_grok_telemetry=debug,xai_grok_agent=debug,xai_grok_mcp=debug,xai_acp_lib=debug,sampling_log=off";
+const FIREHOSE_BASE_DIRECTIVES: &str = "info,intelekt_pager=debug,intelekt_shell=debug,intelekt_tools=debug,intelekt_telemetry=debug,intelekt_agent=debug,intelekt_mcp=debug,xai_acp_lib=debug,sampling_log=off";
 
 // Full firehose directives: the curated crate list plus the pager's ACP
 // update target (built from the constant above, not a literal).
@@ -78,8 +78,8 @@ fn firehose_filter() -> EnvFilter {
     EnvFilter::new(firehose_directives())
 }
 
-// RUST_LOG-respecting filter for the GROK_LOG_FILE source: DEBUG default, honor
-// RUST_LOG, silence sampling_log (preserves GROK_LOG_FILE back-compat).
+// RUST_LOG-respecting filter for the INTELEKT_LOG_FILE source: DEBUG default, honor
+// RUST_LOG, silence sampling_log (preserves INTELEKT_LOG_FILE back-compat).
 fn default_file_filter() -> EnvFilter {
     EnvFilter::builder()
         .with_default_directive(LevelFilter::DEBUG.into())
@@ -362,7 +362,7 @@ where
 ///
 /// PerSession installs the routing layer (firehose filter, RUST_LOG-immune) and
 /// prunes old session logs; SingleFile installs a flat `fmt` file picking the
-/// filter by source (GROK_LOG_FILE respects RUST_LOG). Open failures warn AFTER
+/// filter by source (INTELEKT_LOG_FILE respects RUST_LOG). Open failures warn AFTER
 /// init in the single-file case; routing open failures are per-file at write
 /// time and degrade gracefully. `role` names the per-pid fallback file.
 pub fn install_firehose<S>(registry: S, role: &str)
@@ -405,19 +405,19 @@ pub fn flush() {
 /// Where the firehose should go, if anywhere.
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum DebugTarget {
-    /// `GROK_DEBUG_LOG=1` → route per session into `<dir>` (`~/.grok/debug`).
+    /// `GROK_DEBUG_LOG=1` → route per session into `<dir>` (`~/.intelekt/debug`).
     PerSession { dir: PathBuf },
     /// An explicit path → one flat `fmt` file, routing bypassed.
     SingleFile { path: PathBuf, src: DebugSource },
 }
 
-/// Resolve the debug target, honoring precedence: explicit GROK_LOG_FILE wins
+/// Resolve the debug target, honoring precedence: explicit INTELEKT_LOG_FILE wins
 /// (single file, RUST_LOG filter); else GROK_DEBUG_LOG — a truthy bool routes
-/// per session into `~/.grok/debug`, an explicit path writes a single file.
+/// per session into `~/.intelekt/debug`, an explicit path writes a single file.
 ///
 /// Read via `var_os` (not `var`) so a non-UTF-8 path isn't silently dropped.
 pub(crate) fn resolve_debug_target() -> Option<DebugTarget> {
-    let grok_log_file = std::env::var_os("GROK_LOG_FILE");
+    let grok_log_file = std::env::var_os("INTELEKT_LOG_FILE");
     let grok_debug_log = std::env::var_os("GROK_DEBUG_LOG");
     resolve_debug_target_inner(
         grok_log_file.as_deref(),
@@ -477,7 +477,7 @@ fn resolve_debug_target_inner(
 const LOG_RETENTION: std::time::Duration = std::time::Duration::from_secs(7 * 24 * 60 * 60);
 
 /// Prune `*.txt` firehose files (and orphaned `latest.txt` swap temps) under
-/// `~/.grok/debug` older than [`LOG_RETENTION`] so the dir doesn't grow
+/// `~/.intelekt/debug` older than [`LOG_RETENTION`] so the dir doesn't grow
 /// unbounded. Age-based (not count-based) so a still-open log from a concurrent
 /// process is never unlinked mid-write; best-effort, ignore errors.
 pub(crate) fn sweep_old_logs() {
@@ -620,7 +620,7 @@ mod tests {
 
     #[test]
     fn resolve_target_empty_log_file_falls_through_to_debug_log() {
-        // Empty / whitespace GROK_LOG_FILE is treated as unset (mirrors GROK_DEBUG_LOG).
+        // Empty / whitespace INTELEKT_LOG_FILE is treated as unset (mirrors GROK_DEBUG_LOG).
         for blank in ["", "   "] {
             let target = resolve_debug_target_inner(
                 Some(OsStr::new(blank)),
@@ -697,9 +697,9 @@ mod tests {
         tracing::subscriber::with_default(subscriber, || {
             // `%` mirrors production's `info_span!("session", session_id = %...)`.
             tracing::info_span!("session", session_id = %"sess-xyz").in_scope(|| {
-                tracing::info!(target: "xai_grok_shell", "inside session");
+                tracing::info!(target: "intelekt_shell", "inside session");
             });
-            tracing::info!(target: "xai_grok_shell", "outside session");
+            tracing::info!(target: "intelekt_shell", "outside session");
         });
         crate::appender::flush_file_log_guards();
 
@@ -726,7 +726,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         // Exactly the production wrapper: routing layer behind FIREHOSE_DIRECTIVES.
         // Pins the linchpin invariant — the `session` span (INFO, target
-        // `xai_grok_telemetry::session_ctx`) survives the real filter so
+        // `intelekt_telemetry::session_ctx`) survives the real filter so
         // `event_scope` still finds it — at the unit level.
         let layer = RoutingLayer::new(dir.path().to_path_buf(), "agent".to_owned(), 7)
             .with_filter(firehose_filter());
@@ -734,12 +734,12 @@ mod tests {
 
         tracing::subscriber::with_default(subscriber, || {
             tracing::info_span!(
-                target: "xai_grok_telemetry::session_ctx",
+                target: "intelekt_telemetry::session_ctx",
                 "session",
                 session_id = %"sid-real"
             )
             .in_scope(|| {
-                tracing::debug!(target: "xai_grok_shell", "filtered routing works");
+                tracing::debug!(target: "intelekt_shell", "filtered routing works");
             });
         });
         crate::appender::flush_file_log_guards();
@@ -768,11 +768,11 @@ mod tests {
         tracing::subscriber::with_default(subscriber, || {
             tracing::info_span!("session", session_id = %"sid-one").in_scope(|| {
                 // Two events in one session also prove within-session accumulation.
-                tracing::info!(target: "xai_grok_shell", "one first");
-                tracing::info!(target: "xai_grok_shell", "one second");
+                tracing::info!(target: "intelekt_shell", "one first");
+                tracing::info!(target: "intelekt_shell", "one second");
             });
             tracing::info_span!("session", session_id = %"sid-two").in_scope(|| {
-                tracing::info!(target: "xai_grok_shell", "two only");
+                tracing::info!(target: "intelekt_shell", "two only");
             });
         });
         crate::appender::flush_file_log_guards();

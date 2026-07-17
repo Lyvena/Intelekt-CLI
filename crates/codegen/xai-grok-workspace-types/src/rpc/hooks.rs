@@ -1,6 +1,6 @@
 //! Hook registry method (`workspace.hook_registry`).
 //!
-//! `xai_grok_hooks` pulls in `git2`/`reqwest`/`xai-grok-tools`, too heavy for
+//! `intelekt_hooks` pulls in `git2`/`reqwest`/`intelekt-tools`, too heavy for
 //! this lean crate, so the response is mirrored here as wire-shape structs
 //! rather than re-exported. The shapes must stay byte-identical to the upstream
 //! serde attributes (the server round-trips via serde).
@@ -21,7 +21,7 @@ impl WorkspaceRpc for HookRegistryReq {
     type Response = HookRegistryWire;
 }
 
-/// Wire mirror of `xai_grok_hooks::discovery::HookRegistry`.
+/// Wire mirror of `intelekt_hooks::discovery::HookRegistry`.
 ///
 /// The upstream type keeps its `hooks` map private; the serde shape is
 /// `{ "hooks": { "<event>": [<HookSpec>, …] } }`.
@@ -30,14 +30,14 @@ pub struct HookRegistryWire {
     pub hooks: HashMap<HookEventNameWire, Vec<HookSpecWire>>,
 }
 
-/// Wire mirror of `xai_grok_hooks::config::HookSpec`.
+/// Wire mirror of `intelekt_hooks::config::HookSpec`.
 ///
 /// The upstream `matcher` field is `#[serde(skip)]` (compiled regex, never on
 /// the wire) and is therefore omitted here; clients recompile it. All other
 /// fields keep their snake_case names (the upstream type has no `rename_all`).
 ///
 /// Must stay in sync with the upstream struct: the lean crate can't depend on
-/// `xai-grok-hooks`, so a server-side test (`xai-grok-workspace`'s
+/// `intelekt-hooks`, so a server-side test (`intelekt-workspace`'s
 /// `hook_spec_wire_covers_all_upstream_fields`) exhaustively destructures every
 /// upstream field, failing to compile if upstream adds one.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,7 +56,7 @@ pub struct HookSpecWire {
     pub extra_env: HashMap<String, String>,
 }
 
-/// Wire mirror of `xai_grok_hooks::event::HookEventName`.
+/// Wire mirror of `intelekt_hooks::event::HookEventName`.
 ///
 /// Serializes to snake_case (matching the upstream derive) and is used as a
 /// JSON map key in [`HookRegistryWire`]. `Serialize`/`Deserialize` are
@@ -219,7 +219,7 @@ mod tests {
                     "url": null,
                     "url_raw": null,
                     "timeout_ms": 5000,
-                    "source_dir": "/home/u/.grok/hooks",
+                    "source_dir": "/home/u/.intelekt/hooks",
                     "extra_env": { "FOO": "bar" }
                 }]
             }

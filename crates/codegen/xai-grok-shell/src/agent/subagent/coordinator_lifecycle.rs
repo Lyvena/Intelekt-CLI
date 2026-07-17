@@ -21,8 +21,8 @@ use crate::upload::trace::{
 };
 use crate::upload::turn::{PromptTraceContext, complete_prompt_trace};
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
-use xai_grok_tools::implementations::grok_build::task::types::*;
-use xai_grok_workspace::file_system::AsyncFileSystem;
+use intelekt_tools::implementations::grok_build::task::types::*;
+use intelekt_workspace::file_system::AsyncFileSystem;
 use xai_hunk_tracker::HunkTrackerHandle;
 use super::*;
 impl SubagentCoordinator {
@@ -163,8 +163,8 @@ impl SubagentCoordinator {
     pub fn outstanding_reply_for_prompt(
         &self,
         prompt_id: &str,
-    ) -> xai_grok_tools::implementations::grok_build::task::types::SubagentOutstandingReply {
-        xai_grok_tools::implementations::grok_build::task::types::SubagentOutstandingReply {
+    ) -> intelekt_tools::implementations::grok_build::task::types::SubagentOutstandingReply {
+        intelekt_tools::implementations::grok_build::task::types::SubagentOutstandingReply {
             live_ids: self.outstanding_for_prompt(prompt_id),
             background_live: self.background_live_for_prompt(prompt_id),
             subagent_usage_not_applied: self.subagent_usage_not_applied(prompt_id),
@@ -411,9 +411,9 @@ impl SubagentCoordinator {
         {
             let preview = crate::util::truncate(&completed.result.output, 200);
             let level_fn = if success {
-                xai_grok_telemetry::unified_log::info
+                intelekt_telemetry::unified_log::info
             } else {
-                xai_grok_telemetry::unified_log::error
+                intelekt_telemetry::unified_log::error
             };
             level_fn(
                 if success { "subagent completed" } else { "subagent failed" },

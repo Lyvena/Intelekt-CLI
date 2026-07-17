@@ -21,8 +21,8 @@ use crate::upload::trace::{
 };
 use crate::upload::turn::{PromptTraceContext, complete_prompt_trace};
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
-use xai_grok_tools::implementations::grok_build::task::types::*;
-use xai_grok_workspace::file_system::AsyncFileSystem;
+use intelekt_tools::implementations::grok_build::task::types::*;
+use intelekt_workspace::file_system::AsyncFileSystem;
 use xai_hunk_tracker::HunkTrackerHandle;
 use super::*;
 impl SubagentCoordinator {

@@ -11,15 +11,15 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Clear, Widget};
-use xai_grok_pager::app::PagerTerminal;
-use xai_grok_pager::app::app_view::{ActiveView, AppView};
-use xai_grok_pager::minimal_api;
-use xai_grok_pager::render::Renderable;
-use xai_grok_pager::scrollback::state::ScrollbackState;
-use xai_grok_pager::scrollback::wrappers::EntryRenderer;
-use xai_grok_pager::theme::Theme;
-use xai_grok_pager::views::prompt_widget::PromptStyle;
-use xai_grok_pager::views::turn_status;
+use intelekt_pager::app::PagerTerminal;
+use intelekt_pager::app::app_view::{ActiveView, AppView};
+use intelekt_pager::minimal_api;
+use intelekt_pager::render::Renderable;
+use intelekt_pager::scrollback::state::ScrollbackState;
+use intelekt_pager::scrollback::wrappers::EntryRenderer;
+use intelekt_pager::theme::Theme;
+use intelekt_pager::views::prompt_widget::PromptStyle;
+use intelekt_pager::views::turn_status;
 /// Left inset (columns) for every auxiliary live-region row: the status row,
 /// the info bar, the exit hint, and the todo panel — and the prompt's
 /// `chrome_pad_left`.
@@ -30,7 +30,7 @@ use xai_grok_pager::views::turn_status;
 /// 0, matching the welcome card's outer edge. The prompt and auxiliary rows
 /// share that left edge (no chrome pad) so nothing sits ragged against the
 /// welcome box.
-pub(super) fn live_left_inset(_appearance: &xai_grok_pager::appearance::AppearanceConfig) -> u16 {
+pub(super) fn live_left_inset(_appearance: &intelekt_pager::appearance::AppearanceConfig) -> u16 {
     0
 }
 /// Shrink `area` from the left by `inset` columns (clamped to the width).
@@ -47,7 +47,7 @@ fn inset_left(area: Rect, inset: u16) -> Rect {
 /// Shared with [`super::overlay::sync_viewport`] so viewport sizing measures the
 /// prompt's height exactly as the live region will draw it.
 pub(super) fn prompt_style(
-    appearance: &xai_grok_pager::appearance::AppearanceConfig,
+    appearance: &intelekt_pager::appearance::AppearanceConfig,
 ) -> PromptStyle {
     PromptStyle {
         focused: true,
@@ -102,7 +102,7 @@ pub fn draw_live(app: &mut AppView, terminal: &mut PagerTerminal) {
     let row_inset = live_left_inset(appearance);
     let layout_cfg = &appearance.scrollback.layout;
     let term_h = terminal.last_known_area().height;
-    xai_grok_pager::render::draw::draw_frame(terminal, cursor, |frame, _link_spans| {
+    intelekt_pager::render::draw::draw_frame(terminal, cursor, |frame, _link_spans| {
         let area = frame.area();
         if area.height == 0 || area.width < 4 {
             return (None, None);
@@ -127,7 +127,7 @@ pub fn draw_live(app: &mut AppView, terminal: &mut PagerTerminal) {
         if minimal_api::extensions_modal(agent).is_some() {
             let tick = (now_millis() / 100) as u64;
             if let Some(state) = minimal_api::extensions_modal_mut(agent) {
-                xai_grok_pager::views::extensions_modal::render_extensions_modal(
+                intelekt_pager::views::extensions_modal::render_extensions_modal(
                     frame.buffer_mut(),
                     area,
                     state,
@@ -323,14 +323,14 @@ pub fn draw_live(app: &mut AppView, terminal: &mut PagerTerminal) {
             result.cursor_pos,
             result
                 .post_flush_escapes
-                .map(xai_grok_pager::terminal::overlay::PostFlush::from),
+                .map(intelekt_pager::terminal::overlay::PostFlush::from),
         )
     });
 }
 fn live_tail_renderer<'a>(
-    entry: &'a xai_grok_pager::scrollback::entry::ScrollbackEntry,
+    entry: &'a intelekt_pager::scrollback::entry::ScrollbackEntry,
     theme: &'a Theme,
-    appearance: &xai_grok_pager::appearance::AppearanceConfig,
+    appearance: &intelekt_pager::appearance::AppearanceConfig,
     cwd: &'a std::path::Path,
     tick: u64,
 ) -> EntryRenderer<'a> {
@@ -355,7 +355,7 @@ fn draw_tail(
     sb: &ScrollbackState,
     turn_running: bool,
     theme: &Theme,
-    appearance: &xai_grok_pager::appearance::AppearanceConfig,
+    appearance: &intelekt_pager::appearance::AppearanceConfig,
     cwd: &std::path::Path,
     tick: u64,
 ) {
@@ -426,14 +426,14 @@ fn draw_tail(
 /// widget can show the persistent "watching · N monitors · M loops · K
 /// subagents" cue while the agent is idle. Mirrors the full-TUI computation in
 /// `AgentView::draw` (which minimal bypasses).
-fn minimal_watchers(agent: &xai_grok_pager::app::agent_view::AgentView) -> turn_status::Watchers {
+fn minimal_watchers(agent: &intelekt_pager::app::agent_view::AgentView) -> turn_status::Watchers {
     turn_status::Watchers {
         monitors: agent
             .session
             .bg_tasks
             .values()
             .filter(|t| {
-                t.is_monitor && t.status == xai_grok_pager::app::agent::BgTaskStatus::Running
+                t.is_monitor && t.status == intelekt_pager::app::agent::BgTaskStatus::Running
             })
             .count(),
         loops: agent.session.scheduled_tasks.len(),
@@ -450,8 +450,8 @@ fn minimal_watchers(agent: &xai_grok_pager::app::agent_view::AgentView) -> turn_
 /// draw path, so it must drive the same logic or the phase timer would never
 /// reset. Returns the resolved activity for [`render_minimal_status`].
 fn minimal_advance_phase_timer(
-    agent: &mut xai_grok_pager::app::agent_view::AgentView,
-) -> Option<xai_grok_pager::acp::tracker::TurnActivity> {
+    agent: &mut intelekt_pager::app::agent_view::AgentView,
+) -> Option<intelekt_pager::acp::tracker::TurnActivity> {
     let activity = minimal_api::resolve_turn_activity(agent);
     if activity.as_ref() != minimal_api::last_activity(agent) {
         agent.activity_started_at = Some(std::time::Instant::now());
@@ -473,8 +473,8 @@ fn minimal_advance_phase_timer(
 fn render_minimal_status(
     buf: &mut Buffer,
     area: Rect,
-    agent: &xai_grok_pager::app::agent_view::AgentView,
-    activity: &Option<xai_grok_pager::acp::tracker::TurnActivity>,
+    agent: &intelekt_pager::app::agent_view::AgentView,
+    activity: &Option<intelekt_pager::acp::tracker::TurnActivity>,
     transcript_progress: Option<(usize, usize)>,
     theme: &Theme,
 ) {
@@ -537,8 +537,8 @@ fn render_minimal_status(
 fn render_idle_hint(buf: &mut Buffer, area: Rect, theme: &Theme) {
     let style = theme.dim().bg(Color::Reset);
     buf.set_style(area, style);
-    let auto = xai_grok_pager::app::minimal_auto_set_for_mouse_leak();
-    let switch_back = xai_grok_pager::app::minimal_show_switch_back_to_fullscreen();
+    let auto = intelekt_pager::app::minimal_auto_set_for_mouse_leak();
+    let switch_back = intelekt_pager::app::minimal_show_switch_back_to_fullscreen();
     let hint = match (auto, switch_back) {
         (true, true) => {
             "minimal · auto-set on JetBrains/Windows due to JetBrains mouse reporting issues \
@@ -569,12 +569,12 @@ fn render_idle_hint(buf: &mut Buffer, area: Rect, theme: &Theme) {
 fn render_prompt_info(
     buf: &mut Buffer,
     area: Rect,
-    agent: &xai_grok_pager::app::agent_view::AgentView,
+    agent: &intelekt_pager::app::agent_view::AgentView,
     queued: usize,
     transcript_hint: &str,
     theme: &Theme,
 ) {
-    use xai_grok_pager::views::context_bar::fmt_tokens;
+    use intelekt_pager::views::context_bar::fmt_tokens;
     let base = theme.primary().bg(Color::Reset);
     let sep = theme.dim().bg(Color::Reset);
     let mut segs: Vec<(String, Style)> = Vec::new();
@@ -637,7 +637,7 @@ fn render_prompt_info(
 /// is a silent arm (no label). Mirrors the full-TUI shortcuts-bar `PendingHint`,
 /// which minimal does not render.
 fn minimal_pending_hint(
-    pending: &Option<xai_grok_pager::app::app_view::PendingAction>,
+    pending: &Option<intelekt_pager::app::app_view::PendingAction>,
 ) -> Option<String> {
     let pending = pending.as_ref()?;
     if pending.expired() {
@@ -676,9 +676,9 @@ fn render_exit_hint(buf: &mut Buffer, area: Rect, theme: &Theme, hint: &str) {
 /// viewport oversized at commit time, and the following collapse stranded the
 /// prompt at the top of the screen (the "snaps to top" bug).
 pub(super) fn tail_height(
-    agent: &xai_grok_pager::app::agent_view::AgentView,
+    agent: &intelekt_pager::app::agent_view::AgentView,
     width: u16,
-    appearance: &xai_grok_pager::appearance::AppearanceConfig,
+    appearance: &intelekt_pager::appearance::AppearanceConfig,
 ) -> u16 {
     let theme = Theme::current();
     let sb = &agent.scrollback;
@@ -703,15 +703,15 @@ fn now_millis() -> u128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn agent() -> xai_grok_pager::app::agent_view::AgentView {
+    fn agent() -> intelekt_pager::app::agent_view::AgentView {
         minimal_api::test_agent_view(Some("s1"), std::path::PathBuf::from("/tmp"))
     }
     #[test]
     fn tail_height_uses_owning_session_cwd_for_tool_paths() {
-        use xai_grok_pager::app::agent::AgentState;
-        use xai_grok_pager::scrollback::RenderBlock;
-        use xai_grok_pager::scrollback::entry::ScrollbackEntry;
-        use xai_grok_pager::scrollback::types::DisplayMode;
+        use intelekt_pager::app::agent::AgentState;
+        use intelekt_pager::scrollback::RenderBlock;
+        use intelekt_pager::scrollback::entry::ScrollbackEntry;
+        use intelekt_pager::scrollback::types::DisplayMode;
         let cwd = std::path::PathBuf::from("/alternate/worktree");
         let mut agent = minimal_api::test_agent_view(Some("s1"), cwd.clone());
         agent.session.state = AgentState::TurnRunning;
@@ -722,7 +722,7 @@ mod tests {
         entry.set_display_mode(DisplayMode::Expanded);
         agent.scrollback.push(entry);
         let appearance = super::super::commit::committed_appearance(
-            &xai_grok_pager::appearance::AppearanceConfig::default(),
+            &intelekt_pager::appearance::AppearanceConfig::default(),
         );
         let theme = Theme::current();
         let entry = agent.scrollback.get(0).unwrap();
@@ -747,8 +747,8 @@ mod tests {
     }
     #[test]
     fn minimal_status_shows_rich_activity_and_idle_hint() {
-        use xai_grok_pager::acp::tracker::TurnActivity;
-        use xai_grok_pager::app::agent::AgentState;
+        use intelekt_pager::acp::tracker::TurnActivity;
+        use intelekt_pager::app::agent::AgentState;
         let theme = Theme::current();
         let area = Rect::new(0, 0, 60, 1);
         let read = |buf: &Buffer| -> String {
@@ -756,7 +756,7 @@ mod tests {
                 .filter_map(|x| buf.cell((x, 0)).map(|c| c.symbol().to_string()))
                 .collect()
         };
-        xai_grok_pager::app::set_minimal_show_switch_back_to_fullscreen_for_test(false);
+        intelekt_pager::app::set_minimal_show_switch_back_to_fullscreen_for_test(false);
         let a = agent();
         let mut buf = Buffer::empty(area);
         render_minimal_status(&mut buf, area, &a, &None, None, &theme);
@@ -766,7 +766,7 @@ mod tests {
             !idle.contains("/fullscreen"),
             "cold start must not show switch-back: {idle:?}"
         );
-        xai_grok_pager::app::set_minimal_show_switch_back_to_fullscreen_for_test(true);
+        intelekt_pager::app::set_minimal_show_switch_back_to_fullscreen_for_test(true);
         let mut buf = Buffer::empty(area);
         render_minimal_status(&mut buf, area, &a, &None, None, &theme);
         let switched = read(&buf);
@@ -774,7 +774,7 @@ mod tests {
             switched.contains("/fullscreen to go back"),
             "relaunch into minimal must show switch-back: {switched:?}"
         );
-        xai_grok_pager::app::set_minimal_show_switch_back_to_fullscreen_for_test(false);
+        intelekt_pager::app::set_minimal_show_switch_back_to_fullscreen_for_test(false);
         let mut a = agent();
         a.session.state = AgentState::TurnRunning;
         let mut buf = Buffer::empty(area);
@@ -805,7 +805,7 @@ mod tests {
     }
     #[test]
     fn minimal_status_shows_idle_watching_cue() {
-        use xai_grok_pager::app::agent::AgentState;
+        use intelekt_pager::app::agent::AgentState;
         let theme = Theme::current();
         let area = Rect::new(0, 0, 60, 1);
         let read = |buf: &Buffer| -> String {
@@ -817,7 +817,7 @@ mod tests {
         a.session.state = AgentState::Idle;
         a.session.scheduled_tasks.insert(
             "loop-1".to_string(),
-            xai_grok_pager::app::agent::ScheduledTaskInfo {
+            intelekt_pager::app::agent::ScheduledTaskInfo {
                 task_id: "loop-1".to_string(),
                 prompt: "do the thing".to_string(),
                 human_schedule: "every 5m".to_string(),
@@ -836,7 +836,7 @@ mod tests {
     #[test]
     fn prompt_info_renders_model_context_and_queued() {
         let mut a = agent();
-        a.context_state = Some(xai_grok_shell::session::ContextInfo {
+        a.context_state = Some(intelekt_shell::session::ContextInfo {
             used: 276_000,
             total: 2_000_000,
             ..Default::default()
@@ -881,7 +881,7 @@ mod tests {
                 .filter_map(|x| buf.cell((x, 0)).map(|c| c.symbol().to_string()))
                 .collect()
         };
-        let render = |a: &xai_grok_pager::app::agent_view::AgentView| -> String {
+        let render = |a: &intelekt_pager::app::agent_view::AgentView| -> String {
             let mut buf = Buffer::empty(area);
             render_prompt_info(&mut buf, area, a, 0, "ctrl+o transcript", &theme);
             read(&buf)
@@ -905,9 +905,9 @@ mod tests {
     #[test]
     fn pending_hint_formats_press_again() {
         use crossterm::event::{KeyCode, KeyModifiers};
-        use xai_grok_pager::app::actions::Action;
-        use xai_grok_pager::app::app_view::PendingAction;
-        use xai_grok_pager::input::key::KeyShortcut;
+        use intelekt_pager::app::actions::Action;
+        use intelekt_pager::app::app_view::PendingAction;
+        use intelekt_pager::input::key::KeyShortcut;
         assert!(minimal_pending_hint(&None).is_none());
         let shortcut = KeyShortcut::new(KeyCode::Char('q'), KeyModifiers::CONTROL);
         let pending = Some(PendingAction::new(Action::Quit, shortcut, "quit"));

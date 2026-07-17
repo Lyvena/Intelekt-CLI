@@ -70,8 +70,8 @@ async fn test_e2e_idle_resume_refreshes_model_metadata() {
             tokio::time::sleep(std::time::Duration::from_millis(50)).await;
             let (gateway_tx, _) = mpsc::unbounded_channel::<xai_acp_lib::AcpClientMessage>();
             let (persistence_tx, _) = mpsc::unbounded_channel::<PersistenceMsg>();
-            let cwd = xai_grok_paths::AbsPathBuf::new(std::path::PathBuf::from("/tmp")).unwrap();
-            let fs = Arc::new(xai_grok_workspace::file_system::MockFs::new(
+            let cwd = intelekt_paths::AbsPathBuf::new(std::path::PathBuf::from("/tmp")).unwrap();
+            let fs = Arc::new(intelekt_workspace::file_system::MockFs::new(
                 cwd.to_path_buf(),
             ));
             let terminal = Arc::new(DummyTerminal {});
@@ -97,7 +97,7 @@ async fn test_e2e_idle_resume_refreshes_model_metadata() {
             let (event_tx, _event_rx) = tokio::sync::mpsc::unbounded_channel::<SessionEvent>();
             let chat_state_handle = xai_chat_state::ChatStateActor::spawn(
                 vec![],
-                xai_grok_sampling_types::SamplingConfig {
+                intelekt_sampling_types::SamplingConfig {
                     base_url: mock_url,
                     model: "test-model".to_string(),
                     max_completion_tokens: Some(8192),
@@ -149,7 +149,7 @@ async fn test_e2e_idle_resume_refreshes_model_metadata() {
                     gateway_enabled: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true)),
                     persistence_tx,
                 },
-                permissions: xai_grok_workspace::permission::PermissionHandle::allow_all(),
+                permissions: intelekt_workspace::permission::PermissionHandle::allow_all(),
                 tool_context,
                 deny_read_globs: Vec::new(),
                 mcp_state: Arc::new(TokioMutex::new(McpState::new(vec![]))),
@@ -284,7 +284,7 @@ async fn test_e2e_idle_resume_refreshes_model_metadata() {
                 hook_registry: std::cell::RefCell::new(None),
                 client_hooks: Default::default(),
                 hook_resolved_workspace_root: String::new(),
-                vcs_kind: xai_grok_workspace::session::git::VcsKind::Git,
+                vcs_kind: intelekt_workspace::session::git::VcsKind::Git,
                 hook_load_errors: std::cell::RefCell::new(Vec::new()),
                 plugin_registry: std::cell::RefCell::new(None),
                 plugin_registry_handle: None,
@@ -297,7 +297,7 @@ async fn test_e2e_idle_resume_refreshes_model_metadata() {
                 session_turn_active: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
                 streaming_turn_capture: parking_lot::Mutex::new(StreamingTurnCapture::default()),
                 turn_stream_drained: parking_lot::Mutex::new(None),
-                sampler_handle: xai_grok_sampler::SamplerHandle::noop(),
+                sampler_handle: intelekt_sampler::SamplerHandle::noop(),
                 rebuild_spec: crate::session::agent_rebuild::test_rebuild_spec_default(),
                 image_description_model: crate::test_support::TEST_MODEL.to_owned(),
                 image_describe_cache: Arc::new(
@@ -305,7 +305,7 @@ async fn test_e2e_idle_resume_refreshes_model_metadata() {
                 ),
                 subagent_spawn_info: parking_lot::Mutex::new(HashMap::new()),
                 subagent_token_records: parking_lot::Mutex::new(HashMap::new()),
-                workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+                workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
                 trace_config_template: std::cell::RefCell::new(None),
             };
             let eleven_minutes_ago_ms = chrono::Utc::now().timestamp_millis() - (11 * 60 * 1000);

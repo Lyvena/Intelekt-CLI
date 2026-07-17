@@ -2,13 +2,13 @@
 //!
 //! [`SamplerConfig`] is the per-request configuration handed to the
 //! sampler. It deliberately does **not** alias
-//! `xai_grok_sampling_types::SamplingConfig` so that the sampler crate
+//! `intelekt_sampling_types::SamplingConfig` so that the sampler crate
 //! avoids transitive dependencies on shell-specific types
-//! (`xai-grok-tools`, etc.).
+//! (`intelekt-tools`, etc.).
 
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use xai_grok_sampling_types::{
+use intelekt_sampling_types::{
     ApiBackend, CompactionAtTokens, CompactionsRemaining, DoomLoopRecoveryPolicy, ReasoningEffort,
 };
 
@@ -29,13 +29,13 @@ pub enum AuthScheme {
 /// and passes it (or a per-request override) to the actor on every
 /// submit.
 ///
-/// # Construction in `xai-grok-shell`
+/// # Construction in `intelekt-shell`
 ///
 /// `SamplerConfig` is the single source of truth for sampler
 /// configuration. The shell builds it directly (see
 /// `agent::config::resolve_model_to_sampling_config` and
 /// `session::acp_session::SessionActor::reconstruct_full_config`) by
-/// composing chat-state's `xai_grok_sampling_types::SamplingConfig`
+/// composing chat-state's `intelekt_sampling_types::SamplingConfig`
 /// with `Credentials` (api key, client version).
 ///
 /// URL-derived request headers (e.g. `X-XAI-Token-Auth` for the

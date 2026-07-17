@@ -1,22 +1,22 @@
 //! PTY e2e: permission Auto mode is distinct on the real pager screen.
 //!
-//! Uses `xai-grok-pager-pty-harness` (`PtyHarness`) + Shift+Tab (CSI Z,
+//! Uses `intelekt-pager-pty-harness` (`PtyHarness`) + Shift+Tab (CSI Z,
 //! compatible with `ptyctl` key injection) to cycle Normal → Plan → Auto
 //! and assert the mode banner / status shows Auto without conflating
 //! Always-Approve.
 //!
-//! Auth: seeds `HOME/.grok/auth.json` from `GROK_AUTH_JSON` (path) or the
-//! developer's `~/.grok/auth.json` so the pager skips device-login when
+//! Auth: seeds `HOME/.intelekt/auth.json` from `GROK_AUTH_JSON` (path) or the
+//! developer's `~/.intelekt/auth.json` so the pager skips device-login when
 //! credentials exist. Without auth the test records an environmental
 //! failure (login screen) and still asserts the harness API surface.
 //!
 //! Run with:
-//! `cargo test -p xai-grok-pager --test pty_auto_mode -- --ignored --nocapture`
+//! `cargo test -p intelekt-pager --test pty_auto_mode -- --ignored --nocapture`
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use xai_grok_pager_pty_harness::{PtyHarness, pager_binary};
+use intelekt_pager_pty_harness::{PtyHarness, pager_binary};
 
 const ROWS: u16 = 40;
 const COLS: u16 = 120;
@@ -26,7 +26,7 @@ const WELCOME_SCREEN_SENTINEL: &str = "Quit";
 /// Back-tab / Shift+Tab (CSI Z) — pager binds this to CycleMode.
 const SHIFT_TAB: &[u8] = b"\x1b[Z";
 
-/// Prefer explicit path, else the user's real `~/.grok/auth.json`.
+/// Prefer explicit path, else the user's real `~/.intelekt/auth.json`.
 fn auth_json_source() -> Option<PathBuf> {
     if let Ok(p) = std::env::var("GROK_AUTH_JSON") {
         let pb = PathBuf::from(p);
@@ -35,7 +35,7 @@ fn auth_json_source() -> Option<PathBuf> {
         }
     }
     dirs_next_home()
-        .map(|h| h.join(".grok/auth.json"))
+        .map(|h| h.join(".intelekt/auth.json"))
         .filter(|p| p.is_file())
 }
 
@@ -49,7 +49,7 @@ fn dirs_next_home() -> Option<PathBuf> {
 /// auto-permission-mode feature gate pinned explicitly via `gate_on` so each
 /// test is self-contained and deterministic regardless of the runner's shell.
 fn prepare_sandbox(home: &Path, gate_on: bool) -> Vec<(String, String)> {
-    let grok = home.join(".grok");
+    let grok = home.join(".intelekt");
     let _ = std::fs::create_dir_all(&grok);
     if let Some(src) = auth_json_source() {
         let dest = grok.join("auth.json");
@@ -63,13 +63,13 @@ fn prepare_sandbox(home: &Path, gate_on: bool) -> Vec<(String, String)> {
             );
         }
     } else {
-        eprintln!("pty_auto_mode: no ~/.grok/auth.json — may hit device login");
+        eprintln!("pty_auto_mode: no ~/.intelekt/auth.json — may hit device login");
     }
 
     let home_s = home.display().to_string();
     let mut env = vec![
         ("HOME".into(), home_s.clone()),
-        ("GROK_HOME".into(), grok.display().to_string()),
+        ("INTELEKT_HOME".into(), grok.display().to_string()),
         ("XDG_CONFIG_HOME".into(), format!("{home_s}/.config")),
         ("XDG_DATA_HOME".into(), format!("{home_s}/.local/share")),
         ("XDG_CACHE_HOME".into(), format!("{home_s}/.cache")),
@@ -82,7 +82,7 @@ fn prepare_sandbox(home: &Path, gate_on: bool) -> Vec<(String, String)> {
     ];
     // Pin the feature gate explicitly so the cycle is deterministic regardless
     // of the developer's shell. `GROK_AUTO_PERMISSION_MODE` is the highest gate
-    // layer below requirements; "1"/"0" parse to on/off (xai_grok_config::
+    // layer below requirements; "1"/"0" parse to on/off (intelekt_config::
     // env_bool), and portable-pty merges this over the inherited environment —
     // so an exported value can't flip the result (Auto is present in the ring
     // with the gate on, skipped with it off).
@@ -123,7 +123,7 @@ fn pty_shift_tab_cycles_to_auto_mode_banner() {
         .collect();
 
     let mut harness = PtyHarness::new(&binary, ROWS, COLS, &[], &env_refs)
-        .expect("spawn pager in PTY (xai-grok-pager-pty-harness)");
+        .expect("spawn pager in PTY (intelekt-pager-pty-harness)");
 
     // Drain startup; welcome or agent chrome.
     let _ = harness.wait_for_text(WELCOME_SCREEN_SENTINEL, WELCOME_TIMEOUT);
@@ -207,7 +207,7 @@ fn pty_shift_tab_skips_auto_when_gate_off() {
         .collect();
 
     let mut harness = PtyHarness::new(&binary, ROWS, COLS, &[], &env_refs)
-        .expect("spawn pager in PTY (xai-grok-pager-pty-harness)");
+        .expect("spawn pager in PTY (intelekt-pager-pty-harness)");
 
     let _ = harness.wait_for_text(WELCOME_SCREEN_SENTINEL, WELCOME_TIMEOUT);
     let early = harness.screen_contents();

@@ -1,6 +1,6 @@
-//! Shared helpers for xai-grok-shell integration tests.
+//! Shared helpers for intelekt-shell integration tests.
 
-use xai_grok_shell::sampling::{ApiBackend, Client, SamplerConfig};
+use intelekt_shell::sampling::{ApiBackend, Client, SamplerConfig};
 
 /// Create a sampling client configured for a mock server. Shared by the
 /// integration tests so the ~30-field `SamplerConfig` literal lives in one
@@ -27,7 +27,7 @@ pub fn test_sampler_config(
     api_backend: ApiBackend,
     extra_headers: &[(&str, &str)],
 ) -> SamplerConfig {
-    // Shell `Client` is `xai_grok_sampler::SamplingClient`, which takes a
+    // Shell `Client` is `intelekt_sampler::SamplingClient`, which takes a
     // `SamplerConfig` directly. Construct one inline here.
     SamplerConfig {
         api_key: Some("test-api-key".to_string()),

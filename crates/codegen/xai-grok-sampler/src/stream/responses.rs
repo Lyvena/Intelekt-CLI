@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use futures_util::StreamExt;
 use futures_util::stream::{BoxStream, Stream};
 
-use xai_grok_sampling_types::{
+use intelekt_sampling_types::{
     ConversationItem, ConversationResponse, ResponseModelMetadata, SamplingError, StopReason,
     TokenUsage, rs,
 };
@@ -461,8 +461,8 @@ pub fn stream_responses<'a>(
         // text as a fallback when the final response lacks `content` /
         // `summary` (the streaming deltas may have arrived out of band).
         // Splice policy lives in `inject_streaming_reasoning_fallback`.
-        let mut items = xai_grok_sampling_types::response_to_conversation_items(response);
-        xai_grok_sampling_types::inject_streaming_reasoning_fallback(&mut items, reasoning_acc);
+        let mut items = intelekt_sampling_types::response_to_conversation_items(response);
+        intelekt_sampling_types::inject_streaming_reasoning_fallback(&mut items, reasoning_acc);
 
         let has_tool_calls = items.iter().any(|i| match i {
             ConversationItem::Assistant(a) => !a.tool_calls.is_empty(),
@@ -902,7 +902,7 @@ mod tests {
 
     #[tokio::test]
     async fn doom_loop_collector_signals_land_on_completed_response() {
-        use xai_grok_sampling_types::doom_loop::{
+        use intelekt_sampling_types::doom_loop::{
             DOOM_LOOP_CHECK_EVENT_TYPE, SAMPLE_CHECK_EVENT_DATA,
         };
         let collector = crate::doom_loop::DoomLoopSignalCollector::default();

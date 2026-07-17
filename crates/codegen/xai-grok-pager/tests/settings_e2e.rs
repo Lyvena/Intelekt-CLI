@@ -10,16 +10,16 @@ use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent
 use ratatui::layout::Rect;
 use std::sync::Arc;
 
-use xai_grok_pager::app::actions::Action;
-use xai_grok_pager::settings::{
+use intelekt_pager::app::actions::Action;
+use intelekt_pager::settings::{
     EnumChoice, PagerLocalSnapshot, SettingCategory, SettingKind, SettingMeta, SettingOwner,
     SettingValue, SettingsRegistry,
 };
-use xai_grok_pager::views::settings_modal::{
+use intelekt_pager::views::settings_modal::{
     RowEntry, SettingsKeyOutcome, SettingsModalMode, SettingsModalState, handle_settings_key,
     handle_settings_mouse,
 };
-use xai_grok_shell::agent::config::UiConfig;
+use intelekt_shell::agent::config::UiConfig;
 
 // ---------------------------------------------------------------------------
 // Compile-time exhaustive matrix
@@ -110,7 +110,7 @@ fn matrix_is_subset_of_registry() {
 
 fn make_state() -> SettingsModalState {
     // Voice rows are hidden when the process gate is off (default until startup).
-    xai_grok_pager::app::set_voice_mode_enabled_for_test(true);
+    intelekt_pager::app::set_voice_mode_enabled_for_test(true);
     SettingsModalState::new(
         Arc::new(SettingsRegistry::defaults()),
         UiConfig::default(),
@@ -1453,7 +1453,7 @@ fn render_with_filter_active_and_small_viewport_clamps_scroll() {
         height: 12,
     };
     let mut buf = Buffer::empty(area);
-    xai_grok_pager::views::settings_modal::render_settings_modal(
+    intelekt_pager::views::settings_modal::render_settings_modal(
         &mut buf, area, &mut s, false, None,
     );
     let visible = s.filtered_indices().len();
@@ -1485,7 +1485,7 @@ fn render_no_matches_placeholder_includes_query() {
         height: 30,
     };
     let mut buf = Buffer::empty(area);
-    xai_grok_pager::views::settings_modal::render_settings_modal(
+    intelekt_pager::views::settings_modal::render_settings_modal(
         &mut buf, area, &mut s, false, None,
     );
     // Scan all cells for the substring "No matches" and "xyzzy".
@@ -1705,25 +1705,25 @@ fn enum_settings_membership_through_pr_14() {
 /// `UiConfig::default()` with independently hard-coded expectations.
 #[test]
 fn defaults_round_trip_through_registry() {
-    use xai_grok_pager::settings::{SettingValue, current_value_for};
+    use intelekt_pager::settings::{SettingValue, current_value_for};
     let reg = SettingsRegistry::defaults();
     let ui = UiConfig::default();
     let pager = PagerLocalSnapshot::default();
 
     // `current_value_for` for these keys reads process-wide caches, not `ui`.
     // Reset to defaults so a sibling test on this worker thread can't leak in.
-    xai_grok_pager::appearance::cache::set_keep_text_selection(
-        xai_grok_pager::appearance::TextSelection::Flash,
+    intelekt_pager::appearance::cache::set_keep_text_selection(
+        intelekt_pager::appearance::TextSelection::Flash,
     );
-    xai_grok_pager::appearance::cache::set_show_thinking_blocks(true);
-    xai_grok_pager::appearance::cache::set_prompt_suggestions(true);
-    xai_grok_pager::appearance::cache::set_group_tool_verbs(true);
-    xai_grok_pager::appearance::cache::set_scroll_mode(
-        xai_grok_pager::appearance::ScrollMode::Auto,
+    intelekt_pager::appearance::cache::set_show_thinking_blocks(true);
+    intelekt_pager::appearance::cache::set_prompt_suggestions(true);
+    intelekt_pager::appearance::cache::set_group_tool_verbs(true);
+    intelekt_pager::appearance::cache::set_scroll_mode(
+        intelekt_pager::appearance::ScrollMode::Auto,
     );
-    xai_grok_pager::appearance::cache::set_invert_scroll(false);
+    intelekt_pager::appearance::cache::set_invert_scroll(false);
     // 3 = the registry default shown while the profile is in charge.
-    xai_grok_pager::appearance::cache::set_scroll_lines(3);
+    intelekt_pager::appearance::cache::set_scroll_lines(3);
 
     // Hard-coded per-key expectations (independent of registry).
     let expected = |key: &str| -> SettingValue {
@@ -1782,7 +1782,7 @@ fn defaults_round_trip_through_registry() {
         }
         let live_value = current_value_for(meta.key, &ui, &pager)
             .unwrap_or_else(|| panic!("current_value_for(`{}`) returned None", meta.key));
-        let default_value = xai_grok_pager::settings::default_value_for(meta);
+        let default_value = intelekt_pager::settings::default_value_for(meta);
         let expected_value = expected(meta.key);
 
         assert_eq!(
@@ -2331,7 +2331,7 @@ fn pr4_theme_preview_and_commit_e2e() {
 }
 
 // Strangler-fig dispatch-layer tests for the typed Actions are in
-// `crates/codegen/xai-grok-pager/src/app/dispatch.rs::tests` (next to
+// `crates/codegen/intelekt-pager/src/app/dispatch.rs::tests` (next to
 // the `set_compact_mode_emits_persist_setting_with_correct_payload`
 // family) — see `set_theme_emits_persist_setting_with_correct_payload`
 // and friends. The dispatch tests live there because the `AppView`
@@ -2726,7 +2726,7 @@ fn pr6_permission_mode_does_not_support_preview() {
 /// `permission_mode` reads from pager snapshot, not `ui` (live state).
 #[test]
 fn pr6_current_value_for_reads_pager_snapshot() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
 
     let ui = UiConfig::default();
 
@@ -2834,7 +2834,7 @@ fn pr6_permission_mode_picker_nav_does_not_dispatch_preview() {
 /// Enter on "always-approve" commits `SetPermissionMode(AlwaysApprove)`.
 #[test]
 fn pr6_permission_mode_picker_enter_dispatches_set_permission_mode_commit() {
-    use xai_grok_pager::app::actions::PermissionModeKind;
+    use intelekt_pager::app::actions::PermissionModeKind;
     let reg = SettingsRegistry::defaults();
     let meta = reg.find("permission_mode").unwrap();
     let choices = match &meta.kind {
@@ -3116,7 +3116,7 @@ fn pr6_mouse_click_on_permission_mode_indicator_opens_picker_in_one_click() {
 /// Picking "Default" dispatches `SetPermissionMode(Default)`.
 #[test]
 fn pr11_picker_commit_for_default_dispatches_set_permission_mode_default() {
-    use xai_grok_pager::app::actions::PermissionModeKind;
+    use intelekt_pager::app::actions::PermissionModeKind;
     let reg = SettingsRegistry::defaults();
     let meta = reg.find("permission_mode").unwrap();
     let choices = match &meta.kind {
@@ -3169,7 +3169,7 @@ fn pr11_picker_commit_for_default_dispatches_set_permission_mode_default() {
 /// Picking "Ask" dispatches `SetPermissionMode(Ask)`.
 #[test]
 fn pr11_picker_commit_for_ask_dispatches_set_permission_mode_ask() {
-    use xai_grok_pager::app::actions::PermissionModeKind;
+    use intelekt_pager::app::actions::PermissionModeKind;
     // Set snapshot so the picker opens seeded at "always-approve",
     // then navigate to "ask" to commit a non-default selection.
     let snapshot = PagerLocalSnapshot {
@@ -3222,7 +3222,7 @@ fn pr11_picker_commit_for_ask_dispatches_set_permission_mode_ask() {
 /// Returns "default" when `ui.permission_mode == "default"` and yolo=false.
 #[test]
 fn pr11_current_value_for_returns_default_when_ui_says_default() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
     let ui = UiConfig {
         permission_mode: Some("default".into()),
         ..UiConfig::default()
@@ -3241,7 +3241,7 @@ fn pr11_current_value_for_returns_default_when_ui_says_default() {
 /// Live yolo_mode=true overrides ui.permission_mode → "always-approve".
 #[test]
 fn pr11_current_value_for_pager_yolo_overrides_default_canonical() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
     let ui = UiConfig {
         permission_mode: Some("default".into()),
         ..UiConfig::default()
@@ -3260,7 +3260,7 @@ fn pr11_current_value_for_pager_yolo_overrides_default_canonical() {
 /// yolo=true + ui=None → "always-approve" (--yolo startup baseline).
 #[test]
 fn pr11_current_value_for_yolo_true_with_ui_none_returns_always_approve() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
     let ui = UiConfig {
         permission_mode: None,
         ..UiConfig::default()
@@ -3280,7 +3280,7 @@ fn pr11_current_value_for_yolo_true_with_ui_none_returns_always_approve() {
 /// Non-"default" values with yolo=false fall through to "ask".
 #[test]
 fn pr11_current_value_for_falls_through_to_ask() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
     let pager = PagerLocalSnapshot {
         yolo_mode: false,
         ..PagerLocalSnapshot::default()
@@ -3320,7 +3320,7 @@ fn pr11_current_value_for_falls_through_to_ask() {
 /// `PermissionModeKind` canonical strings round-trip.
 #[test]
 fn pr11_permission_mode_kind_canonical_round_trip() {
-    use xai_grok_pager::app::actions::PermissionModeKind;
+    use intelekt_pager::app::actions::PermissionModeKind;
     for kind in [
         PermissionModeKind::Default,
         PermissionModeKind::Ask,
@@ -3342,7 +3342,7 @@ fn pr11_permission_mode_kind_canonical_round_trip() {
 /// Catalog canonicals match `PermissionModeKind::as_canonical`.
 #[test]
 fn pr11_permission_mode_kind_canonical_strings_match_choices_catalog() {
-    use xai_grok_pager::app::actions::PermissionModeKind;
+    use intelekt_pager::app::actions::PermissionModeKind;
     let catalog_canonicals: std::collections::HashSet<&str> = SettingsRegistry::defaults()
         .find("permission_mode")
         .and_then(|m| match &m.kind {
@@ -3376,7 +3376,7 @@ fn pr11_permission_mode_kind_canonical_strings_match_choices_catalog() {
 /// Only `AlwaysApprove` projects to `true`.
 #[test]
 fn pr11_permission_mode_kind_is_always_approve_projection() {
-    use xai_grok_pager::app::actions::PermissionModeKind;
+    use intelekt_pager::app::actions::PermissionModeKind;
     assert!(PermissionModeKind::AlwaysApprove.is_always_approve());
     assert!(!PermissionModeKind::Ask.is_always_approve());
     assert!(
@@ -3419,7 +3419,7 @@ fn pr11_permission_mode_kind_is_always_approve_projection() {
 fn reset_overlay_dims_all_rows_except_target() {
     use ratatui::buffer::Buffer;
     use ratatui::style::Modifier;
-    use xai_grok_pager::views::settings_modal::ResetConfirmOverlay;
+    use intelekt_pager::views::settings_modal::ResetConfirmOverlay;
     // Set up a state with at least 3 rows visible AND navigate to a
     // specific target (NOT the initially-selected row) so we can
     // assert dim-vs-full-intensity for both target and non-target
@@ -3443,7 +3443,7 @@ fn reset_overlay_dims_all_rows_except_target() {
         prompt: "Reset 'Show timestamps' to default (on)?",
         breadcrumb_suffix: "Reset 'Show timestamps'",
     };
-    xai_grok_pager::views::settings_modal::render_settings_modal(
+    intelekt_pager::views::settings_modal::render_settings_modal(
         &mut buf,
         area,
         &mut s,
@@ -3605,7 +3605,7 @@ fn docs_footer_renders_for_browse_and_picker() {
             assert!(matches!(s.mode, SettingsModalMode::PickingEnum { .. }));
         }
         let mut buf = Buffer::empty(area);
-        xai_grok_pager::views::settings_modal::render_settings_modal(
+        intelekt_pager::views::settings_modal::render_settings_modal(
             &mut buf, area, &mut s, false, None,
         );
         let mut all_text = String::new();
@@ -3651,7 +3651,7 @@ fn render_modal_to_string(s: &mut SettingsModalState, width: u16, height: u16) -
         height,
     };
     let mut buf = Buffer::empty(area);
-    xai_grok_pager::views::settings_modal::render_settings_modal(&mut buf, area, s, false, None);
+    intelekt_pager::views::settings_modal::render_settings_modal(&mut buf, area, s, false, None);
     let mut out = String::new();
     for y in 0..area.height {
         for x in 0..area.width {
@@ -3761,8 +3761,8 @@ fn restart_pill_visible_when_expanded() {
 /// previously-set Off value in a fresh session.
 #[test]
 fn restart_pill_hidden_when_edited_but_collapsed() {
-    use xai_grok_pager::settings::{PagerLocalSnapshot, SettingsRegistry};
-    use xai_grok_shell::agent::config::UiConfig;
+    use intelekt_pager::settings::{PagerLocalSnapshot, SettingsRegistry};
+    use intelekt_shell::agent::config::UiConfig;
 
     // Construct a state where `show_tips` is NOT at its registered
     // default of `true`.
@@ -3885,7 +3885,7 @@ fn vim_l_h_keys_toggle_expansion() {
 #[test]
 fn reset_confirm_overlay_renders_prompt_with_setting_label_and_default() {
     use ratatui::buffer::Buffer;
-    use xai_grok_pager::views::settings_modal::ResetConfirmOverlay;
+    use intelekt_pager::views::settings_modal::ResetConfirmOverlay;
     let mut s = make_state();
     let area = Rect {
         x: 0,
@@ -3898,7 +3898,7 @@ fn reset_confirm_overlay_renders_prompt_with_setting_label_and_default() {
         prompt: "Reset 'Compact mode' to default (off)?",
         breadcrumb_suffix: "Reset 'Compact mode'",
     };
-    xai_grok_pager::views::settings_modal::render_settings_modal(
+    intelekt_pager::views::settings_modal::render_settings_modal(
         &mut buf,
         area,
         &mut s,
@@ -3941,9 +3941,9 @@ fn reset_confirm_overlay_renders_prompt_with_setting_label_and_default() {
 /// missing display string would render an empty or garbled prompt.
 #[test]
 fn reset_confirm_prompt_helper_builds_well_formed_string_for_every_setting() {
-    use xai_grok_pager::settings::{PagerLocalSnapshot, SettingsRegistry};
-    use xai_grok_pager::views::modal::{ActiveModal, ModalConfirmation, reset_confirm_prompt};
-    use xai_grok_shell::agent::config::UiConfig;
+    use intelekt_pager::settings::{PagerLocalSnapshot, SettingsRegistry};
+    use intelekt_pager::views::modal::{ActiveModal, ModalConfirmation, reset_confirm_prompt};
+    use intelekt_shell::agent::config::UiConfig;
     let reg = SettingsRegistry::defaults();
     for meta in reg.all() {
         let state = Box::new(SettingsModalState::new(
@@ -4032,11 +4032,11 @@ fn pr14_default_model_picker_commits_resolved_model_id() {
         available_models: vec![
             (
                 "Grok 4.5".to_string(),
-                agent_client_protocol::ModelId::new(std::sync::Arc::from("grok-4.5")),
+                agent_client_protocol::ModelId::new(std::sync::Arc::from("intelekt-4.5")),
             ),
             (
                 "Grok 3".to_string(),
-                agent_client_protocol::ModelId::new(std::sync::Arc::from("grok-3")),
+                agent_client_protocol::ModelId::new(std::sync::Arc::from("intelekt-3")),
             ),
         ],
         ..PagerLocalSnapshot::default()
@@ -4070,7 +4070,7 @@ fn pr14_default_model_picker_commits_resolved_model_id() {
         SettingsKeyOutcome::Action(Action::SetDefaultModel(id)) => {
             assert_eq!(
                 id.0.as_ref(),
-                "grok-4.5",
+                "intelekt-4.5",
                 "committed id must match snapshot"
             );
         }
@@ -4088,7 +4088,7 @@ fn pr14_default_model_picker_row_zero_commits_clear_action() {
     let snapshot = PagerLocalSnapshot {
         available_models: vec![(
             "Grok 3".to_string(),
-            agent_client_protocol::ModelId::new(std::sync::Arc::from("grok-3")),
+            agent_client_protocol::ModelId::new(std::sync::Arc::from("intelekt-3")),
         )],
         ..PagerLocalSnapshot::default()
     };
@@ -4125,7 +4125,7 @@ fn pr14_mouse_click_on_dynamic_enum_row_opens_picker() {
     let snapshot = PagerLocalSnapshot {
         available_models: vec![(
             "Grok 3".to_string(),
-            agent_client_protocol::ModelId::new(std::sync::Arc::from("grok-3")),
+            agent_client_protocol::ModelId::new(std::sync::Arc::from("intelekt-3")),
         )],
         ..PagerLocalSnapshot::default()
     };
@@ -4361,7 +4361,7 @@ fn pr8_esc_in_editing_value_cancels_without_dispatch() {
 /// against hard-coded literals.
 #[test]
 fn pr8_default_model_and_max_thoughts_width_defaults_roundtrip() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
     let reg = SettingsRegistry::defaults();
     let ui = UiConfig::default();
     let pager = PagerLocalSnapshot::default();
@@ -4374,7 +4374,7 @@ fn pr8_default_model_and_max_thoughts_width_defaults_roundtrip() {
     // converge on `SettingValue::String("")`.
     let dm_meta = reg.find("default_model").unwrap();
     assert_eq!(
-        xai_grok_pager::settings::default_value_for(dm_meta),
+        intelekt_pager::settings::default_value_for(dm_meta),
         SettingValue::String(String::new()),
         "default_model registered default must be the empty string",
     );
@@ -4388,7 +4388,7 @@ fn pr8_default_model_and_max_thoughts_width_defaults_roundtrip() {
     // UiConfig::default()'s DEFAULT_MAX_THOUGHTS_WIDTH constant).
     let mt_meta = reg.find("max_thoughts_width").unwrap();
     assert_eq!(
-        xai_grok_pager::settings::default_value_for(mt_meta),
+        intelekt_pager::settings::default_value_for(mt_meta),
         SettingValue::Int(120),
         "max_thoughts_width registered default must be 120",
     );
@@ -4447,7 +4447,7 @@ fn pr9_coding_data_sharing_does_not_support_preview() {
 /// Reads from pager snapshot; inverts `_opt_out` bool.
 #[test]
 fn pr9_current_value_for_reads_pager_snapshot_inverts_opt_out() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
 
     let ui = UiConfig::default();
 
@@ -4824,7 +4824,7 @@ fn default_selected_permission_does_not_support_preview() {
 /// `always_allow_all_sessions` canonical (the effective default).
 #[test]
 fn default_selected_permission_current_value_defaults_to_always_allow_all_sessions() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
     let ui = UiConfig::default();
     let pager = PagerLocalSnapshot::default();
     assert_eq!(
@@ -5058,7 +5058,7 @@ fn default_selected_permission_mouse_click_on_indicator_opens_picker_in_one_clic
 /// both the accept list AND the reject list.
 #[test]
 fn pr9_privacy_slash_command_parses_aliases() {
-    use xai_grok_pager::slash::commands::privacy::parse_privacy_arg;
+    use intelekt_pager::slash::commands::privacy::parse_privacy_arg;
 
     // Canonical names.
     assert_eq!(parse_privacy_arg("opt-in"), Some(true));
@@ -5154,7 +5154,7 @@ fn pr10_plan_mode_does_not_support_preview() {
 /// only). Canonical mapping: `true → "on"`, `false → "off"`.
 #[test]
 fn pr10_current_value_for_reads_pager_snapshot() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
 
     let ui = UiConfig::default();
 
@@ -5246,7 +5246,7 @@ fn pr10_plan_mode_picker_nav_does_not_dispatch_preview() {
 /// (on→On, off→Off).
 #[test]
 fn pr10_plan_mode_picker_enter_dispatches_set_commit() {
-    use xai_grok_pager::app::actions::PlanModeKind;
+    use intelekt_pager::app::actions::PlanModeKind;
 
     let mut s = make_state();
     navigate_to(&mut s, "plan_mode");
@@ -5583,7 +5583,7 @@ fn render_mermaid_picker_nav_does_not_dispatch_preview() {
 /// canonical-to-RenderMermaid mapping.
 #[test]
 fn render_mermaid_picker_enter_dispatches_set_commit() {
-    use xai_grok_pager::appearance::RenderMermaid;
+    use intelekt_pager::appearance::RenderMermaid;
 
     let mut s = make_state();
     navigate_to(&mut s, "render_mermaid");
@@ -6172,7 +6172,7 @@ fn pr13_cli_batch_all_settings_are_restart_required() {
 /// CLI-batch defaults round-trip through `current_value_for`.
 #[test]
 fn pr13_cli_batch_defaults_roundtrip_via_current_value_for() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
     let ui = UiConfig::default();
     let pager = PagerLocalSnapshot::default();
     for (key, expected) in [("show_tips", true), ("auto_update", true)] {
@@ -6240,7 +6240,7 @@ fn pr14_restart_required_split() {
 /// Model settings use `DynamicEnum` with `ActiveModelCatalog`.
 #[test]
 fn pr14_string_settings_use_known_model_validator() {
-    use xai_grok_pager::settings::DynamicEnumSource;
+    use intelekt_pager::settings::DynamicEnumSource;
     let reg = SettingsRegistry::defaults();
     for key in ["default_model", "fork_secondary_model"] {
         let meta = reg
@@ -6263,7 +6263,7 @@ fn pr14_string_settings_use_known_model_validator() {
 /// Defaults round-trip through `current_value_for`.
 #[test]
 fn pr14_model_family_defaults_roundtrip_via_current_value_for() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
     let ui = UiConfig::default();
     let pager = PagerLocalSnapshot::default();
 
@@ -6279,7 +6279,7 @@ fn pr14_model_family_defaults_roundtrip_via_current_value_for() {
 /// Non-baseline `fork_secondary_model` surfaces verbatim.
 #[test]
 fn pr14_fork_secondary_model_reads_ui_config_non_baseline() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
     let ui = UiConfig {
         fork_secondary_model: "Custom Fork Model".to_string(),
         ..UiConfig::default()
@@ -6447,8 +6447,8 @@ fn keep_text_selection_does_not_support_preview() {
 fn enter_on_keep_text_selection_row_enters_picking_enum() {
     // The picker's `original_value` is read from the process-wide cache; pin it
     // to the default so a sibling test's `set_keep_text_selection` can't leak in.
-    xai_grok_pager::appearance::cache::set_keep_text_selection(
-        xai_grok_pager::appearance::TextSelection::Flash,
+    intelekt_pager::appearance::cache::set_keep_text_selection(
+        intelekt_pager::appearance::TextSelection::Flash,
     );
     let mut s = make_state();
     navigate_to(&mut s, "keep_text_selection");
@@ -6500,11 +6500,11 @@ fn keep_text_selection_picker_nav_does_not_dispatch_preview() {
 
 #[test]
 fn keep_text_selection_picker_enter_dispatches_set_commit() {
-    use xai_grok_pager::appearance::TextSelection;
+    use intelekt_pager::appearance::TextSelection;
 
     // Pin the cache-backed live value so the picker seeds at flash (idx 0)
     // regardless of any sibling test that set hold/word_select on this thread.
-    xai_grok_pager::appearance::cache::set_keep_text_selection(TextSelection::Flash);
+    intelekt_pager::appearance::cache::set_keep_text_selection(TextSelection::Flash);
     let mut s = make_state();
     navigate_to(&mut s, "keep_text_selection");
     let _ = handle_settings_key(&mut s, &press(KeyCode::Enter));
@@ -6612,9 +6612,9 @@ fn mouse_click_on_keep_text_selection_indicator_opens_picker_in_one_click() {
 
 #[test]
 fn keep_text_selection_hold_snapshot_seeds_picker_at_hold() {
-    use xai_grok_pager::appearance::TextSelection;
+    use intelekt_pager::appearance::TextSelection;
     // Live value is the process-wide cache (like render_mermaid), not UiConfig alone.
-    xai_grok_pager::appearance::cache::set_keep_text_selection(TextSelection::Hold);
+    intelekt_pager::appearance::cache::set_keep_text_selection(TextSelection::Hold);
     let ui = UiConfig {
         keep_text_selection: Some("hold".into()),
         ..UiConfig::default()
@@ -6758,11 +6758,11 @@ fn scroll_mode_renders_under_mouse_shell_owned_no_preview() {
 
 #[test]
 fn scroll_mode_picker_enter_dispatches_set_commit() {
-    use xai_grok_pager::appearance::ScrollMode;
+    use intelekt_pager::appearance::ScrollMode;
 
     // Pin the cache-backed live value so the picker seeds at auto (idx 0)
     // regardless of sibling tests on this thread.
-    xai_grok_pager::appearance::cache::set_scroll_mode(ScrollMode::Auto);
+    intelekt_pager::appearance::cache::set_scroll_mode(ScrollMode::Auto);
     let mut s = make_state();
     navigate_to(&mut s, "scroll_mode");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Enter));
@@ -6844,7 +6844,7 @@ fn scroll_lines_renders_under_mouse_shell_owned_bounds_1_to_10() {
 #[test]
 fn scroll_lines_int_stepper_commit_dispatches_typed_setter() {
     // Pin the live cache so the buffer seeds at the default 3.
-    xai_grok_pager::appearance::cache::set_scroll_lines(3);
+    intelekt_pager::appearance::cache::set_scroll_lines(3);
     let mut s = make_state();
     navigate_to(&mut s, "scroll_lines");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Enter));
@@ -6908,27 +6908,27 @@ fn scroll_lines_mouse_click_opens_editor() {
 
 #[test]
 fn invert_scroll_space_dispatches_typed_setter() {
-    xai_grok_pager::appearance::cache::set_invert_scroll(false);
+    intelekt_pager::appearance::cache::set_invert_scroll(false);
     let mut s = make_state();
     navigate_to(&mut s, "invert_scroll");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Char(' ')));
     assert_set_bool_action(outcome, "invert_scroll", true);
-    xai_grok_pager::appearance::cache::set_invert_scroll(false);
+    intelekt_pager::appearance::cache::set_invert_scroll(false);
 }
 
 #[test]
 fn invert_scroll_enter_dispatches_typed_setter() {
-    xai_grok_pager::appearance::cache::set_invert_scroll(true);
+    intelekt_pager::appearance::cache::set_invert_scroll(true);
     let mut s = make_state();
     navigate_to(&mut s, "invert_scroll");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Enter));
     assert_set_bool_action(outcome, "invert_scroll", false);
-    xai_grok_pager::appearance::cache::set_invert_scroll(false);
+    intelekt_pager::appearance::cache::set_invert_scroll(false);
 }
 
 #[test]
 fn invert_scroll_mouse_click_two_stage_toggles() {
-    xai_grok_pager::appearance::cache::set_invert_scroll(false);
+    intelekt_pager::appearance::cache::set_invert_scroll(false);
     let mut s = make_state();
     synth_rects(&mut s);
     let row_y = row_idx_for(&s, "invert_scroll") as u16;
@@ -6951,7 +6951,7 @@ fn invert_scroll_mouse_click_two_stage_toggles() {
         row_y,
     );
     assert_set_bool_action(outcome, "invert_scroll", true);
-    xai_grok_pager::appearance::cache::set_invert_scroll(false);
+    intelekt_pager::appearance::cache::set_invert_scroll(false);
 }
 
 #[test]
@@ -7041,7 +7041,7 @@ fn display_refresh_auto_cadence_meta_appearance_shell_restart_hidden_minimal() {
 
 #[test]
 fn display_refresh_auto_cadence_defaults_roundtrip_via_current_value_for() {
-    use xai_grok_pager::settings::current_value_for;
+    use intelekt_pager::settings::current_value_for;
     let ui = UiConfig::default();
     let pager = PagerLocalSnapshot::default();
     let value = current_value_for("display_refresh_auto_cadence", &ui, &pager)
@@ -7062,27 +7062,27 @@ fn display_refresh_auto_cadence_defaults_roundtrip_via_current_value_for() {
 #[test]
 fn show_thinking_blocks_space_dispatches_typed_setter() {
     // Pin off so space toggles to true.
-    xai_grok_pager::appearance::cache::set_show_thinking_blocks(false);
+    intelekt_pager::appearance::cache::set_show_thinking_blocks(false);
     let mut s = make_state();
     navigate_to(&mut s, "show_thinking_blocks");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Char(' ')));
     assert_set_bool_action(outcome, "show_thinking_blocks", true);
-    xai_grok_pager::appearance::cache::set_show_thinking_blocks(true);
+    intelekt_pager::appearance::cache::set_show_thinking_blocks(true);
 }
 
 #[test]
 fn show_thinking_blocks_enter_dispatches_typed_setter() {
-    xai_grok_pager::appearance::cache::set_show_thinking_blocks(false);
+    intelekt_pager::appearance::cache::set_show_thinking_blocks(false);
     let mut s = make_state();
     navigate_to(&mut s, "show_thinking_blocks");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Enter));
     assert_set_bool_action(outcome, "show_thinking_blocks", true);
-    xai_grok_pager::appearance::cache::set_show_thinking_blocks(true);
+    intelekt_pager::appearance::cache::set_show_thinking_blocks(true);
 }
 
 #[test]
 fn show_thinking_blocks_mouse_click_two_stage_toggles() {
-    xai_grok_pager::appearance::cache::set_show_thinking_blocks(false);
+    intelekt_pager::appearance::cache::set_show_thinking_blocks(false);
     let mut s = make_state();
     synth_rects(&mut s);
     let row_y = row_idx_for(&s, "show_thinking_blocks") as u16;
@@ -7107,13 +7107,13 @@ fn show_thinking_blocks_mouse_click_two_stage_toggles() {
     );
     // Cache pinned off above → toggle dispatches true.
     assert_set_bool_action(outcome, "show_thinking_blocks", true);
-    xai_grok_pager::appearance::cache::set_show_thinking_blocks(true);
+    intelekt_pager::appearance::cache::set_show_thinking_blocks(true);
 }
 
 #[test]
 fn show_thinking_blocks_cache_on_dispatches_off() {
     // When the live cache is on, toggle should turn it off.
-    xai_grok_pager::appearance::cache::set_show_thinking_blocks(true);
+    intelekt_pager::appearance::cache::set_show_thinking_blocks(true);
     let mut s = SettingsModalState::new(
         Arc::new(SettingsRegistry::defaults()),
         UiConfig::default(),
@@ -7123,7 +7123,7 @@ fn show_thinking_blocks_cache_on_dispatches_off() {
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Char(' ')));
     assert_set_bool_action(outcome, "show_thinking_blocks", false);
     // Restore client default (on) for other tests that share the process cache.
-    xai_grok_pager::appearance::cache::set_show_thinking_blocks(true);
+    intelekt_pager::appearance::cache::set_show_thinking_blocks(true);
 }
 
 #[test]
@@ -7168,27 +7168,27 @@ fn show_thinking_blocks_renders_under_appearance_category_shell_owned() {
 #[test]
 fn prompt_suggestions_space_dispatches_typed_setter() {
     // Pin off so space toggles to true.
-    xai_grok_pager::appearance::cache::set_prompt_suggestions(false);
+    intelekt_pager::appearance::cache::set_prompt_suggestions(false);
     let mut s = make_state();
     navigate_to(&mut s, "prompt_suggestions");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Char(' ')));
     assert_set_bool_action(outcome, "prompt_suggestions", true);
-    xai_grok_pager::appearance::cache::set_prompt_suggestions(true);
+    intelekt_pager::appearance::cache::set_prompt_suggestions(true);
 }
 
 #[test]
 fn prompt_suggestions_enter_dispatches_typed_setter() {
-    xai_grok_pager::appearance::cache::set_prompt_suggestions(false);
+    intelekt_pager::appearance::cache::set_prompt_suggestions(false);
     let mut s = make_state();
     navigate_to(&mut s, "prompt_suggestions");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Enter));
     assert_set_bool_action(outcome, "prompt_suggestions", true);
-    xai_grok_pager::appearance::cache::set_prompt_suggestions(true);
+    intelekt_pager::appearance::cache::set_prompt_suggestions(true);
 }
 
 #[test]
 fn prompt_suggestions_mouse_click_two_stage_toggles() {
-    xai_grok_pager::appearance::cache::set_prompt_suggestions(false);
+    intelekt_pager::appearance::cache::set_prompt_suggestions(false);
     let mut s = make_state();
     synth_rects(&mut s);
     let row_y = row_idx_for(&s, "prompt_suggestions") as u16;
@@ -7213,13 +7213,13 @@ fn prompt_suggestions_mouse_click_two_stage_toggles() {
     );
     // Cache pinned off above → toggle dispatches true.
     assert_set_bool_action(outcome, "prompt_suggestions", true);
-    xai_grok_pager::appearance::cache::set_prompt_suggestions(true);
+    intelekt_pager::appearance::cache::set_prompt_suggestions(true);
 }
 
 #[test]
 fn prompt_suggestions_cache_on_dispatches_off() {
     // Default is on; when the live cache is on, toggle should turn it off.
-    xai_grok_pager::appearance::cache::set_prompt_suggestions(true);
+    intelekt_pager::appearance::cache::set_prompt_suggestions(true);
     let mut s = SettingsModalState::new(
         Arc::new(SettingsRegistry::defaults()),
         UiConfig::default(),
@@ -7229,7 +7229,7 @@ fn prompt_suggestions_cache_on_dispatches_off() {
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Char(' ')));
     assert_set_bool_action(outcome, "prompt_suggestions", false);
     // Restore client default (on) for other tests that share the process cache.
-    xai_grok_pager::appearance::cache::set_prompt_suggestions(true);
+    intelekt_pager::appearance::cache::set_prompt_suggestions(true);
 }
 
 #[test]
@@ -7351,7 +7351,7 @@ fn respect_manual_folds_renders_under_appearance_category_pager_owned() {
 #[test]
 fn group_tool_verbs_space_dispatches_typed_setter() {
     // Default is true; space toggles to false.
-    xai_grok_pager::appearance::cache::set_group_tool_verbs(true);
+    intelekt_pager::appearance::cache::set_group_tool_verbs(true);
     let mut s = make_state();
     navigate_to(&mut s, "group_tool_verbs");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Char(' ')));
@@ -7360,7 +7360,7 @@ fn group_tool_verbs_space_dispatches_typed_setter() {
 
 #[test]
 fn group_tool_verbs_enter_dispatches_typed_setter() {
-    xai_grok_pager::appearance::cache::set_group_tool_verbs(true);
+    intelekt_pager::appearance::cache::set_group_tool_verbs(true);
     let mut s = make_state();
     navigate_to(&mut s, "group_tool_verbs");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Enter));
@@ -7369,7 +7369,7 @@ fn group_tool_verbs_enter_dispatches_typed_setter() {
 
 #[test]
 fn group_tool_verbs_mouse_click_two_stage_toggles() {
-    xai_grok_pager::appearance::cache::set_group_tool_verbs(true);
+    intelekt_pager::appearance::cache::set_group_tool_verbs(true);
     let mut s = make_state();
     synth_rects(&mut s);
     let row_y = row_idx_for(&s, "group_tool_verbs") as u16;
@@ -7399,7 +7399,7 @@ fn group_tool_verbs_mouse_click_two_stage_toggles() {
 #[test]
 fn group_tool_verbs_cache_off_dispatches_on() {
     // When the live cache is off, toggle should turn it on.
-    xai_grok_pager::appearance::cache::set_group_tool_verbs(false);
+    intelekt_pager::appearance::cache::set_group_tool_verbs(false);
     let mut s = SettingsModalState::new(
         Arc::new(SettingsRegistry::defaults()),
         UiConfig::default(),
@@ -7409,7 +7409,7 @@ fn group_tool_verbs_cache_off_dispatches_on() {
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Char(' ')));
     assert_set_bool_action(outcome, "group_tool_verbs", true);
     // Restore default (on) for other tests that share the process cache.
-    xai_grok_pager::appearance::cache::set_group_tool_verbs(true);
+    intelekt_pager::appearance::cache::set_group_tool_verbs(true);
 }
 
 #[test]
@@ -7455,7 +7455,7 @@ fn group_tool_verbs_renders_under_appearance_category_shell_owned() {
 fn collapsed_edit_blocks_space_dispatches_typed_setter() {
     // Seed the live cache to the shipped default (bypasses the disk seed so a
     // host [ui] override can't flip the expected toggle direction).
-    xai_grok_pager::appearance::cache::set_collapsed_edit_blocks(false);
+    intelekt_pager::appearance::cache::set_collapsed_edit_blocks(false);
     let mut s = make_state();
     navigate_to(&mut s, "collapsed_edit_blocks");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Char(' ')));
@@ -7464,7 +7464,7 @@ fn collapsed_edit_blocks_space_dispatches_typed_setter() {
 
 #[test]
 fn collapsed_edit_blocks_enter_dispatches_typed_setter() {
-    xai_grok_pager::appearance::cache::set_collapsed_edit_blocks(false);
+    intelekt_pager::appearance::cache::set_collapsed_edit_blocks(false);
     let mut s = make_state();
     navigate_to(&mut s, "collapsed_edit_blocks");
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Enter));
@@ -7473,7 +7473,7 @@ fn collapsed_edit_blocks_enter_dispatches_typed_setter() {
 
 #[test]
 fn collapsed_edit_blocks_mouse_click_two_stage_toggles() {
-    xai_grok_pager::appearance::cache::set_collapsed_edit_blocks(false);
+    intelekt_pager::appearance::cache::set_collapsed_edit_blocks(false);
     let mut s = make_state();
     synth_rects(&mut s);
     let row_y = row_idx_for(&s, "collapsed_edit_blocks") as u16;
@@ -7503,7 +7503,7 @@ fn collapsed_edit_blocks_mouse_click_two_stage_toggles() {
 #[test]
 fn collapsed_edit_blocks_cache_on_dispatches_off() {
     // When the live cache is on (remote settings/team enable), toggle turns it off.
-    xai_grok_pager::appearance::cache::set_collapsed_edit_blocks(true);
+    intelekt_pager::appearance::cache::set_collapsed_edit_blocks(true);
     let mut s = SettingsModalState::new(
         Arc::new(SettingsRegistry::defaults()),
         UiConfig::default(),
@@ -7513,7 +7513,7 @@ fn collapsed_edit_blocks_cache_on_dispatches_off() {
     let outcome = handle_settings_key(&mut s, &press(KeyCode::Char(' ')));
     assert_set_bool_action(outcome, "collapsed_edit_blocks", false);
     // Restore default (off) for other tests that share the process cache.
-    xai_grok_pager::appearance::cache::set_collapsed_edit_blocks(false);
+    intelekt_pager::appearance::cache::set_collapsed_edit_blocks(false);
 }
 
 #[test]

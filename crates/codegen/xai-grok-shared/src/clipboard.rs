@@ -901,7 +901,7 @@ mod platform {
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
-        xai_grok_tools::util::detach_std_command(&mut cmd);
+        intelekt_tools::util::detach_std_command(&mut cmd);
         let stdout = match checked_command_stdout("osascript", cmd.output()) {
             Ok(stdout) => stdout,
             Err(error) => {
@@ -962,7 +962,7 @@ mod platform {
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
-        xai_grok_tools::util::detach_std_command(&mut cmd);
+        intelekt_tools::util::detach_std_command(&mut cmd);
         let stdout = checked_command_stdout("pbpaste", cmd.output())?;
         if stdout.is_empty() {
             return Ok(None);
@@ -984,7 +984,7 @@ mod platform {
             cmd.stdin(Stdio::from(stdin))
                 .stdout(Stdio::null())
                 .stderr(Stdio::null());
-            xai_grok_tools::util::detach_std_command(&mut cmd);
+            intelekt_tools::util::detach_std_command(&mut cmd);
             let mut child = cmd
                 .spawn()
                 .map_err(|e| anyhow::anyhow!("failed to spawn pbcopy: {e}"))?;
@@ -1072,7 +1072,7 @@ mod platform {
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
-        xai_grok_tools::util::detach_std_command(&mut cmd);
+        intelekt_tools::util::detach_std_command(&mut cmd);
         let stdout = match checked_command_stdout("osascript", cmd.output()) {
             Ok(stdout) => stdout,
             Err(error) => {
@@ -1151,7 +1151,7 @@ mod platform {
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::piped());
-        xai_grok_tools::util::detach_std_command(&mut cmd);
+        intelekt_tools::util::detach_std_command(&mut cmd);
         let output = cmd
             .output()
             .map_err(|e| anyhow::anyhow!("failed to run osascript: {e}"))?;
@@ -1628,7 +1628,7 @@ mod platform {
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null());
-        xai_grok_tools::util::detach_std_command(&mut cmd);
+        intelekt_tools::util::detach_std_command(&mut cmd);
         // Availability = the tool ran and exited in time (any exit status).
         let Ok(mut child) = cmd.spawn() else {
             return false;
@@ -1749,7 +1749,7 @@ mod platform {
             .stdin(Stdio::from(stdin))
             .stdout(Stdio::null())
             .stderr(Stdio::null());
-        xai_grok_tools::util::detach_std_command(&mut cmd);
+        intelekt_tools::util::detach_std_command(&mut cmd);
         let mut child = cmd
             .spawn()
             .map_err(|e| anyhow::anyhow!("failed to spawn {bin}: {e}"))?;
@@ -1773,7 +1773,7 @@ mod platform {
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
-        xai_grok_tools::util::detach_std_command(&mut cmd);
+        intelekt_tools::util::detach_std_command(&mut cmd);
         let mut child = cmd
             .spawn()
             .map_err(|e| anyhow::anyhow!("failed to run {bin}: {e}"))?;
@@ -2730,7 +2730,7 @@ mod tests {
             .stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null());
-        xai_grok_tools::util::detach_std_command(&mut cmd);
+        intelekt_tools::util::detach_std_command(&mut cmd);
         cmd.spawn().expect("spawn sleep")
     }
 
@@ -3214,7 +3214,7 @@ mod macos_probe_smoke {
 
     /// Manual smoke for the objc2 shim — nothing automated executes it (CI is
     /// Linux, the unit suites fake the probe). Run on a Mac:
-    /// `cargo test -p xai-grok-shared -- --ignored probe_smoke`.
+    /// `cargo test -p intelekt-shared -- --ignored probe_smoke`.
     #[test]
     #[ignore = "requires a real pasteboard; run manually on macOS"]
     fn probe_smoke_returns_some_on_macos() {

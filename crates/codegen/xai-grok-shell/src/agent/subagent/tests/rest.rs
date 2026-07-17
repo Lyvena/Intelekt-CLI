@@ -5,13 +5,13 @@ use crate::test_support::lsp_runtime::{
 };
 #[test]
 fn normalize_forked_context_strips_project_layout() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let big_layout = "<project_layout>\nline1\nline2\nline3\n</project_layout>";
     let items = vec![
         ConversationItem::system("sys"), ConversationItem::user(big_layout),
         ConversationItem::assistant("ack"),
     ];
-    let (conv, _) = xai_grok_subagent_resolution::context::normalize_forked_context(
+    let (conv, _) = intelekt_subagent_resolution::context::normalize_forked_context(
         items,
     );
     if let ConversationItem::User(u) = &conv[1] {
@@ -19,7 +19,7 @@ fn normalize_forked_context_strips_project_layout() {
             .content
             .iter()
             .filter_map(|p| match p {
-                xai_grok_sampling_types::conversation::ContentPart::Text { text } => {
+                intelekt_sampling_types::conversation::ContentPart::Text { text } => {
                     Some(text.as_ref())
                 }
                 _ => None,
@@ -35,12 +35,12 @@ fn normalize_forked_context_strips_project_layout() {
 }
 #[test]
 fn normalize_forked_context_consecutive_users() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let items = vec![
         ConversationItem::system("sys"), ConversationItem::user("prefix"),
         ConversationItem::user("query"), ConversationItem::assistant("response"),
     ];
-    let (conv, prefix_len) = xai_grok_subagent_resolution::context::normalize_forked_context(
+    let (conv, prefix_len) = intelekt_subagent_resolution::context::normalize_forked_context(
         items,
     );
     assert_eq!(prefix_len, 2);
@@ -49,7 +49,7 @@ fn normalize_forked_context_consecutive_users() {
             .content
             .iter()
             .filter_map(|p| match p {
-                xai_grok_sampling_types::conversation::ContentPart::Text { text } => {
+                intelekt_sampling_types::conversation::ContentPart::Text { text } => {
                     Some(text.as_ref())
                 }
                 _ => None,
@@ -68,14 +68,14 @@ fn normalize_forked_context_consecutive_users() {
 /// [System(child's), BackgroundContext, Task].
 #[test]
 fn end_to_end_normalized_conversation_shape() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let parent_conv = vec![
         ConversationItem::system("parent system prompt"),
         ConversationItem::user("user prefix with project info"),
         ConversationItem::user("implement quicksort"),
         ConversationItem::assistant("here is quicksort"),
     ];
-    let (mut conv, prefix_len) = xai_grok_subagent_resolution::context::normalize_forked_context(
+    let (mut conv, prefix_len) = intelekt_subagent_resolution::context::normalize_forked_context(
         parent_conv,
     );
     assert_eq!(prefix_len, 2);
@@ -93,7 +93,7 @@ fn end_to_end_normalized_conversation_shape() {
             .content
             .iter()
             .filter_map(|p| match p {
-                xai_grok_sampling_types::conversation::ContentPart::Text { text } => {
+                intelekt_sampling_types::conversation::ContentPart::Text { text } => {
                     Some(text.as_ref())
                 }
                 _ => None,
@@ -115,7 +115,7 @@ fn end_to_end_normalized_conversation_shape() {
             .content
             .iter()
             .filter_map(|p| match p {
-                xai_grok_sampling_types::conversation::ContentPart::Text { text } => {
+                intelekt_sampling_types::conversation::ContentPart::Text { text } => {
                     Some(text.as_ref())
                 }
                 _ => None,
@@ -130,19 +130,19 @@ fn end_to_end_normalized_conversation_shape() {
 /// cached prompt text in the session pipeline.
 #[test]
 fn cached_prompt_text_is_task_not_background() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let parent_conv = vec![
         ConversationItem::system("sys"), ConversationItem::user("parent query"),
         ConversationItem::assistant("parent answer"),
     ];
-    let (conv, _) = xai_grok_subagent_resolution::context::normalize_forked_context(
+    let (conv, _) = intelekt_subagent_resolution::context::normalize_forked_context(
         parent_conv,
     );
     let background_text = if let ConversationItem::User(ref u) = conv[1] {
         u.content
             .iter()
             .filter_map(|p| match p {
-                xai_grok_sampling_types::conversation::ContentPart::Text { text } => {
+                intelekt_sampling_types::conversation::ContentPart::Text { text } => {
                     Some(text.as_ref())
                 }
                 _ => None,
@@ -165,12 +165,12 @@ fn cached_prompt_text_is_task_not_background() {
 /// Verify extract_last_real_user_query would return the task.
 #[test]
 fn last_user_message_is_task_after_normalization() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let parent_conv = vec![
         ConversationItem::system("sys"), ConversationItem::user("parent context"),
         ConversationItem::assistant("ack"),
     ];
-    let (mut conv, _) = xai_grok_subagent_resolution::context::normalize_forked_context(
+    let (mut conv, _) = intelekt_subagent_resolution::context::normalize_forked_context(
         parent_conv,
     );
     let task = "deploy the service to staging";
@@ -184,7 +184,7 @@ fn last_user_message_is_task_after_normalization() {
                     .content
                     .iter()
                     .filter_map(|p| match p {
-                        xai_grok_sampling_types::conversation::ContentPart::Text {
+                        intelekt_sampling_types::conversation::ContentPart::Text {
                             text,
                         } => Some(text.as_ref()),
                         _ => None,
@@ -207,13 +207,13 @@ fn last_user_message_is_task_after_normalization() {
 /// [System(inherited), BackgroundContext(inherited), UserPrefix(compacted), Summary, ...]
 #[test]
 fn compaction_preserves_inherited_prefix() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let parent_conv = vec![
         ConversationItem::system("parent sys"),
         ConversationItem::user("parent question"),
         ConversationItem::assistant("parent answer"),
     ];
-    let (conv, prefix_len) = xai_grok_subagent_resolution::context::normalize_forked_context(
+    let (conv, prefix_len) = intelekt_subagent_resolution::context::normalize_forked_context(
         parent_conv,
     );
     assert_eq!(prefix_len, 2);
@@ -246,7 +246,7 @@ fn compaction_preserves_inherited_prefix() {
             .content
             .iter()
             .filter_map(|p| match p {
-                xai_grok_sampling_types::conversation::ContentPart::Text { text } => {
+                intelekt_sampling_types::conversation::ContentPart::Text { text } => {
                     Some(text.as_ref())
                 }
                 _ => None,
@@ -273,7 +273,7 @@ fn compaction_preserves_inherited_prefix() {
                     .iter()
                     .any(|p| {
                         matches!(
-                            p, xai_grok_sampling_types::conversation::ContentPart::Text {
+                            p, intelekt_sampling_types::conversation::ContentPart::Text {
                             text } if text.contains("<background_context>")
                         )
                     })
@@ -289,7 +289,7 @@ fn compaction_preserves_inherited_prefix() {
 /// Verify that compaction with prefix_len=0 (non-forked) passes through unchanged.
 #[test]
 fn compaction_no_prefix_passes_through() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let compacted = vec![
         ConversationItem::system("sys"), ConversationItem::user("summary"),
     ];
@@ -343,7 +343,7 @@ fn resumable_source_returns_info_for_completed_subagent() {
                 child_cwd: "/workspace".into(),
                 worktree_path: Some(PathBuf::from("/tmp/worktree-1")),
                 snapshot_ref: None,
-                effective_model_id: "grok-3".into(),
+                effective_model_id: "intelekt-3".into(),
                 block_waited: false,
                 explicitly_killed: false,
             },
@@ -906,7 +906,7 @@ fn subagent_session_metadata_roundtrip() {
     };
     let session_meta = SubagentSessionMetadata::from_meta(
         &meta,
-        Some("grok-4.5"),
+        Some("intelekt-4.5"),
         Some("/workspace"),
         Some("/tmp/worktree"),
         Some("worktree"),
@@ -921,7 +921,7 @@ fn subagent_session_metadata_roundtrip() {
     assert_eq!(session_meta.subagent_id, "sa-1");
     assert_eq!(session_meta.parent_session_id, "parent-1");
     assert_eq!(session_meta.description, "test task");
-    assert_eq!(session_meta.model_id.as_deref(), Some("grok-4.5"));
+    assert_eq!(session_meta.model_id.as_deref(), Some("intelekt-4.5"));
     assert_eq!(session_meta.role.as_deref(), Some("rust-dev"));
     assert_eq!(session_meta.persona.as_deref(), Some("reviewer"));
     assert!(! session_meta.context_normalized);
@@ -1030,7 +1030,7 @@ fn upload_lifecycle_spawn_then_completion_preserves_fields() {
     };
     let spawn_gcs = SubagentSessionMetadata::from_meta(
         &spawn_meta,
-        Some("grok-4.5"),
+        Some("intelekt-4.5"),
         Some("/workspace"),
         None,
         Some("worktree"),
@@ -1043,7 +1043,7 @@ fn upload_lifecycle_spawn_then_completion_preserves_fields() {
     assert_eq!(spawn_gcs.status, "running");
     assert!(spawn_gcs.completed_at.is_none());
     assert!(spawn_gcs.duration_ms.is_none());
-    assert_eq!(spawn_gcs.model_id.as_deref(), Some("grok-4.5"));
+    assert_eq!(spawn_gcs.model_id.as_deref(), Some("intelekt-4.5"));
     assert_eq!(spawn_gcs.cwd.as_deref(), Some("/workspace"));
     assert_eq!(spawn_gcs.role.as_deref(), Some("rust-dev"));
     assert_eq!(spawn_gcs.parent_prompt_id.as_deref(), Some("prompt-42"));
@@ -1056,7 +1056,7 @@ fn upload_lifecycle_spawn_then_completion_preserves_fields() {
     completed_meta.turns = Some(3);
     let completion_gcs = SubagentSessionMetadata::from_meta(
         &completed_meta,
-        Some("grok-4.5"),
+        Some("intelekt-4.5"),
         Some("/workspace"),
         Some("/tmp/worktree-1"),
         Some("worktree"),
@@ -1071,7 +1071,7 @@ fn upload_lifecycle_spawn_then_completion_preserves_fields() {
     assert_eq!(completion_gcs.duration_ms, Some(5000));
     assert_eq!(completion_gcs.tool_calls, Some(12));
     assert_eq!(completion_gcs.turns, Some(3));
-    assert_eq!(completion_gcs.model_id.as_deref(), Some("grok-4.5"));
+    assert_eq!(completion_gcs.model_id.as_deref(), Some("intelekt-4.5"));
     assert_eq!(completion_gcs.cwd.as_deref(), Some("/workspace"));
     assert_eq!(completion_gcs.role.as_deref(), Some("rust-dev"));
     assert_eq!(completion_gcs.parent_prompt_id.as_deref(), Some("prompt-42"));
@@ -1175,7 +1175,7 @@ fn session_metadata_session_kind_for_resumed() {
 /// transcript through intact — a whole-transcript prefix is what pinned compaction.
 #[test]
 fn resume_initial_context_preserves_head_only() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let mut conversation = vec![ConversationItem::system("sys")];
     for i in 0..8 {
         conversation.push(ConversationItem::user(format!("u{i}")));
@@ -1193,7 +1193,7 @@ fn resume_initial_context_preserves_head_only() {
 }
 #[test]
 fn resume_prefix_len_is_system_head_only() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let mut conversation = vec![ConversationItem::system("sys")];
     for i in 0..6 {
         conversation.push(ConversationItem::user(format!("u{i}")));
@@ -1203,7 +1203,7 @@ fn resume_prefix_len_is_system_head_only() {
 }
 #[test]
 fn resume_prefix_len_is_zero_without_system_head() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let conversation = vec![
         ConversationItem::user("task"), ConversationItem::assistant("done"),
     ];
@@ -1211,7 +1211,7 @@ fn resume_prefix_len_is_zero_without_system_head() {
 }
 #[test]
 fn resume_prefix_len_counts_consecutive_system_head() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let conversation = vec![
         ConversationItem::system("sys a"), ConversationItem::system("sys b"),
         ConversationItem::user("work"),
@@ -1225,7 +1225,7 @@ fn resume_source_worktree_reuse() {
         child_session_id: "child-wt".into(),
         child_cwd: "/tmp/worktree".into(),
         worktree_path: Some(
-            PathBuf::from("/home/user/.grok/worktrees/myrepo/subagent-sub-wt"),
+            PathBuf::from("/home/user/.intelekt/worktrees/myrepo/subagent-sub-wt"),
         ),
         snapshot_ref: None,
         subagent_type: "general-purpose".into(),
@@ -1235,7 +1235,7 @@ fn resume_source_worktree_reuse() {
     let worktree = source_with_worktree.worktree_path.clone();
     assert_eq!(
         worktree.as_deref(),
-        Some(Path::new("/home/user/.grok/worktrees/myrepo/subagent-sub-wt",)),
+        Some(Path::new("/home/user/.intelekt/worktrees/myrepo/subagent-sub-wt",)),
         "should reuse source worktree"
     );
     let source_without_worktree = ResumeSourceData {
@@ -1310,7 +1310,7 @@ fn select_override_cwd_resume_never_falls_through_to_request_cwd() {
         child_session_id: "child-wt".into(),
         child_cwd: "/tmp/whatever".into(),
         worktree_path: Some(
-            PathBuf::from("/home/user/.grok/worktrees/repo/subagent-sub-wt"),
+            PathBuf::from("/home/user/.intelekt/worktrees/repo/subagent-sub-wt"),
         ),
         snapshot_ref: None,
         subagent_type: "general-purpose".into(),
@@ -1364,7 +1364,7 @@ fn resumable_source_rejects_cross_session_lookup() {
 }
 #[test]
 fn resumed_session_uses_current_runtime_contract() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let mut conversation = [
         ConversationItem::system("old source system prompt"),
         ConversationItem::user("task 1"),
@@ -1385,7 +1385,7 @@ fn resumed_session_uses_current_runtime_contract() {
 }
 #[test]
 fn token_estimation_for_window_safety() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let conversation = vec![
         ConversationItem::system("You are a helpful assistant."),
         ConversationItem::user("Hello, how are you?"),
@@ -1398,7 +1398,7 @@ fn token_estimation_for_window_safety() {
 }
 #[test]
 fn token_estimation_accounts_for_images() {
-    use xai_grok_sampling_types::conversation::{ContentPart, ConversationItem, UserItem};
+    use intelekt_sampling_types::conversation::{ContentPart, ConversationItem, UserItem};
     let text_only = vec![
         ConversationItem::User(UserItem { content : vec![ContentPart::Text { text :
         "describe this".into(), }], synthetic_reason : None, ..Default::default() })
@@ -1447,7 +1447,7 @@ fn durable_fallback_roundtrips_child_cwd_and_worktree() {
         child_cwd: Some("/workspace/project".into()),
         worktree_path: Some("/tmp/grok-wt/sa-dur".into()),
         snapshot_ref: None,
-        effective_model_id: Some("grok-3".into()),
+        effective_model_id: Some("intelekt-3".into()),
     };
     write_subagent_meta(&dir, &meta);
     let data = std::fs::read_to_string(dir.join("meta.json")).unwrap();
@@ -1968,11 +1968,11 @@ fn resume_allows_matching_identity() {
         snapshot_ref: None,
         subagent_type: "general-purpose".into(),
         persona: Some("implementer".into()),
-        model_id: Some("grok-3".into()),
+        model_id: Some("intelekt-3".into()),
     };
     assert_eq!("general-purpose", source.subagent_type);
     assert_eq!(Some("implementer"), source.persona.as_deref());
-    assert_eq!(Some("grok-3"), source.model_id.as_deref());
+    assert_eq!(Some("intelekt-3"), source.model_id.as_deref());
 }
 #[test]
 fn resume_identity_does_not_gate_on_model() {
@@ -1984,14 +1984,14 @@ fn resume_identity_does_not_gate_on_model() {
         snapshot_ref: None,
         subagent_type: "general-purpose".into(),
         persona: None,
-        model_id: Some("grok-3".into()),
+        model_id: Some("intelekt-3".into()),
     };
     assert!(
-        xai_grok_subagent_resolution::validate_resume_identity("general-purpose", None, &
+        intelekt_subagent_resolution::validate_resume_identity("general-purpose", None, &
         source,).is_ok()
     );
     assert_eq!(
-        source.model_id.as_deref(), Some("grok-3"),
+        source.model_id.as_deref(), Some("intelekt-3"),
         "source model remains available for pinning"
     );
 }
@@ -2023,24 +2023,24 @@ fn durable_meta_roundtrips_effective_model_id() {
         child_cwd: Some("/workspace".into()),
         worktree_path: None,
         snapshot_ref: None,
-        effective_model_id: Some("grok-3".into()),
+        effective_model_id: Some("intelekt-3".into()),
     };
     write_subagent_meta(&dir, &meta);
     let data = std::fs::read_to_string(dir.join("meta.json")).unwrap();
     let loaded: SubagentMeta = serde_json::from_str(&data).unwrap();
     assert_eq!(
-        loaded.effective_model_id.as_deref(), Some("grok-3"),
+        loaded.effective_model_id.as_deref(), Some("intelekt-3"),
         "model ID should round-trip through meta.json"
     );
     let _ = std::fs::remove_dir_all(&dir);
 }
 #[test]
 fn resume_model_pinning_overrides_default_resolution() {
-    let source_model = Some("grok-3".to_string());
+    let source_model = Some("intelekt-3".to_string());
     let resolved_model = "grok-light";
     let needs_pin = source_model.as_deref() != Some(resolved_model);
     assert!(needs_pin, "resolved model differs from source — pinning should trigger");
-    let resolved_same = "grok-3";
+    let resolved_same = "intelekt-3";
     let no_pin = source_model.as_deref() == Some(resolved_same);
     assert!(no_pin, "same model — no pinning needed");
 }
@@ -2163,7 +2163,7 @@ fn completed_subagent_propagates_resumed_from() {
                 child_cwd: "/workspace".into(),
                 worktree_path: None,
                 snapshot_ref: None,
-                effective_model_id: "grok-3".into(),
+                effective_model_id: "intelekt-3".into(),
                 block_waited: false,
                 explicitly_killed: false,
             },
@@ -2472,19 +2472,19 @@ fn ctx_with_parent_chat_state(
 #[tokio::test]
 async fn read_parent_sampling_config_keeps_auto_catalog_id_with_routing_slug() {
     let mut models = indexmap::IndexMap::new();
-    models.insert("auto".to_string(), test_model_entry("grok-4.5"));
-    let ctx = ctx_with_parent_chat_state("auto", "grok-4.5", "composer-2-fast", models);
+    models.insert("auto".to_string(), test_model_entry("intelekt-4.5"));
+    let ctx = ctx_with_parent_chat_state("auto", "intelekt-4.5", "composer-2-fast", models);
     let (config, model_id) = read_parent_sampling_config(&ctx).await;
-    assert_eq!(config.model, "grok-4.5");
+    assert_eq!(config.model, "intelekt-4.5");
     assert_eq!(model_id.0.as_ref(), "auto");
 }
 #[tokio::test]
 async fn read_parent_sampling_config_keeps_auto_when_catalog_has_slug_key_only() {
     let mut models = indexmap::IndexMap::new();
-    models.insert("grok-4.5".to_string(), test_model_entry("grok-4.5"));
-    let ctx = ctx_with_parent_chat_state("auto", "grok-4.5", "auto", models);
+    models.insert("intelekt-4.5".to_string(), test_model_entry("intelekt-4.5"));
+    let ctx = ctx_with_parent_chat_state("auto", "intelekt-4.5", "auto", models);
     let (config, model_id) = read_parent_sampling_config(&ctx).await;
-    assert_eq!(config.model, "grok-4.5");
+    assert_eq!(config.model, "intelekt-4.5");
     assert_eq!(model_id.0.as_ref(), "auto");
 }
 #[tokio::test]
@@ -2525,11 +2525,11 @@ async fn read_parent_sampling_config_ignores_global_default() {
 }
 #[tokio::test]
 async fn read_parent_sampling_config_resolves_backend_search_from_catalog() {
-    let mut entry = test_model_entry("grok-4.5");
+    let mut entry = test_model_entry("intelekt-4.5");
     entry.info.supports_backend_search = true;
     let mut models = indexmap::IndexMap::new();
     models.insert("auto".to_string(), entry);
-    let mut ctx = ctx_with_parent_chat_state("auto", "grok-4.5", "auto", models);
+    let mut ctx = ctx_with_parent_chat_state("auto", "intelekt-4.5", "auto", models);
     ctx.sampling_config.supports_backend_search = false;
     let (config, _model_id) = read_parent_sampling_config(&ctx).await;
     assert!(
@@ -2564,12 +2564,12 @@ async fn read_parent_sampling_config_fallback_resolves_backend_search_from_catal
 }
 #[tokio::test]
 async fn read_parent_sampling_config_resolves_compactions_remaining_from_catalog() {
-    use xai_grok_sampling_types::CompactionsRemaining;
-    let mut entry = test_model_entry("grok-4.5");
+    use intelekt_sampling_types::CompactionsRemaining;
+    let mut entry = test_model_entry("intelekt-4.5");
     entry.info.compactions_remaining = Some(CompactionsRemaining::Dynamic(true));
     let mut models = indexmap::IndexMap::new();
     models.insert("auto".to_string(), entry);
-    let mut ctx = ctx_with_parent_chat_state("auto", "grok-4.5", "auto", models);
+    let mut ctx = ctx_with_parent_chat_state("auto", "intelekt-4.5", "auto", models);
     ctx.sampling_config.compactions_remaining = None;
     let (config, _model_id) = read_parent_sampling_config(&ctx).await;
     assert_eq!(
@@ -2579,7 +2579,7 @@ async fn read_parent_sampling_config_resolves_compactions_remaining_from_catalog
 }
 #[tokio::test]
 async fn read_parent_sampling_config_fallback_resolves_compactions_remaining_from_catalog() {
-    use xai_grok_sampling_types::CompactionsRemaining;
+    use intelekt_sampling_types::CompactionsRemaining;
     let mut entry = test_model_entry("composer-2-fast");
     entry.info.compactions_remaining = Some(CompactionsRemaining::Dynamic(true));
     let mut models = indexmap::IndexMap::new();
@@ -2611,7 +2611,7 @@ async fn read_parent_sampling_config_fallback_resolves_compactions_remaining_fro
 /// handed back); and an unknown override falls through to the pin.
 #[tokio::test]
 async fn runtime_override_wins_over_subagents_models_pin_in_precedence_path() {
-    use xai_grok_agent::config::ModelOverride;
+    use intelekt_agent::config::ModelOverride;
     let build_ctx = || {
         let mut models = indexmap::IndexMap::new();
         models.insert("goal-model".to_string(), test_model_entry("goal-model"));
@@ -2670,7 +2670,7 @@ async fn runtime_override_wins_over_subagents_models_pin_in_precedence_path() {
 /// `resolve_effective_model_config`.
 #[tokio::test]
 async fn fork_context_pins_parent_model_over_overrides() {
-    use xai_grok_agent::config::ModelOverride;
+    use intelekt_agent::config::ModelOverride;
     let build_ctx = || {
         let mut ctx = ctx_with_toggle(HashMap::new());
         ctx.sampling_config.model = "parent-model".to_string();
@@ -2723,8 +2723,8 @@ async fn fork_context_pins_parent_model_over_overrides() {
 /// is treated identically to any other).
 #[tokio::test]
 async fn resolve_subagent_inherits_parent_model_without_pins() {
-    use xai_grok_agent::config::ModelOverride;
-    for parent_model in ["grok-4.5", "composer-2-fast", "my-custom-byok-model"] {
+    use intelekt_agent::config::ModelOverride;
+    for parent_model in ["intelekt-4.5", "composer-2-fast", "my-custom-byok-model"] {
         let mut ctx = ctx_with_toggle(HashMap::new());
         ctx.sampling_config.model = parent_model.to_string();
         ctx.model_id = acp::ModelId::new(parent_model);
@@ -2747,8 +2747,8 @@ async fn resolve_subagent_inherits_parent_model_without_pins() {
 /// honor the pin identically now that the heavy-model gate is gone.
 #[tokio::test]
 async fn resolve_subagent_config_override_pin_applies_for_any_parent() {
-    use xai_grok_agent::config::ModelOverride;
-    for parent_model in ["grok-4.5", "composer-2-fast"] {
+    use intelekt_agent::config::ModelOverride;
+    for parent_model in ["intelekt-4.5", "composer-2-fast"] {
         let mut ctx = ctx_with_toggle(HashMap::new());
         ctx.sampling_config.model = parent_model.to_string();
         ctx.model_id = acp::ModelId::new(parent_model);
@@ -2773,10 +2773,10 @@ async fn resolve_subagent_config_override_pin_applies_for_any_parent() {
 /// subagent to that model even when the parent runs a light model.
 #[tokio::test]
 async fn resolve_subagent_agent_definition_pin_applies_for_light_parent() {
-    use xai_grok_agent::config::ModelOverride;
+    use intelekt_agent::config::ModelOverride;
     let mut ctx = ctx_with_toggle(HashMap::new());
-    ctx.sampling_config.model = "grok-4.5".to_string();
-    ctx.model_id = acp::ModelId::new("grok-4.5");
+    ctx.sampling_config.model = "intelekt-4.5".to_string();
+    ctx.model_id = acp::ModelId::new("intelekt-4.5");
     ctx.available_models
         .insert("pinned-model".to_string(), test_model_entry("pinned-model"));
     let agent_model = ModelOverride::Override("pinned-model".to_string());
@@ -2793,10 +2793,10 @@ async fn resolve_subagent_agent_definition_pin_applies_for_light_parent() {
 /// (`AgentDefinition.model`) when both pins are set and both resolve.
 #[tokio::test]
 async fn resolve_subagent_config_override_wins_over_agent_definition() {
-    use xai_grok_agent::config::ModelOverride;
+    use intelekt_agent::config::ModelOverride;
     let mut ctx = ctx_with_toggle(HashMap::new());
-    ctx.sampling_config.model = "grok-4.5".to_string();
-    ctx.model_id = acp::ModelId::new("grok-4.5");
+    ctx.sampling_config.model = "intelekt-4.5".to_string();
+    ctx.model_id = acp::ModelId::new("intelekt-4.5");
     ctx.available_models
         .insert("config-pin".to_string(), test_model_entry("config-pin"));
     ctx.available_models
@@ -2816,10 +2816,10 @@ async fn resolve_subagent_config_override_wins_over_agent_definition() {
 /// `available_models`) falls through to inherit the parent model.
 #[tokio::test]
 async fn resolve_subagent_config_override_unknown_model_falls_through_to_inherit() {
-    use xai_grok_agent::config::ModelOverride;
+    use intelekt_agent::config::ModelOverride;
     let mut ctx = ctx_with_toggle(HashMap::new());
-    ctx.sampling_config.model = "grok-4.5".to_string();
-    ctx.model_id = acp::ModelId::new("grok-4.5");
+    ctx.sampling_config.model = "intelekt-4.5".to_string();
+    ctx.model_id = acp::ModelId::new("intelekt-4.5");
     ctx.subagent_model_overrides
         .insert("explore".to_string(), "does-not-exist".to_string());
     let (config, model_id) = resolve_subagent_sampling_config(
@@ -2828,17 +2828,17 @@ async fn resolve_subagent_config_override_unknown_model_falls_through_to_inherit
             &ctx,
         )
         .await;
-    assert_eq!(config.model, "grok-4.5");
-    assert_eq!(model_id.0.as_ref(), "grok-4.5");
+    assert_eq!(config.model, "intelekt-4.5");
+    assert_eq!(model_id.0.as_ref(), "intelekt-4.5");
 }
 /// An unresolvable `AgentDefinition.model` pin (model absent from
 /// `available_models`) falls through to inherit the parent model.
 #[tokio::test]
 async fn resolve_subagent_agent_definition_unknown_model_falls_through_to_inherit() {
-    use xai_grok_agent::config::ModelOverride;
+    use intelekt_agent::config::ModelOverride;
     let mut ctx = ctx_with_toggle(HashMap::new());
-    ctx.sampling_config.model = "grok-4.5".to_string();
-    ctx.model_id = acp::ModelId::new("grok-4.5");
+    ctx.sampling_config.model = "intelekt-4.5".to_string();
+    ctx.model_id = acp::ModelId::new("intelekt-4.5");
     let agent_model = ModelOverride::Override("does-not-exist".to_string());
     let (config, model_id) = resolve_subagent_sampling_config(
             "explore",
@@ -2846,8 +2846,8 @@ async fn resolve_subagent_agent_definition_unknown_model_falls_through_to_inheri
             &ctx,
         )
         .await;
-    assert_eq!(config.model, "grok-4.5");
-    assert_eq!(model_id.0.as_ref(), "grok-4.5");
+    assert_eq!(config.model, "intelekt-4.5");
+    assert_eq!(model_id.0.as_ref(), "intelekt-4.5");
 }
 #[test]
 fn key_prefix_truncates_to_8_chars() {
@@ -2870,7 +2870,7 @@ fn key_prefix_empty_string() {
 }
 #[test]
 fn non_cursor_persona_injected_as_system_reminder() {
-    use xai_grok_sampling_types::conversation::{ConversationItem, SyntheticReason};
+    use intelekt_sampling_types::conversation::{ConversationItem, SyntheticReason};
     let persona = "You are a pragmatic implementer.";
     let mut conv = vec![
         ConversationItem::system("sys"), ConversationItem::user("task"),
@@ -2890,7 +2890,7 @@ fn non_cursor_persona_injected_as_system_reminder() {
             .content
             .first()
             .map(|c| match c {
-                xai_grok_sampling_types::conversation::ContentPart::Text { text } => {
+                intelekt_sampling_types::conversation::ContentPart::Text { text } => {
                     text.as_ref()
                 }
                 _ => "",
@@ -2909,7 +2909,7 @@ fn non_cursor_persona_injected_as_system_reminder() {
 }
 #[test]
 fn persona_injection_skipped_for_resumed() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let persona_instructions = Some("Be thorough.".to_string());
     let context_source = InitialContextSource::Resumed;
     let mut conv = vec![
@@ -2934,7 +2934,7 @@ fn persona_injection_skipped_for_resumed() {
 }
 #[test]
 fn persona_injection_into_empty_conversation() {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     let mut conv: Vec<ConversationItem> = vec![];
     let mut prefix_len: usize = 0;
     let reminder = ConversationItem::system_reminder(
@@ -3059,7 +3059,7 @@ fn filter_inheritance_all_passes_everything_through() {
     let pool = make_pool(&["github", "linear", "slack"]);
     let result = super::filter_pool_by_inheritance(
         pool,
-        &xai_grok_agent::config::McpInheritance::All,
+        &intelekt_agent::config::McpInheritance::All,
     );
     let result = result.expect("All should return Some");
     assert_eq!(pool_names(& result), vec!["github", "linear", "slack"]);
@@ -3069,7 +3069,7 @@ fn filter_inheritance_none_returns_none() {
     let pool = make_pool(&["github", "linear"]);
     let result = super::filter_pool_by_inheritance(
         pool,
-        &xai_grok_agent::config::McpInheritance::None,
+        &intelekt_agent::config::McpInheritance::None,
     );
     assert!(result.is_none());
 }
@@ -3078,7 +3078,7 @@ fn filter_inheritance_named_selects_specific_servers() {
     let pool = make_pool(&["github", "linear", "slack", "jira"]);
     let result = super::filter_pool_by_inheritance(
         pool,
-        &xai_grok_agent::config::McpInheritance::Named(
+        &intelekt_agent::config::McpInheritance::Named(
             vec!["github".into(), "slack".into()],
         ),
     );
@@ -3090,7 +3090,7 @@ fn filter_inheritance_except_excludes_specific_servers() {
     let pool = make_pool(&["github", "linear", "slack", "jira"]);
     let result = super::filter_pool_by_inheritance(
         pool,
-        &xai_grok_agent::config::McpInheritance::Except(
+        &intelekt_agent::config::McpInheritance::Except(
             vec!["linear".into(), "jira".into()],
         ),
     );
@@ -3102,7 +3102,7 @@ fn filter_inheritance_named_empty_list_gives_empty_pool() {
     let pool = make_pool(&["github", "linear"]);
     let result = super::filter_pool_by_inheritance(
         pool,
-        &xai_grok_agent::config::McpInheritance::Named(vec![]),
+        &intelekt_agent::config::McpInheritance::Named(vec![]),
     );
     let result = result.expect("Named([]) should return Some (empty pool)");
     assert_eq!(result.server_names().count(), 0);
@@ -3112,7 +3112,7 @@ fn filter_inheritance_except_empty_list_keeps_all() {
     let pool = make_pool(&["github", "linear"]);
     let result = super::filter_pool_by_inheritance(
         pool,
-        &xai_grok_agent::config::McpInheritance::Except(vec![]),
+        &intelekt_agent::config::McpInheritance::Except(vec![]),
     );
     let result = result.expect("Except([]) should return Some");
     assert_eq!(pool_names(& result), vec!["github", "linear"]);
@@ -3122,7 +3122,7 @@ fn filter_inheritance_named_nonexistent_servers_ignored() {
     let pool = make_pool(&["github", "linear"]);
     let result = super::filter_pool_by_inheritance(
         pool,
-        &xai_grok_agent::config::McpInheritance::Named(
+        &intelekt_agent::config::McpInheritance::Named(
             vec!["nonexistent".into(), "github".into(),],
         ),
     );
@@ -3134,7 +3134,7 @@ fn filter_inheritance_except_nonexistent_servers_ignored() {
     let pool = make_pool(&["github", "linear"]);
     let result = super::filter_pool_by_inheritance(
         pool,
-        &xai_grok_agent::config::McpInheritance::Except(vec!["nonexistent".into()]),
+        &intelekt_agent::config::McpInheritance::Except(vec!["nonexistent".into()]),
     );
     let result = result.expect("Except should return Some");
     assert_eq!(pool_names(& result), vec!["github", "linear"]);
@@ -3144,7 +3144,7 @@ fn filter_inheritance_named_all_nonexistent_gives_empty() {
     let pool = make_pool(&["github", "linear"]);
     let result = super::filter_pool_by_inheritance(
         pool,
-        &xai_grok_agent::config::McpInheritance::Named(vec!["foo".into(), "bar".into()]),
+        &intelekt_agent::config::McpInheritance::Named(vec!["foo".into(), "bar".into()]),
     );
     let result = result.expect("Named should return Some");
     assert_eq!(result.server_names().count(), 0);
@@ -3154,7 +3154,7 @@ fn filter_inheritance_except_all_servers_gives_empty() {
     let pool = make_pool(&["github", "linear"]);
     let result = super::filter_pool_by_inheritance(
         pool,
-        &xai_grok_agent::config::McpInheritance::Except(
+        &intelekt_agent::config::McpInheritance::Except(
             vec!["github".into(), "linear".into()],
         ),
     );
@@ -3164,13 +3164,13 @@ fn filter_inheritance_except_all_servers_gives_empty() {
 fn make_test_skill(
     name: &str,
     plugin: Option<&str>,
-) -> xai_grok_tools::implementations::skills::types::SkillInfo {
-    xai_grok_tools::implementations::skills::types::SkillInfo {
+) -> intelekt_tools::implementations::skills::types::SkillInfo {
+    intelekt_tools::implementations::skills::types::SkillInfo {
         name: name.into(),
         display_name: None,
         description: format!("{name} skill"),
         path: format!("/skills/{name}/SKILL.md"),
-        scope: xai_grok_tools::implementations::skills::types::SkillScope::Local,
+        scope: intelekt_tools::implementations::skills::types::SkillScope::Local,
         enabled: true,
         user_invocable: true,
         plugin_name: plugin.map(Into::into),

@@ -20,11 +20,11 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
-use xai_grok_workspace::permission::bash_command_splitting::{
+use intelekt_workspace::permission::bash_command_splitting::{
     BashCommandHighlights, heredoc_payload_byte_ranges, range_fully_inside,
     soft_break_offsets_after_operators, split_physical_line_at_soft_breaks,
 };
-use xai_grok_workspace::permission::{
+use intelekt_workspace::permission::{
     BashCommandPermission, McpToolPermission, mcp_titleize_segment, mcp_tool_action,
     mcp_tool_display_name,
 };
@@ -128,7 +128,7 @@ pub struct PermissionViewState {
 
     // -- Bash command selection --
     /// Parsed bash highlights from request meta (None for non-bash
-    /// permissions). Imported from `xai-grok-shell`, NOT duplicated locally.
+    /// permissions). Imported from `intelekt-shell`, NOT duplicated locally.
     pub bash_highlights: Option<BashCommandHighlights>,
 
     /// How many highlighted words are currently selected (1-indexed).
@@ -2924,7 +2924,7 @@ mod tests {
     /// overlay would, to stdout at several widths.
     ///
     /// ```text
-    /// PERMISSION_UI_RENDER_REVIEW=1 cargo test -p xai-grok-pager --lib \
+    /// PERMISSION_UI_RENDER_REVIEW=1 cargo test -p intelekt-pager --lib \
     ///   render_historic_bash_commands_for_review -- --nocapture --ignored
     /// ```
     #[test]
@@ -3035,7 +3035,7 @@ mod tests {
     }
 
     fn historic_bash_fixture_path() -> std::path::PathBuf {
-        // CARGO_MANIFEST_DIR = crates/codegen/xai-grok-pager
+        // CARGO_MANIFEST_DIR = crates/codegen/intelekt-pager
         std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("tests/fixtures/historic_bash_cmds.txt")
     }

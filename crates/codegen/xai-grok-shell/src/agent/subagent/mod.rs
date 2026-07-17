@@ -35,8 +35,8 @@ use std::sync::OnceLock;
 use tokio::sync::{Notify, mpsc, oneshot};
 use tokio_util::sync::CancellationToken;
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
-use xai_grok_tools::implementations::grok_build::task::types::*;
-use xai_grok_workspace::file_system::AsyncFileSystem;
+use intelekt_tools::implementations::grok_build::task::types::*;
+use intelekt_workspace::file_system::AsyncFileSystem;
 use xai_hunk_tracker::HunkTrackerHandle;
 mod coordinator_lifecycle;
 mod coordinator_query;
@@ -92,7 +92,7 @@ pub(crate) struct SubagentTracker {
         dead_code,
         reason = "unused in production; remove expect when wired or delete the item"
     )]
-    pub color: Option<xai_grok_agent::config::AgentColor>,
+    pub color: Option<intelekt_agent::config::AgentColor>,
 }
 /// Captured parent-side tier inputs for resolving
 /// `auto_compact_threshold_percent` once the subagent's actual model id is
@@ -138,7 +138,7 @@ impl AutoCompactThresholdTiers {
 /// about the full agent struct). Built by `MvpAgent::build_subagent_spawn_context()`.
 pub(crate) struct SubagentSpawnContext {
     /// Parent's LSP runtime — inherited via ToolContext, same as fs/terminal.
-    pub lsp: Option<std::sync::Arc<dyn xai_grok_tools::implementations::lsp::LspBackend>>,
+    pub lsp: Option<std::sync::Arc<dyn intelekt_tools::implementations::lsp::LspBackend>>,
     #[expect(
         dead_code,
         reason = "unused in production; remove expect when wired or delete the item"
@@ -149,7 +149,7 @@ pub(crate) struct SubagentSpawnContext {
     /// connection. Empty when the parent has none. Filled by the coordinator after the
     /// context is built (an async snapshot from the parent session actor).
     pub client_hooks: crate::extensions::hooks::ClientHooks,
-    pub sampling_config: xai_grok_sampler::SamplerConfig,
+    pub sampling_config: intelekt_sampler::SamplerConfig,
     pub managed_mcp_proxy_base_url: String,
     /// The staging auth header value propagated from the parent. Used
     /// when materialising subagent `SamplerConfig`s for auth-flow tracking
@@ -195,17 +195,17 @@ pub(crate) struct SubagentSpawnContext {
     /// Parent's terminal backend — shared so background tasks, monitors, and
     /// scheduled tasks survive subagent exit. When `Some`, the subagent session
     /// reuses this backend instead of creating a new `LocalTerminalBackend`.
-    pub parent_terminal_backend: Option<Arc<dyn xai_grok_tools::computer::types::TerminalBackend>>,
+    pub parent_terminal_backend: Option<Arc<dyn intelekt_tools::computer::types::TerminalBackend>>,
     /// Parent's notification handle for reparenting on subagent exit.
     /// When a subagent exits, its surviving tasks (monitors, bg commands)
     /// need their notification handles swapped to this so events route
     /// to the parent's notification bridge.
     pub parent_notification_handle:
-        Option<xai_grok_tools::notification::types::ToolNotificationHandle>,
+        Option<intelekt_tools::notification::types::ToolNotificationHandle>,
     /// Parent's scheduler handle. When `Some`, the subagent reuses the
     /// parent's scheduler actor so scheduled tasks survive subagent exit.
     pub parent_scheduler_handle:
-        Option<xai_grok_tools::implementations::grok_build::scheduler::types::SchedulerHandle>,
+        Option<intelekt_tools::implementations::grok_build::scheduler::types::SchedulerHandle>,
     /// Parent's session environment variables (.envrc + color settings).
     /// Shared so the child inherits the same env without re-loading.
     pub session_env: Arc<HashMap<String, String>>,
@@ -213,16 +213,16 @@ pub(crate) struct SubagentSpawnContext {
     /// cross-session memory store.
     pub memory_config: Option<crate::config::MemoryConfig>,
     /// Resolved sampling config for web_search.
-    pub web_search_sampling_config: Option<xai_grok_sampler::SamplerConfig>,
+    pub web_search_sampling_config: Option<intelekt_sampler::SamplerConfig>,
     /// Resolved config for web fetch.
-    pub web_fetch_config: xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig,
+    pub web_fetch_config: intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig,
     /// Image generation config (parent-inherited).
-    pub image_gen_config: xai_grok_tools::implementations::grok_build::image_gen::ImageGenConfig,
+    pub image_gen_config: intelekt_tools::implementations::grok_build::image_gen::ImageGenConfig,
     /// Resolved config for video generation.
-    pub video_gen_config: xai_grok_tools::implementations::grok_build::video_gen::VideoGenConfig,
+    pub video_gen_config: intelekt_tools::implementations::grok_build::video_gen::VideoGenConfig,
     /// Resolved config for the deploy service.
     pub app_builder_deployer_config:
-        xai_grok_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig,
+        intelekt_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig,
     /// Whether the write_file tool is enabled.
     pub write_file_enabled: bool,
     /// Whether goal mode (`/goal`) is enabled.
@@ -239,10 +239,10 @@ pub(crate) struct SubagentSpawnContext {
     pub parent_session_info: Option<SessionInfo>,
     /// Subagent roles config for role-based config layering.
     pub subagent_roles:
-        std::collections::HashMap<String, xai_grok_subagent_resolution::config::SubagentRole>,
+        std::collections::HashMap<String, intelekt_subagent_resolution::config::SubagentRole>,
     /// Subagent personas config for persona/SOUL layering.
     pub subagent_personas:
-        std::collections::HashMap<String, xai_grok_subagent_resolution::config::SubagentPersona>,
+        std::collections::HashMap<String, intelekt_subagent_resolution::config::SubagentPersona>,
     /// Pre-rendered persona IO summaries for the task tool description.
     /// Threaded through to child sessions for recursive persona discovery.
     pub persona_io_summaries: Vec<String>,
@@ -280,12 +280,12 @@ pub(crate) struct SubagentSpawnContext {
     /// Inherited from the parent session.
     pub path_not_found_hints: bool,
     /// Plugin registry for plugin-aware agent lookup.
-    pub plugin_registry: Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>>,
+    pub plugin_registry: Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>>,
     /// Shared models manager for etag-triggered refresh.
     pub models_manager: crate::agent::models::ModelsManager,
     /// Pre-resolved file tool overrides (hashline vs standard) from the parent.
     /// `None` means use the standard (default) file tools.
-    pub file_tool_overrides: Option<Vec<xai_grok_tools::registry::types::ToolConfig>>,
+    pub file_tool_overrides: Option<Vec<intelekt_tools::registry::types::ToolConfig>>,
     /// Parent session's agent config snapshot.
     pub agent_config: Option<crate::agent::config::Config>,
     /// GCS bucket URL for trace uploads.
@@ -294,18 +294,18 @@ pub(crate) struct SubagentSpawnContext {
     pub gcs_bucket_url: Option<String>,
     /// GCS upload method (direct or proxy).
     pub gcs_upload_method: Option<crate::session::repo_changes::UploadMethod>,
-    pub hook_registry: Option<std::sync::Arc<xai_grok_hooks::discovery::HookRegistry>>,
+    pub hook_registry: Option<std::sync::Arc<intelekt_hooks::discovery::HookRegistry>>,
     #[expect(
         dead_code,
         reason = "unused in production; remove expect when wired or delete the item"
     )]
     pub hook_workspace_root: String,
-    pub permission_handle: Option<xai_grok_workspace::permission::PermissionHandle>,
+    pub permission_handle: Option<intelekt_workspace::permission::PermissionHandle>,
     pub worktree_type: crate::util::config::WorktreeType,
-    pub api_key_provider: Option<xai_grok_tools::types::SharedApiKeyProvider>,
+    pub api_key_provider: Option<intelekt_tools::types::SharedApiKeyProvider>,
     pub image_description_model: String,
     /// Dual-mode workspace operations handle.
-    pub workspace_ops: xai_grok_workspace::WorkspaceOps,
+    pub workspace_ops: intelekt_workspace::WorkspaceOps,
     pub auth_manager: std::sync::Arc<crate::auth::AuthManager>,
     /// The parent SessionActor's live
     /// `Auth401AttributionCallback`, captured at spawn time.
@@ -318,8 +318,8 @@ pub(crate) struct SubagentSpawnContext {
     /// would not work because the baseline `MvpAgent.sampling_config`
     /// goes through `agent/config.rs::sampling_config_for_model`
     /// which always sets that field to `None`.
-    pub attribution_callback: Option<xai_grok_sampler::SharedAttributionCallback>,
-    /// Parent session's agent name (e.g. "grok-build").
+    pub attribution_callback: Option<intelekt_sampler::SharedAttributionCallback>,
+    /// Parent session's agent name (e.g. "intelekt-cli").
     pub parent_agent_name: Option<String>,
     /// `agent_type` of the parent's current model — the harness-flavor fallback
     /// when `parent_agent_name` is not a recognized harness, e.g. a custom
@@ -340,17 +340,17 @@ pub(crate) struct SubagentSpawnContext {
     /// Snapshot of the parent session's resolved tool schema at spawn time.
     /// `Some` only when a fork parent's actor answered; threaded to the child so a
     /// verbatim mirror-fork sends the parent's exact tool prefix for cache reuse.
-    pub parent_tool_snapshot: Option<Vec<xai_grok_sampling_types::ToolSpec>>,
+    pub parent_tool_snapshot: Option<Vec<intelekt_sampling_types::ToolSpec>>,
     /// Pre-discovered skills from the parent session, captured at spawn time.
-    pub parent_skills: Option<Vec<xai_grok_tools::implementations::skills::types::SkillInfo>>,
+    pub parent_skills: Option<Vec<intelekt_tools::implementations::skills::types::SkillInfo>>,
     /// Parent's skills config for the child's SkillManager.
-    pub parent_skills_config: xai_grok_agent::prompt::skills::SkillsConfig,
+    pub parent_skills_config: intelekt_agent::prompt::skills::SkillsConfig,
     /// Parent's resolved vendor-compat config, inherited by the child so its
     /// skills / rules / AGENTS.md discovery honors the same vendor toggles.
-    pub parent_compat: xai_grok_tools::types::compat::CompatConfig,
+    pub parent_compat: intelekt_tools::types::compat::CompatConfig,
     /// Shared set of IDs delivered via auto-wake synthetic prompts.
     pub auto_wake_delivered:
-        Option<xai_grok_tools::reminders::task_completion::AutoWakeDeliveredIds>,
+        Option<intelekt_tools::reminders::task_completion::AutoWakeDeliveredIds>,
     /// Channel for requesting trace uploads for synthetic auto-wake turns.
     pub synthetic_trace_tx:
         Option<tokio::sync::mpsc::UnboundedSender<crate::upload::turn::SyntheticTurnTraceRequest>>,
@@ -400,7 +400,7 @@ impl SubagentSpawnContext {
     }
     /// Bind a spawned subagent by the parent session's `--tools`/
     /// `--disallowed-tools`/`--permission-mode` restrictions.
-    fn apply_session_cli_overrides(&self, def: &mut xai_grok_agent::config::AgentDefinition) {
+    fn apply_session_cli_overrides(&self, def: &mut intelekt_agent::config::AgentDefinition) {
         if let Some(ref cfg) = self.agent_config {
             cfg.cli_agent_overrides.apply_to_subagent_definition(def);
         }
@@ -511,7 +511,7 @@ pub(crate) struct PendingSubagent {
         dead_code,
         reason = "unused in production; remove expect when wired or delete the item"
     )]
-    pub color: Option<xai_grok_agent::config::AgentColor>,
+    pub color: Option<intelekt_agent::config::AgentColor>,
     /// Spawn-future cancel token; firing it aborts the spawn at the promote
     /// checkpoint and emits a cancelled `SubagentFinished`.
     pub cancel_token: CancellationToken,
@@ -719,7 +719,7 @@ pub(crate) async fn resolve_running_list(
     });
     futures::future::join_all(futs).await
 }
-use xai_grok_subagent_resolution::ResumeSourceData;
+use intelekt_subagent_resolution::ResumeSourceData;
 /// Resume provenance metadata for a subagent.
 #[derive(Debug, Clone, Default)]
 pub(crate) struct SubagentProvenance {
@@ -744,7 +744,7 @@ fn instant_to_epoch_ms(instant: std::time::Instant) -> u64 {
         .unwrap_or_default()
         .as_millis() as u64
 }
-use xai_grok_subagent_resolution::resolve_effective_overrides;
+use intelekt_subagent_resolution::resolve_effective_overrides;
 /// Resolve the sampling config and model ID for a subagent.
 ///
 /// Subagents inherit the parent session's model by default. Only an
@@ -774,10 +774,10 @@ use xai_grok_subagent_resolution::resolve_effective_overrides;
 /// "Behavioral Rules section 3".
 async fn resolve_subagent_sampling_config(
     agent_name: &str,
-    agent_model: &xai_grok_agent::config::ModelOverride,
+    agent_model: &intelekt_agent::config::ModelOverride,
     ctx: &SubagentSpawnContext,
-) -> (xai_grok_sampler::SamplerConfig, acp::ModelId) {
-    use xai_grok_agent::config::ModelOverride;
+) -> (intelekt_sampler::SamplerConfig, acp::ModelId) {
+    use intelekt_agent::config::ModelOverride;
     let (parent_config, parent_mid) = read_parent_sampling_config(ctx).await;
     let try_pin = |model_id: &str, source: &'static str, unknown_msg: &'static str| {
         match resolve_model_override_to_config(model_id, ctx) {
@@ -840,9 +840,9 @@ async fn resolve_subagent_sampling_config(
 async fn resolve_effective_model_config(
     runtime_override_model: Option<&str>,
     subagent_type: &str,
-    definition_model: &xai_grok_agent::config::ModelOverride,
+    definition_model: &intelekt_agent::config::ModelOverride,
     ctx: &SubagentSpawnContext,
-) -> (xai_grok_sampler::SamplerConfig, acp::ModelId) {
+) -> (intelekt_sampler::SamplerConfig, acp::ModelId) {
     if let Some(model_id) = runtime_override_model {
         if let Some(resolved) = resolve_model_override_to_config(model_id, ctx) {
             return resolved;
@@ -869,14 +869,14 @@ fn key_prefix(key: &Option<String>) -> String {
 fn log_subagent_model_resolution(
     agent_name: &str,
     priority: &str,
-    resolved: &xai_grok_sampler::SamplerConfig,
+    resolved: &intelekt_sampler::SamplerConfig,
     resolved_id: &acp::ModelId,
-    parent: &xai_grok_sampler::SamplerConfig,
+    parent: &intelekt_sampler::SamplerConfig,
 ) {
     let child_key = key_prefix(&resolved.api_key);
     let parent_key = key_prefix(&parent.api_key);
     let keys_match = resolved.api_key == parent.api_key;
-    xai_grok_telemetry::unified_log::debug(
+    intelekt_telemetry::unified_log::debug(
         "subagent model resolved",
         None,
         Some(serde_json::json!(
@@ -896,7 +896,7 @@ fn log_subagent_model_resolution(
 /// not the process-global default or chat-state routing slug.
 async fn read_parent_sampling_config(
     ctx: &SubagentSpawnContext,
-) -> (xai_grok_sampler::SamplerConfig, acp::ModelId) {
+) -> (intelekt_sampler::SamplerConfig, acp::ModelId) {
     if let Some(ref chat_state) = ctx.parent_chat_state {
         if let Some(cfg) = chat_state.get_sampling_config().await {
             let creds = chat_state.get_credentials().await;
@@ -909,7 +909,7 @@ async fn read_parent_sampling_config(
             let auth_scheme = crate::agent::config::try_resolve_model_credentials(&cfg.model, None)
                 .map(|r| r.auth_scheme)
                 .unwrap_or_default();
-            let inherited = xai_grok_sampler::SamplerConfig {
+            let inherited = intelekt_sampler::SamplerConfig {
                 api_key: creds.api_key,
                 base_url: cfg.base_url,
                 model: cfg.model.clone(),
@@ -946,7 +946,7 @@ async fn read_parent_sampling_config(
             };
             let model_id = ctx.model_id.clone();
             let global_model_id = ctx.models_manager.current_model_id();
-            xai_grok_telemetry::unified_log::debug(
+            intelekt_telemetry::unified_log::debug(
                 "subagent read parent config (live)",
                 None,
                 Some(serde_json::json!(
@@ -964,7 +964,7 @@ async fn read_parent_sampling_config(
              falling back to spawn context baseline"
         );
     }
-    xai_grok_telemetry::unified_log::warn(
+    intelekt_telemetry::unified_log::warn(
         "subagent read parent config (fallback)",
         None,
         Some(serde_json::json!(
@@ -1006,7 +1006,7 @@ fn subagent_auth_type(
 fn resolve_model_override_to_config(
     model_id: &str,
     ctx: &SubagentSpawnContext,
-) -> Option<(xai_grok_sampler::SamplerConfig, acp::ModelId)> {
+) -> Option<(intelekt_sampler::SamplerConfig, acp::ModelId)> {
     use crate::agent::config::{resolve_credentials, sampling_config_for_model};
     let entry = crate::agent::config::find_model_by_id(&ctx.available_models, model_id).cloned()?;
     let canonical_model_id = if ctx.available_models.contains_key(model_id) {
@@ -1027,7 +1027,7 @@ fn resolve_model_override_to_config(
         ctx.sampling_config.deployment_id.clone(),
         ctx.sampling_config.user_id.clone(),
     );
-    xai_grok_telemetry::unified_log::debug(
+    intelekt_telemetry::unified_log::debug(
         "subagent resolve_model_override_to_config",
         None,
         Some(serde_json::json!(
@@ -1045,9 +1045,9 @@ fn resolve_model_override_to_config(
 /// resumed body (the child's own work) stays compactable. Returns 0 when there's no
 /// leading System; the spawn path then inserts one and bumps the prefix to 1.
 pub(crate) fn resume_inherited_prefix_len(
-    conversation: &[xai_grok_sampling_types::conversation::ConversationItem],
+    conversation: &[intelekt_sampling_types::conversation::ConversationItem],
 ) -> usize {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     conversation
         .iter()
         .take_while(|i| matches!(i, ConversationItem::System(_)))
@@ -1058,7 +1058,7 @@ struct InitialContext {
     source: InitialContextSource,
     copy_error: Option<String>,
     prefix_len: Option<usize>,
-    conversation: Vec<xai_grok_sampling_types::conversation::ConversationItem>,
+    conversation: Vec<intelekt_sampling_types::conversation::ConversationItem>,
     /// True only for a verbatim mirror-fork (parent items copied byte-for-byte).
     /// Gates sending the parent tool snapshot so the child's full request prefix
     /// matches the parent. A summarized-fork fallback leaves this false.
@@ -1066,7 +1066,7 @@ struct InitialContext {
 }
 /// Resume bootstrap: preserve only the System head (see `resume_inherited_prefix_len`).
 fn resume_initial_context(
-    conversation: Vec<xai_grok_sampling_types::conversation::ConversationItem>,
+    conversation: Vec<intelekt_sampling_types::conversation::ConversationItem>,
 ) -> InitialContext {
     InitialContext {
         source: InitialContextSource::Resumed,
@@ -1079,7 +1079,7 @@ fn resume_initial_context(
 /// Apply `fork_filter_chat` then normalize; empty or System-only input (no
 /// `<background_context>` produced) fails open to `New`.
 fn forked_initial_context(
-    mut items: Vec<xai_grok_sampling_types::conversation::ConversationItem>,
+    mut items: Vec<intelekt_sampling_types::conversation::ConversationItem>,
 ) -> InitialContext {
     crate::session::storage::jsonl::fork_filter_chat(&mut items);
     if items.is_empty() {
@@ -1092,7 +1092,7 @@ fn forked_initial_context(
         };
     }
     let (conversation, prefix_len) =
-        xai_grok_subagent_resolution::context::normalize_forked_context(items);
+        intelekt_subagent_resolution::context::normalize_forked_context(items);
     if prefix_len < 2 {
         return InitialContext {
             source: InitialContextSource::New,
@@ -1116,9 +1116,9 @@ fn forked_initial_context(
 /// user/reasoning means the prefix would be incoherent, so the caller falls back
 /// to the summarized path instead of partial-trimming.
 fn conversation_tail_is_complete(
-    items: &[xai_grok_sampling_types::conversation::ConversationItem],
+    items: &[intelekt_sampling_types::conversation::ConversationItem],
 ) -> bool {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     matches!(
         items.last(), Some(ConversationItem::Assistant(a)) if a.tool_calls.is_empty()
     )
@@ -1143,10 +1143,10 @@ fn conversation_tail_is_complete(
 /// Input that is empty or only `System` item(s) — before OR after filtering —
 /// inherited nothing, so it fails open to `New` rather than a hollow fork.
 fn verbatim_or_normalize_fork(
-    items: Vec<xai_grok_sampling_types::conversation::ConversationItem>,
+    items: Vec<intelekt_sampling_types::conversation::ConversationItem>,
     child_context_window: u64,
 ) -> InitialContext {
-    use xai_grok_sampling_types::conversation::ConversationItem;
+    use intelekt_sampling_types::conversation::ConversationItem;
     if !items
         .iter()
         .any(|i| !matches!(i, ConversationItem::System(_)))
@@ -1187,7 +1187,7 @@ fn verbatim_or_normalize_fork(
         };
     }
     let (conversation, prefix_len) =
-        xai_grok_subagent_resolution::context::normalize_forked_context(filtered);
+        intelekt_subagent_resolution::context::normalize_forked_context(filtered);
     InitialContext {
         source: InitialContextSource::Forked,
         copy_error: None,
@@ -1526,9 +1526,9 @@ fn select_override_cwd<'a>(
 /// removes the matching server names in-place.
 fn filter_pool_by_inheritance(
     mut pool: crate::session::mcp_servers::SharedMcpPool,
-    inheritance: &xai_grok_agent::config::McpInheritance,
+    inheritance: &intelekt_agent::config::McpInheritance,
 ) -> Option<crate::session::mcp_servers::SharedMcpPool> {
-    use xai_grok_agent::config::McpInheritance;
+    use intelekt_agent::config::McpInheritance;
     match inheritance {
         McpInheritance::All => Some(pool),
         McpInheritance::None => None,
@@ -1562,8 +1562,8 @@ fn filter_pool_by_inheritance(
 fn resolve_agent_definition(
     subagent_type: &str,
     ctx: &SubagentSpawnContext,
-) -> Option<xai_grok_agent::config::AgentDefinition> {
-    let mut def = xai_grok_agent::discovery::by_name_in_cwd_with_plugins(
+) -> Option<intelekt_agent::config::AgentDefinition> {
+    let mut def = intelekt_agent::discovery::by_name_in_cwd_with_plugins(
         subagent_type,
         &ctx.parent_cwd,
         ctx.plugin_registry.as_deref(),
@@ -1584,7 +1584,7 @@ fn resolve_agent_definition(
 #[derive(Default)]
 pub(crate) struct SubagentValidationContext {
     pub parent_cwd: PathBuf,
-    pub plugin_registry: Option<Arc<xai_grok_agent::plugins::PluginRegistry>>,
+    pub plugin_registry: Option<Arc<intelekt_agent::plugins::PluginRegistry>>,
     pub subagent_toggle: HashMap<String, bool>,
     pub allowed_subagent_types: Option<Vec<String>>,
     pub cli_agent_names: Vec<String>,
@@ -1602,14 +1602,14 @@ pub(crate) fn validate_subagent_type(
     ctx: &SubagentValidationContext,
 ) -> SubagentValidateTypeOutcome {
     let resolves = ctx.cli_agent_names.iter().any(|n| n == subagent_type)
-        || xai_grok_agent::discovery::by_name_in_cwd_with_plugins(
+        || intelekt_agent::discovery::by_name_in_cwd_with_plugins(
             subagent_type,
             &ctx.parent_cwd,
             ctx.plugin_registry.as_deref(),
         )
         .is_some();
     if !resolves {
-        let mut available: Vec<String> = xai_grok_agent::discovery::all_subagents_with_plugins(
+        let mut available: Vec<String> = intelekt_agent::discovery::all_subagents_with_plugins(
             &ctx.parent_cwd,
             &ctx.subagent_toggle,
             ctx.plugin_registry.as_deref(),
@@ -1679,12 +1679,12 @@ pub(crate) fn subagent_harness_flavor_is_representable(_agent_type: &str) -> boo
 /// Apply the harness-dependent toolset/prompt re-selection to a resolved
 /// agent definition.
 ///
-/// The harness flavor (alternate vs grok-build) normally follows the PARENT
+/// The harness flavor (alternate vs intelekt-cli) normally follows the PARENT
 /// agent: `GrokBuildOrchestrator` parents give children
 /// the alternate harness; the orchestrator keeps children lean, and other parents
 /// inherit the file-tool override (hashline vs standard). A `/goal` role may
 /// pass `harness_agent_type` to OVERRIDE that flavor regardless of the parent
-/// (so a grok-build session can run an alternate-harness verifier and vice-versa);
+/// (so a intelekt-cli session can run an alternate-harness verifier and vice-versa);
 /// `None` for every non-goal spawn ⇒ the parent decides (unchanged). The base
 /// toolset stays role-dependent on `subagent_type` (general-purpose →
 /// implementer, else explorer), so the role keeps a capable toolset on the
@@ -1698,7 +1698,7 @@ fn resolve_subagent_toolset(
     #[allow(unused_variables)] subagent_type: &str,
     harness_agent_type: Option<&str>,
     ctx: &SubagentSpawnContext,
-    definition: &mut xai_grok_agent::config::AgentDefinition,
+    definition: &mut intelekt_agent::config::AgentDefinition,
 ) {
     let flavor_agent = match harness_agent_type {
         Some(h) => Some(h),
@@ -1727,10 +1727,10 @@ fn resolve_subagent_toolset(
 /// so a `name_override` is reflected. The read/search/execute flags are what
 /// the per-role capability gates key on.
 fn summarize_tool_config(
-    config: &xai_grok_tools::registry::types::ToolServerConfig,
+    config: &intelekt_tools::registry::types::ToolServerConfig,
 ) -> SubagentTypeSummary {
     use std::collections::HashMap;
-    use xai_grok_tools::types::tool::ToolKind;
+    use intelekt_tools::types::tool::ToolKind;
     let mut tool_names: HashMap<ToolKind, String> = HashMap::new();
     for tc in &config.tools {
         let Some(kind) = tc.kind else { continue };
@@ -1771,7 +1771,7 @@ pub(crate) fn describe_subagent_type(
     if let Some(harness) = harness_agent_type
         && resolve_agent_definition(harness, ctx).is_none()
     {
-        let mut available: Vec<String> = xai_grok_agent::discovery::all_subagents_with_plugins(
+        let mut available: Vec<String> = intelekt_agent::discovery::all_subagents_with_plugins(
             &ctx.parent_cwd,
             &ctx.subagent_toggle,
             ctx.plugin_registry.as_deref(),
@@ -1783,7 +1783,7 @@ pub(crate) fn describe_subagent_type(
         return SubagentDescribeOutcome::Unknown { available };
     }
     let Some(mut definition) = resolve_agent_definition(subagent_type, ctx) else {
-        let mut available: Vec<String> = xai_grok_agent::discovery::all_subagents_with_plugins(
+        let mut available: Vec<String> = intelekt_agent::discovery::all_subagents_with_plugins(
             &ctx.parent_cwd,
             &ctx.subagent_toggle,
             ctx.plugin_registry.as_deref(),
@@ -1848,11 +1848,11 @@ fn parent_source_cwd(ctx: &SubagentSpawnContext) -> std::path::PathBuf {
 /// non-default mode; under the pin, `bypassPermissions` downgrades to `Default`
 /// so a repo/profile/`--agents` def can't restore auto-approve. Caller logs it.
 fn resolve_subagent_permission_mode(
-    requested: xai_grok_agent::config::PermissionMode,
+    requested: intelekt_agent::config::PermissionMode,
     is_plugin: bool,
     policy_block: Option<&'static str>,
-) -> xai_grok_agent::config::PermissionMode {
-    use xai_grok_agent::config::PermissionMode;
+) -> intelekt_agent::config::PermissionMode {
+    use intelekt_agent::config::PermissionMode;
     if is_plugin {
         return PermissionMode::Default;
     }
@@ -1864,7 +1864,7 @@ fn resolve_subagent_permission_mode(
 /// Main repo root for a subagent's source: the durable repo a completion snapshot is transferred into and the repo a resume rehydrates from — both arms MUST resolve this identically.
 fn resolve_subagent_source_repo(ctx: &SubagentSpawnContext) -> std::path::PathBuf {
     let source_cwd = parent_source_cwd(ctx);
-    xai_grok_workspace::session::git::find_main_repo_root_from_path(&source_cwd)
+    intelekt_workspace::session::git::find_main_repo_root_from_path(&source_cwd)
         .unwrap_or(source_cwd)
 }
 enum SubagentWaitOutcome {
@@ -1981,7 +1981,7 @@ fn inject_subagent_completed_prompt(
     subagent_id: &str,
     result: &SubagentResult,
     request: &SubagentRequest,
-    auto_wake_delivered: &Option<xai_grok_tools::reminders::task_completion::AutoWakeDeliveredIds>,
+    auto_wake_delivered: &Option<intelekt_tools::reminders::task_completion::AutoWakeDeliveredIds>,
     parent_cmd_tx: Option<&mpsc::UnboundedSender<SessionCommand>>,
     task_output_tool_name: &str,
     synthetic_trace_tx: &Option<
@@ -2004,11 +2004,11 @@ fn inject_subagent_completed_prompt(
         turns: result.turns,
         output: result.output.clone(),
     };
-    let message = xai_grok_tools::reminders::task_completion::format_subagent_completion(
+    let message = intelekt_tools::reminders::task_completion::format_subagent_completion(
         &summary,
         Some(task_output_tool_name),
     );
-    let wrapped = xai_grok_tools::reminders::wrap_reminder(&message);
+    let wrapped = intelekt_tools::reminders::wrap_reminder(&message);
     let prompt_id = format!("subagent-completed-{subagent_id}");
     let before_rx = if synthetic_trace_tx.is_some() {
         let (before_tx, before_rx) = tokio::sync::oneshot::channel();

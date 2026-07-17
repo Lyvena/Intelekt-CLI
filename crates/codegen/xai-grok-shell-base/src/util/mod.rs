@@ -4,8 +4,8 @@ pub mod grok_home;
 pub mod secure_file;
 pub mod tips;
 pub mod uname;
-pub use xai_grok_shared::clipboard;
-pub use xai_grok_shared::stderr::{stderr_lock, with_locked_stderr};
+pub use intelekt_shared::clipboard;
+pub use intelekt_shared::stderr::{stderr_lock, with_locked_stderr};
 /// Generate a pseudo-random f64 in [0.0, 1.0).
 ///
 /// Uses `RandomState::new()` which is OS-seeded (via `getrandom`) on each
@@ -166,7 +166,7 @@ pub fn is_grok_process(pid: u32) -> bool {
     {
         let cmdline_path = format!("/proc/{pid}/cmdline");
         match std::fs::read(&cmdline_path) {
-            Ok(data) => String::from_utf8_lossy(&data).contains("grok"),
+            Ok(data) => String::from_utf8_lossy(&data).contains("intelekt"),
             Err(_) => false,
         }
     }
@@ -198,7 +198,7 @@ pub fn is_grok_process(pid: u32) -> bool {
         }
         String::from_utf16_lossy(&buf[..size as usize])
             .to_ascii_lowercase()
-            .contains("grok")
+            .contains("intelekt")
     }
     #[cfg(all(not(target_os = "linux"), not(windows)))]
     {

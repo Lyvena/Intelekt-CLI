@@ -1,10 +1,10 @@
-//! Jujutsu extension handlers — delegates to [`xai_grok_workspace::session::jj`].
+//! Jujutsu extension handlers — delegates to [`intelekt_workspace::session::jj`].
 
 use agent_client_protocol as acp;
 
 use super::{Empty, ExtResult, to_ext_response, to_ext_response_partial};
-use xai_grok_workspace::session::git::{CommitData, StageData};
-use xai_grok_workspace::session::jj;
+use intelekt_workspace::session::git::{CommitData, StageData};
+use intelekt_workspace::session::jj;
 
 /// Handle a `x.ai/git/*` method for a jj-colocated repo.
 ///

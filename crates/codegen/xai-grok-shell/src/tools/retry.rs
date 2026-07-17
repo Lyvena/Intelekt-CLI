@@ -1,10 +1,10 @@
-//! Retry utilities — re-exported from `xai-grok-tools`.
+//! Retry utilities — re-exported from `intelekt-tools`.
 //!
-//! The canonical implementation now lives in `xai_grok_tools::retry`.
+//! The canonical implementation now lives in `intelekt_tools::retry`.
 //! This module re-exports with backward-compatible aliases.
 
-pub use xai_grok_tools::retry::BackoffConfig as RetryConfig;
-pub use xai_grok_tools::retry::{BackoffConfig, execute_with_backoff};
+pub use intelekt_tools::retry::BackoffConfig as RetryConfig;
+pub use intelekt_tools::retry::{BackoffConfig, execute_with_backoff};
 
 use std::future::Future;
 use std::time::Duration;

@@ -1,6 +1,6 @@
 [package]
 license = "Apache-2.0"
-name = "xai-grok-version"
+name = "intelekt-version"
 version = "0.2.101"
 edition.workspace = true
 description = "Lockstepped grok CLI version."

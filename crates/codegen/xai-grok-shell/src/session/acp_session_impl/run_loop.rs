@@ -90,7 +90,7 @@ pub(super) async fn run_session(
     };
     if !session.startup_hints.is_subagent && liveness_watchers_enabled {
         let (event_tx, event_rx) =
-            tokio::sync::mpsc::unbounded_channel::<xai_grok_mcp::servers::McpClientEvent>();
+            tokio::sync::mpsc::unbounded_channel::<intelekt_mcp::servers::McpClientEvent>();
         {
             let mut mcp_state = session.mcp_state.lock().await;
             mcp_state.set_client_event_tx(Some(event_tx));
@@ -158,21 +158,21 @@ pub(super) async fn run_session(
             .chat_state_handle.get_conversation_len(). await; let last_len = session
             .last_idle_flush_conversation_len.load(std::sync::atomic::Ordering::Relaxed);
             if current_len > last_len { tracing::info!(target :
-            xai_grok_telemetry::memory_log::TARGET,
+            intelekt_telemetry::memory_log::TARGET,
             "MEMORY_IDLE_FLUSH: timer fired (conversation {last_len} → {current_len})");
             session.last_idle_flush_conversation_len.store(current_len,
             std::sync::atomic::Ordering::Relaxed); tokio::task::spawn_local({ let session
             = session.clone(); async move { if ! session.run_memory_flush("interval",
             None). await { tracing::info!(target :
-            xai_grok_telemetry::memory_log::TARGET,
+            intelekt_telemetry::memory_log::TARGET,
             "MEMORY_IDLE_FLUSH: skipped — another flush already in progress"); } } });
-            } else { tracing::debug!(target : xai_grok_telemetry::memory_log::TARGET,
+            } else { tracing::debug!(target : intelekt_telemetry::memory_log::TARGET,
             "MEMORY_IDLE_FLUSH: skipped, no new messages since last flush (len={current_len})");
             } if let Some(timeout) = session.idle_flush_timeout { idle_flush_sleep
             .as_mut().reset(tokio::time::Instant::now() + timeout); } } _ = & mut
             dream_check_sleep, if session.dream_check_timeout.is_some() && session.memory
             .is_enabled() => { tracing::debug!(target :
-            xai_grok_telemetry::memory_log::TARGET, "MEMORY_DREAM_CHECK: timer fired");
+            intelekt_telemetry::memory_log::TARGET, "MEMORY_DREAM_CHECK: timer fired");
             tokio::task::spawn_local({ let session = session.clone(); async move {
             session.maybe_run_dream(). await; } }); if let Some(timeout) = session
             .dream_check_timeout { dream_check_sleep.as_mut()
@@ -187,7 +187,7 @@ pub(super) async fn run_session(
             Some(xai_chat_state::ChatStateEvent::ImageBudget { body_bytes, trigger_bytes,
             reclaim_target_bytes, inline_images, needs_image_compaction, evicted,
             body_bytes_after, }) => {
-            xai_grok_telemetry::unified_log::info("shell.image_budget", Some(session
+            intelekt_telemetry::unified_log::info("shell.image_budget", Some(session
             .session_info.id.0.as_ref()), Some(serde_json::json!({ "body_bytes" :
             body_bytes, "body_bytes_after" : body_bytes_after, "trigger_bytes" :
             trigger_bytes, "reclaim_target_bytes" : reclaim_target_bytes, "inline_images"
@@ -220,20 +220,20 @@ pub(super) async fn run_session(
             let s = session.clone(); tokio::task::spawn_local(async move { s
             .maybe_fire_laziness_check(). await; }); } } maybe_cmd = cmd_rx.recv() => {
             let Some(cmd) = maybe_cmd else { let envelope = session
-            .fire_hook(xai_grok_hooks::event::HookEventName::SessionEnd, None,
-            xai_grok_hooks::event::HookPayload::SessionEnd { reason : "channel_closed"
+            .fire_hook(intelekt_hooks::event::HookEventName::SessionEnd, None,
+            intelekt_hooks::event::HookPayload::SessionEnd { reason : "channel_closed"
             .to_string(), turn_count : None, tool_call_count : None, },); if let
             Some(registry) = session.hook_registry.borrow().clone() { let ctx = session
             .hook_run_ctx(); let results =
-            xai_grok_hooks::dispatcher::dispatch_non_blocking(& registry,
-            xai_grok_hooks::event::HookEventName::SessionEnd, & envelope, & ctx,). await;
+            intelekt_hooks::dispatcher::dispatch_non_blocking(& registry,
+            intelekt_hooks::event::HookEventName::SessionEnd, & envelope, & ctx,). await;
             session.send_hook_execution("session_end", None, None, & results). await; }
-            let envelope = session.fire_hook(xai_grok_hooks::event::HookEventName::Stop,
-            None, xai_grok_hooks::event::HookPayload::Stop { reason : "channel_closed"
+            let envelope = session.fire_hook(intelekt_hooks::event::HookEventName::Stop,
+            None, intelekt_hooks::event::HookPayload::Stop { reason : "channel_closed"
             .to_string(), },); if let Some(registry) = session.hook_registry.borrow()
             .clone() { let ctx = session.hook_run_ctx(); let results =
-            xai_grok_hooks::dispatcher::dispatch_non_blocking(& registry,
-            xai_grok_hooks::event::HookEventName::Stop, & envelope, & ctx,). await;
+            intelekt_hooks::dispatcher::dispatch_non_blocking(& registry,
+            intelekt_hooks::event::HookEventName::Stop, & envelope, & ctx,). await;
             session.send_hook_execution("stop", None, None, & results). await; } let mut
             session_end_result = "disabled"; let mut total_chunks_at_end = 0usize; if !
             session.startup_hints.is_subagent { if let Some(storage) = session.memory
@@ -246,7 +246,7 @@ pub(super) async fn run_session(
             ::session::memory::hooks::SessionEndResult::Failed(_) => "failed", };
             total_chunks_at_end = storage.total_chunk_count(); let telem = session.memory
             .telemetry_snapshot(); tracing::info!(target :
-            xai_grok_telemetry::memory_log::TARGET, result = ? result, tool_searches =
+            intelekt_telemetry::memory_log::TARGET, result = ? result, tool_searches =
             telem.tool_search_count, injection_searches = telem.injection_count,
             recovery_searches = telem.compaction_recovery_count,
             "MEMORY_SESSION_END: channel closed, session summary saved"); if let crate
@@ -254,7 +254,7 @@ pub(super) async fn run_session(
             session.reindex_and_embed(std::path::Path::new(path_str), "session"). await;
             session.send_xai_notification(XaiSessionUpdate::MemorySessionSaved { path :
             path_str.clone(), }). await; } } } else { tracing::debug!(target :
-            xai_grok_telemetry::memory_log::TARGET,
+            intelekt_telemetry::memory_log::TARGET,
             "MEMORY_SUBAGENT_SKIP: skipping on_session_end for subagent session"); }
             session.maybe_run_dream(). await; let telem = session.memory
             .telemetry_snapshot(); session.emit_memory_session_summary(& telem,
@@ -262,7 +262,7 @@ pub(super) async fn run_session(
             replay_buffer.flush() { session.emit_buffered(notification). await; } { let
             model_id = session.current_model_id(). await; if let Some(signals) = session
             .signals_handle().snapshot(). await {
-            xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::SessionEnded
+            intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::SessionEnded
             { duration_secs : session.session_start.elapsed().as_secs(), turn_count :
             signals.turn_count as u64, tool_call_count : signals.tool_call_count as u64,
             compaction_count : signals.compaction_count as u64, model_id, },); } } if let
@@ -390,7 +390,7 @@ pub(super) async fn run_session(
             acp::ContentBlock::Text(t) = b { Some(t.text.clone()) } else { None } })
             .collect::< Vec < _ >> ().join("\n"); let task_id = source.task_id()
             .to_owned(); const MAX_BUFFER_EVENTS : usize = 50; buffer
-            .push_capped(xai_grok_tools::implementations::grok_build::task::types::MonitorEventNotification
+            .push_capped(intelekt_tools::implementations::grok_build::task::types::MonitorEventNotification
             { task_id : task_id.clone(), event_text, owner_session_id : Some(session
             .session_info.id.0.to_string(),), }, MAX_BUFFER_EVENTS,);
             tracing::debug!(task_id = % task_id,
@@ -438,7 +438,7 @@ pub(super) async fn run_session(
             tokio::task::spawn_local(async move { let cwd = s.tool_context.cwd.as_path()
             .to_string_lossy(); let skills_config = crate ::util::config::load_config().
             await .skills; let pr = s.plugin_registry.borrow().clone(); let new_skills =
-            xai_grok_agent::prompt::skills::list_skills_with_plugins(Some(& cwd), &
+            intelekt_agent::prompt::skills::list_skills_with_plugins(Some(& cwd), &
             skills_config, pr.as_deref(), s.rebuild_spec.compat,). await;
             tracing::info!(skills = new_skills.len(),
             "refreshed skill baseline after bundle sync"); let bridge = s.agent.borrow()
@@ -523,7 +523,7 @@ pub(super) async fn run_session(
             session.session_info.id.0); let _ = respond_to.send(Ok(())); continue; }; if
             (! diff.added.is_empty() || ! diff.removed.is_empty()) && let Some(tx) = &
             dispatch_event_tx { let _ = tx
-            .send(xai_grok_mcp::servers::McpClientEvent::ConfigDiff { added : diff.added
+            .send(intelekt_mcp::servers::McpClientEvent::ConfigDiff { added : diff.added
             .clone(), removed : diff.removed.clone(), },); } for name in & diff.removed {
             let prefix = format!("{}{}", name, crate
             ::session::mcp_servers::MCP_TOOL_NAME_DELIMITER); let removed_count = session
@@ -549,7 +549,7 @@ pub(super) async fn run_session(
             .client_event_tx(); drop(mcp_state); let Some(diff) = diff else { let _ =
             respond_to.send(Ok(())); continue; }; if (! diff.added.is_empty() || ! diff
             .removed.is_empty()) && let Some(tx) = & dispatch_event_tx { let _ = tx
-            .send(xai_grok_mcp::servers::McpClientEvent::ConfigDiff { added : diff.added
+            .send(intelekt_mcp::servers::McpClientEvent::ConfigDiff { added : diff.added
             .clone(), removed : diff.removed.clone(), },); } for name in & diff.removed {
             let prefix = format!("{}{}", name, crate
             ::session::mcp_servers::MCP_TOOL_NAME_DELIMITER); let removed_count = session
@@ -686,12 +686,12 @@ pub(super) async fn run_session(
             let s = session.clone(); tokio::task::spawn_local(async move { s
             .reload_skills_from_disk(). await; }); }
             SessionCommand::DispatchSessionStartHook { source } => { let envelope =
-            session.fire_hook(xai_grok_hooks::event::HookEventName::SessionStart, None,
-            xai_grok_hooks::event::HookPayload::SessionStart { source, model_id : None,
+            session.fire_hook(intelekt_hooks::event::HookEventName::SessionStart, None,
+            intelekt_hooks::event::HookPayload::SessionStart { source, model_id : None,
             agent_type : None, },); if let Some(registry) = session.hook_registry
             .borrow().clone() { let ctx = session.hook_run_ctx(); let results =
-            xai_grok_hooks::dispatcher::dispatch_non_blocking(& registry,
-            xai_grok_hooks::event::HookEventName::SessionStart, & envelope, & ctx,).
+            intelekt_hooks::dispatcher::dispatch_non_blocking(& registry,
+            intelekt_hooks::event::HookEventName::SessionStart, & envelope, & ctx,).
             await; session.send_hook_execution("session_start", None, None, & results).
             await; } } SessionCommand::GetFeedbackContext { turn_number, responds_to } =>
             { let s = session.clone(); tokio::task::spawn_local(async move { use
@@ -772,20 +772,20 @@ pub(super) async fn run_session(
             .send(PersistenceMsg::GitHead { commit, branch },); } SessionCommand::Shutdown => { if let Some(notification) = replay_buffer
             .flush() { session.emit_buffered(notification). await; } session
             .drop_pending_synthetic_items(). await; let envelope = session
-            .fire_hook(xai_grok_hooks::event::HookEventName::SessionEnd, None,
-            xai_grok_hooks::event::HookPayload::SessionEnd { reason : "shutdown"
+            .fire_hook(intelekt_hooks::event::HookEventName::SessionEnd, None,
+            intelekt_hooks::event::HookPayload::SessionEnd { reason : "shutdown"
             .to_string(), turn_count : None, tool_call_count : None, },); if let
             Some(registry) = session.hook_registry.borrow().clone() { let ctx = session
             .hook_run_ctx(); let results =
-            xai_grok_hooks::dispatcher::dispatch_non_blocking(& registry,
-            xai_grok_hooks::event::HookEventName::SessionEnd, & envelope, & ctx,). await;
+            intelekt_hooks::dispatcher::dispatch_non_blocking(& registry,
+            intelekt_hooks::event::HookEventName::SessionEnd, & envelope, & ctx,). await;
             session.send_hook_execution("session_end", None, None, & results). await; }
-            let envelope = session.fire_hook(xai_grok_hooks::event::HookEventName::Stop,
-            None, xai_grok_hooks::event::HookPayload::Stop { reason : "shutdown"
+            let envelope = session.fire_hook(intelekt_hooks::event::HookEventName::Stop,
+            None, intelekt_hooks::event::HookPayload::Stop { reason : "shutdown"
             .to_string(), },); if let Some(registry) = session.hook_registry.borrow()
             .clone() { let ctx = session.hook_run_ctx(); let results =
-            xai_grok_hooks::dispatcher::dispatch_non_blocking(& registry,
-            xai_grok_hooks::event::HookEventName::Stop, & envelope, & ctx,). await;
+            intelekt_hooks::dispatcher::dispatch_non_blocking(& registry,
+            intelekt_hooks::event::HookEventName::Stop, & envelope, & ctx,). await;
             session.send_hook_execution("stop", None, None, & results). await; } let mut
             session_end_result = "disabled"; let mut total_chunks_at_end = 0usize; if !
             session.startup_hints.is_subagent { if let Some(storage) = session.memory
@@ -798,7 +798,7 @@ pub(super) async fn run_session(
             ::session::memory::hooks::SessionEndResult::Failed(_) => "failed", };
             total_chunks_at_end = storage.total_chunk_count(); let telem = session.memory
             .telemetry_snapshot(); tracing::info!(target :
-            xai_grok_telemetry::memory_log::TARGET, result = ? result, tool_searches =
+            intelekt_telemetry::memory_log::TARGET, result = ? result, tool_searches =
             telem.tool_search_count, injection_searches = telem.injection_count,
             recovery_searches = telem.compaction_recovery_count,
             "MEMORY_SESSION_END: session summary saved"); if let crate
@@ -806,7 +806,7 @@ pub(super) async fn run_session(
             session.reindex_and_embed(std::path::Path::new(path_str), "session"). await;
             session.send_xai_notification(XaiSessionUpdate::MemorySessionSaved { path :
             path_str.clone(), }). await; } } } else { tracing::debug!(target :
-            xai_grok_telemetry::memory_log::TARGET,
+            intelekt_telemetry::memory_log::TARGET,
             "MEMORY_SUBAGENT_SKIP: skipping on_session_end for subagent session"); }
             session.maybe_run_dream(). await; let telem = session.memory
             .telemetry_snapshot(); session.emit_memory_session_summary(& telem,
@@ -823,10 +823,10 @@ pub(super) async fn run_session(
 /// the `GetFeedbackContext` handler when a client supplies a `turn_number`
 /// (per-turn thumbs button on a specific assistant message).
 pub(super) fn turn_texts_for_feedback(
-    conversation: &[xai_grok_sampling_types::ConversationItem],
+    conversation: &[intelekt_sampling_types::ConversationItem],
     turn_number: usize,
 ) -> (Option<String>, Option<String>) {
-    use xai_grok_sampling_types::ConversationItem;
+    use intelekt_sampling_types::ConversationItem;
     let Some(start) = conversation
         .iter()
         .enumerate()

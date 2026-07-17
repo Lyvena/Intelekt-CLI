@@ -662,7 +662,7 @@ mod tests {
     }
 
     /// Dumps representative frames to a temp dir for eyeballing.
-    /// Run manually: `cargo test -p xai-grok-pager gboom::tests::dump -- --ignored`
+    /// Run manually: `cargo test -p intelekt-pager gboom::tests::dump -- --ignored`
     #[test]
     #[ignore]
     fn dump_frames_for_visual_inspection() {

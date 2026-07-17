@@ -8,12 +8,12 @@
 //! The `HubWorkspaceChannel` struct that previously lived here has been
 //! removed. Sessions now call the server harness directly via `ToolContext`.
 
-use xai_grok_tools::notification::types::ToolNotification;
-use xai_grok_workspace_types::WorkspaceEvent;
+use intelekt_tools::notification::types::ToolNotification;
+use intelekt_workspace_types::WorkspaceEvent;
 
 pub use crate::hub_ids::WORKSPACE_RPC_TOOL_ID;
 // Canonical in the client crate; re-exported for existing importers.
-pub use xai_grok_workspace_client::consume_stream_terminal;
+pub use intelekt_workspace_client::consume_stream_terminal;
 
 /// Extract a `WorkspaceEvent` from a custom `ToolNotificationFrame`.
 pub fn extract_workspace_event(
@@ -123,5 +123,5 @@ mod tests {
         );
     }
 
-    // consume_stream_terminal tests live in xai-grok-workspace-client.
+    // consume_stream_terminal tests live in intelekt-workspace-client.
 }

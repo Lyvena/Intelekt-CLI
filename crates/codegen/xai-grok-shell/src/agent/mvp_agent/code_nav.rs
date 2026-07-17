@@ -88,7 +88,7 @@ impl MvpAgent {
         }
 
         // Gate 4: git root / config globs
-        let git_root = xai_grok_workspace::session::git::find_git_root_from_path(cwd).ok();
+        let git_root = intelekt_workspace::session::git::find_git_root_from_path(cwd).ok();
         match &setting {
             CodebaseIndexingSetting::Enabled(true) => {
                 if git_root.is_none() {
@@ -180,7 +180,7 @@ impl MvpAgent {
         use crate::agent::config::CodebaseIndexingSetting;
 
         let setting = self.cfg.borrow().features.codebase_indexing.clone();
-        let git_root = xai_grok_workspace::session::git::find_git_root_from_path(cwd).ok();
+        let git_root = intelekt_workspace::session::git::find_git_root_from_path(cwd).ok();
 
         match (&setting, &git_root) {
             (CodebaseIndexingSetting::Enabled(false), _) => {
@@ -233,7 +233,7 @@ impl MvpAgent {
         if self.get_codebase_index(cwd).is_some() {
             return vec![cwd.to_string_lossy().into_owned()];
         }
-        if let Ok(git_root) = xai_grok_workspace::session::git::find_git_root_from_path(cwd)
+        if let Ok(git_root) = intelekt_workspace::session::git::find_git_root_from_path(cwd)
             && self.get_codebase_index(&git_root).is_some()
         {
             return vec![git_root.to_string_lossy().into_owned()];

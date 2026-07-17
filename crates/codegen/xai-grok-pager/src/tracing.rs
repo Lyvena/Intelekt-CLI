@@ -277,14 +277,14 @@ impl TracingModel {
 /// retention in the log channel was the 50-60GB OOM class. Payload fields on
 /// this target must be wrapped in [`LazyJson`] so serialization only happens
 /// inside a recording subscriber: the dev pane filter (dev builds) or the
-/// firehose (`GROK_DEBUG_LOG` / `GROK_LOG_FILE`).
-pub use xai_grok_telemetry::debug_log::ACP_UPDATE_PAYLOAD_TARGET;
+/// firehose (`GROK_DEBUG_LOG` / `INTELEKT_LOG_FILE`).
+pub use intelekt_telemetry::debug_log::ACP_UPDATE_PAYLOAD_TARGET;
 /// Target for the always-on compact ACP update summary line (kind, ids,
 /// status, payload sizes). Cheap to format at streaming rate.
 ///
-/// Defined in `xai-grok-telemetry` so the firehose directives and the pager
+/// Defined in `intelekt-telemetry` so the firehose directives and the pager
 /// filter share one constant (re-exported here for callsites).
-pub use xai_grok_telemetry::debug_log::ACP_UPDATE_TARGET;
+pub use intelekt_telemetry::debug_log::ACP_UPDATE_TARGET;
 /// Lazily JSON-serializes a value inside `Display::fmt`.
 ///
 /// Use as a `%`-captured event field so `serde_json::to_string` runs only
@@ -410,11 +410,11 @@ pub fn init_tracing() -> TracingHandle {
     use tracing_subscriber::{
         EnvFilter, Layer as _, filter::LevelFilter, fmt, layer::SubscriberExt as _,
     };
-    use xai_grok_telemetry::debug_log::RMCP_SSE_NOISE_TARGET;
+    use intelekt_telemetry::debug_log::RMCP_SSE_NOISE_TARGET;
     let (make_writer, rx) = TracingChannelMakeWriter::new();
     let payload_level = "off";
     let directives = format!(
-        "xai_grok_shell=info,xai_grok_pager=trace,xai_grok_tools=info,xai_acp_lib=info,{RMCP_SSE_NOISE_TARGET}=error,sampling_log=off,{ACP_UPDATE_TARGET}=debug,{ACP_UPDATE_PAYLOAD_TARGET}={payload_level}"
+        "intelekt_shell=info,intelekt_pager=trace,intelekt_tools=info,xai_acp_lib=info,{RMCP_SSE_NOISE_TARGET}=error,sampling_log=off,{ACP_UPDATE_TARGET}=debug,{ACP_UPDATE_PAYLOAD_TARGET}={payload_level}"
     );
     let env_filter = EnvFilter::builder()
         .with_default_directive(LevelFilter::WARN.into())
@@ -423,30 +423,30 @@ pub fn init_tracing() -> TracingHandle {
         .with_target(true)
         .with_ansi(true)
         .with_writer(make_writer);
-    let otel_layer = xai_grok_telemetry::otel_layer::build_otel_layer(
-        xai_grok_telemetry::otel_layer::OtelClientInfo {
+    let otel_layer = intelekt_telemetry::otel_layer::build_otel_layer(
+        intelekt_telemetry::otel_layer::OtelClientInfo {
             client_name: "grok-pager",
-            client_version: xai_grok_version::VERSION,
+            client_version: intelekt_version::VERSION,
             service_version: env!("VERSION_WITH_COMMIT"),
             app_entrypoint: "tui",
         },
-        xai_grok_shell::auth::credential_provider::build_default_otel_layer_config(),
+        intelekt_shell::auth::credential_provider::build_default_otel_layer_config(),
     );
-    let instrumentation_layer = xai_grok_telemetry::instrumentation::layer();
-    let sampling_log_layer = xai_grok_telemetry::sampling_log::layer();
-    let hooks_log_layer = xai_grok_telemetry::hooks_log::layer();
+    let instrumentation_layer = intelekt_telemetry::instrumentation::layer();
+    let sampling_log_layer = intelekt_telemetry::sampling_log::layer();
+    let hooks_log_layer = intelekt_telemetry::hooks_log::layer();
     let registry = tracing_subscriber::registry()
         .with(fmt_layer.with_filter(env_filter))
         .with(instrumentation_layer)
         .with(sampling_log_layer)
         .with(hooks_log_layer)
         .with(otel_layer);
-    xai_grok_telemetry::debug_log::install_firehose(registry, "tui");
-    xai_grok_telemetry::external::init(
-        xai_grok_shell::agent::config::resolve_external_otel_config(
-            xai_grok_telemetry::external::config::ExternalClientInfo {
+    intelekt_telemetry::debug_log::install_firehose(registry, "tui");
+    intelekt_telemetry::external::init(
+        intelekt_shell::agent::config::resolve_external_otel_config(
+            intelekt_telemetry::external::config::ExternalClientInfo {
                 service_version: env!("VERSION_WITH_COMMIT").to_owned(),
-                client_version: xai_grok_version::VERSION.to_owned(),
+                client_version: intelekt_version::VERSION.to_owned(),
                 app_entrypoint: "tui".to_owned(),
             },
         ),

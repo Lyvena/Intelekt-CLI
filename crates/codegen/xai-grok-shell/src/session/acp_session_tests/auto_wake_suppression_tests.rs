@@ -1,7 +1,7 @@
 use super::support::*;
 use super::*;
-use xai_grok_tools::reminders::task_completion::consumed_completion_ids;
-use xai_grok_tools::types::output::{BashOutput, TextOutput, ToolOutput};
+use intelekt_tools::reminders::task_completion::consumed_completion_ids;
+use intelekt_tools::types::output::{BashOutput, TextOutput, ToolOutput};
 use xai_tool_types::{
     KillTaskOutput, KillTaskResult, MultiTaskOutputResult, SubagentCompletedOutput,
     TaskOutputOutput, TaskOutputResult,
@@ -724,8 +724,8 @@ async fn handle_bridge_tool_success_runs_consumed_completion_sweep() {
 /// `TaskCompletionReminder` won't resurface it). Mirrors the resource access
 /// in `SessionActor::mark_completions_reported`.
 async fn already_reported(actor: &SessionActor, task_id: &str) -> bool {
-    use xai_grok_tools::reminders::task_completion::ReportedTaskCompletions;
-    use xai_grok_tools::types::resources::State;
+    use intelekt_tools::reminders::task_completion::ReportedTaskCompletions;
+    use intelekt_tools::types::resources::State;
     let bridge = actor.agent.borrow().tool_bridge().clone();
     let resources = bridge.shared_resources().await;
     let mut res = resources.lock().await;
@@ -908,10 +908,10 @@ async fn reparented_record_is_noop_without_goal_harness() {
 /// subagent(s) completed" reminder.
 #[tokio::test(flavor = "current_thread")]
 async fn between_turn_drain_suppresses_auto_wake_delivered_subagents() {
-    use xai_grok_tools::implementations::grok_build::task::types::{
+    use intelekt_tools::implementations::grok_build::task::types::{
         SubagentCompletionSummary, SubagentEvent,
     };
-    use xai_grok_tools::reminders::task_completion::AutoWakeDeliveredIds;
+    use intelekt_tools::reminders::task_completion::AutoWakeDeliveredIds;
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async {
@@ -1006,47 +1006,47 @@ async fn set_goal_loop_active_resource_mirrors_into_gate() {
 /// can be exercised without running a real background command.
 #[derive(Debug)]
 struct OneTaskTerminal {
-    tasks: Vec<xai_grok_tools::computer::types::TaskSnapshot>,
+    tasks: Vec<intelekt_tools::computer::types::TaskSnapshot>,
 }
 #[async_trait::async_trait]
-impl xai_grok_tools::computer::types::TerminalBackend for OneTaskTerminal {
+impl intelekt_tools::computer::types::TerminalBackend for OneTaskTerminal {
     async fn run(
         &self,
-        _: xai_grok_tools::computer::types::TerminalRunRequest,
+        _: intelekt_tools::computer::types::TerminalRunRequest,
     ) -> Result<
-        xai_grok_tools::computer::types::TerminalRunResult,
-        xai_grok_tools::computer::types::ComputerError,
+        intelekt_tools::computer::types::TerminalRunResult,
+        intelekt_tools::computer::types::ComputerError,
     > {
         unimplemented!()
     }
     async fn run_background(
         &self,
-        _: xai_grok_tools::computer::types::TerminalRunRequest,
+        _: intelekt_tools::computer::types::TerminalRunRequest,
     ) -> Result<
-        xai_grok_tools::computer::types::BackgroundHandle,
-        xai_grok_tools::computer::types::ComputerError,
+        intelekt_tools::computer::types::BackgroundHandle,
+        intelekt_tools::computer::types::ComputerError,
     > {
         unimplemented!()
     }
-    async fn get_task(&self, _: &str) -> Option<xai_grok_tools::computer::types::TaskSnapshot> {
+    async fn get_task(&self, _: &str) -> Option<intelekt_tools::computer::types::TaskSnapshot> {
         None
     }
-    async fn kill_task(&self, _: &str) -> xai_grok_tools::computer::types::KillOutcome {
-        xai_grok_tools::computer::types::KillOutcome::NotFound
+    async fn kill_task(&self, _: &str) -> intelekt_tools::computer::types::KillOutcome {
+        intelekt_tools::computer::types::KillOutcome::NotFound
     }
     async fn wait_for_completion(
         &self,
         _: &str,
         _: Option<std::time::Duration>,
-    ) -> Option<xai_grok_tools::computer::types::TaskSnapshot> {
+    ) -> Option<intelekt_tools::computer::types::TaskSnapshot> {
         None
     }
-    async fn list_tasks(&self) -> Vec<xai_grok_tools::computer::types::TaskSnapshot> {
+    async fn list_tasks(&self) -> Vec<intelekt_tools::computer::types::TaskSnapshot> {
         self.tasks.clone()
     }
 }
-fn completed_bash_task(id: &str) -> xai_grok_tools::computer::types::TaskSnapshot {
-    xai_grok_tools::computer::types::TaskSnapshot {
+fn completed_bash_task(id: &str) -> intelekt_tools::computer::types::TaskSnapshot {
+    intelekt_tools::computer::types::TaskSnapshot {
         task_id: id.into(),
         command: "echo done".into(),
         display_command: None,

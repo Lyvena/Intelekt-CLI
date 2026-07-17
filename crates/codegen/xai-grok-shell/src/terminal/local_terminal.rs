@@ -56,7 +56,7 @@ impl AsyncTerminalRunner for LocalTerminalRunner {
         };
         #[cfg(not(unix))]
         let mut cmd = {
-            let inv = xai_grok_config::shell::shell_command_argv(&request.command);
+            let inv = intelekt_config::shell::shell_command_argv(&request.command);
             let mut c = Command::new(inv.program);
             c.args(&inv.args).envs(inv.env);
             c
@@ -70,7 +70,7 @@ impl AsyncTerminalRunner for LocalTerminalRunner {
 
         // Detach from the controlling terminal so child processes
         // (e.g. GPG pinentry) cannot open /dev/tty and corrupt the TUI.
-        xai_grok_tools::util::detach_command(&mut cmd);
+        intelekt_tools::util::detach_command(&mut cmd);
 
         let mut child = cmd
             .spawn()
@@ -131,7 +131,7 @@ mod tests {
     use crate::terminal::DEFAULT_OUTPUT_BYTE_LIMIT;
     use crate::terminal::runner::TerminalRunRequest;
     use std::collections::HashMap;
-    use xai_grok_paths::AbsPathBuf;
+    use intelekt_paths::AbsPathBuf;
 
     fn make_request(command: &str) -> TerminalRunRequest {
         TerminalRunRequest {

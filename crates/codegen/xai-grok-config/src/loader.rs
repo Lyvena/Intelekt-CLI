@@ -96,7 +96,7 @@ pub fn load_managed_config() -> std::io::Result<toml::Value> {
 
 /// Load a user-tier config layer from `<home>/<filename>`. With no resolvable
 /// user home, returns an empty table rather than reading a cwd-relative
-/// `.grok/<filename>` (the cwd-fallback would silently promote an untrusted
+/// `.intelekt/<filename>` (the cwd-fallback would silently promote an untrusted
 /// project `.grok` to the user tier).
 fn load_user_config_layer(home: Option<&Path>, filename: &str) -> std::io::Result<toml::Value> {
     match home {
@@ -361,7 +361,7 @@ pub fn campaigns_application_disabled(base_effective: &toml::Value) -> bool {
 }
 
 /// Disk layers only (no remote, no env override). Prefer the shell loader
-/// (`xai_grok_shell::util::config::load_effective_config`) when remote campaigns
+/// (`intelekt_shell::util::config::load_effective_config`) when remote campaigns
 /// or `GROK_CAMPAIGNS_OVERRIDE` must be honored. The name mirrors the
 /// [`ConfigLayers::effective_config_disk_only`] method so the divergence from the
 /// remote-aware loader is un-ignorable at every call site.
@@ -380,12 +380,12 @@ pub struct CampaignsState {
     pub dismissed_ids: Vec<String>,
 }
 
-/// Path to `$GROK_HOME/campaigns_state.json` under `home`.
+/// Path to `$INTELEKT_HOME/campaigns_state.json` under `home`.
 pub fn campaigns_state_path(home: &std::path::Path) -> std::path::PathBuf {
     home.join(CAMPAIGNS_STATE_FILE)
 }
 
-/// Fail-open dismissed ids from `$GROK_HOME/campaigns_state.json`.
+/// Fail-open dismissed ids from `$INTELEKT_HOME/campaigns_state.json`.
 pub fn load_dismissed_ids_from_home() -> std::collections::HashSet<String> {
     let Some(home) = crate::user_grok_home() else {
         return std::collections::HashSet::new();
@@ -403,7 +403,7 @@ pub fn load_dismissed_ids_from_home() -> std::collections::HashSet<String> {
 /// can't be parsed (broken `GROK_TEST_VERSION` in dev), silently strips
 /// without applying — keeps the CLI usable on a bad dev override.
 pub fn apply_version_overrides_with_registered(value: &mut toml::Value) -> std::io::Result<()> {
-    match xai_grok_version::installed_semver() {
+    match intelekt_version::installed_semver() {
         Ok(version) => apply_version_overrides(value, &version)
             .map_err(|e| std::io::Error::other(e.to_string())),
         Err(_) => {

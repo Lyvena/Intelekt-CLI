@@ -1,9 +1,9 @@
 [package]
 license = "Apache-2.0"
-name = "xai-grok-telemetry"
+name = "intelekt-telemetry"
 version = "0.1.0"
 edition.workspace = true
-description = "Telemetry engine: product events + Mixpanel emission + Sentry error reporting for Grok Build sessions"
+description = "Telemetry engine: product events + Mixpanel emission + Sentry error reporting for Intelekt CLI sessions"
 authors = ["xAI"]
 
 [features]
@@ -31,11 +31,11 @@ git2 = { version = "0.20", default-features = false, features = [
 ] }
 reqwest = { workspace = true }
 url = { workspace = true }
-xai-grok-env = { workspace = true }
-xai-grok-secrets = { workspace = true }
+intelekt-env = { workspace = true }
+intelekt-secrets = { workspace = true }
 xai-mixpanel = { workspace = true }
-xai-grok-config = { workspace = true }
-xai-grok-sampler = { workspace = true }
+intelekt-config = { workspace = true }
+intelekt-sampler = { workspace = true }
 xai-token-estimation = { workspace = true }
 dirs = { workspace = true }
 sentry = { version = "0.42.0", default-features = false, features = [
@@ -62,7 +62,7 @@ obfstr = { workspace = true, optional = true }
 mid = "4.0.0"
 tokio = { workspace = true, features = ["macros", "sync", "rt"] }
 parking_lot = { workspace = true }
-xai-grok-auth = { workspace = true }
+intelekt-auth = { workspace = true }
 opentelemetry = { workspace = true }
 opentelemetry_sdk = { workspace = true, features = [
     "experimental_logs_batch_log_processor_with_async_runtime",

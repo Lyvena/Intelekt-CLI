@@ -29,8 +29,8 @@ use actions::PermissionModePersist;
 #[cfg(test)]
 use agent::AgentId;
 use crate::unified_log as ulog;
-use xai_grok_shell::sampling::error::http_status_from_error;
-use xai_grok_shell::session::{ExtMethodResult, SessionInfoResponse};
+use intelekt_shell::sampling::error::http_status_from_error;
+use intelekt_shell::session::{ExtMethodResult, SessionInfoResponse};
 pub(crate) fn execute(
     effect: Effect,
     tasks: &mut JoinSet<TaskResult>,
@@ -44,7 +44,7 @@ pub(crate) fn execute(
     match effect {
         Effect::RegisterActiveSession { session_id, cwd } => {
             crate::app::signal_handler::set_current_session_id(Some(session_id.clone()));
-            if let Err(e) = xai_grok_shell::active_sessions::register(xai_grok_shell::active_sessions::ActiveSession {
+            if let Err(e) = intelekt_shell::active_sessions::register(intelekt_shell::active_sessions::ActiveSession {
                 session_id,
                 pid: std::process::id(),
                 cwd,
@@ -124,8 +124,8 @@ pub(crate) fn execute(
             chat_kind,
         } => {
             let tx = acp_tx.clone();
-            let compat = xai_grok_tools::types::compat::CompatConfig::default();
-            let mcp_servers = xai_grok_shell::util::config::load_mcp_servers(
+            let compat = intelekt_tools::types::compat::CompatConfig::default();
+            let mcp_servers = intelekt_shell::util::config::load_mcp_servers(
                 &session_cwd,
                 &compat,
             );
@@ -249,7 +249,7 @@ pub(crate) fn execute(
                 .spawn(async move {
                     if let Some(sid) = load_session_id {
                         let resume_started = std::time::Instant::now();
-                        let wt_type = xai_grok_shell::util::config::worktree_type();
+                        let wt_type = intelekt_shell::util::config::worktree_type();
                         let copy_mode = if git_ref.is_some() {
                             "clean"
                         } else {
@@ -456,9 +456,9 @@ pub(crate) fn execute(
                             };
                         }
                     }
-                    let mcp_servers = xai_grok_shell::util::config::load_mcp_servers(
+                    let mcp_servers = intelekt_shell::util::config::load_mcp_servers(
                         &session_cwd,
-                        &xai_grok_tools::types::compat::CompatConfig::default(),
+                        &intelekt_tools::types::compat::CompatConfig::default(),
                     );
                     let result = acp_send(
                             acp::NewSessionRequest::new(session_cwd.clone())
@@ -502,9 +502,9 @@ pub(crate) fn execute(
             }
             let cwd = session_cwd.unwrap_or_else(|| cwd.to_path_buf());
             let mcp_started = std::time::Instant::now();
-            let mcp_servers = xai_grok_shell::util::config::load_mcp_servers(
+            let mcp_servers = intelekt_shell::util::config::load_mcp_servers(
                 &cwd,
-                &xai_grok_tools::types::compat::CompatConfig::default(),
+                &intelekt_tools::types::compat::CompatConfig::default(),
             );
             tracing::info!(
                 elapsed_ms = mcp_started.elapsed().as_millis() as u64, server_count =
@@ -608,7 +608,7 @@ pub(crate) fn execute(
                     }
                     let summaries = tokio::task::spawn_blocking(move || {
                             let _permit = permit;
-                            xai_grok_workspace::foreign_sessions::scan_foreign_sessions(
+                            intelekt_workspace::foreign_sessions::scan_foreign_sessions(
                                 &cwd,
                                 enabled,
                             )
@@ -663,7 +663,7 @@ pub(crate) fn execute(
                             compat,
                             &grok_home,
                             |enabled| async move {
-                                tokio::task::spawn_blocking(move || xai_grok_workspace::foreign_sessions::most_recent_foreign_session(
+                                tokio::task::spawn_blocking(move || intelekt_workspace::foreign_sessions::most_recent_foreign_session(
                                         &cwd_for_scan,
                                         enabled,
                                         crate::app::foreign_sessions::RESUME_HINT_WINDOW,
@@ -832,14 +832,14 @@ pub(crate) fn execute(
                 });
         }
         Effect::RestoreAndLoadSession { agent_id, session_id, session_cwd: _ } => {
-            use xai_grok_shell::agent::session_registry_client::SessionRegistryClient;
-            use xai_grok_shell::session::restore::restore_session_with_storage;
+            use intelekt_shell::agent::session_registry_client::SessionRegistryClient;
+            use intelekt_shell::session::restore::restore_session_with_storage;
             let setup_started = std::time::Instant::now();
-            let raw_config = xai_grok_shell::config::load_effective_config();
+            let raw_config = intelekt_shell::config::load_effective_config();
             let setup = raw_config
                 .ok()
                 .and_then(|raw| {
-                    let cfg = xai_grok_shell::agent::config::Config::new_from_toml_cfg(
+                    let cfg = intelekt_shell::agent::config::Config::new_from_toml_cfg(
                             &raw,
                         )
                         .ok()?;
@@ -854,7 +854,7 @@ pub(crate) fn execute(
                         .with_alpha_test_key(alpha_test_key.clone())
                         .with_session_id(session_id.clone())
                         .with_auth(auth_manager.clone());
-                    let storage = xai_grok_shell::auth::credential_provider::build_storage_client_for_proxy(
+                    let storage = intelekt_shell::auth::credential_provider::build_storage_client_for_proxy(
                         &proxy_base,
                         deployment_key,
                         alpha_test_key,
@@ -882,9 +882,9 @@ pub(crate) fn execute(
                     };
                     let _ = auth_manager.auth().await;
                     let progress: Option<
-                        xai_grok_shell::session::restore::ProgressCallback,
+                        intelekt_shell::session::restore::ProgressCallback,
                     > = {
-                        use xai_grok_shell::session::restore::{PhaseStep, RestorePhase};
+                        use intelekt_shell::session::restore::{PhaseStep, RestorePhase};
                         Some(
                             Box::new(move |event| {
                                 let msg = match (event.phase, event.step) {
@@ -987,11 +987,11 @@ pub(crate) fn execute(
                     use crate::app::app_view::CardDetail;
                     let result_session_id = session_id.clone();
                     let detail = tokio::task::spawn_blocking(move || {
-                            let info = xai_grok_shell::session::info::Info {
+                            let info = intelekt_shell::session::info::Info {
                                 id: acp::SessionId::new(session_id),
                                 cwd,
                             };
-                            let history_path = xai_grok_shell::session::persistence::session_dir(
+                            let history_path = intelekt_shell::session::persistence::session_dir(
                                     &info,
                                 )
                                 .join("chat_history.jsonl");
@@ -1145,7 +1145,7 @@ pub(crate) fn execute(
             let screen_mode = session_flags.screen_mode_label;
             tasks
                 .spawn(async move {
-                    use xai_grok_shell::extensions::prompt_meta::PromptBlockMeta;
+                    use intelekt_shell::extensions::prompt_meta::PromptBlockMeta;
                     ulog::info(
                         "prompt.acp_send.start",
                         Some(&session_id.0),
@@ -1502,7 +1502,7 @@ pub(crate) fn execute(
             let sid = session_id.0.to_string();
             tasks
                 .spawn(async move {
-                    let params = xai_grok_shell::extensions::task::KillTaskRequest {
+                    let params = intelekt_shell::extensions::task::KillTaskRequest {
                         session_id: sid.clone(),
                         task_id: task_id.clone(),
                     };
@@ -1610,7 +1610,7 @@ pub(crate) fn execute(
                 .spawn(async move {
                     let meta = effort
                         .map(|eff| {
-                            use xai_grok_shell::sampling::types::{
+                            use intelekt_shell::sampling::types::{
                                 REASONING_EFFORT_META_KEY, reasoning_effort_meta_value,
                             };
                             let mut m = acp::Meta::new();
@@ -1629,7 +1629,7 @@ pub(crate) fn execute(
                         .await
                         .map(|_| ())
                         .map_err(|e| {
-                            use xai_grok_shell::agent::config::ModelSwitchIncompatibleAgentError;
+                            use intelekt_shell::agent::config::ModelSwitchIncompatibleAgentError;
                             if let Some(typed) = ModelSwitchIncompatibleAgentError::from_acp_error(
                                 &e,
                             ) {
@@ -1756,13 +1756,13 @@ pub(crate) fn execute(
             tasks
                 .spawn(async move {
                     let changelog = tokio::task::spawn_blocking(|| {
-                            xai_grok_shell::util::changelog::ChangelogManager::new()
+                            intelekt_shell::util::changelog::ChangelogManager::new()
                                 .fetch()
                         })
                         .await
                         .unwrap_or_else(|e| {
                             tracing::warn!(error = % e, "changelog fetch task failed");
-                            xai_grok_shell::util::changelog::Changelog {
+                            intelekt_shell::util::changelog::Changelog {
                                 markdown: None,
                                 entries: None,
                             }
@@ -1776,7 +1776,7 @@ pub(crate) fn execute(
         Effect::PersistAnnouncementsHidden { hidden_ids } => {
             tasks
                 .spawn(async move {
-                    xai_grok_announcements::write_hidden_announcement_ids(&hidden_ids)
+                    intelekt_announcements::write_hidden_announcement_ids(&hidden_ids)
                         .await;
                     TaskResult::AnnouncementsHiddenPersisted {
                         result: Ok(()),
@@ -1832,7 +1832,7 @@ pub(crate) fn execute(
             let model_id_str = model_id.0.to_string();
             tasks
                 .spawn(async move {
-                    let result = xai_grok_shell::util::config::persist_models_default(
+                    let result = intelekt_shell::util::config::persist_models_default(
                             Some(model_id_str),
                             reasoning_effort,
                         )
@@ -2318,7 +2318,7 @@ pub(crate) fn execute(
                             let inner = wrapper.get("result").unwrap_or(&wrapper);
                             serde_json::from_value::<
                                 Vec<
-                                    xai_grok_tools::implementations::skills::types::SkillInfo,
+                                    intelekt_tools::implementations::skills::types::SkillInfo,
                                 >,
                             >(inner.get("skills").cloned().unwrap_or_default())
                                 .map_err(|_| "couldn't load skills".to_string())
@@ -2357,7 +2357,7 @@ pub(crate) fn execute(
                             let inner = wrapper.get("result").unwrap_or(&wrapper);
                             let parsed = serde_json::from_value::<
                                 Vec<
-                                    xai_grok_tools::implementations::skills::types::SkillInfo,
+                                    intelekt_tools::implementations::skills::types::SkillInfo,
                                 >,
                             >(inner.get("skills").cloned().unwrap_or_default())
                                 .map_err(|_| "couldn't toggle skill".to_string());
@@ -2680,7 +2680,7 @@ pub(crate) fn execute(
                         session_id: String,
                         server_name: String,
                         #[serde(flatten)]
-                        config: xai_grok_shell::util::config::McpServerConfig,
+                        config: intelekt_shell::util::config::McpServerConfig,
                     }
                     let req_body = McpUpsertRequest {
                         session_id: session_id.0.to_string(),
@@ -2802,7 +2802,7 @@ pub(crate) fn execute(
                 });
         }
         Effect::ShareSession { agent_id, session_id } => {
-            use xai_grok_shell::session::{ShareSessionRequest, ShareSessionResponse};
+            use intelekt_shell::session::{ShareSessionRequest, ShareSessionResponse};
             let tx = acp_tx.clone();
             tasks
                 .spawn(async move {
@@ -3108,8 +3108,8 @@ pub(crate) fn execute(
                 });
         }
         Effect::SendFeedback { agent_id, session_id, feedback_text } => {
-            use xai_grok_shell::session::ClientType;
-            use xai_grok_shell::session::acp_types::ClientFeedbackInput;
+            use intelekt_shell::session::ClientType;
+            use intelekt_shell::session::acp_types::ClientFeedbackInput;
             let terminal_info = Some(
                 crate::terminal::terminal_context().feedback_info(),
             );
@@ -3126,7 +3126,7 @@ pub(crate) fn execute(
                         context_type: None,
                         turn_number: None,
                         request_id: None,
-                        client_version: Some(xai_grok_version::VERSION.to_string()),
+                        client_version: Some(intelekt_version::VERSION.to_string()),
                         metadata: None,
                         terminal_info,
                     };
@@ -3216,13 +3216,13 @@ pub(crate) fn execute(
             tasks
                 .spawn(async move {
                     let result = tokio::task::spawn_blocking(move || {
-                            let storage = xai_grok_shell::session::memory::MemoryStorage::new(
+                            let storage = intelekt_shell::session::memory::MemoryStorage::new(
                                 &cwd,
                                 None,
                             );
                             storage
                                 .append_to_memory(
-                                    xai_grok_shell::session::memory::MemoryScope::Global,
+                                    intelekt_shell::session::memory::MemoryScope::Global,
                                     &text,
                                 )
                         })
@@ -3706,7 +3706,7 @@ pub(crate) fn execute(
                                 if let Some(hits) = payload.get("results") {
                                     results = serde_json::from_value::<
                                         Vec<
-                                            xai_grok_shell::extensions::session_search::SearchSessionHit,
+                                            intelekt_shell::extensions::session_search::SearchSessionHit,
                                         >,
                                     >(hits.clone())
                                         .unwrap_or_default();
@@ -3812,17 +3812,17 @@ pub(crate) fn execute(
         Effect::HydrateSessionTitleFromDisk { agent_id, session_id, cwd } => {
             tasks
                 .spawn(async move {
-                    let info = xai_grok_shell::session::info::Info {
+                    let info = intelekt_shell::session::info::Info {
                         id: session_id,
                         cwd: cwd.to_string_lossy().to_string(),
                     };
-                    let path = xai_grok_shell::session::persistence::session_dir(&info)
+                    let path = intelekt_shell::session::persistence::session_dir(&info)
                         .join("summary.json");
                     let title = tokio::task::spawn_blocking(move || -> Option<
                             (String, bool),
                         > {
                             let raw = std::fs::read_to_string(path).ok()?;
-                            let summary: xai_grok_shell::session::persistence::Summary = serde_json::from_str(
+                            let summary: intelekt_shell::session::persistence::Summary = serde_json::from_str(
                                     &raw,
                                 )
                                 .ok()?;
@@ -3844,7 +3844,7 @@ pub(crate) fn execute(
             let tx = acp_tx.clone();
             tasks
                 .spawn(async move {
-                    use xai_grok_shell::extensions::billing::BillingConfigResponse;
+                    use intelekt_shell::extensions::billing::BillingConfigResponse;
                     let req = acp::ExtRequest::new(
                         "x.ai/billing",
                         serde_json::value::to_raw_value(&serde_json::json!({}))
@@ -3900,17 +3900,17 @@ pub(crate) fn execute(
             tasks
                 .spawn(async move {
                     let settings = tokio::task::spawn_blocking(|| {
-                            if !xai_grok_shell::util::config::resolve_remote_fetch_enabled() {
+                            if !intelekt_shell::util::config::resolve_remote_fetch_enabled() {
                                 return None;
                             }
-                            let grok_home = xai_grok_shell::util::grok_home::grok_home();
-                            let store = xai_grok_shell::auth::read_auth_json(
+                            let grok_home = intelekt_shell::util::grok_home::grok_home();
+                            let store = intelekt_shell::auth::read_auth_json(
                                     &grok_home.join("auth.json"),
                                 )
                                 .ok()?;
-                            let scope = xai_grok_shell::auth::GrokComConfig::default()
+                            let scope = intelekt_shell::auth::GrokComConfig::default()
                                 .auth_scope();
-                            let auth = xai_grok_shell::auth::lookup_auth(
+                            let auth = intelekt_shell::auth::lookup_auth(
                                 &store,
                                 &scope,
                             )?;
@@ -3918,10 +3918,10 @@ pub(crate) fn execute(
                                     "GROK_CLI_CHAT_PROXY_BASE_URL",
                                 )
                                 .unwrap_or_else(|_| {
-                                    xai_grok_shell::agent::config::CLI_CHAT_PROXY_BASE_URL_DEFAULT
+                                    intelekt_shell::agent::config::CLI_CHAT_PROXY_BASE_URL_DEFAULT
                                         .to_owned()
                                 });
-                            xai_grok_shell::remote::fetch_settings_blocking(
+                            intelekt_shell::remote::fetch_settings_blocking(
                                 &proxy_base,
                                 &auth,
                                 None,
@@ -3939,7 +3939,7 @@ pub(crate) fn execute(
             let tx = acp_tx.clone();
             tasks
                 .spawn(async move {
-                    use xai_grok_shell::extensions::billing::BillingConfigResponse;
+                    use intelekt_shell::extensions::billing::BillingConfigResponse;
                     let req = acp::ExtRequest::new(
                         "x.ai/billing",
                         serde_json::value::to_raw_value(&serde_json::json!({}))
@@ -4129,7 +4129,7 @@ async fn fetch_session_info(
 }
 /// Look up the session title/summary from local persistence.
 async fn lookup_session_title(session_id: &acp::SessionId) -> Option<String> {
-    let summaries = xai_grok_shell::session::persistence::list_summaries(None)
+    let summaries = intelekt_shell::session::persistence::list_summaries(None)
         .await
         .ok()?;
     summaries
@@ -4148,7 +4148,7 @@ fn format_session_info(
     let session_id = &info.session_id;
     let cwd = &info.cwd;
     let model = info.data.model.as_deref().unwrap_or("unknown");
-    let model_display = xai_grok_shell::session::model_display_name(
+    let model_display = intelekt_shell::session::model_display_name(
         info.data.model_display_name.as_deref(),
         model,
         info.data.resolved_model_id.as_deref(),
@@ -4162,7 +4162,7 @@ fn format_session_info(
         Some(t) => format!("  Title: {t}\n"),
         None => String::new(),
     };
-    let model_hash_line = if xai_grok_shell::session::should_show_model_fingerprint(
+    let model_hash_line = if intelekt_shell::session::should_show_model_fingerprint(
         info.data.show_model_fingerprint,
         model,
     ) {
@@ -4180,9 +4180,9 @@ fn format_session_info(
         .as_deref()
         .map(|b| format!("\n  API Backend: {b}"))
         .unwrap_or_default();
-    let sandbox_line = match xai_grok_sandbox::profile_name() {
+    let sandbox_line = match intelekt_sandbox::profile_name() {
         Some(profile) => {
-            let net = if xai_grok_sandbox::should_restrict_child_network() {
+            let net = if intelekt_sandbox::should_restrict_child_network() {
                 " (network: restricted)"
             } else {
                 ""
@@ -4199,8 +4199,8 @@ fn format_session_info(
         .filter(|id| !id.is_empty())
         .map(|id| format!("\n  Conversation ID: {id}"))
         .unwrap_or_default();
-    let version_display = xai_grok_version::display_version(
-        xai_grok_update::channel_label(),
+    let version_display = intelekt_version::display_version(
+        intelekt_update::channel_label(),
     );
     format!(
         "{title_line}  Shell version: {version_display}\n  Session ID: {session_id}{conversation_line}\n  Working directory: {cwd}\n  Model: {model_display}{model_hash_line}{backend_line}{sandbox_line}{turn_line}\n  Context: {used} / {total} tokens ({pct}%)"

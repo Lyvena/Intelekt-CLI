@@ -9,7 +9,7 @@ use crate::auth::{GrokAuth, GrokComConfig};
 use chrono::{Duration, Utc};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
-use xai_grok_telemetry::events::{AuthTokenKind, ManualAuthReason};
+use intelekt_telemetry::events::{AuthTokenKind, ManualAuthReason};
 
 /// Mock IdP: OIDC discovery + a `/token` endpoint returning a fixed
 /// `(status, body)` and counting every hit, plus the `/user` endpoint
@@ -219,7 +219,7 @@ async fn auth_backend_contract_concurrent_401s_hit_idp_once() {
 /// rejected principal; a refreshable token auto-refreshes and emits nothing.
 #[tokio::test]
 async fn auth_backend_contract_dead_token_emits_typed_manual_auth_event() {
-    use xai_grok_telemetry::events::ManualAuthSurface;
+    use intelekt_telemetry::events::ManualAuthSurface;
 
     // A dead refresh token on each user-facing source emits the typed event
     // with the surface that produced it.

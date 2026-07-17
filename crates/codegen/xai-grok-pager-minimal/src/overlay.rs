@@ -35,14 +35,14 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Style;
 
-use xai_grok_pager::app::PagerTerminal;
-use xai_grok_pager::app::agent_view::AgentView;
-use xai_grok_pager::app::app_view::{ActiveView, AppView};
-use xai_grok_pager::appearance::LayoutConfig;
-use xai_grok_pager::minimal_api;
-use xai_grok_pager::render::SafeBuf as _;
-use xai_grok_pager::theme::Theme;
-use xai_grok_pager::views::prompt_widget::{PromptStyle, PromptWidget};
+use intelekt_pager::app::PagerTerminal;
+use intelekt_pager::app::agent_view::AgentView;
+use intelekt_pager::app::app_view::{ActiveView, AppView};
+use intelekt_pager::appearance::LayoutConfig;
+use intelekt_pager::minimal_api;
+use intelekt_pager::render::SafeBuf as _;
+use intelekt_pager::theme::Theme;
+use intelekt_pager::views::prompt_widget::{PromptStyle, PromptWidget};
 
 /// Which prompt-anchored dropdown is currently shown.
 ///
@@ -61,9 +61,9 @@ enum Kind {
 /// `items_width` is the width the rows render at (minimal is flush-left, so
 /// the prompt/viewport width); slash rows wrap, so their count is line-based.
 fn active(prompt: &PromptWidget, items_width: u16) -> Option<(Kind, u16)> {
-    use xai_grok_pager::views::completion_dropdown::MAX_VISIBLE_ROWS;
-    use xai_grok_pager::views::file_search::dropdown::MAX_DROPDOWN_ROWS as FILE_MAX;
-    use xai_grok_pager::views::slash_dropdown::desired_item_rows;
+    use intelekt_pager::views::completion_dropdown::MAX_VISIBLE_ROWS;
+    use intelekt_pager::views::file_search::dropdown::MAX_DROPDOWN_ROWS as FILE_MAX;
+    use intelekt_pager::views::slash_dropdown::desired_item_rows;
 
     // Precedence matches `AgentView::draw`: file search is checked first and,
     // when visible, suppresses the others even if it currently has 0 results.
@@ -365,7 +365,7 @@ pub fn render(
 
     match kind {
         Kind::FileSearch => {
-            xai_grok_pager::views::file_search::dropdown::render_dropdown(
+            intelekt_pager::views::file_search::dropdown::render_dropdown(
                 buf,
                 items_rect,
                 &prompt.file_search,
@@ -375,12 +375,12 @@ pub fn render(
         Kind::Slash => {
             let snap = prompt.slash_snapshot();
             let hovered = prompt.slash_hovered();
-            xai_grok_pager::views::slash_dropdown::render_dropdown(
+            intelekt_pager::views::slash_dropdown::render_dropdown(
                 buf, items_rect, &snap, hovered, theme,
             );
         }
         Kind::Completion => {
-            xai_grok_pager::views::completion_dropdown::render_dropdown(
+            intelekt_pager::views::completion_dropdown::render_dropdown(
                 buf,
                 items_rect,
                 &minimal_api::prompt_suggestions(prompt).dropdown,
@@ -451,14 +451,14 @@ pub fn modal_height(modal: Modal, agent: &mut AgentView, screen_h: u16, content_
             .permission_queue
             .front()
             .map(|p| {
-                xai_grok_pager::views::permission_view::permission_view_height(
+                intelekt_pager::views::permission_view::permission_view_height(
                     p, screen_h, content_w,
                 )
             })
             .unwrap_or(0),
         Modal::Question => {
             let input_mode = minimal_api::question_view(agent).is_some_and(|qv| {
-                qv.focus == xai_grok_pager::views::question_view::QuestionFocus::InputMode
+                qv.focus == intelekt_pager::views::question_view::QuestionFocus::InputMode
             });
             let editor_extra = if input_mode {
                 question_editor_h(
@@ -473,7 +473,7 @@ pub fn modal_height(modal: Modal, agent: &mut AgentView, screen_h: u16, content_
             };
             minimal_api::question_view_mut(agent)
                 .map(|qv| {
-                    xai_grok_pager::views::question_view::question_view_height(
+                    intelekt_pager::views::question_view::question_view_height(
                         qv, screen_h, content_w,
                     )
                     .saturating_add(editor_extra)
@@ -481,11 +481,11 @@ pub fn modal_height(modal: Modal, agent: &mut AgentView, screen_h: u16, content_
                 .unwrap_or(0)
         }
         Modal::Rewind => minimal_api::rewind_state(agent)
-            .map(|rw| xai_grok_pager::views::rewind::rewind_overlay_height(&rw.phase, screen_h))
+            .map(|rw| intelekt_pager::views::rewind::rewind_overlay_height(&rw.phase, screen_h))
             .unwrap_or(0),
         Modal::Cancel => {
             if minimal_api::cancel_turn_view(agent).is_some() {
-                xai_grok_pager::views::modal::cancel_turn_panel_height(screen_h)
+                intelekt_pager::views::modal::cancel_turn_panel_height(screen_h)
             } else {
                 0
             }
@@ -512,7 +512,7 @@ pub fn render_modal(
         Modal::Question => render_question(buf, area, agent, theme, screen_h),
         Modal::Rewind => {
             if let Some(rw) = minimal_api::rewind_state(agent) {
-                xai_grok_pager::views::rewind::render_rewind_overlay(buf, area, &rw.phase, true);
+                intelekt_pager::views::rewind::render_rewind_overlay(buf, area, &rw.phase, true);
             }
             None
         }
@@ -523,7 +523,7 @@ pub fn render_modal(
             // render the hit-test rects into a local Vec and store them back after.
             let mut buttons: Vec<Rect> = Vec::new();
             let drawn = if let Some(ctv) = minimal_api::cancel_turn_view(agent) {
-                xai_grok_pager::views::modal::render_cancel_turn_panel(
+                intelekt_pager::views::modal::render_cancel_turn_panel(
                     buf,
                     area,
                     ctv,
@@ -590,7 +590,7 @@ fn render_permission(
     // Clone so the immutable borrow of `agent.prompt` ends before the mutable
     // `agent.prompt.draw` below.
     let followup = agent.prompt.text().to_string();
-    let result = xai_grok_pager::views::permission_view::render_permission_view(
+    let result = intelekt_pager::views::permission_view::render_permission_view(
         buf,
         area,
         perm,
@@ -626,7 +626,7 @@ fn render_question(
     theme: &Theme,
     screen_h: u16,
 ) -> Option<(u16, u16)> {
-    use xai_grok_pager::views::question_view::{QUESTION_VIEW_HPAD, QuestionFocus};
+    use intelekt_pager::views::question_view::{QUESTION_VIEW_HPAD, QuestionFocus};
 
     let input_mode = minimal_api::question_view(agent)
         .map(|qv| qv.focus == QuestionFocus::InputMode)
@@ -652,7 +652,7 @@ fn render_question(
     // end before the `&mut clamp_scroll`.
     if let Some(qv) = minimal_api::question_view_mut(agent) {
         let vis = qv.questions.get(qv.active_tab).map(|question| {
-            xai_grok_pager::views::question_view::visible_options_height(
+            intelekt_pager::views::question_view::visible_options_height(
                 question,
                 q_area.height,
                 content_w,
@@ -668,7 +668,7 @@ fn render_question(
     }
 
     if let Some(qv) = minimal_api::question_view(agent) {
-        xai_grok_pager::views::question_view::render_question_view(
+        intelekt_pager::views::question_view::render_question_view(
             buf,
             q_area,
             qv,
@@ -688,12 +688,12 @@ fn render_question(
             .and_then(|qv| qv.per_question_freeform_selected.get(qv.active_tab))
             .copied()
             .unwrap_or(false);
-        let embed = xai_grok_pager::views::modal_window::embedded_row_style(theme, true);
+        let embed = intelekt_pager::views::modal_window::embedded_row_style(theme, true);
         let fg = |normal| embed.map_or(normal, |e| e.fg(normal));
         let marker = if is_multi {
             (if freeform_sel { "[x]" } else { "[ ]" }).to_string()
         } else if freeform_sel {
-            format!("({})", xai_grok_pager::glyphs::filled_dot())
+            format!("({})", intelekt_pager::glyphs::filled_dot())
         } else {
             "(\u{25cb})".to_string()
         };
@@ -720,7 +720,7 @@ fn render_question(
         buf.set_span_safe(
             area.x + 9,
             row_y,
-            &ratatui::text::Span::styled(xai_grok_pager::glyphs::prompt_arrow(), accent),
+            &ratatui::text::Span::styled(intelekt_pager::glyphs::prompt_arrow(), accent),
             2,
         );
 
@@ -728,7 +728,7 @@ fn render_question(
         let editor = Rect {
             x: area.x + 11,
             y: row_y,
-            width: xai_grok_pager::views::question_view::inline_text_width(area.width),
+            width: intelekt_pager::views::question_view::inline_text_width(area.width),
             height: input_h,
         };
         return agent
@@ -748,7 +748,7 @@ fn question_editor_cap(screen_h: u16) -> u16 {
 /// Desired height of the inline question editor (InputMode), bounded by
 /// `cap`.
 fn question_editor_h(agent: &AgentView, area_w: u16, cap: u16, theme: &Theme) -> u16 {
-    let text_w = xai_grok_pager::views::question_view::inline_text_width(area_w);
+    let text_w = intelekt_pager::views::question_view::inline_text_width(area_w);
     agent
         .prompt
         .desired_height(text_w, &inline_input_style(theme), false, cap.max(1))
@@ -781,7 +781,7 @@ fn inline_input_style(theme: &Theme) -> PromptStyle {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_pager::views::suggestion_controller::CompletionItemParsed;
+    use intelekt_pager::views::suggestion_controller::CompletionItemParsed;
 
     fn completion_item() -> CompletionItemParsed {
         // Functional update: only the semantic fields; new optional item
@@ -797,8 +797,8 @@ mod tests {
     /// Build an agent with an active single-select question in InputMode and
     /// the given freeform text loaded into the prompt.
     fn question_input_agent(text: &str) -> AgentView {
-        use xai_grok_pager::views::prompt_widget::StashedPrompt;
-        use xai_grok_pager::views::question_view::{Question, QuestionOption, QuestionViewState};
+        use intelekt_pager::views::prompt_widget::StashedPrompt;
+        use intelekt_pager::views::question_view::{Question, QuestionOption, QuestionViewState};
 
         let mut agent = minimal_api::test_agent_view(Some("s1"), std::path::PathBuf::from("/tmp"));
         let mut qv = QuestionViewState::new(
@@ -970,7 +970,7 @@ mod tests {
 
     #[test]
     fn completion_dropdown_caps_item_rows() {
-        use xai_grok_pager::views::completion_dropdown::MAX_VISIBLE_ROWS;
+        use intelekt_pager::views::completion_dropdown::MAX_VISIBLE_ROWS;
         let mut pw = PromptWidget::new();
         minimal_api::prompt_suggestions_mut(&mut pw).dropdown.open = true;
         minimal_api::prompt_suggestions_mut(&mut pw).dropdown.items =

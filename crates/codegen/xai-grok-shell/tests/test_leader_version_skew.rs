@@ -5,7 +5,7 @@
 //! Binaries are resolved per role:
 //! - `GROK_BINARY_LEADER` — the binary that elects the initial leader
 //!   (typically the latest released stable, e.g. fetched from
-//!   `https://storage.googleapis.com/grok-build-public-artifacts/cli/grok-<ver>-linux-x86_64`).
+//!   `https://storage.googleapis.com/intelekt-cli-public-artifacts/cli/grok-<ver>-linux-x86_64`).
 //! - `GROK_BINARY_CLIENT` — the second client (typically a freshly built main).
 //!
 //! All tests are `#[ignore]`d: they need two pre-built binaries and spawn real
@@ -13,7 +13,7 @@
 //!
 //! ```bash
 //! GROK_BINARY_LEADER=/path/to/grok-old GROK_BINARY_CLIENT=/path/to/grok-new \
-//!   cargo test -p xai-grok-shell --test test_leader_version_skew -- --ignored --nocapture
+//!   cargo test -p intelekt-shell --test test_leader_version_skew -- --ignored --nocapture
 //! ```
 
 #![cfg(unix)]
@@ -21,14 +21,14 @@
 use std::path::Path;
 use std::time::Duration;
 
-use xai_grok_shell::leader::{
+use intelekt_shell::leader::{
     ClientCapabilities, ClientMode, ControlCommand, ControlPayload, LeaderClient,
 };
-use xai_grok_test_support::leader::{
+use intelekt_test_support::leader::{
     LeaderStdioClient, client_binary, leader_binary, leader_log, pid_alive, read_leader_pid,
     wait_for_live_leader, wait_for_new_leader, wait_for_replay_notifications,
 };
-use xai_grok_test_support::*;
+use intelekt_test_support::*;
 
 /// Skew tests are meaningless when both roles resolve to the same binary
 /// (e.g. a local `--ignored` run without the env vars): the version floor
@@ -58,7 +58,7 @@ async fn wait_for_pid_death(pid: u32, timeout: Duration) -> bool {
 }
 
 fn sandbox_unified_log(home: &Path) -> String {
-    std::fs::read_to_string(home.join(".grok").join("logs").join("unified.jsonl"))
+    std::fs::read_to_string(home.join(".intelekt").join("logs").join("unified.jsonl"))
         .unwrap_or_default()
 }
 
@@ -76,7 +76,7 @@ async fn new_client_evicts_old_leader_and_sessions_reload() {
             let server = MockInferenceServer::start().await.unwrap();
             let workdir = git_workdir();
             let home = tempfile::tempdir().unwrap();
-            std::fs::create_dir_all(home.path().join(".grok")).unwrap();
+            std::fs::create_dir_all(home.path().join(".intelekt")).unwrap();
 
             // Old binary elects the leader and completes a turn.
             let old_client = LeaderStdioClient::spawn_with_binary(
@@ -163,7 +163,7 @@ async fn old_client_adopts_new_leader_and_still_functions() {
             let server = MockInferenceServer::start().await.unwrap();
             let workdir = git_workdir();
             let home = tempfile::tempdir().unwrap();
-            std::fs::create_dir_all(home.path().join(".grok")).unwrap();
+            std::fs::create_dir_all(home.path().join(".intelekt")).unwrap();
 
             // NEW binary elects the leader first.
             let new_client = LeaderStdioClient::spawn_with_binary(
@@ -224,7 +224,7 @@ async fn old_client_adopts_new_leader_and_still_functions() {
 /// `grok update`'s relaunch signal against a REAL old leader: connect,
 /// require `relaunch_v1`, send `RelaunchForUpdate`, and the leader exits so
 /// the surviving client re-elects. Mirrors the private
-/// `signal_leaders_to_relaunch` in `xai-grok-pager-bin/src/main.rs` (which is
+/// `signal_leaders_to_relaunch` in `intelekt-pager-bin/src/main.rs` (which is
 /// bin-private, so the per-leader body is replicated here).
 #[tokio::test]
 #[ignore = "two-binary version-skew test; set GROK_BINARY_LEADER/GROK_BINARY_CLIENT and run with --ignored"]
@@ -237,7 +237,7 @@ async fn relaunch_for_update_drives_real_old_leader_to_exit() {
             let server = MockInferenceServer::start().await.unwrap();
             let workdir = git_workdir();
             let home = tempfile::tempdir().unwrap();
-            std::fs::create_dir_all(home.path().join(".grok")).unwrap();
+            std::fs::create_dir_all(home.path().join(".intelekt")).unwrap();
 
             let old_client = LeaderStdioClient::spawn_with_binary(
                 &old_bin,
@@ -259,7 +259,7 @@ async fn relaunch_for_update_drives_real_old_leader_to_exit() {
 
             // The update-signal body, against the sandboxed socket.
             let control = LeaderClient::connect(
-                home.path().join(".grok").join("leader.sock"),
+                home.path().join(".intelekt").join("leader.sock"),
                 "grok-pager-update",
                 ClientMode::Stdio,
                 ClientCapabilities::default(),
@@ -331,7 +331,7 @@ async fn eviction_leaves_single_leader_and_single_auth_owner() {
             let server = MockInferenceServer::start().await.unwrap();
             let workdir = git_workdir();
             let home = tempfile::tempdir().unwrap();
-            std::fs::create_dir_all(home.path().join(".grok")).unwrap();
+            std::fs::create_dir_all(home.path().join(".intelekt")).unwrap();
 
             let old_client = LeaderStdioClient::spawn_with_binary(
                 &old_bin,
@@ -345,7 +345,7 @@ async fn eviction_leaves_single_leader_and_single_auth_owner() {
                 .await
                 .expect("no live old leader");
 
-            let auth_path = home.path().join(".grok").join("auth.json");
+            let auth_path = home.path().join(".intelekt").join("auth.json");
             let auth_before = std::fs::metadata(&auth_path)
                 .ok()
                 .and_then(|m| m.modified().ok());

@@ -27,7 +27,7 @@ pub(crate) struct GatewayToolDescriptor {
 }
 
 /// Per-server descriptor folder: `<mcps_root>/<sanitized server name>`. Uses the
-/// sanitizer shared with `xai-grok-mcp` so the advertised folder matches disk.
+/// sanitizer shared with `intelekt-mcp` so the advertised folder matches disk.
 pub(crate) fn server_descriptor_dir(mcps_root: &Path, server_name: &str) -> PathBuf {
     mcps_root.join(sanitize_descriptor_segment(server_name))
 }
@@ -248,7 +248,7 @@ mod tests {
 
     #[test]
     fn server_dir_is_joined_under_root() {
-        let root = Path::new("/home/u/.grok/projects/enc/mcps");
+        let root = Path::new("/home/u/.intelekt/projects/enc/mcps");
         assert_eq!(server_descriptor_dir(root, "vercel"), root.join("vercel"));
     }
 

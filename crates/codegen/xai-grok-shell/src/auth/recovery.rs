@@ -19,7 +19,7 @@ use crate::auth::error::{AuthError, RefreshTokenError, RefreshTokenFailedReason}
 use crate::auth::manager::AuthManager;
 use crate::auth::model::GrokAuth;
 use crate::auth::token_type::TokenType;
-use xai_grok_telemetry::events::{AuthTokenKind, ManualAuth, ManualAuthReason, ManualAuthSurface};
+use intelekt_telemetry::events::{AuthTokenKind, ManualAuth, ManualAuthReason, ManualAuthSurface};
 
 /// `manual_auth` KPI reason for a terminal `AuthError`, or `None` when it
 /// doesn't force a manual re-login. Lives here (not on `AuthError`) so the error
@@ -184,7 +184,7 @@ impl ManualAuthTracker {
             self.emit_count
                 .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         }
-        xai_grok_telemetry::session_ctx::log_event(event);
+        intelekt_telemetry::session_ctx::log_event(event);
     }
 
     #[cfg(test)]
@@ -364,12 +364,12 @@ impl UnauthorizedRecovery {
             // same-as-rejected / no entry): a silent arm hides which path
             // a recovery loop is taking. Debug level — the disk-state
             // *transition* is logged once by `read_disk_auth` itself.
-            xai_grok_telemetry::unified_log::debug("auth recovery: no disk entry", None, None);
+            intelekt_telemetry::unified_log::debug("auth recovery: no disk entry", None, None);
             return None;
         };
         if crate::auth::is_expired(&disk_auth) {
             tracing::debug!("auth recovery: disk token is expired, skipping");
-            xai_grok_telemetry::unified_log::debug(
+            intelekt_telemetry::unified_log::debug(
                 "auth recovery: disk token expired",
                 None,
                 Some(serde_json::json!({
@@ -381,7 +381,7 @@ impl UnauthorizedRecovery {
         }
         if self.is_different_token(&disk_auth) {
             tracing::info!("auth recovery: disk has a different token, accepting");
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "auth recovery: adopted disk token",
                 None,
                 Some(serde_json::json!({
@@ -393,7 +393,7 @@ impl UnauthorizedRecovery {
             Some(disk_auth)
         } else {
             tracing::debug!("auth recovery: disk token is same as rejected, skipping");
-            xai_grok_telemetry::unified_log::debug(
+            intelekt_telemetry::unified_log::debug(
                 "auth recovery: disk token same as rejected",
                 None,
                 None,
@@ -424,7 +424,7 @@ impl UnauthorizedRecovery {
             mint_age_seconds,
             "auth recovery: current token freshly minted, skipping refresh"
         );
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "auth recovery: fresh mint, refresh skipped",
             None,
             Some(serde_json::json!({
@@ -467,7 +467,7 @@ impl UnauthorizedRecovery {
                     .await;
                 match &result {
                     Ok(auth) => {
-                        xai_grok_telemetry::unified_log::info(
+                        intelekt_telemetry::unified_log::info(
                             "auth recovery: refreshed from authority",
                             None,
                             Some(serde_json::json!({
@@ -478,7 +478,7 @@ impl UnauthorizedRecovery {
                         );
                     }
                     Err(e) => {
-                        xai_grok_telemetry::unified_log::warn(
+                        intelekt_telemetry::unified_log::warn(
                             "auth recovery: refresh from authority failed",
                             None,
                             Some(serde_json::json!({
@@ -491,7 +491,7 @@ impl UnauthorizedRecovery {
                 result
             }
             TokenType::LegacySession | TokenType::ApiKey => {
-                xai_grok_telemetry::unified_log::warn(
+                intelekt_telemetry::unified_log::warn(
                     "auth recovery: no refresh authority for token type",
                     None,
                     Some(serde_json::json!({ "token_type": format!("{tt:?}") })),

@@ -1,7 +1,7 @@
 //! Discovery methods (`workspace.discover_skills`).
 //!
 //! SYNC: [`SkillInfo`] / [`SkillScope`] mirror the serde shape of
-//! `xai-grok-tools/src/implementations/skills/types.rs` (the type the
+//! `intelekt-tools/src/implementations/skills/types.rs` (the type the
 //! server serializes); the fixture tests below pin the contract.
 //!
 //! Not to be confused with the event/chunk `SkillInfo` in
@@ -40,13 +40,13 @@ impl WorkspaceRpc for DiscoverPluginsReq {
 /// so round-tripping never rewrites a novel scope value.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SkillScope {
-    /// cwd/.grok/skills
+    /// cwd/.intelekt/skills
     Local,
-    /// repo_root/.grok/skills
+    /// repo_root/.intelekt/skills
     Repo,
-    /// ~/.grok/skills
+    /// ~/.intelekt/skills
     User,
-    /// ~/.grok/server-skills (synced from the skill store)
+    /// ~/.intelekt/server-skills (synced from the skill store)
     Server,
     /// platform built-in skills
     Bundled,
@@ -160,7 +160,7 @@ mod tests {
         let raw = serde_json::json!({
             "name": "my-skill",
             "description": "A test skill",
-            "path": "/workspace/.grok/skills/my-skill/SKILL.md",
+            "path": "/workspace/.intelekt/skills/my-skill/SKILL.md",
             "scope": "local",
         });
         let info: SkillInfo = serde_json::from_value(raw).unwrap();
@@ -172,7 +172,7 @@ mod tests {
         assert!(info.config_source.is_none());
     }
 
-    // Fixture mirrored field-for-field from the xai-grok-tools SkillInfo
+    // Fixture mirrored field-for-field from the intelekt-tools SkillInfo
     // serialization; refresh from a captured live response when the wire
     // shape is in question.
     #[test]
@@ -190,15 +190,15 @@ mod tests {
             "license": "Apache-2.0",
             "compatibility": "Requires kubectl",
             "metadata": {"team": "infra"},
-            "path": "/root/.grok/server-skills/deploy/SKILL.md",
+            "path": "/root/.intelekt/server-skills/deploy/SKILL.md",
             "scope": "server",
-            "config_source": {"type": "user", "path": "/root/.grok/skills"},
+            "config_source": {"type": "user", "path": "/root/.intelekt/skills"},
             "plugin_name": "infra-plugin",
             "plugin_version": "1.0.0",
-            "plugin_root": "/root/.grok/plugins/infra-plugin",
-            "plugin_data": "/root/.grok/plugin-data/infra-plugin",
+            "plugin_root": "/root/.intelekt/plugins/infra-plugin",
+            "plugin_data": "/root/.intelekt/plugin-data/infra-plugin",
             "allowed_tools": ["bash"],
-            "model": "grok-4",
+            "model": "intelekt-4",
             "effort": "high",
             "user_invocable": true,
             "disable_model_invocation": false,

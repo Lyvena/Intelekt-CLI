@@ -1,11 +1,11 @@
 //! Integration tests: jemalloc heap-profile monitor against mock
-//! `/v1/settings` + `/v1/storage` (xai-grok-test-support).
+//! `/v1/settings` + `/v1/storage` (intelekt-test-support).
 //!
 //! Fake hooks inject controllable `stats.resident` crossings. Real
 //! `gcs::upload_file` proxy uploads hit the mock storage endpoint.
 //!
 //! ```bash
-//! cargo test -p xai-grok-shell --test test_heap_profile_monitor
+//! cargo test -p intelekt-shell --test test_heap_profile_monitor
 //! ```
 
 use std::path::Path;
@@ -15,16 +15,16 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Duration;
 
 use chrono::{Duration as ChronoDuration, Utc};
-use xai_grok_shell::auth::{AuthManager, AuthMode, GrokAuth, GrokComConfig};
-use xai_grok_shell::heap_profile::{
+use intelekt_shell::auth::{AuthManager, AuthMode, GrokAuth, GrokComConfig};
+use intelekt_shell::heap_profile::{
     self, HeapProfileHooks, HeapProfileMonitor, HeapProfileUploadHandles,
     JemallocHeapProfileConfig, JemallocStats, build_upload_handles, is_valid_session_id,
     object_paths, resolve_jemalloc_heap_profile, sanitize_version,
 };
-use xai_grok_shell::session::repo_changes::UploadMethod;
-use xai_grok_shell::util::config::RemoteSettings;
-use xai_grok_test_support::{EnvGuard, MockInferenceServer};
-use xai_grok_version::TEST_VERSION_ENV;
+use intelekt_shell::session::repo_changes::UploadMethod;
+use intelekt_shell::util::config::RemoteSettings;
+use intelekt_test_support::{EnvGuard, MockInferenceServer};
+use intelekt_version::TEST_VERSION_ENV;
 
 const SID: &str = "11111111-1111-4111-8111-111111111111";
 const TEST_VERSION: &str = "9.9.9-heaptest";
@@ -171,7 +171,7 @@ fn assert_jemalloc_object_pair(sid: &str, version: &str, heap: &str, meta: &str)
     assert_eq!(meta, expected_meta);
 }
 
-fn assert_storage_auth(uploads: &[xai_grok_test_support::mock_server::StorageUpload]) {
+fn assert_storage_auth(uploads: &[intelekt_test_support::mock_server::StorageUpload]) {
     for u in uploads {
         assert_eq!(
             u.authorization.as_deref(),

@@ -89,7 +89,7 @@ On first launch, Grok opens your browser to authenticate with grok.com:
 grok
 ```
 
-Credentials are stored in `~/.grok/auth.json` and persist across sessions. Tokens expire after 7 days; Grok will prompt you to re-authenticate when needed.
+Credentials are stored in `~/.intelekt/auth.json` and persist across sessions. Tokens expire after 7 days; Grok will prompt you to re-authenticate when needed.
 
 ### Re-authenticate
 
@@ -122,7 +122,7 @@ Authenticate developers via your own Identity Provider (Okta, Azure AD, Auth0) i
 **2. Configure the CLI** (config file or env vars):
 
 ```toml
-# ~/.grok/config.toml
+# ~/.intelekt/config.toml
 [grok_com_config.oidc]
 issuer = "https://acme.okta.com"
 client_id = "0oa1b2c3d4e5f6g7h8i9"
@@ -139,7 +139,7 @@ Customers typically also override the API endpoint to point at their own proxy:
 export GROK_CLI_CHAT_PROXY_BASE_URL="https://grok-proxy.acme.com/v1"
 ```
 
-**3. Run `grok`.** The CLI discovers endpoints via `{issuer}/.well-known/openid-configuration`, opens the IdP login page, and stores tokens in `~/.grok/auth.json`. The OIDC token is sent as `Authorization: Bearer` to the configured proxy. Tokens auto-refresh silently via the stored `refresh_token`.
+**3. Run `grok`.** The CLI discovers endpoints via `{issuer}/.well-known/openid-configuration`, opens the IdP login page, and stores tokens in `~/.intelekt/auth.json`. The OIDC token is sent as `Authorization: Bearer` to the configured proxy. Tokens auto-refresh silently via the stored `refresh_token`.
 
 **Optional fields:**
 
@@ -169,7 +169,7 @@ Grok is provider-agnostic — it doesn't know or care how your binary authentica
 1. Grok runs your command via `sh -c "<command>"`
 2. Your binary does whatever auth flow it needs (SSO login, device code, cert exchange, etc.)
 3. **stderr** → displayed directly to the user (use for login URLs, status messages, progress)
-4. **stdout** → captured by Grok and saved to `~/.grok/auth.json` as the access token
+4. **stdout** → captured by Grok and saved to `~/.intelekt/auth.json` as the access token
 5. exit 0 → success; exit non-zero → Grok falls through to interactive login
 
 #### The stdout / stderr Contract
@@ -216,7 +216,7 @@ echo "eyJhbGciOiJSUzI1NiIs..."
 #### Configuration
 
 ```toml
-# ~/.grok/config.toml
+# ~/.intelekt/config.toml
 [auth]
 auth_provider_command = "/usr/local/bin/my-auth-provider"
 auth_provider_label = "Acme Corp"   # optional — customizes the TUI login button
@@ -341,11 +341,11 @@ If you've authenticated with `grok login`, you can use the stored credentials to
 ```bash
 curl -s -N -X POST "https://cli-chat-proxy.grok.com/v1/chat/completions" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $(jq -r '."https://accounts.x.ai/sign-in".key' ~/.grok/auth.json)" \
+  -H "Authorization: Bearer $(jq -r '."https://accounts.x.ai/sign-in".key' ~/.intelekt/auth.json)" \
   -H "X-XAI-Token-Auth: xai-grok-cli" \
-  -H "x-grok-model-override: grok-build" \
+  -H "x-grok-model-override: intelekt-cli" \
   -d '{
-    "model": "grok-build",
+    "model": "intelekt-cli",
     "messages": [{"role": "user", "content": "Hello!"}],
     "stream": true
   }'
@@ -355,9 +355,9 @@ curl -s -N -X POST "https://cli-chat-proxy.grok.com/v1/chat/completions" \
 
 | Header                           | Required | Purpose                                                                                                                                                                                   |
 | -------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Authorization: Bearer <token>`  | Yes      | Session token from `~/.grok/auth.json` (set by `grok login`)                                                                                                                              |
+| `Authorization: Bearer <token>`  | Yes      | Session token from `~/.intelekt/auth.json` (set by `grok login`)                                                                                                                              |
 | `X-XAI-Token-Auth: xai-grok-cli` | Yes      | Tells the auth middleware to validate as a CLI session token                                                                                                                              |
-| `x-grok-model-override: <model>` | Yes\*    | The proxy uses this header (not the JSON body) to route to the correct backend. \*Can be omitted for `grok-build` which is on the default route, but always safe to include. |
+| `x-grok-model-override: <model>` | Yes\*    | The proxy uses this header (not the JSON body) to route to the correct backend. \*Can be omitted for `intelekt-cli` which is on the default route, but always safe to include. |
 
 **Streaming vs non-streaming:**
 
@@ -365,7 +365,7 @@ Most models behind the proxy only support streaming. Always use `"stream": true`
 
 | Model                 | Non-streaming  | Streaming    |
 | --------------------- | -------------- | ------------ |
-| `grok-build`    | ✅ Supported   | ✅ Supported |
+| `intelekt-cli`    | ✅ Supported   | ✅ Supported |
 
 > **Note:** `auth.json` tokens expire after 7 days. Run `grok login` to refresh.
 
@@ -458,7 +458,7 @@ Type `/` in the input to access commands:
 
 ```bash
 # Example usage in TUI:
-/model grok-build
+/model intelekt-cli
 /new
 /rewind
 /feedback Something isn't working
@@ -519,7 +519,7 @@ grok -p "Your prompt here"
 | Flag                    | Description                                           |
 | ----------------------- | ----------------------------------------------------- |
 | `-p, --single <PROMPT>` | The prompt to send (required)                         |
-| `-m, --model <MODEL>`   | Model to use (e.g., `grok-build`)               |
+| `-m, --model <MODEL>`   | Model to use (e.g., `intelekt-cli`)               |
 | `-s, --session-id <ID>` | Create or resume a headless session with this ID      |
 | `-r, --resume <ID>`     | Resume an existing session (errors if not found)      |
 | `-c, --continue`        | Continue the most recent session in current directory |
@@ -628,7 +628,7 @@ grok --allow "WebFetch(domain:docs.rs)" --deny "WebFetch(*)"
 grok -p "What does this project do?"
 
 # Use a specific model
-grok -p "Optimize this function" -m grok-build
+grok -p "Optimize this function" -m intelekt-cli
 
 # Get JSON output for parsing
 grok -p "List all TODO comments in the codebase" --output-format json
@@ -745,7 +745,7 @@ Communication happens via JSON-RPC over stdin/stdout. This mode is used by:
 
 | Flag                  | Description                                                                         |
 | --------------------- | ----------------------------------------------------------------------------------- |
-| `-m, --model <MODEL>` | Override the default model ID (e.g., `grok-build`)                           |
+| `-m, --model <MODEL>` | Override the default model ID (e.g., `intelekt-cli`)                           |
 | `--always-approve`    | Start in always-approve mode (auto-approve all tool executions without confirmation) |
 | `--reauth`            | Force re-authentication flow                                                        |
 
@@ -819,7 +819,7 @@ class GrokChat:
         return ["grok", "-p", prompt, "-m", model, "--cwd", self.cwd,
                 "--output-format", "streaming-json" if stream else "json", "--always-approve"]
 
-    async def create(self, messages, model="grok-build", stream=False):
+    async def create(self, messages, model="intelekt-cli", stream=False):
         prompt = messages[-1]["content"] if len(messages) == 1 else "\n".join(
             f"{m['role']}: {m['content']}" for m in messages
         )
@@ -895,7 +895,7 @@ class GrokChat {
 
   async create(
     messages: { role: string; content: string }[],
-    { model = "grok-build", stream = false } = {},
+    { model = "intelekt-cli", stream = false } = {},
   ) {
     const prompt =
       messages.length === 1
@@ -1004,7 +1004,7 @@ class GrokACPChat:
         line = await self.proc.stdout.readline()
         return json.loads(line).get("result", {})
 
-    async def create(self, messages, model="grok-build", stream=False):
+    async def create(self, messages, model="intelekt-cli", stream=False):
         prompt = [{"type": "text", "text": m["content"]} for m in messages]
 
         # For streaming, yield chunks as they arrive
@@ -1133,7 +1133,7 @@ class GrokACPChat {
 
   async create(
     messages: { role: string; content: string }[],
-    { model = "grok-build", stream = false } = {},
+    { model = "intelekt-cli", stream = false } = {},
   ) {
     const prompt = messages.map((m) => ({ type: "text", text: m.content }));
 
@@ -1272,7 +1272,7 @@ Grok implements the [Agent Client Protocol (ACP)](https://agentclientprotocol.co
 
 ## Configuration
 
-Grok reads configuration from `~/.grok/config.toml`. If the file doesn't exist, Grok uses sensible defaults. You only need to specify values you want to override.
+Grok reads configuration from `~/.intelekt/config.toml`. If the file doesn't exist, Grok uses sensible defaults. You only need to specify values you want to override.
 
 Each feature section below documents its own config. This section covers the general-purpose settings that don't have their own top-level section.
 
@@ -1283,7 +1283,7 @@ Each feature section below documents its own config. This section covers the gen
 auto_update = true                     # check for updates on launch
 
 [models]
-default = "grok-build"           # model used for new sessions
+default = "intelekt-cli"           # model used for new sessions
 web_search = "grok-4.20-multi-agent"   # model used by the web_search tool
 
 [ui]
@@ -1348,8 +1348,8 @@ Reference: [Language Server Protocol](https://microsoft.github.io/language-serve
 
 Grok looks for server definitions in:
 
-- project config: `<repo>/.grok/lsp.json`
-- user config: `~/.grok/lsp.json`
+- project config: `<repo>/.intelekt/lsp.json`
+- user config: `~/.intelekt/lsp.json`
 
 If the same server name appears in both places, the project config wins.
 
@@ -1450,9 +1450,9 @@ auth_token_ttl = 3600               # if your provider outputs bare tokens
 default = "company-grok"
 
 [model.company-grok]
-model = "grok-build"
+model = "intelekt-cli"
 base_url = "https://grok-proxy.acme.com/"
-name = "Grok Build Latest (Proxy)"
+name = "Intelekt CLI Latest (Proxy)"
 context_window = 256000
 
 [features]
@@ -1473,7 +1473,7 @@ Add project-specific instructions by creating an agent rules file (e.g., `AGENTS
 
 Grok scans for agent rules in this order:
 
-1. `~/.grok/` (global rules)
+1. `~/.intelekt/` (global rules)
 2. If inside a git repo: every directory from the repo root → current working directory (inclusive)
 3. If **not** inside a git repo: only the current working directory
 
@@ -1497,14 +1497,14 @@ Grok discovers skills from these directories (in priority order):
 
 | Location                    | Scope | Priority |
 | --------------------------- | ----- | -------- |
-| `./.grok/skills/`           | Local | Highest  |
-| `<repo_root>/.grok/skills/` | Repo  | Medium   |
-| `~/.grok/skills/`           | User  | Lowest   |
+| `./.intelekt/skills/`           | Local | Highest  |
+| `<repo_root>/.intelekt/skills/` | Repo  | Medium   |
+| `~/.intelekt/skills/`           | User  | Lowest   |
 | `~/.claude/skills/`         | User  | Lowest   |
 
 Skills with the same name are deduplicated — higher priority locations override lower ones.
 
-Repo-scoped skills (Local and Repo) respect `.gitignore` and are filtered out if ignored. User-scoped skills (`~/.grok/skills/`) are outside the repo and never filtered.
+Repo-scoped skills (Local and Repo) respect `.gitignore` and are filtered out if ignored. User-scoped skills (`~/.intelekt/skills/`) are outside the repo and never filtered.
 
 ### Configuration
 
@@ -1521,7 +1521,7 @@ ignore = ["~/my-team-skills/wip"]     # paths to exclude
 Each skill lives in its own directory with a `SKILL.md` file:
 
 ```
-~/.grok/skills/
+~/.intelekt/skills/
 └── commit/
     └── SKILL.md
 ```
@@ -1576,15 +1576,15 @@ Users can reference skills as `/skill-name` (e.g., `/commit`). When you see this
 
 Agent profiles control the system prompt, toolset, and behavior of a session. A profile is a `.md` file with YAML frontmatter, or a named agent discovered from disk.
 
-Grok discovers agent definitions from `.grok/agents/` (project), `~/.grok/agents/` (user), and built-in agents. Priority (highest wins):
+Grok discovers agent definitions from `.intelekt/agents/` (project), `~/.intelekt/agents/` (user), and built-in agents. Priority (highest wins):
 
 1. `--agent-profile <PATH>` CLI flag
 2. `[agent]` section in `config.toml`
 3. `GROK_AGENT` env var
-4. Default `grok-build` agent
+4. Default `intelekt-cli` agent
 
 ```toml
-# ~/.grok/config.toml
+# ~/.intelekt/config.toml
 [agent]
 name = "my-custom-agent"             # Discovered by name
 # definition = "/path/to/agent.md"   # OR: explicit path
@@ -1609,7 +1609,7 @@ export GROK_SUBAGENTS=0              # Environment variable
 ```
 
 ```toml
-# ~/.grok/config.toml
+# ~/.intelekt/config.toml
 [subagents]
 enabled = false
 ```
@@ -1624,7 +1624,7 @@ explore = true                       # default — omitted agents are enabled
 plan = false                         # disable plan subagent
 
 [subagents.models]
-explore = "grok-build"              # route explore to a lighter model
+explore = "intelekt-cli"              # route explore to a lighter model
 ```
 
 By default a subagent inherits the parent session's model. Only an explicit
@@ -1640,15 +1640,15 @@ Roles define reusable capability/model defaults. Personas layer tone and behavio
 [subagents.roles.researcher]
 description = "Deep research agent"
 default_capability_mode = "read-only"
-model = "grok-build"
-prompt_file = ".grok/prompts/researcher.md"
+model = "intelekt-cli"
+prompt_file = ".intelekt/prompts/researcher.md"
 
 [subagents.personas.concise]
 instructions = "Be extremely concise. No filler words."
-# instructions_file = ".grok/personas/concise.md"  # or load from file
+# instructions_file = ".intelekt/personas/concise.md"  # or load from file
 ```
 
-Both are also discovered from `.grok/roles/*.toml` and `.grok/personas/*.toml` files respectively. If a requested persona is not found, the spawn fails (fail-closed).
+Both are also discovered from `.intelekt/roles/*.toml` and `.intelekt/personas/*.toml` files respectively. If a requested persona is not found, the spawn fails (fail-closed).
 
 ---
 
@@ -1660,14 +1660,14 @@ Plugins extend Grok with additional tools, skills, and MCP servers from external
 
 | Location                    | Scope   |
 | --------------------------- | ------- |
-| `.grok/plugins/`            | Project |
-| `~/.grok/plugins/`          | User    |
+| `.intelekt/plugins/`            | Project |
+| `~/.intelekt/plugins/`          | User    |
 | `--plugin-dir <PATH>` (CLI) | Session |
 
 ### Configuration
 
 ```toml
-# ~/.grok/config.toml
+# ~/.intelekt/config.toml
 [plugins]
 paths = ["~/my-plugins/custom-tools"]       # additional plugin directories
 disabled = ["user/a1b2c3d4/noisy-plugin"]   # plugin IDs to skip
@@ -1681,7 +1681,7 @@ Manage plugins at runtime with `/plugins list`, `/plugins reload`, or `/plugins 
 
 Hooks run project scripts on tool and session lifecycle events (pre/post-tool-use, session start/end). Projects must be explicitly trusted before their hooks execute.
 
-Grok discovers hooks from `.grok/hooks/` in the project directory. Manage them with:
+Grok discovers hooks from `.intelekt/hooks/` in the project directory. Manage them with:
 
 ```
 /hooks-list              # show hooks loaded in this session
@@ -1723,7 +1723,7 @@ You can override specific fields of built-in models without redefining everythin
 
 ```toml
 # Override just the API key for a default model
-[model.grok-build]
+[model.intelekt-cli]
 api_key = "my-api-key"
 
 # Override temperature and add a custom API key
@@ -1839,14 +1839,14 @@ Grok fetches the model list from `{GROK_MODELS_BASE_URL}/models` on startup and 
 
 If your model list endpoint differs from `{base_url}/models`, set `GROK_MODELS_LIST_URL` explicitly.
 
-**Combining with `[endpoints]` config:** You can also set endpoints in `~/.grok/config.toml`:
+**Combining with `[endpoints]` config:** You can also set endpoints in `~/.intelekt/config.toml`:
 
 ```toml
 [endpoints]
 models_base_url = "https://api.acme.com/v1"
 
 # Override just the API key for a specific model
-[model.grok-build]
+[model.intelekt-cli]
 api_key = "my-api-key"
 ```
 
@@ -1862,7 +1862,7 @@ Extend Grok's capabilities with [Model Context Protocol](https://modelcontextpro
 
 ### Configuration
 
-MCP servers are configured in `~/.grok/config.toml`:
+MCP servers are configured in `~/.intelekt/config.toml`:
 
 ```toml
 [mcp_servers.<name>]
@@ -1878,36 +1878,36 @@ tool_timeouts = { create_issue = 120, search = 30 }  # Per-tool timeout override
 
 ### Project-Scoped MCP Servers
 
-MCP servers can also be configured per-project in `.grok/config.toml`. Grok walks from the current directory up to the git repo root, loading `.grok/config.toml` at each level:
+MCP servers can also be configured per-project in `.intelekt/config.toml`. Grok walks from the current directory up to the git repo root, loading `.intelekt/config.toml` at each level:
 
 | Location                        | Scope             | Priority |
 | ------------------------------- | ----------------- | -------- |
-| `~/.grok/config.toml`           | All projects      | Lowest   |
-| `<repo-root>/.grok/config.toml` | This repository   | ↑        |
-| `<cwd>/.grok/config.toml`       | Current directory | Highest  |
+| `~/.intelekt/config.toml`           | All projects      | Lowest   |
+| `<repo-root>/.intelekt/config.toml` | This repository   | ↑        |
+| `<cwd>/.intelekt/config.toml`       | Current directory | Highest  |
 
 If a project defines a server with the same name as a global one, the project version **replaces** it entirely (fields are not merged — omitted fields get defaults, not the global values). Servers defined only in the global config are unaffected.
 
-**Example:** commit a `.grok/config.toml` in your repo to share MCP servers across the team:
+**Example:** commit a `.intelekt/config.toml` in your repo to share MCP servers across the team:
 
 ```
 my-project/
-├── .grok/
+├── .intelekt/
 │   └── config.toml
 ├── src/
 └── ...
 ```
 
 ```toml
-# .grok/config.toml
+# .intelekt/config.toml
 [mcp_servers.linear]
 command = "npx"
 args = ["-y", "mcp-remote", "https://mcp.linear.app/mcp"]
 ```
 
-If you also have a `linear` server in `~/.grok/config.toml`, the project version replaces it entirely.
+If you also have a `linear` server in `~/.intelekt/config.toml`, the project version replaces it entirely.
 
-> **Note:** Only `[mcp_servers]` is supported in project-scoped `.grok/config.toml`. Other config sections (models, shortcuts, etc.) are only read from `~/.grok/config.toml`.
+> **Note:** Only `[mcp_servers]` is supported in project-scoped `.intelekt/config.toml`. Other config sections (models, shortcuts, etc.) are only read from `~/.intelekt/config.toml`.
 
 ### Tool Naming
 
@@ -1981,10 +1981,10 @@ Cross-session memory lets Grok remember facts, decisions, code patterns, and deb
 
 ### How it works
 
-Memory is stored as Markdown files under `~/.grok/memory/`:
-- **Global** (`~/.grok/memory/MEMORY.md`) — facts that apply across all your projects
-- **Workspace** (`~/.grok/memory/<project-slug>-<hash8>/MEMORY.md`) — project-specific conventions and context
-- **Session logs** (`~/.grok/memory/<project-slug>-<hash8>/sessions/`) — per-session summaries
+Memory is stored as Markdown files under `~/.intelekt/memory/`:
+- **Global** (`~/.intelekt/memory/MEMORY.md`) — facts that apply across all your projects
+- **Workspace** (`~/.intelekt/memory/<project-slug>-<hash8>/MEMORY.md`) — project-specific conventions and context
+- **Session logs** (`~/.intelekt/memory/<project-slug>-<hash8>/sessions/`) — per-session summaries
 
 Workspace directories are suffixed with a short hash for uniqueness (e.g. `xai-a3f7b2c9/`). The hash is derived from the git remote URL so all clones and worktrees of the same repository share the same memory directory.
 
@@ -2001,7 +2001,7 @@ export GROK_MEMORY=1
 grok
 
 # Config file (persists permanently)
-# ~/.grok/config.toml
+# ~/.intelekt/config.toml
 [memory]
 enabled = true
 ```
@@ -2024,7 +2024,7 @@ This summary is searchable in future sessions but does **not** capture full cont
 
 ### Capturing rich knowledge with `/flush`
 
-For richer capture — decisions, patterns, debugging workflows, API discoveries — use `/flush` in the TUI. This triggers an LLM-generated summary of the current session's most important content and writes it to a dated session log under `~/.grok/memory/<project-slug>-<hash8>/sessions/`, where it is indexed and searchable in future sessions.
+For richer capture — decisions, patterns, debugging workflows, API discoveries — use `/flush` in the TUI. This triggers an LLM-generated summary of the current session's most important content and writes it to a dated session log under `~/.intelekt/memory/<project-slug>-<hash8>/sessions/`, where it is indexed and searchable in future sessions.
 
 Use `/flush` when you want to preserve important context before compaction or at any point during a productive session.
 
@@ -2068,13 +2068,13 @@ grok memory stats
 
 ### Configuration reference
 
-Key options under `[memory]` in `~/.grok/config.toml`:
+Key options under `[memory]` in `~/.intelekt/config.toml`:
 
 | Key | Default | Description |
 |-----|---------|-------------|
 | `enabled` | `false` | Enable memory (can also be set via CLI flag or env var) |
 | `session.save_on_end` | `true` | Write the lightweight metadata summary on session end |
-| `watcher.enabled` | `true` | Watch `~/.grok/memory/` for external edits and reindex on search |
+| `watcher.enabled` | `true` | Watch `~/.intelekt/memory/` for external edits and reindex on search |
 | `search.max_results` | `6` | Default number of memory results to return |
 | `search.min_score` | `0.35` | Minimum relevance score threshold for explicit memory search and recovery paths |
 | `initial_injection.enabled` | `true` | Enable automatic first-turn memory injection |
@@ -2116,16 +2116,16 @@ grok --sandbox strict
 | Profile         | FS Read            | FS Write                  | Child Network | Use Case                 |
 | --------------- | ------------------ | ------------------------- | ------------- | ------------------------ |
 | `off` (default) | Unrestricted       | Unrestricted              | Unrestricted  | No sandbox               |
-| `workspace`     | Everywhere         | CWD + `/tmp` + `~/.grok/` | Allowed       | Normal development       |
-| `read-only`     | Everywhere         | `~/.grok/` only           | Blocked       | Exploration, code review |
-| `strict`        | CWD + system paths | CWD + `/tmp` + `~/.grok/` | Blocked       | Untrusted code           |
+| `workspace`     | Everywhere         | CWD + `/tmp` + `~/.intelekt/` | Allowed       | Normal development       |
+| `read-only`     | Everywhere         | `~/.intelekt/` only           | Blocked       | Exploration, code review |
+| `strict`        | CWD + system paths | CWD + `/tmp` + `~/.intelekt/` | Blocked       | Untrusted code           |
 
-Sensitive paths (`~/.ssh/`, `~/.aws/`, `~/.gnupg/`, `~/.grok/auth/`) are always
+Sensitive paths (`~/.ssh/`, `~/.aws/`, `~/.gnupg/`, `~/.intelekt/auth/`) are always
 write-protected regardless of profile.
 
 ### Custom Profiles
 
-Create `~/.grok/sandbox.toml` (global) or `.grok/sandbox.toml` (per-project):
+Create `~/.intelekt/sandbox.toml` (global) or `.intelekt/sandbox.toml` (per-project):
 
 ```toml
 [profiles.devbox]
@@ -2177,7 +2177,7 @@ model cannot convince the agent to relax restrictions at runtime.
 
 ### Event Logging
 
-Sandbox events (profile applied, violations) are logged to `~/.grok/sandbox-events.jsonl`
+Sandbox events (profile applied, violations) are logged to `~/.intelekt/sandbox-events.jsonl`
 for telemetry and debugging.
 
 ---
@@ -2194,7 +2194,7 @@ grok inspect --json   # machine-readable JSON
 The output shows all loaded configuration organized by type:
 
 - **Project Instructions** — AGENTS.md / CLAUDE.md files with token counts
-- **Skills** — from `.grok/skills/`, `~/.grok/skills/`, plugins, and config paths
+- **Skills** — from `.intelekt/skills/`, `~/.intelekt/skills/`, plugins, and config paths
 - **Agents** — built-in, user-defined, and plugin-provided subagents
 - **Plugins** — discovered plugins with what each provides (skills, agents, hooks, MCPs)
 - **MCP Servers** — from `config.toml`, plugins, `~/.claude.json`, and `.mcp.json`
@@ -2208,13 +2208,13 @@ Plugin-provided components appear in their respective sections with a `[plugin: 
 
 ## Claude Code Compatibility
 
-Grok automatically discovers configuration from Claude Code directories alongside native `.grok/` paths. No extra setup is needed.
+Grok automatically discovers configuration from Claude Code directories alongside native `.intelekt/` paths. No extra setup is needed.
 
 ### What is picked up
 
 | Component         | Claude Code location                                 | How Grok uses it                 |
 | ----------------- | ---------------------------------------------------- | -------------------------------- |
-| **Skills**        | `.claude/skills/`, `~/.claude/skills/`               | Loaded as skills (same as `.grok/skills/`) |
+| **Skills**        | `.claude/skills/`, `~/.claude/skills/`               | Loaded as skills (same as `.intelekt/skills/`) |
 | **Agents**        | `.claude/agents/`, `~/.claude/agents/`               | Loaded as subagents              |
 | **Plugins**       | `.claude/plugins/`, `~/.claude/plugins/`             | Discovered with all components   |
 | **Installed plugins** | `~/.claude/plugins/installed_plugins.json`        | Each `installPath` is loaded     |
@@ -2284,10 +2284,10 @@ Grok automatically persists conversations to disk. This works across all modes: 
 
 ### Storage Layout
 
-Sessions are stored under `~/.grok/sessions/`, organized by URL-encoded working directory:
+Sessions are stored under `~/.intelekt/sessions/`, organized by URL-encoded working directory:
 
 ```
-~/.grok/sessions/<encoded-cwd>/<session-id>/
+~/.intelekt/sessions/<encoded-cwd>/<session-id>/
   summary.json            # metadata: title, timestamps, model, message count
   updates.jsonl           # ACP session update stream (conversation + tool calls)
   chat_history.jsonl      # raw chat messages sent to the model
@@ -2363,19 +2363,19 @@ The agent persists all session updates automatically. Clients can reconnect and 
 
 | Path                  | Description                                         |
 | --------------------- | --------------------------------------------------- |
-| `~/.grok/config.toml` | Configuration file                                  |
-| `~/.grok/sessions/`   | Persisted sessions (organized by working directory) |
-| `~/.grok/auth.json`   | Authentication credentials (auto-managed)           |
-| `~/.grok/memory/`     | Cross-session memory files and index                |
-| `~/.grok/skills/`     | User-scoped skill definitions                       |
-| `~/.grok/plugins/`    | User-scoped plugins                                 |
-| `~/.grok/agents/`     | User-scoped agent definitions                       |
-| `.grok/config.toml`   | Project-scoped config (MCP servers)                 |
-| `.grok/skills/`       | Project-scoped skill definitions                    |
-| `.grok/plugins/`      | Project-scoped plugins                              |
-| `.grok/agents/`       | Project-scoped agent definitions                    |
-| `.grok/hooks/`        | Project-scoped hooks                                |
-| `.grok/lsp.json`      | LSP server configuration                            |
+| `~/.intelekt/config.toml` | Configuration file                                  |
+| `~/.intelekt/sessions/`   | Persisted sessions (organized by working directory) |
+| `~/.intelekt/auth.json`   | Authentication credentials (auto-managed)           |
+| `~/.intelekt/memory/`     | Cross-session memory files and index                |
+| `~/.intelekt/skills/`     | User-scoped skill definitions                       |
+| `~/.intelekt/plugins/`    | User-scoped plugins                                 |
+| `~/.intelekt/agents/`     | User-scoped agent definitions                       |
+| `.intelekt/config.toml`   | Project-scoped config (MCP servers)                 |
+| `.intelekt/skills/`       | Project-scoped skill definitions                    |
+| `.intelekt/plugins/`      | Project-scoped plugins                              |
+| `.intelekt/agents/`       | Project-scoped agent definitions                    |
+| `.intelekt/hooks/`        | Project-scoped hooks                                |
+| `.intelekt/lsp.json`      | LSP server configuration                            |
 | `~/.claude/skills/`   | User-scoped skills (Claude Code compat)             |
 | `~/.claude/plugins/`  | User-scoped plugins (Claude Code compat)            |
 | `~/.claude.json`      | MCP servers (Claude Code compat)                    |
@@ -2396,7 +2396,7 @@ The agent persists all session updates automatically. Clients can reconnect and 
 | `GROK_AUTH_EARLY_INVALIDATION_SECS` | Seconds before `expires_at` to consider a token expired (default: `300`). See [Automatic Credential Refresh](#automatic-credential-refresh) |
 | `GROK_OIDC_ISSUER`              | OIDC issuer URL (alternative to config file). See [OIDC](#oidc-customer-sso)                             |
 | `GROK_OIDC_CLIENT_ID`           | OIDC client ID (alternative to config file). See [OIDC](#oidc-customer-sso)                              |
-| `GROK_HOME`                     | Override config directory (default: `~/.grok`)                                                           |
+| `INTELEKT_HOME`                     | Override config directory (default: `~/.intelekt`)                                                           |
 | `GROK_SUBAGENTS`                | Enable (`1`) or disable (`0`) subagent/task tool support                                                 |
 | `GROK_MEMORY`                   | Enable (`1`) or disable (`0`) cross-session memory                                                       |
 | `GROK_AGENT`                    | Custom agent definition path or name (see [Agent Profiles](#agent-profiles))                             |
@@ -2404,10 +2404,10 @@ The agent persists all session updates automatically. Clients can reconnect and 
 | `GROK_WEB_FETCH_PROXY`          | Egress proxy URL for `web_fetch` requests (overridden by `[toolset.web_fetch] proxy_endpoint`)           |
 | `GROK_RESPECT_GITIGNORE`        | Disable `.gitignore` filtering in tools when set to `0`                                                  |
 | `GROK_FEEDBACK_ENABLED`         | Enable (`1`) or disable (`0`) feedback system independently from telemetry                               |
-| `GROK_DEPLOYMENT_KEY`           | Management API key for enterprise deployments                                                            |
-| `GROK_LOG_FILE`                 | Enable file logging by providing a file path (the value is used verbatim as the path)                    |
-| `GROK_DEBUG_LOG`                | Debug firehose (set by `--debug`): truthy routes per-session logs to `~/.grok/debug/<sessionId>.txt`, a path writes that one file |
-| `RUST_LOG`                      | Log filter for stderr (headless `-p` defaults to `off`, other non-TUI modes to `error`; TUI captures stderr) and for the `GROK_LOG_FILE` log; the `--debug` firehose ignores it |
+| `INTELEKT_DEPLOYMENT_KEY`           | Management API key for enterprise deployments                                                            |
+| `INTELEKT_LOG_FILE`                 | Enable file logging by providing a file path (the value is used verbatim as the path)                    |
+| `GROK_DEBUG_LOG`                | Debug firehose (set by `--debug`): truthy routes per-session logs to `~/.intelekt/debug/<sessionId>.txt`, a path writes that one file |
+| `RUST_LOG`                      | Log filter for stderr (headless `-p` defaults to `off`, other non-TUI modes to `error`; TUI captures stderr) and for the `INTELEKT_LOG_FILE` log; the `--debug` firehose ignores it |
 
 ---
 
@@ -2431,14 +2431,14 @@ Reload your shell or run `source ~/.bashrc`.
 Alternative (Grok-managed location):
 
 ```bash
-mkdir -p ~/.grok/completions/bash
-grok completions bash > ~/.grok/completions/bash/grok.bash
+mkdir -p ~/.intelekt/completions/bash
+grok completions bash > ~/.intelekt/completions/bash/grok.bash
 ```
 
 Add to `~/.bashrc`:
 
 ```bash
-[[ -r "$HOME/.grok/completions/bash/grok.bash" ]] && source "$HOME/.grok/completions/bash/grok.bash"
+[[ -r "$HOME/.intelekt/completions/bash/grok.bash" ]] && source "$HOME/.intelekt/completions/bash/grok.bash"
 ```
 
 ### Zsh
@@ -2461,14 +2461,14 @@ compinit
 Alternative (Grok-managed location):
 
 ```bash
-mkdir -p ~/.grok/completions/zsh
-grok completions zsh > ~/.grok/completions/zsh/_grok
+mkdir -p ~/.intelekt/completions/zsh
+grok completions zsh > ~/.intelekt/completions/zsh/_grok
 ```
 
 Add to `~/.zshrc`:
 
 ```zsh
-fpath=("$HOME/.grok/completions/zsh" $fpath)
+fpath=("$HOME/.intelekt/completions/zsh" $fpath)
 autoload -Uz compinit
 compinit
 ```
@@ -2483,24 +2483,24 @@ Regenerate completions after upgrading `grok` — the script reflects the CLI of
 
 ### Debug logging
 
-Write logs to a file for debugging. The TUI captures stderr, so `RUST_LOG` alone won't produce visible output in production — use `grok --debug` or `GROK_LOG_FILE` instead:
+Write logs to a file for debugging. The TUI captures stderr, so `RUST_LOG` alone won't produce visible output in production — use `grok --debug` or `INTELEKT_LOG_FILE` instead:
 
 ```bash
-# Per-session debug log (~/.grok/debug/<sessionId>.txt)
+# Per-session debug log (~/.intelekt/debug/<sessionId>.txt)
 grok --debug
 
 # Log to a custom path
-GROK_LOG_FILE=/tmp/grok-debug.log grok
+INTELEKT_LOG_FILE=/tmp/grok-debug.log grok
 
 # Tail the most-recently-opened session's log in another terminal (Unix symlink)
-tail -f ~/.grok/debug/latest.txt
+tail -f ~/.intelekt/debug/latest.txt
 ```
 
-The `--debug` firehose uses a fixed filter (first-party crates at `debug`) and is not narrowed by `RUST_LOG`. A `GROK_LOG_FILE` log defaults to `debug` and honors `RUST_LOG`, so you can set module-level filters for targeted debugging:
+The `--debug` firehose uses a fixed filter (first-party crates at `debug`) and is not narrowed by `RUST_LOG`. A `INTELEKT_LOG_FILE` log defaults to `debug` and honors `RUST_LOG`, so you can set module-level filters for targeted debugging:
 
 ```bash
 # Debug auth, info for everything else
-GROK_LOG_FILE=/tmp/grok-debug.log RUST_LOG="info,xai_grok_shell::auth=debug" grok
+INTELEKT_LOG_FILE=/tmp/grok-debug.log RUST_LOG="info,xai_grok_shell::auth=debug" grok
 ```
 
 ### Authentication fails
@@ -2548,16 +2548,16 @@ Session files are plain JSON/JSONL and can be inspected directly:
 
 ```bash
 # Find sessions for the current directory
-ls ~/.grok/sessions/
+ls ~/.intelekt/sessions/
 
 # Read session metadata
-cat ~/.grok/sessions/<encoded-cwd>/<session-id>/summary.json | jq .
+cat ~/.intelekt/sessions/<encoded-cwd>/<session-id>/summary.json | jq .
 
 # View conversation history
-cat ~/.grok/sessions/<encoded-cwd>/<session-id>/updates.jsonl | head -20
+cat ~/.intelekt/sessions/<encoded-cwd>/<session-id>/updates.jsonl | head -20
 
 # Count turns in a session
-wc -l ~/.grok/sessions/<encoded-cwd>/<session-id>/chat_history.jsonl
+wc -l ~/.intelekt/sessions/<encoded-cwd>/<session-id>/chat_history.jsonl
 ```
 
 ### Context window full

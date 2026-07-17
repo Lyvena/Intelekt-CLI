@@ -33,7 +33,7 @@ const CREDENTIAL_POLL_INTERVAL: std::time::Duration = std::time::Duration::from_
 // (multiple async tasks / sessions) and across separate processes (leader
 // mode disabled, multiple `grok` invocations).
 //
-// Layer 1 (cross-process): filesystem lock at $GROK_HOME/mcp_auth_{safe_name}.lock
+// Layer 1 (cross-process): filesystem lock at $INTELEKT_HOME/mcp_auth_{safe_name}.lock
 // Layer 2 (in-process):    watch channel so only one task runs the flow
 // ---------------------------------------------------------------------------
 
@@ -244,7 +244,7 @@ fn auth_lock_path(server_name: &str) -> std::path::PathBuf {
             }
         })
         .collect();
-    xai_grok_config::grok_home().join(format!("mcp_auth_{safe}.lock"))
+    intelekt_config::grok_home().join(format!("mcp_auth_{safe}.lock"))
 }
 
 /// Run the interactive browser-based OAuth flow.

@@ -14,7 +14,7 @@ use std::sync::OnceLock;
 use serial_test::serial;
 
 /// Shared temp directory that lives for the entire test binary.
-/// All tests share this as GROK_HOME (the `OnceLock` in xai-grok-config
+/// All tests share this as INTELEKT_HOME (the `OnceLock` in intelekt-config
 /// only allows one value per process).
 fn test_home() -> &'static PathBuf {
     static HOME: OnceLock<PathBuf> = OnceLock::new();
@@ -23,7 +23,7 @@ fn test_home() -> &'static PathBuf {
         // Keep so the directory survives the entire test process.
         let path = dir.keep();
         // SAFETY: called once at init before other threads touch this var.
-        unsafe { std::env::set_var("GROK_HOME", &path) };
+        unsafe { std::env::set_var("INTELEKT_HOME", &path) };
         path
     })
 }
@@ -59,8 +59,8 @@ async fn update_config_does_not_leak_requirements_into_user_config() {
 
     // Sanity-check: effective config should show auto_update = false
     // (requirements wins over user config).
-    let effective = xai_grok_shell::config::load_effective_config().unwrap();
-    let effective_cfg = xai_grok_shell::util::config::load_config_from_toml(&effective);
+    let effective = intelekt_shell::config::load_effective_config().unwrap();
+    let effective_cfg = intelekt_shell::util::config::load_config_from_toml(&effective);
     assert_eq!(
         effective_cfg.cli.auto_update,
         Some(false),
@@ -69,8 +69,8 @@ async fn update_config_does_not_leak_requirements_into_user_config() {
 
     // --- Act ---
     // Simulate an unrelated config write (e.g. persisting a model preference).
-    xai_grok_shell::util::config::update_config(|cfg| {
-        cfg.models.default = Some("grok-3".to_string());
+    intelekt_shell::util::config::update_config(|cfg| {
+        cfg.models.default = Some("intelekt-3".to_string());
     })
     .await
     .expect("update_config should succeed");
@@ -79,7 +79,7 @@ async fn update_config_does_not_leak_requirements_into_user_config() {
     // Read the user's config.toml back from disk (raw, no merge).
     let raw = fs::read_to_string(home.join("config.toml")).unwrap();
     let user_toml: toml::Value = toml::from_str(&raw).unwrap();
-    let user_cfg = xai_grok_shell::util::config::load_config_from_toml(&user_toml);
+    let user_cfg = intelekt_shell::util::config::load_config_from_toml(&user_toml);
 
     assert_eq!(
         user_cfg.cli.auto_update,
@@ -89,7 +89,7 @@ async fn update_config_does_not_leak_requirements_into_user_config() {
     );
 
     // Also verify the unrelated write succeeded.
-    assert_eq!(user_cfg.models.default.as_deref(), Some("grok-3"));
+    assert_eq!(user_cfg.models.default.as_deref(), Some("intelekt-3"));
 }
 
 #[tokio::test]
@@ -113,7 +113,7 @@ async fn update_config_preserves_none_when_only_requirements_sets_value() {
     .unwrap();
 
     // Write an unrelated field
-    xai_grok_shell::util::config::update_config(|cfg| {
+    intelekt_shell::util::config::update_config(|cfg| {
         cfg.ui.yolo = true;
     })
     .await
@@ -122,7 +122,7 @@ async fn update_config_preserves_none_when_only_requirements_sets_value() {
     // Read back
     let raw = fs::read_to_string(home.join("config.toml")).unwrap();
     let user_toml: toml::Value = toml::from_str(&raw).unwrap();
-    let user_cfg = xai_grok_shell::util::config::load_config_from_toml(&user_toml);
+    let user_cfg = intelekt_shell::util::config::load_config_from_toml(&user_toml);
 
     assert_eq!(
         user_cfg.cli.auto_update, None,
@@ -151,7 +151,7 @@ async fn update_config_does_not_leak_managed_config_values() {
     )
     .unwrap();
 
-    xai_grok_shell::util::config::update_config(|cfg| {
+    intelekt_shell::util::config::update_config(|cfg| {
         cfg.models.default = Some("test-model".to_string());
     })
     .await
@@ -159,7 +159,7 @@ async fn update_config_does_not_leak_managed_config_values() {
 
     let raw = fs::read_to_string(home.join("config.toml")).unwrap();
     let user_toml: toml::Value = toml::from_str(&raw).unwrap();
-    let user_cfg = xai_grok_shell::util::config::load_config_from_toml(&user_toml);
+    let user_cfg = intelekt_shell::util::config::load_config_from_toml(&user_toml);
 
     assert_eq!(
         user_cfg.cli.auto_update, None,

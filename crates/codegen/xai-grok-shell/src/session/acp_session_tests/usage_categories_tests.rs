@@ -27,7 +27,7 @@ async fn seed_skills(actor: &SessionActor, names: &[&str]) {
     let skills = names
         .iter()
         .map(
-            |name| xai_grok_tools::implementations::skills::types::SkillInfo {
+            |name| intelekt_tools::implementations::skills::types::SkillInfo {
                 name: name.to_string(),
                 description: format!("Does {name} things."),
                 path: format!("/skills/{name}/SKILL.md"),

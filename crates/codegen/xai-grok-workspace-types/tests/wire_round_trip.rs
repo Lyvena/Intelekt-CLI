@@ -15,7 +15,7 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use chrono::{DateTime, TimeZone, Utc};
-use xai_grok_workspace_types::*;
+use intelekt_workspace_types::*;
 
 /// JSON round-trip helper. Asserts equality after a serialize +
 /// deserialize cycle.

@@ -1,5 +1,5 @@
 //! Rendering helpers for [`CompactionStateContext`] that depend on
-//! shell-specific types (`xai_grok_tools::MemoryBackend`, memory context).
+//! shell-specific types (`intelekt_tools::MemoryBackend`, memory context).
 //!
 //! The core [`CompactionStateContext`] struct and its builder live in
 //! `xai_chat_state::compaction_utils`. This module adds system-reminder
@@ -7,7 +7,7 @@
 //!
 //! The three **common** active-agent sections (background tasks, TODO list,
 //! running subagents) are formatted by
-//! [`xai_grok_compaction::reminder`] so grok-chat and grok-build stay in lockstep.
+//! [`intelekt_compaction::reminder`] so grok-chat and intelekt-cli stay in lockstep.
 //! Harness-only sections (edited files, AGENTS.md, skills, MCP, memory) stay here.
 
 use std::path::PathBuf;
@@ -17,7 +17,7 @@ pub use xai_chat_state::compaction_utils::{
     RunningSubagentSummary, TodoSummary, TodoSummaryStatus, extract_last_user_query,
     extract_messages_since_last_user, extract_user_query,
 };
-use xai_grok_compaction::reminder::{
+use intelekt_compaction::reminder::{
     self, ActiveAgentReminderState, BackgroundTask, RunningSubagent, TodoItem, TodoStatus,
 };
 
@@ -53,7 +53,7 @@ pub struct SubagentToolNames {
 pub fn to_system_reminder_sync(
     ctx: &CompactionStateContext,
     discovered_agents_md: &[PathBuf],
-    skills: &[xai_grok_tools::implementations::skills::types::SkillInfo],
+    skills: &[intelekt_tools::implementations::skills::types::SkillInfo],
     subagent_tool_names: Option<&SubagentToolNames>,
     mcp_tool_names: Option<&McpToolNames>,
 ) -> Option<String> {
@@ -74,8 +74,8 @@ pub fn to_system_reminder_sync(
 pub async fn to_system_reminder(
     ctx: &CompactionStateContext,
     discovered_agents_md: &[PathBuf],
-    skills: &[xai_grok_tools::implementations::skills::types::SkillInfo],
-    memory_backend: Option<&dyn xai_grok_tools::types::memory_backend::MemoryBackend>,
+    skills: &[intelekt_tools::implementations::skills::types::SkillInfo],
+    memory_backend: Option<&dyn intelekt_tools::types::memory_backend::MemoryBackend>,
     subagent_tool_names: Option<&SubagentToolNames>,
     mcp_tool_names: Option<&McpToolNames>,
 ) -> Option<String> {
@@ -85,7 +85,7 @@ pub async fn to_system_reminder(
         let query = ctx.last_user_query.as_deref().unwrap_or("project context");
         if let Ok(results) = memory.search(query, 3, 0.0).await {
             tracing::debug!(
-                target: xai_grok_telemetry::memory_log::TARGET,
+                target: intelekt_telemetry::memory_log::TARGET,
                 results = results.len(),
                 "recovered memory context after compaction"
             );
@@ -107,8 +107,8 @@ pub async fn to_system_reminder(
 fn to_system_reminder_inner(
     ctx: &CompactionStateContext,
     discovered_agents_md: &[PathBuf],
-    skills: &[xai_grok_tools::implementations::skills::types::SkillInfo],
-    memory_results: &[xai_grok_tools::types::memory_backend::MemorySearchResult],
+    skills: &[intelekt_tools::implementations::skills::types::SkillInfo],
+    memory_results: &[intelekt_tools::types::memory_backend::MemorySearchResult],
     subagent_tool_names: Option<&SubagentToolNames>,
     mcp_tool_names: Option<&McpToolNames>,
 ) -> Option<String> {
@@ -149,7 +149,7 @@ fn to_system_reminder_inner(
     // the startup `<system-reminder>` (no hard-coded tool name, includes
     // `Use when:` triggers and `Absolute path:`).
     if let Some(listing) =
-        xai_grok_tools::types::skill_discovery_tracker::format_compaction_skill_listing(skills)
+        intelekt_tools::types::skill_discovery_tracker::format_compaction_skill_listing(skills)
     {
         sections.push(format!("## Available Skills\n{listing}"));
     }
@@ -206,7 +206,7 @@ fn to_system_reminder_inner(
 
     // Connected MCP servers (shell-only)
     if !ctx.connected_mcp_servers.is_empty() {
-        use xai_grok_tools::implementations::search_tool::format_compaction_server_line;
+        use intelekt_tools::implementations::search_tool::format_compaction_server_line;
         let servers: String = ctx
             .connected_mcp_servers
             .iter()

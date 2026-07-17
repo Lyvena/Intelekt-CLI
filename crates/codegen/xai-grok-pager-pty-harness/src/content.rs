@@ -2,7 +2,7 @@
 //!
 //! An idle pager only renders a splash screen — not useful for scroll,
 //! stream, or resize scenarios. [`ContentController`] wraps the shared
-//! [`MockInferenceServer`] from `xai-grok-test-support` and provides the
+//! [`MockInferenceServer`] from `intelekt-test-support` and provides the
 //! env vars that point the bundled shell agent at it, so the pager ends
 //! up rendering real agent output.
 //!
@@ -12,14 +12,14 @@
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use xai_grok_test_support::MockInferenceServer;
+use intelekt_test_support::MockInferenceServer;
 
-pub use xai_grok_test_support::mock_server::LogEntry;
-pub use xai_grok_test_support::mock_server::MockModelEntry as MockModel;
-pub use xai_grok_test_support::mock_server::StorageUpload;
+pub use intelekt_test_support::mock_server::LogEntry;
+pub use intelekt_test_support::mock_server::MockModelEntry as MockModel;
+pub use intelekt_test_support::mock_server::StorageUpload;
 // SSE event builders for `enqueue_response` scripts (reasoning turns etc.).
-pub use xai_grok_test_support::sse;
-pub use xai_grok_test_support::{ScriptedResponse, SseEvent};
+pub use intelekt_test_support::sse;
+pub use intelekt_test_support::{ScriptedResponse, SseEvent};
 
 /// Drives content into the pager by serving a mock inference endpoint that
 /// the bundled shell agent hits for `/v1/chat/completions` and `/v1/responses`.
@@ -66,7 +66,7 @@ impl ContentController {
         self.server.url()
     }
 
-    /// Isolated `$HOME` directory that the pager should use (keeps its ~/.grok
+    /// Isolated `$HOME` directory that the pager should use (keeps its ~/.intelekt
     /// cache/state out of the real home during tests).
     pub fn home(&self) -> &Path {
         self.home.path()
@@ -75,21 +75,21 @@ impl ContentController {
     /// Env vars to pass to the pager process so it hits the mock server
     /// with telemetry / feedback disabled.
     ///
-    /// Mirrors `xai_grok_test_support::env::test_env_cmd_tokio`.
+    /// Mirrors `intelekt_test_support::env::test_env_cmd_tokio`.
     pub fn env_for_pager(&self) -> Vec<(String, String)> {
         let home = self.home.path().to_string_lossy().into_owned();
         let grok_home = self
             .home
             .path()
-            .join(".grok")
+            .join(".intelekt")
             .to_string_lossy()
             .into_owned();
         vec![
             ("HOME".into(), home),
-            // Explicit GROK_HOME prevents leaking the real user's
+            // Explicit INTELEKT_HOME prevents leaking the real user's
             // config.toml when $HOME alone isn't sufficient (e.g. if
-            // GROK_HOME is set in the test runner's env).
-            ("GROK_HOME".into(), grok_home),
+            // INTELEKT_HOME is set in the test runner's env).
+            ("INTELEKT_HOME".into(), grok_home),
             ("GROK_CLI_CHAT_PROXY_BASE_URL".into(), self.url()),
             ("GROK_XAI_API_BASE_URL".into(), self.url()),
             ("XAI_API_KEY".into(), "test-key-for-ci".into()),
@@ -275,8 +275,8 @@ mod tests {
 
         assert_eq!(get("HOME").as_deref(), content.home().to_str());
         assert_eq!(
-            get("GROK_HOME").as_deref(),
-            content.home().join(".grok").to_str()
+            get("INTELEKT_HOME").as_deref(),
+            content.home().join(".intelekt").to_str()
         );
         assert_eq!(get("GROK_CLI_CHAT_PROXY_BASE_URL"), Some(content.url()));
         assert_eq!(get("GROK_XAI_API_BASE_URL"), Some(content.url()));

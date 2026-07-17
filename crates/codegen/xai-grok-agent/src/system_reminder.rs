@@ -1,4 +1,4 @@
-//! Reminder policy — wraps xai-grok-tools reminder config.
+//! Reminder policy — wraps intelekt-tools reminder config.
 
 /// Default per-prompt fire cap for the runtime turn-end TodoGate. Used
 /// only as the default for `TodoGateConfig`; the runtime consumer reads
@@ -59,7 +59,7 @@ impl Default for TodoNudgeConfig {
 /// The gate inspects `TodoState` after every content-only assistant
 /// message and forces another turn via `<system-reminder>` injection
 /// if pending/unbacked-in-progress todos remain — see
-/// `xai-grok-shell::session::acp_session::evaluate_todo_gate`.
+/// `intelekt-shell::session::acp_session::evaluate_todo_gate`.
 ///
 /// **Disabled by default.** Operators opt in via the remote
 /// `todo_gate_enabled = true` remote settings key, or via the

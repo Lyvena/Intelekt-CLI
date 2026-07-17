@@ -9,7 +9,7 @@ use std::sync::Arc;
 use tokio::sync::oneshot;
 use url::Url;
 use xai_file_utils::queue::{EnqueueOutcome, TraceExportSource, UploadQueue, UploadRetryPolicy};
-use xai_grok_workspace::permission::PermissionEvent;
+use intelekt_workspace::permission::PermissionEvent;
 /// Upload request payload to cloud storage in the background (best-effort, non-blocking).
 ///
 /// Used by the legacy `stream_via_*` path to upload the per-request
@@ -249,9 +249,9 @@ fn record_upload_failure(ctx: &PromptTraceContext, f: UploadFailure<'_>) {
         .bytes, "phase" : f.phase, }
     ));
     if level == UploadFailureLogLevel::Warn {
-        xai_grok_telemetry::unified_log::warn(&msg, sid, log_ctx);
+        intelekt_telemetry::unified_log::warn(&msg, sid, log_ctx);
     } else {
-        xai_grok_telemetry::unified_log::error(&msg, sid, log_ctx);
+        intelekt_telemetry::unified_log::error(&msg, sid, log_ctx);
     }
 }
 /// Increment when making breaking changes to PromptMetadata structure.
@@ -260,10 +260,10 @@ pub(crate) use prod_mc_cli_chat_proxy_types::{
     GCS_SCHEMA_VERSION, LocalSandboxTelemetry, PromptMetadata,
 };
 pub(crate) fn local_sandbox_telemetry() -> Option<LocalSandboxTelemetry> {
-    let profile = xai_grok_sandbox::configured_profile_name()?;
+    let profile = intelekt_sandbox::configured_profile_name()?;
     Some(LocalSandboxTelemetry {
         profile: profile.to_owned(),
-        applied: xai_grok_sandbox::is_active(),
+        applied: intelekt_sandbox::is_active(),
     })
 }
 /// Strip username/password credentials from a git remote URL.
@@ -502,9 +502,9 @@ pub(crate) async fn upload_config(
 /// Uploaded as `plugins.json` alongside other per-turn trace artifacts.
 pub(crate) async fn upload_plugin_state(
     ctx: &PromptTraceContext,
-    registry: Option<&xai_grok_agent::plugins::PluginRegistry>,
+    registry: Option<&intelekt_agent::plugins::PluginRegistry>,
 ) {
-    use xai_grok_agent::plugins::discovery::PluginScope;
+    use intelekt_agent::plugins::discovery::PluginScope;
     /// Serializable plugin entry for trace upload.
     #[derive(serde::Serialize)]
     struct PluginEntry {
@@ -896,7 +896,7 @@ pub(crate) async fn upload_memory_state(ctx: &PromptTraceContext) {
 pub(crate) async fn upload_unified_log(ctx: &PromptTraceContext, wait: UploadWait) {
     let session_id = ctx.session_info.id.0.to_string();
     let log_bytes = match tokio::task::spawn_blocking(move || {
-        xai_grok_telemetry::unified_log::snapshot_session_log(&session_id)
+        intelekt_telemetry::unified_log::snapshot_session_log(&session_id)
     })
     .await
     {
@@ -930,7 +930,7 @@ pub(crate) async fn upload_unified_log(ctx: &PromptTraceContext, wait: UploadWai
     )
     .await;
     let full_log_bytes =
-        tokio::task::spawn_blocking(xai_grok_telemetry::unified_log::snapshot_log).await;
+        tokio::task::spawn_blocking(intelekt_telemetry::unified_log::snapshot_log).await;
     let user_id = ctx
         .auth_manager
         .current_or_expired()
@@ -1010,7 +1010,7 @@ pub(crate) struct SessionStateBuildError {
 /// zero-byte payload the viewer treats as "no history" (harness pairs always
 /// carry ≥1 message, so this is only a safety floor).
 pub(crate) fn build_chat_history_session_state(
-    _messages: &[xai_grok_sampling_types::conversation::ConversationItem],
+    _messages: &[intelekt_sampling_types::conversation::ConversationItem],
 ) -> Result<Vec<u8>, SessionStateBuildError> {
     use flate2::Compression;
     use flate2::write::GzEncoder;
@@ -1099,7 +1099,7 @@ impl TraceExportSource for DynamicResolver {
     ) -> Option<Arc<dyn xai_file_utils::storage_client::Auth401AttributionCallback>> {
         xai_file_utils::gcs::StorageConfig::proxy_attribution(&self.with_auth())
     }
-    fn proxy_credentials(&self) -> Option<Arc<dyn xai_grok_auth::AuthCredentialProvider>> {
+    fn proxy_credentials(&self) -> Option<Arc<dyn intelekt_auth::AuthCredentialProvider>> {
         xai_file_utils::gcs::StorageConfig::proxy_credentials(&self.with_auth())
     }
     fn proxy_http_client(&self) -> Option<reqwest::Client> {
@@ -1208,13 +1208,13 @@ pub(crate) fn spawn_startup_spill_reconcile(
         match queue {
             Some(queue) => {
                 let report =
-                    xai_grok_workspace::recovery::run_startup_recovery(&grok_home, &queue).await;
+                    intelekt_workspace::recovery::run_startup_recovery(&grok_home, &queue).await;
                 tracing::info!(?report, "startup spill recovery complete");
                 queue.cleanup_orphans(xai_file_utils::queue::DEFAULT_MAX_AGE);
             }
             None => {
                 let purged = tokio::task::spawn_blocking(move || {
-                    xai_grok_workspace::recovery::purge_spilled_items(&grok_home)
+                    intelekt_workspace::recovery::purge_spilled_items(&grok_home)
                 })
                 .await;
                 match purged {
@@ -1636,7 +1636,7 @@ mod tests {
             team_id: None,
             client_source: None,
             client_version: None,
-            model: "grok-3".into(),
+            model: "intelekt-3".into(),
             reasoning_effort: None,
             experiment_id: None,
             host_os: "linux".into(),
@@ -2420,7 +2420,7 @@ mod tests {
     }
     #[test]
     fn chat_history_session_state_omits_conversation_items() {
-        use xai_grok_sampling_types::conversation::ConversationItem;
+        use intelekt_sampling_types::conversation::ConversationItem;
         let messages = vec![
             ConversationItem::user("verify whether the change compiles"),
             ConversationItem::assistant("PASS: the change compiles and tests pass"),

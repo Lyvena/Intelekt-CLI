@@ -1,6 +1,6 @@
 //! Shared image re-encoding with PNG+JPEG format selection.
 //!
-//! Both the user-attachment normalizer (`xai-grok-shell`) and the `read_file`
+//! Both the user-attachment normalizer (`intelekt-shell`) and the `read_file`
 //! tool image path use this to compress images under a byte-size cap while
 //! respecting per-caller dimension and quality parameters.
 

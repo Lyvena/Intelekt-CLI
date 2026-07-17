@@ -4256,7 +4256,7 @@ mod tests {
     /// to stdout. Run with:
     ///
     /// ```text
-    /// cargo test -p xai-grok-pager --lib \
+    /// cargo test -p intelekt-pager --lib \
     ///     views::dashboard::render::tests::dashboard_visual_preview -- --ignored --nocapture
     /// ```
     #[test]
@@ -4407,7 +4407,7 @@ mod tests {
     /// Local-only preview of the overlay chrome alone. Run with:
     ///
     /// ```text
-    /// cargo test -p xai-grok-pager --lib \
+    /// cargo test -p intelekt-pager --lib \
     ///     views::dashboard::render::tests::dashboard_overlay_visual_preview \
     ///     -- --ignored --nocapture
     /// ```

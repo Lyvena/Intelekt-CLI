@@ -14,7 +14,7 @@ use crate::terminal::runner::{
     AsyncTerminalRunner, TerminalError, TerminalRunRequest, TerminalRunResult,
 };
 use crate::terminal::{TerminalInfo, TerminalStatus};
-use xai_grok_tools::types::output::{BashOutput, ToolOutput};
+use intelekt_tools::types::output::{BashOutput, ToolOutput};
 
 const DEFAULT_NOTIFICATION_INTERVAL_MS: u64 = 100;
 const READ_BUFFER_SIZE: usize = 8192;
@@ -33,7 +33,7 @@ const READ_BUFFER_SIZE: usize = 8192;
 /// inline `kill_terminal` / `release_terminal` paths. Bounding the wait stops a
 /// wedged child from making the reaper linger; the process is already SIGKILL'd
 /// (and `KillOnDrop` is armed), so the OS / tokio reaper still tears it down
-/// after we stop waiting. Mirrors the bound the `xai-grok-tools` local terminal
+/// after we stop waiting. Mirrors the bound the `intelekt-tools` local terminal
 /// backend already applies to the same call.
 const KILL_REAP_TIMEOUT: Duration = Duration::from_secs(2);
 
@@ -872,7 +872,7 @@ fn spawn_shell_command(
     }
     #[cfg(not(unix))]
     {
-        let inv = xai_grok_config::shell::shell_command_argv(command);
+        let inv = intelekt_config::shell::shell_command_argv(command);
         spawn_with_argv(&inv.program, cwd, env, |cmd| {
             cmd.args(&inv.args).envs(inv.env);
         })
@@ -914,10 +914,10 @@ fn spawn_with_argv(
                 .stderr(Stdio::piped());
 
             #[cfg(target_os = "linux")]
-            if xai_grok_sandbox::should_restrict_child_network() {
+            if intelekt_sandbox::should_restrict_child_network() {
                 // SAFETY: single prctl syscall (async-signal-safe).
                 unsafe {
-                    cmd.pre_exec(|| xai_grok_sandbox::child_net::install_child_network_filter());
+                    cmd.pre_exec(|| intelekt_sandbox::child_net::install_child_network_filter());
                 }
             }
         });
@@ -1048,7 +1048,7 @@ async fn wait_background_completion(
     command: String,
     cwd: String,
 ) {
-    use xai_grok_tools::types::output::{BashOutput, ToolOutput};
+    use intelekt_tools::types::output::{BashOutput, ToolOutput};
 
     // Wait for the process to exit
     loop {
@@ -1189,7 +1189,7 @@ async fn run_output_collector(
 mod tests {
     use super::*;
     use crate::terminal::DEFAULT_OUTPUT_BYTE_LIMIT;
-    use xai_grok_paths::AbsPathBuf;
+    use intelekt_paths::AbsPathBuf;
 
     struct TestNotifier {
         notifications: Mutex<Vec<acp::SessionNotification>>,

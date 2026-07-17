@@ -1,9 +1,9 @@
-//! Memory-system configuration value types, extracted from xai-grok-shell
+//! Memory-system configuration value types, extracted from intelekt-shell
 //! (config dependency inversion).
 //!
 //! These are the leaf `[memory.*]` and `[compaction.*]` sub-config structs.
 //! The `MemoryConfig` aggregate and its `resolve()` loader stay in
-//! `xai-grok-shell` — `resolve()` depends on `toml` and on shell-internal
+//! `intelekt-shell` — `resolve()` depends on `toml` and on shell-internal
 //! flag resolution, and is part of shell's public API (cross-crate caller).
 
 use serde::{Deserialize, Serialize};
@@ -290,7 +290,7 @@ impl Default for MemoryDreamConfig {
 
 /// File watcher configuration for detecting external memory edits (`[memory.watcher]`).
 ///
-/// When enabled, watches `~/.grok/memory/` for `.md` file changes (create,
+/// When enabled, watches `~/.intelekt/memory/` for `.md` file changes (create,
 /// modify, delete) and syncs the index on the next `memory_search` call:
 /// - Created/modified files are reindexed.
 /// - Deleted files have their stale chunks removed from the index.
@@ -318,7 +318,7 @@ impl Default for MemoryWatcherConfig {
 
 /// Garbage collection for orphaned workspace memory directories (`[memory.gc]`).
 ///
-/// On session init, directories under `~/.grok/memory/` are scanned:
+/// On session init, directories under `~/.intelekt/memory/` are scanned:
 /// - `tmp*` dirs: empty ones removed unconditionally, non-empty ones removed
 ///   after 7 days.
 /// - Other workspaces with no session files: removed after `max_age_days`.

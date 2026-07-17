@@ -1,6 +1,6 @@
 //! File watcher for appearance configuration.
 //!
-//! In dev mode, watches ~/.grok/pager.toml for changes and hot-reloads.
+//! In dev mode, watches ~/.intelekt/pager.toml for changes and hot-reloads.
 //! In prod mode, returns static defaults (no file operations).
 use super::config::AppearanceConfig;
 use std::io;
@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use tokio::sync::watch;
 /// Watches for appearance config changes.
 ///
-/// In dev mode: reads from ~/.grok/pager.toml, watches for changes.
+/// In dev mode: reads from ~/.intelekt/pager.toml, watches for changes.
 /// In prod mode: returns static defaults, `.changed()` never fires.
 pub struct ConfigWatcher {
     rx: watch::Receiver<AppearanceConfig>,
@@ -25,7 +25,7 @@ enum WatcherState {
 impl ConfigWatcher {
     /// Start the config watcher.
     ///
-    /// - In dev mode: reads/creates ~/.grok/pager.toml, watches for changes
+    /// - In dev mode: reads/creates ~/.intelekt/pager.toml, watches for changes
     /// - In prod mode: returns default config, no file operations
     pub async fn start() -> io::Result<Self> {
         Self::start_static()
@@ -38,13 +38,13 @@ impl ConfigWatcher {
     pub async fn changed(&mut self) -> Result<(), watch::error::RecvError> {
         self.rx.changed().await
     }
-    /// Path to `$GROK_HOME/pager.toml`.
+    /// Path to `$INTELEKT_HOME/pager.toml`.
     fn pager_config_path() -> PathBuf {
         crate::util::pager_toml_path()
     }
     /// Start with config loaded from disk (prod mode — no hot-reload).
     fn start_static() -> io::Result<Self> {
-        let config = xai_grok_config::user_grok_home()
+        let config = intelekt_config::user_grok_home()
             .and_then(|_| std::fs::read_to_string(Self::pager_config_path()).ok())
             .and_then(|content| {
                 toml::from_str::<super::config::RawAppearanceConfig>(&content)

@@ -18,7 +18,7 @@ use crate::theme::Theme;
 const FIRST_LINES: usize = 5;
 const LAST_LINES: usize = 3;
 
-use xai_grok_tools::implementations::skills::types::skill_name_from_path;
+use intelekt_tools::implementations::skills::types::skill_name_from_path;
 
 /// What kind of non-text media this read produced.
 #[derive(Debug, Clone)]
@@ -485,7 +485,7 @@ mod tests {
 
     #[test]
     fn skill_md_renders_as_skill_label() {
-        let block = ReadToolCallBlock::new("/home/user/.grok/skills/deploy/SKILL.md");
+        let block = ReadToolCallBlock::new("/home/user/.intelekt/skills/deploy/SKILL.md");
         let output = block.output(&make_ctx());
         let text: String = output.lines[0]
             .content
@@ -658,7 +658,7 @@ mod tests {
     fn skill_header_selects_skill_name_only() {
         use crate::scrollback::types::{Selectable, derive_selection_text};
 
-        let block = ReadToolCallBlock::new("/home/user/.grok/skills/deploy/SKILL.md");
+        let block = ReadToolCallBlock::new("/home/user/.intelekt/skills/deploy/SKILL.md");
         let output = block.output(&make_ctx());
         let header = &output.lines[0];
 

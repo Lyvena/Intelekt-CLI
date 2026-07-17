@@ -3,7 +3,7 @@
 //! One `git2` discovery + one cwd→root walk, reused across the many repo-local
 //! config marker checks the folder-trust gate runs back-to-back. Lives in its
 //! own module (rather than `discovery`) because it is a generic repo-walk
-//! primitive consumed cross-crate by `xai-grok-workspace`, not agent-definition
+//! primitive consumed cross-crate by `intelekt-workspace`, not agent-definition
 //! discovery.
 
 use std::path::{Path, PathBuf};
@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 /// and ONE upward walk.
 ///
 /// The folder-trust gate's `repo_configs_present` probes a dozen repo-local
-/// code-exec markers (`.mcp.json`, `.grok/config.toml`, `.claude/settings.json`,
+/// code-exec markers (`.mcp.json`, `.intelekt/config.toml`, `.claude/settings.json`,
 /// project plugin/agent dirs, …) back-to-back on the agent startup path. Each
 /// marker walker used to run its own `discover` + cwd→root walk; sharing one
 /// `RepoDirChain` collapses that to a single traversal (each redundant syscall
@@ -82,7 +82,7 @@ impl RepoDirChain {
 }
 
 /// Whether `path` canonicalizes to the user's home directory. Local (not reused
-/// from `xai-grok-workspace`, which depends on THIS crate) to keep the dep edge
+/// from `intelekt-workspace`, which depends on THIS crate) to keep the dep edge
 /// one-way; backs the home-is-dotfiles guard in [`RepoDirChain::resolve`].
 fn is_home_dir(path: &Path) -> bool {
     let Some(home) = dirs::home_dir() else {

@@ -9,7 +9,7 @@ use std::sync::Arc;
 ///   an `AuthManager` (visibility checks, bundle fetches, tests).
 ///
 /// Deployment key (enterprise) sends bare `Bearer`, routed to management key auth.
-/// User token (xAI users) sends `Bearer` + `X-XAI-Token-Auth: xai-grok-cli`.
+/// User token (xAI users) sends `Bearer` + `X-XAI-Token-Auth: intelekt-cli`.
 /// Deployment key takes precedence when both are present.
 #[derive(Clone)]
 pub struct GrokAuthCredentials {
@@ -66,7 +66,7 @@ impl GrokAuthCredentials {
     /// Error hint for 401 responses, based on which credential was sent.
     pub fn auth_error_hint(&self) -> &'static str {
         if self.deployment_key.is_some() {
-            "Your GROK_DEPLOYMENT_KEY is invalid or expired. Please contact a team admin."
+            "Your INTELEKT_DEPLOYMENT_KEY is invalid or expired. Please contact a team admin."
         } else if self.user_token.is_some() {
             "Your auth token is invalid or expired. Run `grok login` to re-authenticate."
         } else {
@@ -124,7 +124,7 @@ impl GrokAuthCredentials {
                 .header("Authorization", format!("Bearer {}", token))
                 .header(
                     obfstr::obfstr!("X-XAI-Token-Auth"),
-                    obfstr::obfstr!("xai-grok-cli"),
+                    obfstr::obfstr!("intelekt-cli"),
                 )
         } else {
             builder
@@ -133,7 +133,7 @@ impl GrokAuthCredentials {
         builder
     }
 }
-impl xai_grok_auth::HttpAuth for GrokAuthCredentials {
+impl intelekt_auth::HttpAuth for GrokAuthCredentials {
     fn apply(&self, builder: RequestBuilder, base_url: &str) -> RequestBuilder {
         GrokAuthCredentials::apply(self, builder, base_url)
     }

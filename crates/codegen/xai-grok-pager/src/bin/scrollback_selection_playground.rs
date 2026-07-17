@@ -15,13 +15,13 @@ use ratatui::layout::{Constraint, Layout};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
-use xai_grok_pager::scrollback::text_selection::{
+use intelekt_pager::scrollback::text_selection::{
     PersistentTextSelection, RangeHit, ResolvedSelectionModel, SelectionEndpoint, SelectionOrigin,
     configured_word_separators, render_persistent_selection_overlay, url_range_at_col,
     word_boundaries_at_col,
 };
-use xai_grok_pager::scrollback::types::slice_display_cols;
-use xai_grok_pager::scrollback::{RenderBlock, ScratchBuffer, ScrollbackPane, ScrollbackState};
+use intelekt_pager::scrollback::types::slice_display_cols;
+use intelekt_pager::scrollback::{RenderBlock, ScratchBuffer, ScrollbackPane, ScrollbackState};
 
 /// Maximum time (ms) between consecutive clicks to count as a multi-click.
 const MULTI_CLICK_TIMEOUT_MS: u128 = 300;
@@ -32,7 +32,7 @@ const MAX_DISPLAY_TEXT_LEN: usize = 60;
 /// Playground highlight TTL (`hold`/`word_select` → 0; flash → 500ms for visibility).
 fn selection_highlight_duration_ms() -> u64 {
     const PLAYGROUND_FLASH_MS: u64 = 500;
-    if xai_grok_pager::appearance::cache::load_keep_text_selection().holds() {
+    if intelekt_pager::appearance::cache::load_keep_text_selection().holds() {
         0
     } else {
         PLAYGROUND_FLASH_MS
@@ -42,7 +42,7 @@ fn selection_highlight_duration_ms() -> u64 {
 /// Whether double-click does terminal-like word/line selection (`word_select`)
 /// vs. fold toggle, per the unified `keep_text_selection` setting.
 fn double_click_action_label() -> &'static str {
-    if xai_grok_pager::appearance::cache::load_keep_text_selection().selects_word() {
+    if intelekt_pager::appearance::cache::load_keep_text_selection().selects_word() {
         "word_select"
     } else {
         "toggle_fold"
@@ -84,7 +84,7 @@ impl App {
             "I am thinking through how to answer your question before responding.",
         ));
         scrollback.push_block(RenderBlock::agent_message(
-            "I'm Grok Build, an interactive CLI agent built to help with software engineering tasks like coding, debugging, refactoring, and exploring codebases.",
+            "I'm Intelekt CLI, an interactive CLI agent built to help with software engineering tasks like coding, debugging, refactoring, and exploring codebases.",
         ));
         scrollback.push_block(RenderBlock::agent_message(
             "Try drag-selecting text. Double-click toggles fold by default; set Text selection → Word select for double-click word / triple-click line.",

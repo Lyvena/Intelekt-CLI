@@ -17,8 +17,8 @@ use crate::permission::state::{PermissionState, load_state_from_disk, persist_st
 use crate::permission::types::{
     AccessKind, ClientType, Decision, EditPolicy, PermissionCommand, PermissionEvent, PromptPolicy,
 };
-use xai_grok_paths::AbsPathBuf;
-use xai_grok_tools::implementations::grok_build::web_fetch::{
+use intelekt_paths::AbsPathBuf;
+use intelekt_tools::implementations::grok_build::web_fetch::{
     DomainMatcher, domain::normalize_domain,
 };
 
@@ -46,8 +46,8 @@ mod reasons {
 /// Canonical permission-mode string for the uploaded artifact. Matches
 /// `config.ui.permission_mode` (hyphenated) for trace-internal consistency,
 /// deliberately diverging from the telemetry enum's underscore Mixpanel serde.
-fn permission_mode_artifact_str(mode: xai_grok_telemetry::enums::PermissionMode) -> &'static str {
-    use xai_grok_telemetry::enums::PermissionMode;
+fn permission_mode_artifact_str(mode: intelekt_telemetry::enums::PermissionMode) -> &'static str {
+    use intelekt_telemetry::enums::PermissionMode;
     match mode {
         PermissionMode::AlwaysApprove => "always-approve",
         PermissionMode::Auto => "auto",
@@ -949,7 +949,7 @@ fn spawn_permission_manager_with_pin(
         // "Yes, allow all edits during this session".
         //
         // Prior to this change, that choice would set edit_policy=Allow and
-        // persist it to ~/.grok/sessions/<cwd>/permission.toml. This caused
+        // persist it to ~/.intelekt/sessions/<cwd>/permission.toml. This caused
         // the allow to survive full restarts (new grok process, new agent
         // session in the same directory), which did not match the label or
         // user expectation (and did not match upstream session-scoped
@@ -1062,11 +1062,11 @@ fn spawn_permission_manager_with_pin(
                     let request_received = std::time::Instant::now();
                     // Effective mode (yolo wins); stable for the arm (single-threaded actor).
                     let permission_mode = if yolo_mode {
-                        xai_grok_telemetry::enums::PermissionMode::AlwaysApprove
+                        intelekt_telemetry::enums::PermissionMode::AlwaysApprove
                     } else if auto_mode {
-                        xai_grok_telemetry::enums::PermissionMode::Auto
+                        intelekt_telemetry::enums::PermissionMode::Auto
                     } else {
-                        xai_grok_telemetry::enums::PermissionMode::Ask
+                        intelekt_telemetry::enums::PermissionMode::Ask
                     };
                     // Extract tool info for telemetry
                     let tool_id = tool_call_update.tool_call_id.to_string();
@@ -1331,7 +1331,7 @@ fn spawn_permission_manager_with_pin(
                     }
 
                     if matches!(&access, AccessKind::Bash(_))
-                        && xai_grok_sandbox::should_auto_allow_bash()
+                        && intelekt_sandbox::should_auto_allow_bash()
                         && !policy_forced_prompt
                         && !auto_forced_prompt
                     {

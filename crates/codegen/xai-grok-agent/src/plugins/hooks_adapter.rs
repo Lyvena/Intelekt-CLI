@@ -1,17 +1,17 @@
 //! Plugin hooks adapter — pre-filter and source-entry builder.
 //!
 //! This module is a bridge between plugin hook JSON files and the shared
-//! `xai-grok-hooks` runtime.  It pre-filters unsupported events from plugin
+//! `intelekt-hooks` runtime.  It pre-filters unsupported events from plugin
 //! hook files before passing them to `parse_hook_file()`, and injects
 //! plugin-specific environment variables into the resulting `HookSpec` entries.
 //!
 //! This is NOT a second hooks engine — it feeds into the existing
-//! `xai-grok-hooks` crate's parser and runtime.
+//! `intelekt-hooks` crate's parser and runtime.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use xai_grok_hooks::config::{HookSpec, parse_hook_file};
+use intelekt_hooks::config::{HookSpec, parse_hook_file};
 
 use super::manifest::substitute_env_vars;
 
@@ -182,10 +182,10 @@ fn process_hooks_content(
             // config-load time keeps hook env var resolution consistent
             // with managed MCP server resolution and avoids relying on
             // the runtime `sh -c` shell-metachar heuristic in
-            // `xai-grok-hooks::runner::command` for env vars whose
+            // `intelekt-hooks::runner::command` for env vars whose
             // values are already known at load time.
             let substituted = substitute_env_vars(&cmd_str, plugin_root, plugin_data);
-            let expanded = xai_grok_config::expand_env_vars_in_string(&substituted);
+            let expanded = intelekt_config::expand_env_vars_in_string(&substituted);
             if expanded != cmd_str {
                 spec.command = Some(PathBuf::from(expanded));
             }
@@ -494,7 +494,7 @@ mod tests {
     /// (e.g. `${HOME}` / `$HOME`) must be expanded at config-load time
     /// just like managed MCP server commands. Otherwise resolution
     /// depends on the runtime `sh -c` heuristic in
-    /// `xai-grok-hooks::runner::command`, which can fail for hooks
+    /// `intelekt-hooks::runner::command`, which can fail for hooks
     /// whose handler doesn't otherwise contain shell metacharacters.
     /// Plugin hooks must not be double-expanded: a `${CLAUDE_PLUGIN_ROOT}`
     /// reference resolves to the plugin root exactly once, and the result

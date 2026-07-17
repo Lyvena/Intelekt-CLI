@@ -16,7 +16,7 @@
 //! to untrusted multiplexers without an explicit allowlist.
 
 use base64::Engine as _;
-use xai_grok_pager_render::clipboard::{ImageData, osc52_sink_active};
+use intelekt_pager_render::clipboard::{ImageData, osc52_sink_active};
 
 /// OSC body after `ESC ]` for a host image request.
 pub const REQUEST_BODY: &[u8] = b"999;GrokWrapClipboardImage?";
@@ -85,7 +85,7 @@ fn maybe_request_wrap_host_image_with(
 
 fn write_request_osc() -> std::io::Result<()> {
     use std::io::Write;
-    xai_grok_shell::util::with_locked_stderr(|stderr| {
+    intelekt_shell::util::with_locked_stderr(|stderr| {
         stderr.write_all(&request_osc_bytes())?;
         stderr.flush()
     })

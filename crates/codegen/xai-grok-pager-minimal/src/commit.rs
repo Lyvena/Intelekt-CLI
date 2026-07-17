@@ -11,18 +11,18 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::text::Span;
 
-use xai_grok_pager::app::PagerTerminal;
-use xai_grok_pager::app::app_view::{ActiveView, AppView};
-use xai_grok_pager::appearance::AppearanceConfig;
-use xai_grok_pager::minimal_api;
-use xai_grok_pager::render::Renderable;
-use xai_grok_pager::scrollback::block::RenderBlock;
-use xai_grok_pager::scrollback::blocks::ToolCallBlock;
-use xai_grok_pager::scrollback::entry::{EntryId, ScrollbackEntry};
-use xai_grok_pager::scrollback::state::ScrollbackState;
-use xai_grok_pager::scrollback::types::DisplayMode;
-use xai_grok_pager::scrollback::wrappers::EntryRenderer;
-use xai_grok_pager::theme::Theme;
+use intelekt_pager::app::PagerTerminal;
+use intelekt_pager::app::app_view::{ActiveView, AppView};
+use intelekt_pager::appearance::AppearanceConfig;
+use intelekt_pager::minimal_api;
+use intelekt_pager::render::Renderable;
+use intelekt_pager::scrollback::block::RenderBlock;
+use intelekt_pager::scrollback::blocks::ToolCallBlock;
+use intelekt_pager::scrollback::entry::{EntryId, ScrollbackEntry};
+use intelekt_pager::scrollback::state::ScrollbackState;
+use intelekt_pager::scrollback::types::DisplayMode;
+use intelekt_pager::scrollback::wrappers::EntryRenderer;
+use intelekt_pager::theme::Theme;
 
 /// Blank rows emitted after each committed block — and held after each live-tail
 /// entry (`super::live`) — in minimal mode.
@@ -579,9 +579,9 @@ pub fn sync_pending_marks(app: &mut AppView) {
 mod tests {
     use super::*;
     use ratatui::style::Color;
-    use xai_grok_pager::scrollback::block::RenderBlock;
-    use xai_grok_pager::scrollback::entry::ScrollbackEntry;
-    use xai_grok_pager::scrollback::state::ScrollbackState;
+    use intelekt_pager::scrollback::block::RenderBlock;
+    use intelekt_pager::scrollback::entry::ScrollbackEntry;
+    use intelekt_pager::scrollback::state::ScrollbackState;
 
     fn test_cwd() -> &'static std::path::Path {
         std::path::Path::new("/test/session")
@@ -1072,7 +1072,7 @@ mod tests {
     #[test]
     fn terminal_native_lock_paints_only_native_colors() {
         use ratatui::buffer::Buffer;
-        use xai_grok_pager::theme::cache as theme_cache;
+        use intelekt_pager::theme::cache as theme_cache;
 
         let _guard = theme_cache::test_lock()
             .lock()
@@ -1080,7 +1080,7 @@ mod tests {
         struct LockReset;
         impl Drop for LockReset {
             fn drop(&mut self) {
-                xai_grok_pager::theme::cache::set_terminal_native_lock(false);
+                intelekt_pager::theme::cache::set_terminal_native_lock(false);
             }
         }
         let _reset = LockReset;
@@ -1092,19 +1092,19 @@ mod tests {
                   - item one\n- item two\n\n> a quote\n\n```rust\nfn main() { println!(\"hi\"); }\n```";
         use similar::ChangeTag;
         let hunk = vec![
-            xai_grok_pager::diff::DiffLine {
+            intelekt_pager::diff::DiffLine {
                 text: "let x = 1;\n".into(),
                 lo: 1,
                 ln: 1,
                 tag: ChangeTag::Equal,
             },
-            xai_grok_pager::diff::DiffLine {
+            intelekt_pager::diff::DiffLine {
                 text: "let y = 2;\n".into(),
                 lo: 2,
                 ln: 0,
                 tag: ChangeTag::Delete,
             },
-            xai_grok_pager::diff::DiffLine {
+            intelekt_pager::diff::DiffLine {
                 text: "let y = 3;\n".into(),
                 lo: 0,
                 ln: 2,
@@ -1238,7 +1238,7 @@ mod tests {
         use ratatui::buffer::Buffer;
         use ratatui::layout::Rect;
         use similar::ChangeTag;
-        use xai_grok_pager::diff::DiffLine;
+        use intelekt_pager::diff::DiffLine;
 
         let hunk = vec![
             DiffLine {

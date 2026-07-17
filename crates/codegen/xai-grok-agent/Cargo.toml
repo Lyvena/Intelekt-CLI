@@ -1,15 +1,15 @@
 [package]
 license = "Apache-2.0"
-name = "xai-grok-agent"
+name = "intelekt-agent"
 version = "0.1.0"
 edition.workspace = true
 description = "Agent builder, definition parsing, and system prompt assembly"
 
 [dependencies]
 dunce = { workspace = true }
-xai-grok-hooks = { path = "../xai-grok-hooks" }
-xai-grok-sampling-types = { path = "../xai-grok-sampling-types" }
-xai-grok-tools = { path = "../xai-grok-tools" }
+intelekt-hooks = { path = "../intelekt-hooks" }
+intelekt-sampling-types = { path = "../intelekt-sampling-types" }
+intelekt-tools = { path = "../intelekt-tools" }
 xai-token-estimation = { workspace = true }
 minijinja = { version = "2", features = ["custom_syntax"] }
 git2 = { version = "0.20", default-features = false, features = ["vendored-libgit2"] }
@@ -22,7 +22,7 @@ tracing = { workspace = true }
 chrono = { workspace = true }
 ignore = { workspace = true }
 dirs = "6"
-xai-grok-config = { workspace = true }
+intelekt-config = { workspace = true }
 sha2 = { workspace = true }
 strum = { workspace = true }
 thiserror = { workspace = true }

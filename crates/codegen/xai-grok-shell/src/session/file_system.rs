@@ -4,7 +4,7 @@ use anyhow::Result;
 use base64::Engine;
 use chrono::Utc;
 use serde::Serialize;
-use xai_grok_workspace::file_system::{self as wfs, FsReadEncoding};
+use intelekt_workspace::file_system::{self as wfs, FsReadEncoding};
 
 #[derive(Clone, Debug)]
 pub struct FsListParams {

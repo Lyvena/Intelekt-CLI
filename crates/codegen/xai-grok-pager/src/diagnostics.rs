@@ -96,7 +96,7 @@ impl TerminalWarning {
 pub fn summarize_warnings(warnings: &[TerminalWarning]) -> Option<crate::startup::StartupWarning> {
     // Only surface warnings over SSH — locally these tmux misconfigurations
     // don't actually break clipboard, so showing the banner would be noise.
-    let is_ssh = xai_grok_shell::util::clipboard::is_remote_session();
+    let is_ssh = intelekt_shell::util::clipboard::is_remote_session();
     summarize_warnings_inner(warnings, is_ssh)
 }
 
@@ -179,7 +179,7 @@ pub fn collect_startup_warnings(
     // Apple Terminal.app does not support OSC 52. Over SSH, this means
     // clipboard writes can never reach the user's local machine.
     if ctx.brand == TerminalName::AppleTerminal
-        && xai_grok_shell::util::clipboard::is_remote_session()
+        && intelekt_shell::util::clipboard::is_remote_session()
     {
         warnings.push(TerminalWarning::new(
             WarningCategory::UnsupportedTerminal,
@@ -333,7 +333,7 @@ pub fn wezterm_kitty_keyboard_warning(
 }
 
 pub fn sandbox_profile_conflict_warning(workspace: &Path) -> Option<TerminalWarning> {
-    sandbox_profile_conflict_warning_from(xai_grok_sandbox::sandbox_profile_conflicts(workspace))
+    sandbox_profile_conflict_warning_from(intelekt_sandbox::sandbox_profile_conflicts(workspace))
 }
 
 fn sandbox_profile_conflict_warning_from(conflicts: Vec<String>) -> Option<TerminalWarning> {
@@ -348,7 +348,7 @@ fn sandbox_profile_conflict_warning_from(conflicts: Vec<String>) -> Option<Termi
     Some(TerminalWarning {
         category: WarningCategory::SandboxProfileConflict,
         message: format!(
-            "Your project sandbox profile conflicts with user config.\nProfile: {profiles}\nProject config: .grok/sandbox.toml\nUser config: ~/.grok/sandbox.toml"
+            "Your project sandbox profile conflicts with user config.\nProfile: {profiles}\nProject config: .intelekt/sandbox.toml\nUser config: ~/.intelekt/sandbox.toml"
         ),
         fix: Some("Using the user profile instead.".to_string()),
         config_path: None,
@@ -592,8 +592,8 @@ pub fn diagnose_wayland_data_control_live() -> Option<TerminalWarning> {
     let is_wayland = crate::host::DisplayServer::current() == crate::host::DisplayServer::Wayland;
     diagnose_wayland_data_control(
         is_wayland,
-        is_wayland && xai_grok_shell::util::clipboard::wayland_data_control_supported(),
-        is_wayland && xai_grok_shell::util::clipboard::native_tool_name() == "wl-copy",
+        is_wayland && intelekt_shell::util::clipboard::wayland_data_control_supported(),
+        is_wayland && intelekt_shell::util::clipboard::native_tool_name() == "wl-copy",
     )
 }
 

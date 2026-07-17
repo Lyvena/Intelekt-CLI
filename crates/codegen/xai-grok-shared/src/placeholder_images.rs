@@ -1,7 +1,7 @@
 //! Shared helper for resolving `[Image #N: <path>]` placeholders into
 //! image bytes.
 //!
-//! Both the TUI ([`xai_grok_pager::prompt_images`]) and the server-side
+//! Both the TUI ([`intelekt_pager::prompt_images`]) and the server-side
 //! ingestion path ([`crate::session::acp_session`]) need to recover image
 //! bytes when a placeholder lacks an attached `PastedImage` /
 //! `ContentBlock::Image` — e.g. a paste from a previous session's
@@ -37,7 +37,7 @@
 //!   cannot trigger huge sequential syscall chains or memory spikes.
 //!
 //! Wire format: `[Image #<n>: <absolute_path>]` — the producer is
-//! [`xai_grok_pager::prompt_images::display_text`]. The shape of this
+//! [`intelekt_pager::prompt_images::display_text`]. The shape of this
 //! placeholder is part of the chat-history contract — do NOT change
 //! it. The regex requires the literal `": "` separator that the
 //! producer always emits; see [`extract_placeholders`].
@@ -79,7 +79,7 @@ pub const MAX_PLACEHOLDER_AGGREGATE_BYTES: usize = 200 * 1024 * 1024;
 /// `_meta` key under which an attached image's `[Image #N]` display number
 /// is recorded on its ACP image block, so the server can resolve
 /// `[Image #N]` tokens to the right attachment by number rather than list
-/// position (the two diverge — see `AttachedImages` in `xai-grok-tools`).
+/// position (the two diverge — see `AttachedImages` in `intelekt-tools`).
 pub const IMAGE_DISPLAY_NUMBER_META_KEY: &str = "xai.dev/imageDisplayNumber";
 
 /// Build an ACP image-block `_meta` value carrying `display_number` under
@@ -103,7 +103,7 @@ pub fn display_number_from_meta(meta: Option<&agent_client_protocol::Meta>) -> O
 }
 
 /// Build the per-turn `[Image #N]` → reference registry (see
-/// [`AttachedImages`](xai_grok_tools::types::resources::AttachedImages))
+/// [`AttachedImages`](intelekt_tools::types::resources::AttachedImages))
 /// from the user's inline attached images.
 ///
 /// The display number comes from each block's `_meta` (set by the TUI),
@@ -172,7 +172,7 @@ pub const DENY_PATH_CONTAINS: &[&str] = &[
 /// `[Image #<digits>: <path>]`.
 ///
 /// * Producer emits exactly `": "` (colon, single space) as the
-///   separator — see [`xai_grok_pager::prompt_images::display_text`].
+///   separator — see [`intelekt_pager::prompt_images::display_text`].
 ///   The regex requires the same; a path token like `[Image #5:foo]`
 ///   does **not** match.
 /// * The path capture excludes `]`, `\n`, and `\r` so the match
@@ -410,7 +410,7 @@ pub const HOME_IMAGE_SUBDIRS: &[&str] = &[
 /// Symlinks: this loader follows symlinks (via `canonicalize`), then
 /// checks the **resolved** path against the prefix allowlist. That is
 /// strictly stronger than the legacy
-/// [`xai_grok_pager::prompt_images::read_image_at_path`], which has no
+/// [`intelekt_pager::prompt_images::read_image_at_path`], which has no
 /// prefix allowlist at all. The new rule applies to both
 /// `[Image #N: <path>]` placeholder recovery callers — the
 /// server-side `handle_prompt` fallback and the TUI orphan-placeholder
@@ -514,7 +514,7 @@ pub fn load_canonical_placeholder_image(
 /// Header-only validation via the shared image_validate helper.
 /// Returns the matching MIME type, or `None` if the bytes fail validation.
 fn decode_image_mime(data: &[u8]) -> Option<&'static str> {
-    xai_grok_tools::util::image_validate::validate_image_bytes_with(data, false)
+    intelekt_tools::util::image_validate::validate_image_bytes_with(data, false)
         .ok()
         .map(|(_, _, mime)| mime)
 }
@@ -1262,7 +1262,7 @@ mod tests {
 
     /// Pin the inverse direction. The placeholder text wire
     /// format is the unencoded path produced by
-    /// `xai_grok_pager::prompt_images::display_text`. A
+    /// `intelekt_pager::prompt_images::display_text`. A
     /// percent-encoded path *inside the placeholder text* is **not**
     /// supported — `extract_placeholders` captures the raw `%20`
     /// substring and `canonicalize` rejects the synthetic name. The
@@ -1468,7 +1468,7 @@ mod tests {
         // copy rather than re-decoding a large base64 blob.
         let img = agent_client_protocol::ImageContent::new("AAAA", "image/png")
             .uri(Some(
-                "file:///Users/me/.grok/sessions/s/images/image-1.png".into(),
+                "file:///Users/me/.intelekt/sessions/s/images/image-1.png".into(),
             ))
             .meta(display_number_meta(1));
         let refs = attached_image_references(std::slice::from_ref(&img));
@@ -1476,7 +1476,7 @@ mod tests {
             refs,
             vec![(
                 1,
-                "/Users/me/.grok/sessions/s/images/image-1.png".to_string()
+                "/Users/me/.intelekt/sessions/s/images/image-1.png".to_string()
             )]
         );
     }

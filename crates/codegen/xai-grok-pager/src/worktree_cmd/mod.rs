@@ -7,7 +7,7 @@ use xai_fast_worktree::WorktreeRecord;
 
 use agent_client_protocol as acp;
 use xai_acp_lib::acp_send;
-use xai_grok_shell::agent::config::Config as AgentConfig;
+use intelekt_shell::agent::config::Config as AgentConfig;
 
 /// Local response types matching the ACP response shapes.
 #[derive(Debug, serde::Deserialize)]
@@ -398,7 +398,7 @@ mod tests {
 
     #[test]
     fn ext_envelope_unwraps_success_result() {
-        let json = r#"{"result": {"path": "/home/user/.grok/worktrees.db"}, "error": null}"#;
+        let json = r#"{"result": {"path": "/home/user/.intelekt/worktrees.db"}, "error": null}"#;
         #[derive(serde::Deserialize)]
         struct PathResp {
             path: String,
@@ -406,7 +406,7 @@ mod tests {
         let envelope: ExtEnvelope<PathResp> = serde_json::from_str(json).unwrap();
         assert!(envelope.error.is_none());
         let inner = envelope.result.unwrap();
-        assert_eq!(inner.path, "/home/user/.grok/worktrees.db");
+        assert_eq!(inner.path, "/home/user/.intelekt/worktrees.db");
     }
 
     #[test]

@@ -8,7 +8,7 @@
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, bail};
-use xai_grok_pager_pty_harness::{ContentController, PtyHarness, keys, pager_binary};
+use intelekt_pager_pty_harness::{ContentController, PtyHarness, keys, pager_binary};
 
 const ROWS: u16 = 40;
 const COLS: u16 = 100;

@@ -1235,7 +1235,7 @@ async fn activate_verified_download(download: &VerifiedDownload) -> Result<()> {
     eprintln!();
 
     // Clean up old versioned binaries (keeps current + 1 previous).
-    cleanup_old_downloads(&download_dir, "grok", &download.version).await;
+    cleanup_old_downloads(cleanup_old_downloads(&download_dir, "grok"download_dir, "intelekt", &download.version).await;
     cleanup_old_downloads(&download_dir, "grok-pager", &download.version).await;
 
     // Persist installer to config.toml so future runs auto-detect internal.
@@ -1342,7 +1342,7 @@ async fn swap_managed_bin_links(
     binary_path: &std::path::Path,
     bin_dir: &std::path::Path,
 ) -> Result<std::path::PathBuf> {
-    let grok_name = if cfg!(windows) { "grok.exe" } else { "grok" };
+    let grok_name = if cfg!(windows) { "intelekt.exe" } else { "intelekt" };
     let agent_name = if cfg!(windows) { "agent.exe" } else { "agent" };
     let grok_link = bin_dir.join(grok_name);
     let agent_link = bin_dir.join(agent_name);
@@ -1741,7 +1741,7 @@ async fn sweep_old_exe_backups(old: &std::path::Path) {
 /// and hasn't fully loaded all pages yet — deleting it on macOS causes SIGKILL
 /// because the kernel can no longer verify the code signature).
 ///
-/// `bin_prefix` is the binary name prefix, e.g. `"grok"` or `"grok-pager"`.
+/// `bin_prefix` is the binary name prefix, e.g. `"intelekt"` or `"intelekt-pager"`.
 /// Files must match `{bin_prefix}-{digit}*` to be considered versioned binaries
 /// (this avoids `grok-*` matching `grok-pager-*` or `grok-latest`).
 ///
@@ -1958,7 +1958,7 @@ async fn install_gh_release(target: Option<&str>) -> Result<()> {
     // ~/.grok/downloads/ (legacy layout — skips the grok-latest indirection).
     // Permission errors ignored.
     #[cfg(unix)]
-    for name in ["grok", "agent"] {
+    for name in ["intelekt", "agent"] {
         let system_link = std::path::PathBuf::from(format!("/usr/local/bin/{name}"));
         if let Ok(existing_target) = tokio::fs::read_link(&system_link).await {
             let target_str = existing_target.to_string_lossy();
@@ -1974,7 +1974,7 @@ async fn install_gh_release(target: Option<&str>) -> Result<()> {
     eprintln!();
 
     // Clean up old versioned binaries (keeps current + 1 previous).
-    cleanup_old_downloads(&download_dir, "grok", &version).await;
+    cleanup_old_downloads(cleanup_old_downloads(&download_dir, "grok"download_dir, "intelekt", &version).await;
     cleanup_old_downloads(&download_dir, "grok-pager", &version).await;
 
     // Persist installer to config.toml so future runs auto-detect gh-release.
@@ -2030,7 +2030,7 @@ fn create_temp_npmrc(npm_registry: Option<&str>) -> Result<Option<std::path::Pat
 fn warn_if_other_grok_processes_running() {
     let my_pid = std::process::id().to_string();
     let mut cmd = Command::new("pgrep");
-    cmd.args(["-f", "grok"])
+    cmd.args(["-f", "intelekt"])
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null());
@@ -2451,7 +2451,7 @@ mod tests {
         let target = dir.path().join("binary-v1");
         std::fs::write(&target, "v1").unwrap();
 
-        let link = dir.path().join("grok");
+        let link = dir.path().join("intelekt");
         // No existing symlink — should create one.
         atomic_symlink_swap(&target, &link).await.unwrap();
 
@@ -2470,7 +2470,7 @@ mod tests {
         let target_v2 = dir.path().join("binary-v2");
         std::fs::write(&target_v2, "v2").unwrap();
 
-        let link = dir.path().join("grok");
+        let link = dir.path().join("intelekt");
         // Set up initial symlink to v1.
         std::os::unix::fs::symlink(&target_v1, &link).unwrap();
         assert_eq!(std::fs::read_to_string(&link).unwrap(), "v1");
@@ -2493,7 +2493,7 @@ mod tests {
         let target_v2 = dir.path().join("binary-v2");
         std::fs::write(&target_v2, "v2-content").unwrap();
 
-        let link = dir.path().join("grok");
+        let link = dir.path().join("intelekt");
         std::os::unix::fs::symlink(&target_v1, &link).unwrap();
 
         // Swap to v2.
@@ -2519,7 +2519,7 @@ mod tests {
         let target_v2 = dir.path().join("binary-v2");
         std::fs::write(&target_v2, "v2").unwrap();
 
-        let link = dir.path().join("grok");
+        let link = dir.path().join("intelekt");
         std::os::unix::fs::symlink(&target_v1, &link).unwrap();
         assert!(link.exists(), "link should exist before swap");
 
@@ -2541,7 +2541,7 @@ mod tests {
         let target = dir.path().join("binary-v2");
         std::fs::write(&target, "v2").unwrap();
 
-        let link = dir.path().join("grok");
+        let link = dir.path().join("intelekt");
         // Simulate an old installation where grok is a regular file.
         std::fs::write(&link, "old-binary").unwrap();
 
@@ -2563,7 +2563,7 @@ mod tests {
         let target_v2 = dir.path().join("binary-v2");
         std::fs::write(&target_v2, "v2").unwrap();
 
-        let link = dir.path().join("grok");
+        let link = dir.path().join("intelekt");
         std::os::unix::fs::symlink(&target_v1, &link).unwrap();
         std::os::unix::fs::symlink(&target_v1, link.with_extension("tmp-link")).unwrap();
 
@@ -2578,7 +2578,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let target = dir.path().join("binary-v1");
         std::fs::write(&target, "v1").unwrap();
-        let link = dir.path().join("grok");
+        let link = dir.path().join("intelekt");
         std::os::unix::fs::symlink(&target, &link).unwrap();
 
         // Old- and new-style leftover temp links.
@@ -2606,7 +2606,7 @@ mod tests {
     async fn test_atomic_symlink_swap_multiple_sequential_swaps() {
         // Simulate v1 -> v2 -> v3 -> v4 sequential swaps.
         let dir = tempfile::tempdir().unwrap();
-        let link = dir.path().join("grok");
+        let link = dir.path().join("intelekt");
 
         for i in 1..=4 {
             let target = dir.path().join(format!("binary-v{}", i));
@@ -2641,7 +2641,7 @@ mod tests {
         let binary = dir.path().join("grok-0.1.141");
         std::fs::write(&binary, "v141").unwrap();
 
-        let link = dir.path().join("grok");
+        let link = dir.path().join("intelekt");
         atomic_symlink_swap(&binary, &link).await.unwrap();
 
         assert!(link.is_symlink());
@@ -2663,7 +2663,7 @@ mod tests {
         std::fs::write(downloads.join("grok-0.1.203"), "v203").unwrap();
 
         let rel_target = std::path::Path::new("../downloads/grok-0.1.203");
-        let link = bin.join("grok");
+        let link = bin.join("intelekt");
         atomic_symlink_swap(rel_target, &link).await.unwrap();
 
         assert!(link.is_symlink());
@@ -2719,7 +2719,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
 
         // Create alice's layout
-        let alice = dir.path().join("alice").join(".grok");
+        let alice = dir.path().join("alice").join(".intelekt");
         let alice_downloads = alice.join("downloads");
         let alice_bin = alice.join("bin");
         std::fs::create_dir_all(&alice_downloads).unwrap();
@@ -2728,7 +2728,7 @@ mod tests {
 
         // Create a relative symlink (what the fix produces)
         let rel_target = std::path::Path::new("../downloads/grok-0.1.203");
-        let link = alice_bin.join("grok");
+        let link = alice_bin.join("intelekt");
         atomic_symlink_swap(rel_target, &link).await.unwrap();
 
         // Verify it works at the original location
@@ -2737,7 +2737,7 @@ mod tests {
         // "Bind-mount" to bob: copy the entire .grok tree
         let bob_home = dir.path().join("bob");
         std::fs::create_dir_all(&bob_home).unwrap();
-        let bob = bob_home.join(".grok");
+        let bob = bob_home.join(".intelekt");
         let copy_status = std::process::Command::new("cp")
             .args(["-a", alice.to_str().unwrap(), bob.to_str().unwrap()])
             .status()
@@ -2745,7 +2745,7 @@ mod tests {
         assert!(copy_status.success());
 
         // Verify the symlink resolves at bob's path too
-        let bob_link = bob.join("bin").join("grok");
+        let bob_link = bob.join("bin").join("intelekt");
         assert!(bob_link.is_symlink());
         assert_eq!(
             std::fs::read_link(&bob_link).unwrap(),
@@ -2766,7 +2766,7 @@ mod tests {
         // the swap should still succeed.
         let dir = tempfile::tempdir().unwrap();
 
-        let link = dir.path().join("grok");
+        let link = dir.path().join("intelekt");
         // Create a broken symlink — points to a file that doesn't exist.
         std::os::unix::fs::symlink(dir.path().join("deleted-binary"), &link).unwrap();
         assert!(link.is_symlink());
@@ -2881,7 +2881,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.145").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.145").await;
 
         // Current must survive.
         assert!(d.join("grok-0.1.145-macos-aarch64").exists(), "current");
@@ -2920,7 +2920,7 @@ mod tests {
         // Cleanup only grok — pager files must be untouched.
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         assert!(d.join("grok-0.1.141-macos-aarch64").exists());
         assert!(d.join("grok-0.1.140-macos-aarch64").exists()); // only old, kept as N-1
@@ -2969,7 +2969,7 @@ mod tests {
         std::fs::write(d.join("grok-0.1.142-macos-aarch64.77-0.tmp"), "inflight").unwrap();
         std::fs::write(d.join("grok-0.1.141-macos-aarch64"), "current").unwrap();
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         assert!(
             !d.join("grok-0.1.140-macos-aarch64.tmp").exists(),
@@ -3004,7 +3004,7 @@ mod tests {
         // download into place (e.g. a rollback install racing an upgrade).
         std::fs::write(d.join("grok-0.1.138-macos-aarch64"), "in-flight").unwrap();
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         assert!(d.join("grok-0.1.141-macos-aarch64").exists(), "current");
         assert!(d.join("grok-0.1.140-macos-aarch64").exists(), "N-1 kept");
@@ -3031,7 +3031,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         assert!(
             d.join("grok-latest").exists(),
@@ -3046,7 +3046,7 @@ mod tests {
         // Should not panic or error on empty directory.
         make_all_stale(dir.path());
 
-        cleanup_old_downloads(dir.path(), "grok", "0.1.141").await;
+        cleanup_old_downloads(dir.path(), "intelekt", "0.1.141").await;
     }
 
     #[tokio::test]
@@ -3062,7 +3062,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.14").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.14").await;
 
         // Current must survive.
         assert!(
@@ -3125,7 +3125,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         assert!(d.join("grok-0.1.141").exists(), "current");
         assert!(d.join("grok-0.1.140").exists(), "N-1 kept");
@@ -3148,7 +3148,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.150-alpha.1").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.150-alpha.1").await;
 
         // Current must survive.
         assert!(
@@ -3185,7 +3185,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.150").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.150").await;
 
         // Current must survive.
         assert!(d.join("grok-0.1.150-macos-aarch64").exists(), "current");
@@ -3750,7 +3750,7 @@ mod tests {
         // Invalid version string → cleanup must early-return without deleting.
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "not-a-version").await;
+        cleanup_old_downloads(d, "intelekt", "not-a-version").await;
         assert!(d.join("grok-0.1.140-macos-aarch64").exists());
         assert!(d.join("grok-0.1.141-macos-aarch64").exists());
     }
@@ -3760,7 +3760,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let missing = dir.path().join("does-not-exist");
         // Must not panic when the directory doesn't exist.
-        cleanup_old_downloads(&missing, "grok", "0.1.141").await;
+        cleanup_old_downloads(cleanup_old_downloads(&missing, "grok"missing, "intelekt", "0.1.141").await;
     }
 
     #[tokio::test]
@@ -3776,7 +3776,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         // grok-latest and grok-pager-* must be untouched.
         assert!(d.join("grok-latest").exists());
@@ -3794,7 +3794,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         assert!(
             d.join("grok-9garbage-macos-aarch64").exists(),
@@ -3811,7 +3811,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         assert!(d.join("grok-0.1.141-macos-aarch64").exists());
     }
@@ -3825,7 +3825,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         // Only one old version → keep it as N-1.
         assert!(d.join("grok-0.1.140-macos-aarch64").exists(), "N-1 kept");
@@ -3845,7 +3845,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         assert!(d.join("README.md").exists());
         assert!(d.join("config.toml").exists());
@@ -3865,7 +3865,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         // Both platform variants of current must survive.
         assert!(d.join("grok-0.1.141-macos-aarch64").exists());
@@ -3888,7 +3888,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         assert!(!d.join("grok-junk.tmp").exists(), "junk tmp deleted");
         assert!(
@@ -3910,7 +3910,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         assert!(d.join("grok-0.1.141-macos-aarch64").exists(), "current");
         assert!(d.join("grok-0.1.140-macos-aarch64").exists(), "N-1 only");
@@ -3929,7 +3929,7 @@ mod tests {
 
         make_all_stale(d);
 
-        cleanup_old_downloads(d, "grok", "0.1.141").await;
+        cleanup_old_downloads(d, "intelekt", "0.1.141").await;
 
         assert!(d.join("grok-0.1.141-darwin-arm64").exists(), "current");
         assert!(d.join("grok-0.1.140-darwin-arm64").exists(), "N-1");

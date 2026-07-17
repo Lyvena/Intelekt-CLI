@@ -10,7 +10,7 @@ use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
 /// deny still blocks the child — direct read and the `cat .env` shell equivalent.
 #[tokio::test]
 async fn subagent_spawn_context_inherits_parent_permission_handle() {
-    use xai_grok_workspace::permission::types::{
+    use intelekt_workspace::permission::types::{
         PatternMode, PermissionConfig, PermissionRule, RuleAction, ToolFilter,
     };
 
@@ -21,14 +21,14 @@ async fn subagent_spawn_context_inherits_parent_permission_handle() {
             let sid = acp::SessionId::new("parent-permission");
             let (tx, _rx) = tokio::sync::mpsc::unbounded_channel();
             let gateway = GatewaySender::new(tx);
-            let cwd = xai_grok_paths::AbsPathBuf::new(std::path::PathBuf::from("/tmp"))
+            let cwd = intelekt_paths::AbsPathBuf::new(std::path::PathBuf::from("/tmp"))
                 .expect("absolute cwd");
             let (permission_handle, _events_rx) =
-                xai_grok_workspace::permission::spawn_permission_manager(
+                intelekt_workspace::permission::spawn_permission_manager(
                     sid.clone(),
                     gateway,
                     cwd,
-                    xai_grok_workspace::permission::types::ClientType::Generic,
+                    intelekt_workspace::permission::types::ClientType::Generic,
                     Some(PermissionConfig::new(vec![PermissionRule {
                         action: RuleAction::Deny,
                         tool: ToolFilter::Read,
@@ -52,8 +52,8 @@ async fn subagent_spawn_context_inherits_parent_permission_handle() {
 
             // Direct file read and the shell equivalent both hit the parent deny.
             for access in [
-                xai_grok_workspace::permission::AccessKind::Read(Some(".env".into())),
-                xai_grok_workspace::permission::AccessKind::Bash("cat .env".into()),
+                intelekt_workspace::permission::AccessKind::Read(Some(".env".into())),
+                intelekt_workspace::permission::AccessKind::Bash("cat .env".into()),
             ] {
                 let decision = inherited
                     .request(
@@ -67,7 +67,7 @@ async fn subagent_spawn_context_inherits_parent_permission_handle() {
                 assert!(
                     matches!(
                         decision,
-                        xai_grok_workspace::permission::Decision::PolicyDeny(_)
+                        intelekt_workspace::permission::Decision::PolicyDeny(_)
                     ),
                     "subagent-inherited handle must enforce parent deny for {access:?}, got {decision:?}"
                 );

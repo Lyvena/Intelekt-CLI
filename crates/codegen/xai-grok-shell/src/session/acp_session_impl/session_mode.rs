@@ -2,7 +2,7 @@
 //! plan-mode reminders and persistence, active-template detection).
 use super::*;
 pub(super) fn prompt_mode_from_session_mode_id(session_mode_id: &acp::SessionModeId) -> PromptMode {
-    use xai_grok_tools::types::SessionMode;
+    use intelekt_tools::types::SessionMode;
     match SessionMode::from_id(session_mode_id.0.as_ref()) {
         SessionMode::Plan => PromptMode::Plan,
         SessionMode::Ask => PromptMode::Ask,
@@ -28,7 +28,7 @@ impl SessionActor {
         false
     }
     pub(super) async fn handle_session_mode(&self, session_mode_id: acp::SessionModeId) {
-        use xai_grok_tools::types::SessionMode;
+        use intelekt_tools::types::SessionMode;
         let prompt_mode = prompt_mode_from_session_mode_id(&session_mode_id);
         *self.current_prompt_mode.lock() = prompt_mode;
         let mode = SessionMode::from_id(session_mode_id.0.as_ref());
@@ -48,10 +48,10 @@ impl SessionActor {
             if entered && turn_in_flight {
                 self.activate_plan_mode_mid_turn().await;
             }
-            xai_grok_telemetry::session_ctx::log_event(
-                xai_grok_telemetry::events::PlanModeToggled {
+            intelekt_telemetry::session_ctx::log_event(
+                intelekt_telemetry::events::PlanModeToggled {
                     enabled: true,
-                    trigger: xai_grok_telemetry::events::PlanModeTrigger::User,
+                    trigger: intelekt_telemetry::events::PlanModeTrigger::User,
                     turn_in_flight,
                     was_previously_active: !entered,
                 },
@@ -82,10 +82,10 @@ impl SessionActor {
                 session_id = % self.session_info.id.0, new_mode = % session_mode_id.0,
                 turn_in_flight, "Plan mode toggled OFF"
             );
-            xai_grok_telemetry::session_ctx::log_event(
-                xai_grok_telemetry::events::PlanModeToggled {
+            intelekt_telemetry::session_ctx::log_event(
+                intelekt_telemetry::events::PlanModeToggled {
                     enabled: false,
-                    trigger: xai_grok_telemetry::events::PlanModeTrigger::User,
+                    trigger: intelekt_telemetry::events::PlanModeTrigger::User,
                     turn_in_flight,
                     was_previously_active: true,
                 },
@@ -100,7 +100,7 @@ impl SessionActor {
             "browser_use" => Some(AgentDefinition::browser_use()),
             name => {
                 let cwd = self.tool_context.cwd.as_path();
-                xai_grok_agent::discovery::by_name_in_cwd(name, cwd)
+                intelekt_agent::discovery::by_name_in_cwd(name, cwd)
             }
         };
         if let Some(ref def) = agent_def {

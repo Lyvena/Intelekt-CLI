@@ -56,7 +56,7 @@ pub struct IdentityAttrs {
 }
 
 impl IdentityAttrs {
-    pub fn from_snapshot(snapshot: &xai_grok_auth::CredentialSnapshot) -> Self {
+    pub fn from_snapshot(snapshot: &intelekt_auth::CredentialSnapshot) -> Self {
         Self {
             user_id: snapshot.user_id.clone(),
             organization_id: snapshot.organization_id.clone(),

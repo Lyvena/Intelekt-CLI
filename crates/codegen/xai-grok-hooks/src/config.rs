@@ -199,7 +199,7 @@ pub struct HookSpec {
     ///    `GROK_WORKSPACE_ROOT`, `CLAUDE_PROJECT_DIR`) are stripped at
     ///    load time and a tracing warning is emitted.
     /// 2. Plugin-injected vars merged in by the plugin adapter
-    ///    (`xai-grok-agent::plugins::hooks_adapter`). The adapter sets
+    ///    (`intelekt-agent::plugins::hooks_adapter`). The adapter sets
     ///    `GROK_PLUGIN_ROOT`, `CLAUDE_PLUGIN_ROOT`, `GROK_PLUGIN_DATA`,
     ///    and `CLAUDE_PLUGIN_DATA`; the merge overrides any user
     ///    values for those four keys so the plugin contract is intact.
@@ -684,8 +684,8 @@ mod tests {
     fn source_dir_from_file_path() {
         let json =
             r#"{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"x.sh"}]}]}}"#;
-        let (specs, _) = parse_hook_file(json, Path::new("/home/user/.grok/hooks/safety.json"));
-        assert_eq!(specs[0].source_dir, PathBuf::from("/home/user/.grok/hooks"));
+        let (specs, _) = parse_hook_file(json, Path::new("/home/user/.intelekt/hooks/safety.json"));
+        assert_eq!(specs[0].source_dir, PathBuf::from("/home/user/.intelekt/hooks"));
     }
 
     #[test]

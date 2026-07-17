@@ -679,9 +679,9 @@ impl LocalTerminalActor {
         }
 
         #[cfg(target_os = "linux")]
-        if xai_grok_sandbox::should_restrict_child_network() {
+        if intelekt_sandbox::should_restrict_child_network() {
             unsafe {
-                cmd.pre_exec(|| xai_grok_sandbox::child_net::install_child_network_filter());
+                cmd.pre_exec(|| intelekt_sandbox::child_net::install_child_network_filter());
             }
         }
 
@@ -2766,9 +2766,9 @@ fn spawn_shell_command(
         // Filesystem restrictions are already inherited from the process-level
         // Landlock/Seatbelt sandbox — no action needed here for FS.
         #[cfg(target_os = "linux")]
-        if xai_grok_sandbox::should_restrict_child_network() {
+        if intelekt_sandbox::should_restrict_child_network() {
             unsafe {
-                cmd.pre_exec(|| xai_grok_sandbox::child_net::install_child_network_filter());
+                cmd.pre_exec(|| intelekt_sandbox::child_net::install_child_network_filter());
             }
         }
         cmd
@@ -2780,7 +2780,7 @@ fn spawn_shell_command(
             CREATE_BREAKAWAY_FROM_JOB, CREATE_NEW_PROCESS_GROUP, CREATE_NO_WINDOW,
         };
 
-        let inv = xai_grok_config::shell::shell_command_argv(command);
+        let inv = intelekt_config::shell::shell_command_argv(command);
         let mut cmd = tokio::process::Command::new(&inv.program);
         cmd.args(&inv.args)
             .envs(inv.env)

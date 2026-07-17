@@ -188,12 +188,12 @@ async fn get_authenticated_json<T: serde::de::DeserializeOwned>(
     fetch_failed_message: &'static str,
     parse_error_message: &'static str,
 ) -> Result<T, ManagedMcpFetchError> {
-    let resp = match xai_grok_http::shared_client()
+    let resp = match intelekt_http::shared_client()
         .get(url)
         .timeout(std::time::Duration::from_secs(10))
         .header("Authorization", format!("Bearer {}", auth_key))
-        .header("X-XAI-Token-Auth", "xai-grok-cli")
-        .header("x-grok-client-version", xai_grok_version::VERSION)
+        .header("X-XAI-Token-Auth", "intelekt-cli")
+        .header("x-grok-client-version", intelekt_version::VERSION)
         .send()
         .await
     {
@@ -470,12 +470,12 @@ pub async fn call_gateway_tool(
         arguments,
     };
 
-    let resp = match xai_grok_http::shared_client()
+    let resp = match intelekt_http::shared_client()
         .post(&url)
         .timeout(GATEWAY_TOOL_CALL_TIMEOUT)
         .header("Authorization", format!("Bearer {}", auth_key))
-        .header("X-XAI-Token-Auth", "xai-grok-cli")
-        .header("x-grok-client-version", xai_grok_version::VERSION)
+        .header("X-XAI-Token-Auth", "intelekt-cli")
+        .header("x-grok-client-version", intelekt_version::VERSION)
         .json(&request)
         .send()
         .await
@@ -694,22 +694,22 @@ pub async fn get_or_fetch_gateway_tool_catalog(
 ///   `grok_com_slack`   → managed by grok.com
 ///   `my_company_api`   → user-managed (local)
 ///
-/// Single source of truth lives in `xai-grok-workspace` (which matches policy
+/// Single source of truth lives in `intelekt-workspace` (which matches policy
 /// `serverName`s against it); re-exported here so the two never drift.
-pub use xai_grok_workspace::permission::resolution::MANAGED_MCP_PREFIX;
+pub use intelekt_workspace::permission::resolution::MANAGED_MCP_PREFIX;
 
 /// `"Linear"` -> `"grok_com_linear"`. Shares normalization and the
 /// `MANAGED_MCP_NAME_MAX_CHARS` cap with policy matching (`mcp_name_matches`) so
 /// the runtime name and a policy `serverName` never drift.
 pub fn to_managed_name(display_name: &str) -> String {
-    use xai_grok_workspace::permission::resolution::{
+    use intelekt_workspace::permission::resolution::{
         MANAGED_MCP_NAME_MAX_CHARS, normalize_managed_name,
     };
     let raw = format!(
         "{MANAGED_MCP_PREFIX}{}",
         normalize_managed_name(display_name)
     );
-    xai_grok_shell_base::util::truncate(&raw, MANAGED_MCP_NAME_MAX_CHARS).to_string()
+    intelekt_shell_base::util::truncate(&raw, MANAGED_MCP_NAME_MAX_CHARS).to_string()
 }
 
 /// Minutes before token expiry to refresh credentials.

@@ -1,7 +1,7 @@
 //! Capability-mode filtering for session toolsets.
 
-use xai_grok_tools::registry::types::{ToolConfig, ToolServerConfig};
-use xai_grok_tools::types::tool::ToolKind;
+use intelekt_tools::registry::types::{ToolConfig, ToolServerConfig};
+use intelekt_tools::types::tool::ToolKind;
 
 /// Capability mode applied to a session's toolset.
 ///
@@ -170,7 +170,7 @@ pub(crate) fn kind_allowed(mode: CapabilityMode, kind: ToolKind) -> bool {
 mod tests {
     use super::*;
     use crate::session::tool_config::test_support;
-    use xai_grok_tools::types::tool::ToolKind;
+    use intelekt_tools::types::tool::ToolKind;
 
     fn make_cfg(tools: Vec<ToolConfig>) -> ToolServerConfig {
         ToolServerConfig {

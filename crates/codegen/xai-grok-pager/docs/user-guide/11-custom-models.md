@@ -6,7 +6,7 @@ Grok connects to custom model endpoints for alternative providers, self-hosted m
 
 ## Default Models
 
-By default, Grok uses models hosted by SpaceXAI, and new sessions start with `grok-build`. Default models require no configuration. Authenticate with `grok login` or an API key, then start a session.
+By default, Grok uses models hosted by SpaceXAI, and new sessions start with `intelekt-cli`. Default models require no configuration. Authenticate with `grok login` or an API key, then start a session.
 
 List all available models:
 
@@ -21,7 +21,7 @@ grok models
 ### CLI Flag
 
 ```bash
-grok -p "Hello" -m grok-build
+grok -p "Hello" -m intelekt-cli
 ```
 
 ### Slash Command
@@ -29,13 +29,13 @@ grok -p "Hello" -m grok-build
 In the TUI, switch models during a session:
 
 ```
-/model grok-build
+/model intelekt-cli
 ```
 
 Or use the alias:
 
 ```
-/m grok-build
+/m intelekt-cli
 ```
 
 ### Model Picker (Ctrl+M)
@@ -44,11 +44,11 @@ Press `Ctrl+M` from the scrollback pane to open the model picker. It lists all a
 
 ### Config Default
 
-Set a persistent default in `~/.grok/config.toml`:
+Set a persistent default in `~/.intelekt/config.toml`:
 
 ```toml
 [models]
-default = "grok-build"
+default = "intelekt-cli"
 ```
 
 ---
@@ -71,7 +71,7 @@ To send provider-specific authentication or version headers -- for example, Anth
 
 ## Configuring Custom Models
 
-Add custom model endpoints in `~/.grok/config.toml` under `[model.<name>]` sections:
+Add custom model endpoints in `~/.intelekt/config.toml` under `[model.<name>]` sections:
 
 ```toml
 [model.my-model]
@@ -139,11 +139,11 @@ You can override specific fields of built-in models without redefining everythin
 
 ```toml
 # Override only the API key for a default model
-[model.grok-build]
+[model.intelekt-cli]
 api_key = "my-api-key"
 
 # Override temperature and add a custom API key
-[model.grok-build]
+[model.intelekt-cli]
 temperature = 0.5
 api_key = "sk-custom"
 ```
@@ -265,7 +265,7 @@ grok
 models_base_url = "https://api.acme.com/v1"
 
 # Override only the API key for a specific model
-[model.grok-build]
+[model.intelekt-cli]
 api_key = "my-api-key"
 ```
 
@@ -341,9 +341,9 @@ auth_token_ttl = 3600
 default = "company-grok"
 
 [model.company-grok]
-model = "grok-build"
+model = "intelekt-cli"
 base_url = "https://grok-proxy.acme.com/"
-name = "Grok Build Latest (Proxy)"
+name = "Intelekt CLI Latest (Proxy)"
 context_window = 128000
 
 [features]
@@ -375,7 +375,7 @@ curl -s https://api.example.com/v1/models \
 ### Debug Logging
 
 ```bash
-RUST_LOG=debug GROK_LOG_FILE=/tmp/grok.log grok
+RUST_LOG=debug INTELEKT_LOG_FILE=/tmp/grok.log grok
 tail -f /tmp/grok.log
 ```
 

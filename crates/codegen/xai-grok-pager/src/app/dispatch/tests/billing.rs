@@ -201,7 +201,7 @@ fn upsell_non_max_upgrade_url_is_supergrok() {
         .as_deref()
         .unwrap();
     assert!(url.contains("supergrok"), "got: {url}");
-    assert!(url.contains("referrer=grok-build"), "got: {url}");
+    assert!(url.contains("referrer=intelekt-cli"), "got: {url}");
 }
 
 #[test]
@@ -257,7 +257,7 @@ fn upsell_non_max_unified_shows_buy_credits() {
     assert_eq!(q.options[1].label, "Buy more credits");
     assert_eq!(
         q.options[1].description,
-        "Purchase credits to keep using Grok Build"
+        "Purchase credits to keep using Intelekt CLI"
     );
 }
 
@@ -316,7 +316,7 @@ fn is_credit_limit_error_matches_legacy_403_and_pool_402() {
     assert!(is_credit_limit_error(Some(402), "anything"));
     assert!(is_credit_limit_error(
         None,
-        "API error (status 402 Payment Required): Grok Build usage balance exhausted"
+        "API error (status 402 Payment Required): Intelekt CLI usage balance exhausted"
     ));
     assert!(is_credit_limit_error(
         None,
@@ -818,7 +818,7 @@ fn free_usage_upsell_shows_two_options_with_exact_labels() {
         qv.local_kind,
         Some(
             crate::views::question_view::LocalQuestionKind::FreeUsageUpsell {
-                source: xai_grok_telemetry::events::SuperGrokUpsell::FreeUsagePaywall,
+                source: intelekt_telemetry::events::SuperGrokUpsell::FreeUsagePaywall,
             }
         )
     ));
@@ -832,7 +832,7 @@ fn free_usage_upsell_shows_two_options_with_exact_labels() {
         ),
         (
             "Upgrade to SuperGrok Heavy",
-            "Get the most out of Grok Build. Highest usage limits.",
+            "Get the most out of Intelekt CLI. Highest usage limits.",
             Some(UPSELL_URL_UPGRADE),
         ),
     ];
@@ -850,7 +850,7 @@ fn free_usage_upsell_shows_two_options_with_exact_labels() {
 #[test]
 fn free_usage_failure_opens_paywall_modal() {
     use crate::app::acp_handler::apply_session_event_for_test;
-    use xai_grok_shell::extensions::notification::{RetryState, SessionUpdate};
+    use intelekt_shell::extensions::notification::{RetryState, SessionUpdate};
 
     let mut app = test_app_with_agent();
     let id = AgentId(0);
@@ -918,7 +918,7 @@ fn free_usage_translate_local_submit_maps_options() {
     open_free_usage_upsell(agent, None);
     let mut qv = agent.question_view.take().unwrap();
     let kind = || LocalQuestionKind::FreeUsageUpsell {
-        source: xai_grok_telemetry::events::SuperGrokUpsell::FreeUsagePaywall,
+        source: intelekt_telemetry::events::SuperGrokUpsell::FreeUsagePaywall,
     };
 
     for idx in [0, 1] {
@@ -961,7 +961,7 @@ fn restricted_command_submit_opens_two_option_upsell() {
         qv.local_kind,
         Some(
             crate::views::question_view::LocalQuestionKind::FreeUsageUpsell {
-                source: xai_grok_telemetry::events::SuperGrokUpsell::RestrictedCommand,
+                source: intelekt_telemetry::events::SuperGrokUpsell::RestrictedCommand,
             }
         )
     ));
@@ -1167,8 +1167,8 @@ fn credit_limit_upsell_submit_shows_url_when_browser_unavailable() {
     qv.selections[0] = QuestionSelection::Single(Some(1));
     let kind = LocalQuestionKind::CreditLimitUpsell {
         choices: vec![
-            xai_grok_telemetry::events::CreditLimitChoice::UpgradeTier,
-            xai_grok_telemetry::events::CreditLimitChoice::PurchaseCredits,
+            intelekt_telemetry::events::CreditLimitChoice::UpgradeTier,
+            intelekt_telemetry::events::CreditLimitChoice::PurchaseCredits,
         ],
     };
     let InputOutcome::Action(Action::OpenUrl(url)) =

@@ -12,7 +12,7 @@ fn open_extensions_modal_no_session_sets_flag_no_fetches() {
     let effects = dispatch(
         Action::OpenExtensionsModal {
             tab: ExtensionsTab::Hooks,
-            trigger: xai_grok_telemetry::events::ExtensionsModalTrigger::SlashCommand,
+            trigger: intelekt_telemetry::events::ExtensionsModalTrigger::SlashCommand,
         },
         &mut app,
     );
@@ -29,7 +29,7 @@ fn open_extensions_modal_with_session_emits_fetches_no_flag() {
     let effects = dispatch(
         Action::OpenExtensionsModal {
             tab: ExtensionsTab::Hooks,
-            trigger: xai_grok_telemetry::events::ExtensionsModalTrigger::SlashCommand,
+            trigger: intelekt_telemetry::events::ExtensionsModalTrigger::SlashCommand,
         },
         &mut app,
     );
@@ -46,7 +46,7 @@ fn open_extensions_modal_with_session_resets_stale_flag() {
     let effects = dispatch(
         Action::OpenExtensionsModal {
             tab: ExtensionsTab::Hooks,
-            trigger: xai_grok_telemetry::events::ExtensionsModalTrigger::SlashCommand,
+            trigger: intelekt_telemetry::events::ExtensionsModalTrigger::SlashCommand,
         },
         &mut app,
     );
@@ -232,7 +232,7 @@ fn extensions_modal_in_non_project_dir_creates_session() {
     let effects = dispatch(
         Action::OpenExtensionsModal {
             tab: crate::views::extensions_modal::ExtensionsTab::McpServers,
-            trigger: xai_grok_telemetry::events::ExtensionsModalTrigger::SlashCommand,
+            trigger: intelekt_telemetry::events::ExtensionsModalTrigger::SlashCommand,
         },
         &mut app,
     );

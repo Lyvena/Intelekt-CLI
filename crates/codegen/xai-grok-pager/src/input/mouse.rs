@@ -54,7 +54,7 @@ impl ScrollInputMode {
 // REDRAW_CADENCE_MS, DEFAULT_WHEEL_TICK_DETECT_MAX_MS,
 // DEFAULT_TRACKPAD_ACCEL_MAX, ACCEL_MIN_INTERVAL_MS and
 // MIN_LINES_PER_WHEEL_STREAM — are duplicated in
-// `xai-grok-pager-pty-harness/src/scroll_matrix/gestures.rs` (the harness
+// `intelekt-pager-pty-harness/src/scroll_matrix/gestures.rs` (the harness
 // deliberately has no pager dependency). Its gesture tables and invariants
 // are shaped around these default values, so retune the mirrors together
 // with any change here. Runtime may override via `set_redraw_cadence`

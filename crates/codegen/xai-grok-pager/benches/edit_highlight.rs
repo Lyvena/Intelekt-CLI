@@ -19,8 +19,8 @@
 //! file (the worst case a real upgrade pays).
 //!
 //! ```text
-//! cargo bench -p xai-grok-pager --bench edit_highlight
-//! cargo bench -p xai-grok-pager --bench edit_highlight -- edit_hl/upgrade
+//! cargo bench -p intelekt-pager --bench edit_highlight
+//! cargo bench -p intelekt-pager --bench edit_highlight -- edit_hl/upgrade
 //! ```
 
 use std::collections::HashMap;
@@ -33,13 +33,13 @@ use similar::ChangeTag;
 use syntect::highlighting::Style as SyntectStyle;
 use tempfile::TempDir;
 
-use xai_grok_pager::diff::{DiffHunk, DiffLine};
-use xai_grok_pager::scrollback::blocks::tool::{
+use intelekt_pager::diff::{DiffHunk, DiffLine};
+use intelekt_pager::scrollback::blocks::tool::{
     DiffRenderConfig, EDIT_HL_MAX_BYTES, EDIT_HL_MAX_LINES, compute_file_scoped_styles,
     render_diff_hunks_highlighted, render_diff_hunks_with_styles,
 };
-use xai_grok_pager::syntax::{Syntect, get_syntect};
-use xai_grok_pager::theme::Theme;
+use intelekt_pager::syntax::{Syntect, get_syntect};
+use intelekt_pager::theme::Theme;
 
 const SAMPLE_SIZE: usize = 20;
 const SAMPLE_SIZE_HEAVY: usize = 10;

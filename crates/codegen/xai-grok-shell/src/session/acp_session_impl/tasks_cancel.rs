@@ -191,7 +191,7 @@ impl SessionActor {
 
     fn cancel_subagents_for_prompt_id(&self, parent_prompt_id: &str) {
         if let Some(event_tx) = self.tool_context.subagent_event_tx.clone() {
-            use xai_grok_tools::implementations::grok_build::task::types::{
+            use intelekt_tools::implementations::grok_build::task::types::{
                 SubagentCancelRequest, SubagentCancelTarget, SubagentEvent,
             };
             let _ = event_tx.send(SubagentEvent::Cancel(SubagentCancelRequest {
@@ -241,7 +241,7 @@ impl SessionActor {
             .expect("current_prompt_id mutex poisoned")
             .clone();
         {
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "shell.cancel.processing",
                 Some(self.session_info.id.0.as_ref()),
                 Some(serde_json::json!({
@@ -430,7 +430,7 @@ impl SessionActor {
             .borrow()
             .tool_bridge()
             .update_resource(
-                xai_grok_tools::implementations::grok_build::task::types::CurrentPromptIdResource(
+                intelekt_tools::implementations::grok_build::task::types::CurrentPromptIdResource(
                     String::new(),
                 ),
             )

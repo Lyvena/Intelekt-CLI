@@ -1,4 +1,4 @@
-//! Worktree-pool configuration value type, extracted from xai-grok-shell
+//! Worktree-pool configuration value type, extracted from intelekt-shell
 //! (config dependency inversion).
 
 use serde::{Deserialize, Serialize};

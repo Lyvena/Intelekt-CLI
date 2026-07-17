@@ -4,7 +4,7 @@
 use super::*;
 /// Auth-failure detector for tool errors. Matches strictly on HTTP 401
 /// when the error carries a structured status code, mirroring
-/// `SamplingError::is_auth_error` in xai-grok-sampling-types: 403 is
+/// `SamplingError::is_auth_error` in intelekt-sampling-types: 403 is
 /// deliberately excluded because it means "authenticated but forbidden"
 /// (content-safety blocks, ZDR-gated requests, remote settings gates), where
 /// a token refresh would be a no-op and would surface to the client as
@@ -68,12 +68,12 @@ pub(super) async fn call_with_auth_retry<F, Fut>(
     shared_recovery: Option<&tokio::sync::OnceCell<bool>>,
     tool_name: &str,
     mut call: F,
-) -> Result<xai_grok_tools::types::output::ToolRunResult, xai_tool_runtime::ToolError>
+) -> Result<intelekt_tools::types::output::ToolRunResult, xai_tool_runtime::ToolError>
 where
     F: FnMut() -> Fut,
     Fut: std::future::Future<
             Output = Result<
-                xai_grok_tools::types::output::ToolRunResult,
+                intelekt_tools::types::output::ToolRunResult,
                 xai_tool_runtime::ToolError,
             >,
         >,
@@ -99,7 +99,7 @@ where
         call().await
     } else {
         tracing::warn!(tool = tool_name, "auth recovery: tool 401, refresh failed");
-        xai_grok_telemetry::unified_log::warn(
+        intelekt_telemetry::unified_log::warn(
             "auth recovery: tool 401, refresh failed",
             None,
             Some(serde_json::json!({ "tool" : tool_name })),
@@ -211,13 +211,13 @@ impl SessionActor {
         );
         let sid = Some(self.session_info.id.0.as_ref());
         if refresh_active {
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "auth gate: Unknown BYOK on first-party endpoint — session-token refresh kept active",
                 sid,
                 Some(ctx),
             );
         } else {
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 "auth gate: Unknown BYOK on non-first-party endpoint — refresh withheld (may surface stale-token 401)",
                 sid,
                 Some(ctx),
@@ -232,7 +232,7 @@ impl SessionActor {
         #[allow(clippy::items_after_statements)]
         #[derive(Debug)]
         struct TraceContextInjector;
-        impl xai_grok_sampler::HeaderInjector for TraceContextInjector {
+        impl intelekt_sampler::HeaderInjector for TraceContextInjector {
             fn inject(&self, headers: &mut reqwest::header::HeaderMap) {
                 if let Some(tp) = xai_file_utils::trace_context::current_traceparent()
                     && let Ok(v) = reqwest::header::HeaderValue::from_str(&tp)
@@ -248,7 +248,7 @@ impl SessionActor {
                 f.debug_struct("AuthManagerBearerResolver").finish()
             }
         }
-        impl xai_grok_sampler::BearerResolver for AuthManagerBearerResolver {
+        impl intelekt_sampler::BearerResolver for AuthManagerBearerResolver {
             fn current_bearer(&self) -> Option<String> {
                 self.0.current_or_expired().map(|a| a.key)
             }
@@ -257,7 +257,7 @@ impl SessionActor {
             .chat_state_handle
             .get_sampling_config()
             .await
-            .unwrap_or_else(|| xai_grok_sampling_types::SamplingConfig {
+            .unwrap_or_else(|| intelekt_sampling_types::SamplingConfig {
                 base_url: String::new(),
                 model: String::new(),
                 max_completion_tokens: None,
@@ -339,7 +339,7 @@ impl SessionActor {
             bearer_resolver: if use_bearer_resolver {
                 self.auth_manager
                     .as_ref()
-                    .map(|am| -> xai_grok_sampler::SharedBearerResolver {
+                    .map(|am| -> intelekt_sampler::SharedBearerResolver {
                         std::sync::Arc::new(AuthManagerBearerResolver(am.clone()))
                     })
             } else {
@@ -386,7 +386,7 @@ impl SessionActor {
         let (prompt_type, classifier_reasoning_effort) =
             crate::util::config::auto_mode_classifier_defaults(&auto_cfg, effective_supports_re);
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<(
-            Vec<xai_grok_workspace::permission::ClassifierMessage>,
+            Vec<intelekt_workspace::permission::ClassifierMessage>,
             tokio::sync::oneshot::Sender<Result<String, String>>,
         )>();
         let session = Arc::clone(self);
@@ -414,10 +414,10 @@ impl SessionActor {
                     let items = messages
                         .into_iter()
                         .map(|m| match m.role {
-                            xai_grok_workspace::permission::ClassifierMessageRole::System => {
+                            intelekt_workspace::permission::ClassifierMessageRole::System => {
                                 ConversationItem::system(m.text)
                             }
-                            xai_grok_workspace::permission::ClassifierMessageRole::User => {
+                            intelekt_workspace::permission::ClassifierMessageRole::User => {
                                 ConversationItem::user(m.text)
                             }
                         })
@@ -431,13 +431,13 @@ impl SessionActor {
                         temperature: None,
                         max_output_tokens: None,
                         json_schema: Some(
-                            xai_grok_workspace::permission::classifier_output_json_schema(),
+                            intelekt_workspace::permission::classifier_output_json_schema(),
                         ),
                         reasoning_effort: classifier_reasoning_effort,
                         x_grok_conv_id: Some(session_id.clone()),
                         x_grok_req_id: Some(format!("xai-perm-auto-{}", uuid::Uuid::new_v4())),
                         x_grok_session_id: Some(session_id),
-                        x_grok_agent_id: Some(xai_grok_telemetry::id::agent_id()),
+                        x_grok_agent_id: Some(intelekt_telemetry::id::agent_id()),
                         ..ConversationRequest::default()
                     };
                     let fut = sampling_client.conversation_collect(request);
@@ -453,7 +453,7 @@ impl SessionActor {
             }
         });
         let clf =
-            xai_grok_workspace::permission::LlmPermissionClassifier::with_channel(tx, prompt_type);
+            intelekt_workspace::permission::LlmPermissionClassifier::with_channel(tx, prompt_type);
         debug_assert!(
             clf.has_side_query(),
             "channel-wired classifier must report has_side_query"
@@ -472,7 +472,7 @@ impl SessionActor {
     pub(super) async fn resolve_aux_sampler_config(
         &self,
         slug: &str,
-    ) -> Option<xai_grok_sampler::SamplerConfig> {
+    ) -> Option<intelekt_sampler::SamplerConfig> {
         let creds = self.chat_state_handle.get_credentials().await;
         let session_key = self
             .auth_manager
@@ -503,7 +503,7 @@ impl SessionActor {
     async fn resolve_auto_classifier_sampler(
         &self,
         slug: &str,
-    ) -> Option<(xai_grok_sampler::SamplingClient, String)> {
+    ) -> Option<(intelekt_sampler::SamplingClient, String)> {
         let active_session_config = self.reconstruct_full_config().await;
         let mut cfg = self.resolve_aux_sampler_config(slug).await?;
         crate::agent::config::stamp_session_local_sampler_fields(
@@ -513,7 +513,7 @@ impl SessionActor {
             Some(self.max_retries),
         );
         let model = cfg.model.clone();
-        let client = xai_grok_sampler::SamplingClient::new(cfg)
+        let client = intelekt_sampler::SamplingClient::new(cfg)
             .map_err(|e| {
                 tracing::warn!(
                     error = % e,
@@ -531,18 +531,18 @@ impl SessionActor {
     pub(super) async fn prepare_chat_completion(
         &self,
         force_http1: bool,
-    ) -> Result<xai_grok_sampler::SamplingClient, acp::Error> {
+    ) -> Result<intelekt_sampler::SamplingClient, acp::Error> {
         self.refresh_token_if_expired().await;
         let mut full_config = self.reconstruct_full_config().await;
         full_config.force_http1 = force_http1;
         let sampling_client =
-            xai_grok_sampler::SamplingClient::new(full_config).map_err(|e| self.to_acp_error(e))?;
+            intelekt_sampler::SamplingClient::new(full_config).map_err(|e| self.to_acp_error(e))?;
         Ok(sampling_client)
     }
     /// Push a fresh `SamplerConfig` into the per-session sampler actor
     /// before each turn. Mirrors `prepare_chat_completion`'s
     /// auth-refresh + config rebuild, but routes the result to the
-    /// `xai-grok-sampler` instead of constructing a new
+    /// `intelekt-sampler` instead of constructing a new
     /// `OaiCompatClient`.
     ///
     /// Behaviour parity: we run the same `refresh_token_if_expired()`
@@ -562,7 +562,7 @@ impl SessionActor {
             .as_ref()
             .and_then(|am| am.current_or_expired());
         let reauthable = is_reauthable_failure(Some(error_type), message);
-        xai_grok_telemetry::unified_log::warn(
+        intelekt_telemetry::unified_log::warn(
             "turn.terminal_failure",
             Some(self.session_info.id.0.as_ref()),
             Some(serde_json::json!(
@@ -577,9 +577,9 @@ impl SessionActor {
     }
     pub(crate) async fn handle_sampling_failure(
         self: &Arc<Self>,
-        error: xai_grok_sampler::SamplingErrorInfo,
+        error: intelekt_sampler::SamplingErrorInfo,
     ) -> Result<SamplerFailureRecovery, acp::Error> {
-        use xai_grok_sampler::SamplingErrorKind;
+        use intelekt_sampler::SamplingErrorKind;
         if self.should_compact_on_error(&error).await {
             let cw = error
                 .model_metadata
@@ -659,7 +659,7 @@ impl SessionActor {
                     endpoint_is_first_party = gate.endpoint_is_first_party,
                     "auth recovery: sampler 401 not refreshable (api-key auth) — surfacing 401",
                 );
-                xai_grok_telemetry::unified_log::warn(
+                intelekt_telemetry::unified_log::warn(
                     "auth recovery: sampler 401 not eligible (api-key auth)",
                     Some(self.session_info.id.0.as_ref()),
                     Some(serde_json::json!(
@@ -673,7 +673,7 @@ impl SessionActor {
             eligible
         };
         if !matches!(error.kind, SamplingErrorKind::Auth) && error.status_code == Some(401) {
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 "auth recovery: sampler 401 not eligible (non-auth error kind)",
                 Some(self.session_info.id.0.as_ref()),
                 Some(serde_json::json!(
@@ -700,7 +700,7 @@ impl SessionActor {
                         session_id = % self.session_info.id.0, error = % e,
                         "auth recovery: sampler 401, devbox re-mint failed"
                     );
-                    xai_grok_telemetry::unified_log::warn(
+                    intelekt_telemetry::unified_log::warn(
                         "auth recovery: sampler 401, devbox re-mint failed",
                         Some(self.session_info.id.0.as_ref()),
                         Some(serde_json::json!({ "error" : format!("{e}") })),
@@ -717,7 +717,7 @@ impl SessionActor {
                     session_id = % self.session_info.id.0,
                     "auth recovery: sampler 401, recovered, retrying"
                 );
-                xai_grok_telemetry::unified_log::info(
+                intelekt_telemetry::unified_log::info(
                     "auth recovery: sampler 401, recovered, retrying",
                     Some(self.session_info.id.0.as_ref()),
                     None,
@@ -729,7 +729,7 @@ impl SessionActor {
                 session_id = % self.session_info.id.0,
                 "auth recovery: sampler 401, refresh failed"
             );
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 "auth recovery: sampler 401, refresh failed",
                 Some(self.session_info.id.0.as_ref()),
                 None,
@@ -768,7 +768,7 @@ impl SessionActor {
             .map(|a| a.auth_mode)
             .unwrap_or(crate::auth::AuthMode::ApiKey);
         let auth_mode_str = format!("{auth_mode:?}");
-        let client_version = xai_grok_version::VERSION;
+        let client_version = intelekt_version::VERSION;
         if auth_mode == crate::auth::AuthMode::WebLogin {
             let msg = format!(
                 "{detailed_message}\n\n\
@@ -824,7 +824,7 @@ impl SessionActor {
         } else {
             detailed_message
         };
-        let error_type = if xai_grok_sampling_types::is_context_length_error(&error.message) {
+        let error_type = if intelekt_sampling_types::is_context_length_error(&error.message) {
             "context_length"
         } else {
             error.kind.as_str()
@@ -867,7 +867,7 @@ impl SessionActor {
             *self.turn_stream_drained.lock() = Some(tx);
             rx
         };
-        let request_id = xai_grok_sampler::RequestId::random();
+        let request_id = intelekt_sampler::RequestId::random();
         let request_id_str = request_id.as_str().to_string();
         match self
             .sampler_handle
@@ -900,7 +900,7 @@ impl SessionActor {
             }
             Err(rich_err) => {
                 self.turn_stream_drained.lock().take();
-                let info = xai_grok_sampler::SamplingErrorInfo::from(&rich_err);
+                let info = intelekt_sampler::SamplingErrorInfo::from(&rich_err);
                 match self.handle_sampling_failure(info).await? {
                     SamplerFailureRecovery::CompactAndResubmit => {
                         Ok(SamplerTurnOutcome::CompactAndResubmit)
@@ -933,7 +933,7 @@ impl SessionActor {
                 return;
             }
         } else {
-            xai_grok_telemetry::unified_log::debug(
+            intelekt_telemetry::unified_log::debug(
                 "token refresh skipped: no auth manager",
                 Some(self.session_info.id.0.as_ref()),
                 None,

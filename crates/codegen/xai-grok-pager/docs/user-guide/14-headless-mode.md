@@ -21,7 +21,7 @@ Grok processes the prompt, runs any necessary tools, and prints the result to st
 | Flag                    | Description                                           |
 | ----------------------- | ----------------------------------------------------- |
 | `-p, --single <PROMPT>` | The prompt to send (or use `--prompt-json` / `--prompt-file`) |
-| `-m, --model <MODEL>`   | Model to use (e.g., `grok-build`)              |
+| `-m, --model <MODEL>`   | Model to use (e.g., `intelekt-cli`)              |
 | `-s, --session-id <ID>` | Create a **new** session with this **UUID** (errors if invalid UUID or already in use under the target session directory; does not resume — use `-r`/`-c`) |
 | `--fork-session`        | With `-r`/`-c`, fork into a new session ID instead of appending to the original |
 | `-r, --resume <ID>`     | Resume an existing session (errors if not found)      |
@@ -147,7 +147,7 @@ When the prompt reached the model, the same object also carries spend fields
     "total_tokens": 50103
   },
   "modelUsage": {
-    "grok-build": {
+    "intelekt-cli": {
       "inputTokens": 7210,
       "outputTokens": 1893,
       "cacheReadInputTokens": 41000,
@@ -364,7 +364,7 @@ class GrokChat:
                 "--output-format", "streaming-json" if stream else "json",
                 "--yolo"]
 
-    async def create(self, messages, model="grok-build", stream=False):
+    async def create(self, messages, model="intelekt-cli", stream=False):
         prompt = messages[-1]["content"] if len(messages) == 1 else "\n".join(
             f"{m['role']}: {m['content']}" for m in messages
         )
@@ -454,8 +454,8 @@ Key environment variables that affect headless mode:
 | Variable                        | Description                                                   |
 | ------------------------------- | ------------------------------------------------------------- |
 | `XAI_API_KEY`        | API key for authentication (required when no browser login)   |
-| `GROK_HOME`                    | Override config directory (default: `~/.grok`)                |
-| `GROK_LOG_FILE`                | Path to a log file (used verbatim as the path; works in headless and TUI, honors `RUST_LOG`) |
+| `INTELEKT_HOME`                    | Override config directory (default: `~/.intelekt`)                |
+| `INTELEKT_LOG_FILE`                | Path to a log file (used verbatim as the path; works in headless and TUI, honors `RUST_LOG`) |
 | `RUST_LOG`                     | Log level filter (e.g. `debug`). Headless logs to stderr.     |
 
 For CI environments without browser access, set `XAI_API_KEY` with an API key from [console.x.ai](https://console.x.ai):
@@ -514,7 +514,7 @@ the scope small.
 
 ## File Locations
 
-Grok stores data in `~/.grok` (override with `GROK_HOME`; see [Environment Variables for Headless](#environment-variables-for-headless)):
+Grok stores data in `~/.intelekt` (override with `INTELEKT_HOME`; see [Environment Variables for Headless](#environment-variables-for-headless)):
 
 | Path                     | Contents                              |
 | ------------------------ | ------------------------------------- |
@@ -531,9 +531,9 @@ Grok stores data in `~/.grok` (override with `GROK_HOME`; see [Environment Varia
 | `trace-exports/`         | Session trace exports                 |
 | `worktrees/`             | Git worktree metadata                 |
 
-### Read-Only `~/.grok`
+### Read-Only `~/.intelekt`
 
-For containers or CI, mount `~/.grok` read-only:
+For containers or CI, mount `~/.intelekt` read-only:
 
 - Pre-populate `auth.json` or use `XAI_API_KEY`
 - Session persistence fails silently (ephemeral)
@@ -560,7 +560,7 @@ grok -p "..." --no-auto-update
 case) counts as not set. The agent SDKs
 inject `GROK_DISABLE_AUTOUPDATER=1` for the non-leader agents they spawn (a falsy value in
 the SDK's isolation env keeps updates on), and the stdio agent skips its background update
-unless it runs from the managed install (`$GROK_HOME/bin/grok`).
+unless it runs from the managed install (`$INTELEKT_HOME/bin/grok`).
 
 Update messages go to **stderr**. Stdout stays clean for `--output-format json`. See also [Environment Variables for Headless](#environment-variables-for-headless).
 

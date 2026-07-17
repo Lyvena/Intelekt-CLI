@@ -148,7 +148,7 @@ fn log_effective_worktree_type(
 }
 pub async fn handle(
     agent: &MvpAgent,
-    ops: &xai_grok_workspace::WorkspaceOps,
+    ops: &intelekt_workspace::WorkspaceOps,
     args: &acp::ExtRequest,
 ) -> ExtResult {
     let worktree_type_default = agent.worktree_type;
@@ -221,7 +221,7 @@ pub async fn handle(
             // Dispatch prepare through workspace
             let result = ops
                 .dispatch(
-                    &xai_grok_workspace::workspace_ops::PrepareWorktreeFromWorktreeReq {
+                    &intelekt_workspace::workspace_ops::PrepareWorktreeFromWorktreeReq {
                         inner: req.clone(),
                     },
                     None,
@@ -263,7 +263,7 @@ pub async fn handle(
             let source_path = std::path::Path::new(&req.source_worktree_path);
             let resolved_root = ops
                 .dispatch(
-                    &xai_grok_workspace::workspace_ops::GitResolveRootReq {
+                    &intelekt_workspace::workspace_ops::GitResolveRootReq {
                         cwd: source_path.to_path_buf(),
                     },
                     None,
@@ -274,13 +274,13 @@ pub async fn handle(
             if let Some(git_root) = resolved_root {
                 let vcs_kind = ops
                     .dispatch(
-                        &xai_grok_workspace::workspace_ops::DetectVcsKindReq {
+                        &intelekt_workspace::workspace_ops::DetectVcsKindReq {
                             path: git_root.clone(),
                         },
                         None,
                     )
                     .await
-                    .unwrap_or(xai_grok_workspace::session::git::VcsKind::Git);
+                    .unwrap_or(intelekt_workspace::session::git::VcsKind::Git);
                 if vcs_kind.is_jj() {
                     tracing::info!("using jj workspace for subagent isolation");
                     return to_response(create_jj_workspace(&req).await);
@@ -300,7 +300,7 @@ pub async fn handle(
             );
             let result = ops
                 .dispatch(
-                    &xai_grok_workspace::workspace_ops::CreateWorktreeFromWorktreeSyncReq {
+                    &intelekt_workspace::workspace_ops::CreateWorktreeFromWorktreeSyncReq {
                         inner: req.into_wire(),
                     },
                     None,
@@ -319,7 +319,7 @@ pub async fn handle(
                 req.worktree_type.unwrap_or(worktree_type_default.into()),
             );
             let registry_client = agent.session_registry_client();
-            let agent_id = xai_grok_telemetry::id::agent_id();
+            let agent_id = intelekt_telemetry::id::agent_id();
 
             to_response(
                 resume_session_in_worktree(
@@ -367,7 +367,7 @@ pub async fn handle(
         }
         // ── Worktree management methods ──────────────────────────────────
         "x.ai/git/worktree/list" => {
-            let req: xai_grok_workspace::workspace_ops::WorktreeListReq =
+            let req: intelekt_workspace::workspace_ops::WorktreeListReq =
                 serde_json::from_str(args.params.get())
                     .map_err(|e| acp::Error::internal_error().data(e.to_string()))?;
             let result = ops
@@ -378,7 +378,7 @@ pub async fn handle(
         }
         "x.ai/git/worktree/show" => {
             let req = serde_json::from_str::<ShowWorktreeRequest>(args.params.get())?;
-            let op = xai_grok_workspace::workspace_ops::WorktreeShowReq {
+            let op = intelekt_workspace::workspace_ops::WorktreeShowReq {
                 id_or_path: req.id_or_path,
             };
             let result = ops
@@ -390,7 +390,7 @@ pub async fn handle(
         "x.ai/git/worktree/gc" => {
             let req = serde_json::from_str::<GcWorktreeRequest>(args.params.get())?;
             let max_age_secs = req.max_age.as_deref().map(parse_duration).transpose()?;
-            let op = xai_grok_workspace::workspace_ops::WorktreeGcReq {
+            let op = intelekt_workspace::workspace_ops::WorktreeGcReq {
                 dry_run: req.dry_run,
                 max_age_secs,
                 force: req.force,
@@ -404,7 +404,7 @@ pub async fn handle(
         "x.ai/git/worktree/db/stats" => {
             let result = ops
                 .dispatch(
-                    &xai_grok_workspace::workspace_ops::WorktreeDbStatsReq {},
+                    &intelekt_workspace::workspace_ops::WorktreeDbStatsReq {},
                     None,
                 )
                 .await
@@ -414,7 +414,7 @@ pub async fn handle(
         "x.ai/git/worktree/db/rebuild" => {
             let result = ops
                 .dispatch(
-                    &xai_grok_workspace::workspace_ops::WorktreeDbRebuildReq {},
+                    &intelekt_workspace::workspace_ops::WorktreeDbRebuildReq {},
                     None,
                 )
                 .await
@@ -424,7 +424,7 @@ pub async fn handle(
         "x.ai/git/worktree/db/path" => {
             let result = ops
                 .dispatch(
-                    &xai_grok_workspace::workspace_ops::WorktreeDbPathReq {},
+                    &intelekt_workspace::workspace_ops::WorktreeDbPathReq {},
                     None,
                 )
                 .await
@@ -499,10 +499,10 @@ mod tests {
     #[test]
     fn db_path_response_serializes() {
         let resp = WorktreeDbPathResponse {
-            path: "/home/user/.grok/worktrees.db".into(),
+            path: "/home/user/.intelekt/worktrees.db".into(),
         };
         let json = serde_json::to_string(&resp).unwrap();
-        assert!(json.contains("\"path\":\"/home/user/.grok/worktrees.db\""));
+        assert!(json.contains("\"path\":\"/home/user/.intelekt/worktrees.db\""));
     }
 
     #[test]

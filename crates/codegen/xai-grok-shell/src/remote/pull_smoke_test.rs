@@ -1,6 +1,6 @@
 //! Push → pull round-trip smoke test against the live backend.
 //!
-//! Run with: `cargo test -p xai-grok-shell -- pull_smoke --ignored --nocapture`
+//! Run with: `cargo test -p intelekt-shell -- pull_smoke --ignored --nocapture`
 
 #[cfg(test)]
 mod tests {
@@ -46,7 +46,7 @@ mod tests {
         let metadata = ExportedMetadata {
             title: Some(test_title.into()),
             cwd: test_cwd.clone(),
-            model_id: Some("grok-3".into()),
+            model_id: Some("intelekt-3".into()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
             total_messages: None,

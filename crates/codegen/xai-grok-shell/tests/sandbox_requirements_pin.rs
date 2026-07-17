@@ -1,6 +1,6 @@
 //! Verify `requirements.toml` can pin the base sandbox `profile`.
 
-use xai_grok_shell::agent::config::{ConfigSource, SandboxSettingsConfig};
+use intelekt_shell::agent::config::{ConfigSource, SandboxSettingsConfig};
 
 #[test]
 fn requirements_pin_profile() {

@@ -2,7 +2,7 @@
 //!
 //! Every type in this module is a **placeholder**: the canonical
 //! implementations live in other crates today (`xai-hunk-tracker`,
-//! `xai-grok-shell`, `xai-grok-tools`, ...). We define minimal
+//! `intelekt-shell`, `intelekt-tools`, ...). We define minimal
 //! serializable shapes here so the wire-types crate's API surface
 //! compiles end-to-end. Each type carries a
 //! `// TODO(workspace): align with <canonical type>` comment naming the

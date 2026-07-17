@@ -619,7 +619,7 @@ fn enable_always_approve_sends_response_and_flips_yolo_and_persists() {
 
     let effects = dispatch(
         Action::PermissionSelect(acp::PermissionOptionId::new(Arc::from(
-            xai_grok_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID,
+            intelekt_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID,
         ))),
         &mut app,
     );
@@ -639,7 +639,7 @@ fn enable_always_approve_sends_response_and_flips_yolo_and_persists() {
         })) => {
             assert_eq!(
                 option_id.0.as_ref(),
-                xai_grok_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID,
+                intelekt_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID,
                 "the response must echo the picked option_id",
             );
         }
@@ -650,7 +650,7 @@ fn enable_always_approve_sends_response_and_flips_yolo_and_persists() {
 
     // (2) The dispatcher returns a PersistPermissionMode effect with
     //     canonical "always-approve". This is the bridge that writes
-    //     ~/.grok/config.toml AND fires x.ai/yolo_mode_changed.
+    //     ~/.intelekt/config.toml AND fires x.ai/yolo_mode_changed.
     let persist = effects
         .iter()
         .find_map(|e| match e {
@@ -702,7 +702,7 @@ fn enable_always_approve_is_idempotent_when_yolo_already_on() {
 
     let effects = dispatch(
         Action::PermissionSelect(acp::PermissionOptionId::new(Arc::from(
-            xai_grok_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID,
+            intelekt_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID,
         ))),
         &mut app,
     );
@@ -1373,7 +1373,7 @@ fn cycle_mode_pre_session_normal_to_plan_does_not_persist_permission_mode() {
 ///
 /// **Telemetry-no-op contract.** The
 /// `set_yolo_mode_inner` early-return at the `app.active_view`
-/// guard MUST precede the `xai_grok_telemetry::log_event` call
+/// guard MUST precede the `intelekt_telemetry::log_event` call
 /// — otherwise a no-agent dispatch would leak a `YoloToggled`
 /// telemetry event for an action that never happened. We can't
 /// easily intercept the telemetry library from a unit test, but

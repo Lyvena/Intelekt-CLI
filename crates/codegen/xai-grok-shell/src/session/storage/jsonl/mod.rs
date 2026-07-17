@@ -12,7 +12,7 @@ use std::fs::OpenOptions;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use tokio::io::AsyncWriteExt;
-use xai_grok_workspace::session::file_state::RewindPoint;
+use intelekt_workspace::session::file_state::RewindPoint;
 /// How the adapter resolves the session directory on disk.
 ///
 /// - `FromRoot` (default): computes `{root}/sessions/{urlencoded(cwd)}/{session_id}/`
@@ -446,7 +446,7 @@ impl JsonlStorageAdapter {
     /// backend-search sessions, as `AssistantItem.raw_output: Vec<Value>`.
     /// Newer sessions don't have those fields on `AssistantItem` so serde
     /// would silently drop them. We pre-extract them via
-    /// [`xai_grok_sampling_types::upgrade_legacy_reasoning`] and emit
+    /// [`intelekt_sampling_types::upgrade_legacy_reasoning`] and emit
     /// sibling `Reasoning` / `BackendToolCall` items *before* the
     /// corresponding assistant — matching the order
     /// `response_to_conversation_items` would produce. The file on disk
@@ -512,7 +512,7 @@ impl JsonlStorageAdapter {
                 }
             };
             let siblings =
-                xai_grok_sampling_types::upgrade_legacy_reasoning(&raw, &mut sibling_btc_ids_seen);
+                intelekt_sampling_types::upgrade_legacy_reasoning(&raw, &mut sibling_btc_ids_seen);
             for sib in siblings {
                 match &sib {
                     ConversationItem::Reasoning(_) => upgraded_reasoning_count += 1,
@@ -616,7 +616,7 @@ fn transform_session_id_in_update(
 /// 2. Truncates at the last complete turn boundary. A complete turn runs
 ///    `User → Assistant → (matching ToolResults)`, possibly across multiple
 ///    Assistant/ToolResult cycles, with `Reasoning` siblings interleaved
-///    throughout (real grok-build turns emit `[reasoning, assistant, tool
+///    throughout (real intelekt-cli turns emit `[reasoning, assistant, tool
 ///    results, reasoning, assistant, ...]`). The scan treats everything
 ///    except `Assistant` as transparent and only advances the boundary when an
 ///    Assistant closes every tool call it made, so it survives reasoning
@@ -630,7 +630,7 @@ fn transform_session_id_in_update(
 ///
 /// NOTE: this is one of two reasoning-aware turn-boundary scanners that must move
 /// together — the other is `count_complete_turns` in
-/// `xai-grok-subagent-resolution/src/context.rs` (it counts turns in the same
+/// `intelekt-subagent-resolution/src/context.rs` (it counts turns in the same
 /// filtered list during summarization). Keep their notions of a "complete turn"
 /// in sync if the turn item model changes.
 pub(crate) fn fork_filter_chat(items: &mut Vec<ConversationItem>) {
@@ -921,7 +921,7 @@ impl StorageAdapter for JsonlStorageAdapter {
         } else {
             tracing::info!("Creating new session in JSONL");
             let mut summary = Summary::new(info, model_id)?;
-            summary.sandbox_profile = xai_grok_sandbox::configured_profile_name().map(String::from);
+            summary.sandbox_profile = intelekt_sandbox::configured_profile_name().map(String::from);
             self.write_summary_sync(info, &summary)?;
             Ok(summary)
         }
@@ -981,7 +981,7 @@ impl StorageAdapter for JsonlStorageAdapter {
         info: &Info,
         model_id: &acp::ModelId,
         agent_name: Option<&str>,
-        reasoning_effort: Option<Option<xai_grok_sampling_types::ReasoningEffort>>,
+        reasoning_effort: Option<Option<intelekt_sampling_types::ReasoningEffort>>,
     ) -> io::Result<()> {
         self.apply_summary_patch(
             info,
@@ -1236,7 +1236,7 @@ impl StorageAdapter for JsonlStorageAdapter {
     async fn merge_rewind_points_from(&self, info: &Info, target_index: usize) -> io::Result<()> {
         let points = self.load_rewind_points(info).await?;
         let merged =
-            xai_grok_workspace::session::file_state::merge_rewind_points_from(points, target_index);
+            intelekt_workspace::session::file_state::merge_rewind_points_from(points, target_index);
         self.write_jsonl(self.rewind_points_file(info), &merged)
             .await
     }

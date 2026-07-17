@@ -1,5 +1,5 @@
 [package]
-name = "xai-grok-markdown-fuzz"
+name = "intelekt-markdown-fuzz"
 version = "0.0.0"
 publish = false
 edition = "2021"
@@ -13,7 +13,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 
-[dependencies.xai-grok-markdown]
+[dependencies.intelekt-markdown]
 path = ".."
 
 # All render modes: pretty/non-pretty × syntect/no-syntect × full/streaming

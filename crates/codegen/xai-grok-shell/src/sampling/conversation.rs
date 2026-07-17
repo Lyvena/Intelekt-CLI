@@ -1,11 +1,11 @@
 //! API-agnostic conversation representation.
 //!
-//! The canonical types now live in `xai_grok_sampling_types::conversation`.
+//! The canonical types now live in `intelekt_sampling_types::conversation`.
 //! This module re-exports them and adds grok-shell-specific types
 //! (`ConversationRequestTrace`) that depend on internal crate types.
 
 // Re-export everything from the standalone crate.
-pub use xai_grok_sampling_types::conversation::*;
+pub use intelekt_sampling_types::conversation::*;
 
 // ============================================================================
 // grok-shell-specific types (depend on internal crate types)
@@ -13,7 +13,7 @@ pub use xai_grok_sampling_types::conversation::*;
 
 /// Tracing context for conversation requests.
 ///
-/// Stays in `xai-grok-shell` because it references
+/// Stays in `intelekt-shell` because it references
 /// `TraceExportConfig` (a shell-internal type) and the
 /// `ArtifactTracker` from the upload pipeline. The legacy
 /// `stream_via_*` path used `artifact_tracker` to spawn fire-and-
@@ -37,4 +37,4 @@ pub struct ConversationRequestTrace {
 // be stored in `ConversationRequest.trace` and `ChatCompletionRequest.trace`
 // via `Box::new(trace)`.
 //
-// Tests for conversation types now live in xai-grok-sampling-types crate.
+// Tests for conversation types now live in intelekt-sampling-types crate.

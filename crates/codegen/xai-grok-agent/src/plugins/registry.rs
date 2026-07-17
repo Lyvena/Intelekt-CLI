@@ -78,9 +78,9 @@ pub struct LoadedPlugin {
 }
 
 impl LoadedPlugin {
-    /// Data directory for this plugin: `~/.grok/plugin-data/<plugin_id>/`.
+    /// Data directory for this plugin: `~/.intelekt/plugin-data/<plugin_id>/`.
     pub fn data_dir(&self) -> PathBuf {
-        xai_grok_config::grok_home()
+        intelekt_config::grok_home()
             .join("plugin-data")
             .join(&self.id.0)
     }
@@ -466,7 +466,7 @@ impl SharedPluginRegistryHandle {
 /// dedupes on `plugin:<name>`) — so counts equal what actually loads, both
 /// for overlapping dir entries and same-basename dirs at different paths.
 pub fn skill_md_paths(skill_dirs: &[PathBuf]) -> Vec<PathBuf> {
-    use xai_grok_tools::implementations::skills::discovery::{
+    use intelekt_tools::implementations::skills::discovery::{
         find_skill_md_paths, normalize_skill_name,
     };
 
@@ -887,7 +887,7 @@ mod tests {
         let reg = PluginRegistry::from_discovered(vec![dp], &[], &[]);
         let plugin = reg.get("my-plugin").unwrap();
         let data_dir = plugin.data_dir();
-        // Should be under ~/.grok/plugin-data/<plugin_id>/
+        // Should be under ~/.intelekt/plugin-data/<plugin_id>/
         let data_dir_str = data_dir.to_string_lossy();
         assert!(data_dir_str.contains("plugin-data"));
         assert!(data_dir_str.contains("user/"));

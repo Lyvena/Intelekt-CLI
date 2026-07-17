@@ -1,7 +1,7 @@
 //! Interactive playground for the Ctrl+T todo pane (hide-done empty state).
 //!
 //! ```text
-//! cargo run -p xai-grok-pager --bin todo-pane-playground
+//! cargo run -p intelekt-pager --bin todo-pane-playground
 //! ```
 //!
 //! Keys: h = hide/show done (same as real pane), n/p = scenario, Esc/q = quit.
@@ -18,9 +18,9 @@ use ratatui::layout::{Constraint, Layout};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
-use xai_grok_pager::appearance::LayoutConfig;
-use xai_grok_pager::views::todo_pane::TodoPane;
-use xai_grok_shell::tools::{TodoItem, TodoPriority, TodoStatus};
+use intelekt_pager::appearance::LayoutConfig;
+use intelekt_pager::views::todo_pane::TodoPane;
+use intelekt_shell::tools::{TodoItem, TodoPriority, TodoStatus};
 
 type Scenario = (&'static str, &'static str, Vec<TodoItem>);
 

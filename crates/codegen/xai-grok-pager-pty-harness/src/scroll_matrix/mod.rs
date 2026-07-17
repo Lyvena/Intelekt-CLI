@@ -3,7 +3,7 @@
 //! The scroll matrix drives the pager binary in a PTY with
 //! `GROK_SCROLL_LOG` pointed at a tempfile, then validates the pager's
 //! flight-recorder JSONL (producer:
-//! `xai-grok-pager/src/input/scroll_log.rs`) against gesture invariants.
+//! `intelekt-pager/src/input/scroll_log.rs`) against gesture invariants.
 //!
 //! Layers (per-cell flow, executed by [`runner::run_cell`]):
 //! [`session`] spawns the primed pager → the cell's [`gestures`] table is
@@ -23,7 +23,7 @@
 //! **required**, so a rename/removal on the pager side fails deserialization
 //! loudly here (schema-drift tripwire), while unknown fields are tolerated
 //! so additive producer changes don't break older matrix code. The
-//! producer-side twin lives in `xai-grok-pager/src/input/mouse/tests.rs`
+//! producer-side twin lives in `intelekt-pager/src/input/mouse/tests.rs`
 //! (wire-format fixture test asserting the same key set on raw JSON).
 
 pub mod cells;

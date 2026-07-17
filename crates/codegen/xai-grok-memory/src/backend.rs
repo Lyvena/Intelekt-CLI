@@ -12,7 +12,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use xai_grok_tools::types::memory_backend::{MemoryBackend, MemorySearchResult};
+use intelekt_tools::types::memory_backend::{MemoryBackend, MemorySearchResult};
 
 use super::embedding::EmbeddingProvider as _;
 use super::storage::MemoryStorage;
@@ -29,13 +29,13 @@ pub struct MemoryBackendParams {
     /// Session ID for telemetry events.
     pub session_id: String,
     /// Embedding provider config — `None` forces FTS-only fallback everywhere.
-    pub embed_config: Option<xai_grok_config_types::MemoryEmbeddingConfig>,
+    pub embed_config: Option<intelekt_config_types::MemoryEmbeddingConfig>,
     /// Base URL for embedding API calls (CLI proxy).
     pub embed_base_url: String,
     /// API key for embedding API calls.
     pub embed_api_key: Option<String>,
     /// Hybrid search scoring config (weights, thresholds, decay, MMR).
-    pub search_config: xai_grok_config_types::MemorySearchConfig,
+    pub search_config: intelekt_config_types::MemorySearchConfig,
     /// File watcher for sync-on-search — `None` disables external-edit detection.
     pub watcher: Option<Arc<MemoryFileWatcher>>,
     /// Seconds before a stale reindex claim is forcibly released.
@@ -49,8 +49,8 @@ pub struct MemoryBackendParams {
     pub search_source: &'static str,
     /// Dynamic API key provider — when set, `make_embedding_provider()` resolves
     /// the key per-call instead of using the static `embed_api_key`.
-    pub api_key_provider: Option<xai_grok_tools::types::SharedApiKeyProvider>,
-    pub auth_credentials: Option<Arc<dyn xai_grok_auth::AuthCredentialProvider>>,
+    pub api_key_provider: Option<intelekt_tools::types::SharedApiKeyProvider>,
+    pub auth_credentials: Option<Arc<dyn intelekt_auth::AuthCredentialProvider>>,
 }
 
 impl MemoryBackendParams {
@@ -69,9 +69,9 @@ impl MemoryBackendParams {
 }
 
 async fn build_embedding_provider(
-    config: Option<&xai_grok_config_types::MemoryEmbeddingConfig>,
-    auth_credentials: Option<&Arc<dyn xai_grok_auth::AuthCredentialProvider>>,
-    api_key_provider: Option<&xai_grok_tools::types::SharedApiKeyProvider>,
+    config: Option<&intelekt_config_types::MemoryEmbeddingConfig>,
+    auth_credentials: Option<&Arc<dyn intelekt_auth::AuthCredentialProvider>>,
+    api_key_provider: Option<&intelekt_tools::types::SharedApiKeyProvider>,
     static_api_key: Option<&str>,
     base_url: &str,
 ) -> Option<super::embedding::ApiEmbeddingProvider> {
@@ -109,13 +109,13 @@ pub struct MemoryBackendImpl {
     db_path: PathBuf,
     storage: MemoryStorage,
     /// Embedding config — `None` disables vector search (FTS-only fallback).
-    embed_config: Option<xai_grok_config_types::MemoryEmbeddingConfig>,
+    embed_config: Option<intelekt_config_types::MemoryEmbeddingConfig>,
     /// API base URL for embedding requests (cli-chat-proxy).
     embed_base_url: String,
     /// API key for embedding requests.
     embed_api_key: Option<String>,
     /// Search scoring config (weights, min_score, max_results).
-    search_config: xai_grok_config_types::MemorySearchConfig,
+    search_config: intelekt_config_types::MemorySearchConfig,
     /// File watcher for detecting external memory edits.
     watcher: Option<Arc<MemoryFileWatcher>>,
     /// Stale claim threshold for reindex coordination.
@@ -130,9 +130,9 @@ pub struct MemoryBackendImpl {
     /// injection and compaction-recovery backends use their own local counters.
     pub search_counter: std::sync::Arc<std::sync::atomic::AtomicU64>,
     /// Dynamic API key provider for embedding requests.
-    api_key_provider: Option<xai_grok_tools::types::SharedApiKeyProvider>,
+    api_key_provider: Option<intelekt_tools::types::SharedApiKeyProvider>,
     /// Refresh-capable credential provider for embedding HTTP middleware.
-    auth_credentials: Option<Arc<dyn xai_grok_auth::AuthCredentialProvider>>,
+    auth_credentials: Option<Arc<dyn intelekt_auth::AuthCredentialProvider>>,
 }
 
 impl MemoryBackendImpl {
@@ -145,7 +145,7 @@ impl MemoryBackendImpl {
             embed_config: None,
             embed_base_url: String::new(),
             embed_api_key: None,
-            search_config: xai_grok_config_types::MemorySearchConfig::default(),
+            search_config: intelekt_config_types::MemorySearchConfig::default(),
             watcher: None,
             stale_claim_secs: 60,
             session_id: String::new(),
@@ -167,7 +167,7 @@ impl MemoryBackendImpl {
     /// Without this, `search()` falls back to FTS-only.
     pub fn with_embedding(
         mut self,
-        config: xai_grok_config_types::MemoryEmbeddingConfig,
+        config: intelekt_config_types::MemoryEmbeddingConfig,
         base_url: String,
         api_key: Option<String>,
     ) -> Self {
@@ -178,7 +178,7 @@ impl MemoryBackendImpl {
     }
 
     /// Override the search scoring config (weights, limits, etc.).
-    pub fn with_search_config(mut self, config: xai_grok_config_types::MemorySearchConfig) -> Self {
+    pub fn with_search_config(mut self, config: intelekt_config_types::MemorySearchConfig) -> Self {
         self.search_config = config;
         self
     }
@@ -251,7 +251,7 @@ impl MemoryBackendImpl {
     }
 
     /// Returns the search config stored in this backend.
-    pub fn search_config_for_test(&self) -> &xai_grok_config_types::MemorySearchConfig {
+    pub fn search_config_for_test(&self) -> &intelekt_config_types::MemorySearchConfig {
         &self.search_config
     }
 }
@@ -278,7 +278,7 @@ impl MemoryBackend for MemoryBackendImpl {
         let mut index = super::index::MemoryIndex::open_or_create(
             &self.db_path,
             self.storage.clone(),
-            xai_grok_config_types::MemoryIndexConfig::default(),
+            intelekt_config_types::MemoryIndexConfig::default(),
             embed_dims,
         )
         .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
@@ -344,7 +344,7 @@ impl MemoryBackend for MemoryBackendImpl {
                     }
                     Err(e) => {
                         tracing::warn!(
-                            target: xai_grok_telemetry::memory_log::TARGET,
+                            target: intelekt_telemetry::memory_log::TARGET,
                             error = %e,
                             "embedding batch failed during sync-on-search, skipping"
                         );
@@ -361,8 +361,8 @@ impl MemoryBackend for MemoryBackendImpl {
             index.release_claim();
             // Fire watcher-sync telemetry now that we know the embedded count.
             if let Some((dirty_count, reindexed_count, sync_start)) = watcher_sync_stats {
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::memory_telemetry::MemoryWatcherSync {
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::memory_telemetry::MemoryWatcherSync {
                         session_id: self.session_id.clone(),
                         dirty_file_count: dirty_count,
                         claimed: true,
@@ -443,8 +443,8 @@ impl MemoryBackend for MemoryBackendImpl {
         let top_score = results.first().map_or(0.0, |r| r.score);
 
         if results.is_empty() {
-            xai_grok_telemetry::session_ctx::log_event(
-                xai_grok_telemetry::memory_telemetry::MemorySearchEmpty {
+            intelekt_telemetry::session_ctx::log_event(
+                intelekt_telemetry::memory_telemetry::MemorySearchEmpty {
                     session_id: self.session_id.clone(),
                     query_length: query.len(),
                     keyword_count,
@@ -456,8 +456,8 @@ impl MemoryBackend for MemoryBackendImpl {
                 },
             );
         } else {
-            xai_grok_telemetry::session_ctx::log_event(
-                xai_grok_telemetry::memory_telemetry::MemorySearch {
+            intelekt_telemetry::session_ctx::log_event(
+                intelekt_telemetry::memory_telemetry::MemorySearch {
                     session_id: self.session_id.clone(),
                     query_length: query.len(),
                     keyword_count,
@@ -525,7 +525,7 @@ mod factory_tests {
     use crate::index::{MemoryIndex, init_sqlite_vec};
     use crate::storage::MemoryStorage;
     use tempfile::TempDir;
-    use xai_grok_config_types::{MemoryEmbeddingConfig, MemorySearchConfig};
+    use intelekt_config_types::{MemoryEmbeddingConfig, MemorySearchConfig};
 
     fn make_storage(tmp: &TempDir) -> MemoryStorage {
         let global = tmp.path().join("memory");
@@ -562,7 +562,7 @@ mod factory_tests {
         let mut idx = MemoryIndex::open_or_create(
             &db_path,
             storage.clone(),
-            xai_grok_config_types::MemoryIndexConfig::default(),
+            intelekt_config_types::MemoryIndexConfig::default(),
             4,
         )
         .unwrap();
@@ -612,7 +612,7 @@ mod factory_tests {
         let mut idx = MemoryIndex::open_or_create(
             &db_path,
             storage.clone(),
-            xai_grok_config_types::MemoryIndexConfig::default(),
+            intelekt_config_types::MemoryIndexConfig::default(),
             4,
         )
         .unwrap();
@@ -653,11 +653,11 @@ mod factory_tests {
 
         let custom_search = MemorySearchConfig {
             max_results: 7,
-            mmr: xai_grok_config_types::MmrConfig {
+            mmr: intelekt_config_types::MmrConfig {
                 enabled: true,
                 lambda: 0.42,
             },
-            temporal_decay: xai_grok_config_types::TemporalDecayConfig {
+            temporal_decay: intelekt_config_types::TemporalDecayConfig {
                 enabled: true,
                 half_life_days: 14.0,
             },
@@ -826,7 +826,7 @@ mod factory_tests {
         let mut idx = MemoryIndex::open_or_create(
             &db_path,
             storage.clone(),
-            xai_grok_config_types::MemoryIndexConfig::default(),
+            intelekt_config_types::MemoryIndexConfig::default(),
             4,
         )
         .unwrap();
@@ -860,7 +860,7 @@ mod factory_tests {
         let mut idx = MemoryIndex::open_or_create(
             &db_path,
             storage.clone(),
-            xai_grok_config_types::MemoryIndexConfig::default(),
+            intelekt_config_types::MemoryIndexConfig::default(),
             4,
         )
         .unwrap();
@@ -901,7 +901,7 @@ mod factory_tests {
         let mut idx = MemoryIndex::open_or_create(
             &db_path,
             storage.clone(),
-            xai_grok_config_types::MemoryIndexConfig::default(),
+            intelekt_config_types::MemoryIndexConfig::default(),
             4,
         )
         .unwrap();
@@ -1030,7 +1030,7 @@ mod factory_tests {
             let mut idx = MemoryIndex::open_or_create(
                 &db_path,
                 storage.clone(),
-                xai_grok_config_types::MemoryIndexConfig::default(),
+                intelekt_config_types::MemoryIndexConfig::default(),
                 4,
             )
             .unwrap();
@@ -1105,7 +1105,7 @@ mod factory_tests {
     #[tokio::test]
     async fn make_embedding_provider_uses_async_api_key_resolution() {
         use std::sync::atomic::{AtomicU32, Ordering};
-        use xai_grok_tools::types::ApiKeyProvider;
+        use intelekt_tools::types::ApiKeyProvider;
 
         struct AsyncProbe {
             sync_calls: Arc<AtomicU32>,
@@ -1130,7 +1130,7 @@ mod factory_tests {
 
         let sync_calls = Arc::new(AtomicU32::new(0));
         let async_calls = Arc::new(AtomicU32::new(0));
-        let probe: xai_grok_tools::types::SharedApiKeyProvider = Arc::new(AsyncProbe {
+        let probe: intelekt_tools::types::SharedApiKeyProvider = Arc::new(AsyncProbe {
             sync_calls: sync_calls.clone(),
             async_calls: async_calls.clone(),
         });
@@ -1175,7 +1175,7 @@ mod tests {
     use super::*;
     use crate::index::{MemoryIndex, init_sqlite_vec};
     use tempfile::TempDir;
-    use xai_grok_config_types::MemoryIndexConfig;
+    use intelekt_config_types::MemoryIndexConfig;
 
     fn setup_index(tmp: &TempDir) -> (PathBuf, MemoryStorage) {
         init_sqlite_vec();
@@ -1377,7 +1377,7 @@ mod index_embedding_tests {
         let mut idx = MemoryIndex::open_or_create(
             &db_path,
             storage,
-            xai_grok_config_types::MemoryIndexConfig::default(),
+            intelekt_config_types::MemoryIndexConfig::default(),
             4,
         )
         .unwrap();

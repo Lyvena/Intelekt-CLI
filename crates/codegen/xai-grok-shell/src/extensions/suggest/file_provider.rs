@@ -1085,7 +1085,7 @@ mod tests {
         let tmp = tempfile::TempDir::new().unwrap();
         std::fs::write(tmp.path().join("notes.md"), "").unwrap();
 
-        let _env = xai_grok_test_support::EnvGuard::set("GROK_SUGGEST_TEST_DIR", tmp.path());
+        let _env = intelekt_test_support::EnvGuard::set("GROK_SUGGEST_TEST_DIR", tmp.path());
         let ctx = SuggestContext::new(
             "cat $GROK_SUGGEST_TEST_DIR/no".into(),
             "cat $GROK_SUGGEST_TEST_DIR/no".len(),

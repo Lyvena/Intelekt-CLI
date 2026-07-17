@@ -23,7 +23,7 @@ use prod_mc_cli_chat_proxy_types::feedback_types::{
 const CLIENT_VERSION_HEADER: &str = "x-grok-client-version";
 
 // ============================================================================
-// Turn delta wire types (local to xai-grok-shell until cli-chat-proxy catches up)
+// Turn delta wire types (local to intelekt-shell until cli-chat-proxy catches up)
 // ============================================================================
 
 /// Per-turn delta sent at the end of every turn via
@@ -410,13 +410,13 @@ impl FeedbackClient {
         // where the middleware's eager ServerRejected refresh races with every
         // other auth consumer during token-expiry windows.
         reqwest_middleware::ClientBuilder::new(http.clone())
-            .with(xai_grok_auth::AuthRetryMiddleware::new(provider, 0))
+            .with(intelekt_auth::AuthRetryMiddleware::new(provider, 0))
             .build()
     }
 
     fn make_auth_provider(
         credentials: &crate::util::grok_auth_credentials::GrokAuthCredentials,
-    ) -> Arc<dyn xai_grok_auth::AuthCredentialProvider> {
+    ) -> Arc<dyn intelekt_auth::AuthCredentialProvider> {
         if let Some(am) = credentials.auth_manager() {
             Arc::new(
                 crate::auth::credential_provider::ShellAuthCredentialProvider::new(
@@ -430,7 +430,7 @@ impl FeedbackClient {
                 .deployment_key
                 .clone()
                 .or(credentials.user_token.clone());
-            Arc::new(xai_grok_auth::StaticAuthCredentialProvider::new(
+            Arc::new(intelekt_auth::StaticAuthCredentialProvider::new(
                 Box::new(credentials.clone()),
                 wire_bearer,
             ))
@@ -496,7 +496,7 @@ impl FeedbackClient {
 
     fn add_common_headers(&self, builder: RequestBuilder) -> RequestBuilder {
         let builder = builder
-            .header(CLIENT_VERSION_HEADER, xai_grok_version::VERSION)
+            .header(CLIENT_VERSION_HEADER, intelekt_version::VERSION)
             .header(
                 crate::http::CLIENT_MODE_HEADER,
                 crate::http::process_client_mode(),
@@ -504,7 +504,7 @@ impl FeedbackClient {
         // User-token auth requires the companion marker header for proxy
         // routing. Deployment keys do not need it.
         if self.credentials.deployment_key.is_none() {
-            builder.header("X-XAI-Token-Auth", "xai-grok-cli")
+            builder.header("X-XAI-Token-Auth", "intelekt-cli")
         } else {
             builder
         }
@@ -886,8 +886,8 @@ mod tests {
             context_window_usage: 50,
             tool_call_count: 5,
             tools_used: vec!["read_file".to_string(), "search_replace".to_string()],
-            models_used: vec!["grok-3".to_string()],
-            primary_model_id: Some("grok-3".to_string()),
+            models_used: vec!["intelekt-3".to_string()],
+            primary_model_id: Some("intelekt-3".to_string()),
             session_duration_seconds: 120,
             // Latency metrics
             avg_time_to_first_token_ms: 150,
@@ -924,7 +924,7 @@ mod tests {
         assert_eq!(update.session_duration_seconds, Some(120));
         assert_eq!(update.tools_used.len(), 2);
         assert_eq!(update.models_used.len(), 1);
-        assert_eq!(update.primary_model_id, Some("grok-3".to_string()));
+        assert_eq!(update.primary_model_id, Some("intelekt-3".to_string()));
         // New counter assertions
         assert_eq!(update.edit_and_retry_count, Some(2));
         assert_eq!(update.positive_ratings, Some(3));

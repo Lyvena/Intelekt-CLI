@@ -13,8 +13,8 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 
-use xai_grok_pager::theme::Theme;
-use xai_grok_shell::tools::TodoStatus;
+use intelekt_pager::theme::Theme;
+use intelekt_shell::tools::TodoStatus;
 
 /// Default cap on visible todo rows (the last becomes a `+N more` overflow row);
 /// `Ctrl+T` expands past it.
@@ -26,7 +26,7 @@ pub(super) const MAX_TODO_ROWS: u16 = 8;
 /// A new turn that creates fresh pending todos re-shows it immediately. `force`
 /// (Ctrl+T) pins it visible regardless, e.g. to review a finished list.
 pub(super) fn todo_panel_visible(
-    agent: &xai_grok_pager::app::agent_view::AgentView,
+    agent: &intelekt_pager::app::agent_view::AgentView,
     force: bool,
 ) -> bool {
     let todos = agent.todo.todos();
@@ -46,7 +46,7 @@ pub(super) fn todo_panel_visible(
 /// this to size the idle viewport to exactly its content so the prompt sits
 /// right after the committed conversation (no bottom-pin, no gap).
 pub(super) fn todo_panel_height(
-    agent: &xai_grok_pager::app::agent_view::AgentView,
+    agent: &intelekt_pager::app::agent_view::AgentView,
     force: bool,
 ) -> u16 {
     if !todo_panel_visible(agent, force) {
@@ -82,7 +82,7 @@ pub(super) fn render_todo_panel(
 /// (the last row becomes `… +N more` on overflow). Empty when there are no
 /// todos. Mirrors the full-TUI `TodoPane`'s glyphs/colors.
 pub(super) fn todo_panel_lines(
-    agent: &xai_grok_pager::app::agent_view::AgentView,
+    agent: &intelekt_pager::app::agent_view::AgentView,
     max_rows: u16,
     force: bool,
 ) -> Vec<Line<'static>> {
@@ -112,9 +112,9 @@ pub(super) fn todo_panel_lines(
                         .fg(theme.warning)
                         .add_modifier(Modifier::BOLD),
                 ),
-                TodoStatus::Completed => (xai_grok_pager::glyphs::check_mark(), theme.muted()),
+                TodoStatus::Completed => (intelekt_pager::glyphs::check_mark(), theme.muted()),
                 TodoStatus::Cancelled => (
-                    xai_grok_pager::glyphs::ballot_x(),
+                    intelekt_pager::glyphs::ballot_x(),
                     theme.muted().add_modifier(Modifier::CROSSED_OUT),
                 ),
             };
@@ -156,10 +156,10 @@ fn truncate_chars(s: &str, max: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_pager::minimal_api;
-    use xai_grok_shell::tools::{TodoItem, TodoPriority};
+    use intelekt_pager::minimal_api;
+    use intelekt_shell::tools::{TodoItem, TodoPriority};
 
-    fn agent() -> xai_grok_pager::app::agent_view::AgentView {
+    fn agent() -> intelekt_pager::app::agent_view::AgentView {
         minimal_api::test_agent_view(Some("s1"), std::path::PathBuf::from("/tmp"))
     }
 
@@ -179,7 +179,7 @@ mod tests {
 
     #[test]
     fn todo_panel_visibility_auto_hides_when_work_is_done() {
-        use xai_grok_pager::app::agent::AgentState;
+        use intelekt_pager::app::agent::AgentState;
         let mut a = agent();
         // No todos → hidden.
         assert!(!todo_panel_visible(&a, false));

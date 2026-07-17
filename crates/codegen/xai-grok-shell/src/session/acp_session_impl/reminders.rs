@@ -138,8 +138,8 @@ pub(super) fn build_todo_gate_reminder(pending: &[&str], unbacked_in_progress: &
 pub(crate) fn resolve_reminder_policy(
     remote: Option<&crate::util::config::RemoteSettings>,
     todo_gate: bool,
-) -> xai_grok_agent::ReminderPolicy {
-    let mut policy = xai_grok_agent::ReminderPolicy::default();
+) -> intelekt_agent::ReminderPolicy {
+    let mut policy = intelekt_agent::ReminderPolicy::default();
     if let Some(remote) = remote {
         if let Some(enabled) = remote.todo_gate_enabled {
             policy.todo_gate.enabled = enabled;
@@ -182,8 +182,8 @@ pub(crate) const INTERRUPT_REMINDER: &str = "[Request interrupted by user]";
 /// (`{DISCIPLINE_BLOCK}`), but NOT while the goal loop is active — the
 /// continuation directive drives the loop there (see the body).
 pub(super) fn todo_gate_active(
-    policy: &xai_grok_agent::system_reminder::ReminderPolicy,
-    audience: xai_grok_agent::prompt::context::PromptAudience,
+    policy: &intelekt_agent::system_reminder::ReminderPolicy,
+    audience: intelekt_agent::prompt::context::PromptAudience,
     definition: &AgentDefinition,
     goal_harness_enabled: bool,
     goal_status: Option<crate::session::goal_tracker::GoalStatus>,
@@ -237,9 +237,9 @@ impl SessionActor {
         self.push_system_reminder_with_tag(content, "system-reminder");
     }
     /// The active reminder wrapper tag, backed by the canonical tag constants
-    /// in `xai_grok_tools::reminders`.
+    /// in `intelekt_tools::reminders`.
     pub(super) fn reminder_wrapper_tag(&self) -> &'static str {
-        xai_grok_tools::reminders::DEFAULT_REMINDER_TAG
+        intelekt_tools::reminders::DEFAULT_REMINDER_TAG
     }
     /// Push a `<{tag}>`-wrapped user message.
     pub(super) fn push_system_reminder_with_tag(&self, content: &str, tag: &str) {
@@ -256,8 +256,8 @@ impl SessionActor {
         if ids.is_empty() {
             return;
         }
-        use xai_grok_tools::reminders::task_completion::ReportedTaskCompletions;
-        use xai_grok_tools::types::resources::State;
+        use intelekt_tools::reminders::task_completion::ReportedTaskCompletions;
+        use intelekt_tools::types::resources::State;
         let bridge = self.agent.borrow().tool_bridge().clone();
         let resources = bridge.shared_resources().await;
         let mut res = resources.lock().await;
@@ -301,14 +301,14 @@ impl SessionActor {
                     "draining between-turn bash task completions"
                 );
                 let task_output_name =
-                    xai_grok_tools::reminders::task_completion::resolve_task_output_tool_name(
+                    intelekt_tools::reminders::task_completion::resolve_task_output_tool_name(
                         &bridge,
                     )
                     .await;
                 let read_tool_name =
-                    xai_grok_tools::reminders::task_completion::resolve_read_tool_name(&bridge)
+                    intelekt_tools::reminders::task_completion::resolve_read_tool_name(&bridge)
                         .await;
-                let reminder = xai_grok_tools::reminders::task_completion::format_between_turn_bash_completions(
+                let reminder = intelekt_tools::reminders::task_completion::format_between_turn_bash_completions(
                     &bash_completions,
                     task_output_name.as_deref(),
                     read_tool_name.as_deref(),
@@ -319,7 +319,7 @@ impl SessionActor {
         let Some(tx) = &self.tool_context.subagent_event_tx else {
             return;
         };
-        use xai_grok_tools::implementations::grok_build::task::types::{
+        use intelekt_tools::implementations::grok_build::task::types::{
             SubagentCompletionsRequest, SubagentEvent,
         };
         let suppress_ids = self
@@ -358,7 +358,7 @@ impl SessionActor {
             "draining between-turn subagent completions"
         );
         let reminder =
-            xai_grok_tools::reminders::task_completion::format_between_turn_completion_reminder(
+            intelekt_tools::reminders::task_completion::format_between_turn_completion_reminder(
                 &completions,
                 &bridge,
             )
@@ -419,7 +419,7 @@ impl SessionActor {
     /// Turn-end TodoGate config, or `None` when [`todo_gate_active`] is false.
     pub(super) fn todo_gate_policy(
         &self,
-    ) -> Option<xai_grok_agent::system_reminder::TodoGateConfig> {
+    ) -> Option<intelekt_agent::system_reminder::TodoGateConfig> {
         let goal_status = self.goal_tracker.lock().status();
         let agent = self.agent.borrow();
         let policy = agent.reminder_policy();
@@ -450,7 +450,7 @@ impl SessionActor {
     /// held across a suspension point.
     pub(super) async fn collect_todo_gate_input(&self, prompt_id: &str) -> CollectedTodoGateInput {
         use crate::tools::todo::{TodoState, TodoStatus};
-        use xai_grok_tools::types::resources::State;
+        use intelekt_tools::types::resources::State;
         let bridge = self.tool_bridge_handle();
         let todos: Vec<(String, String, TodoStatus)> = bridge
             .read_resource::<State<TodoState>>()
@@ -472,7 +472,7 @@ impl SessionActor {
             .list_background_tasks()
             .await
             .into_iter()
-            .filter(xai_grok_tools::computer::types::TaskSnapshot::is_outstanding)
+            .filter(intelekt_tools::computer::types::TaskSnapshot::is_outstanding)
             .count();
         let backing_task_count = outstanding_live + incomplete_terminal_tasks;
         CollectedTodoGateInput {

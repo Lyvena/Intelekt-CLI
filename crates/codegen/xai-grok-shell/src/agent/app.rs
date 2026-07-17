@@ -251,7 +251,7 @@ where
     W: tokio::io::AsyncWrite + Unpin + Send + 'static,
 {
     let cwd = std::env::current_dir().unwrap_or_default();
-    let workspace_user_dir = xai_grok_agent::prompt::workspace_user::optional_workspace_user_dir();
+    let workspace_user_dir = intelekt_agent::prompt::workspace_user::optional_workspace_user_dir();
     let (watcher, mut skills_rx) = crate::config::watcher::SkillsFileWatcher::start(
         Some(cwd.as_path()),
         workspace_user_dir.as_deref(),
@@ -294,7 +294,7 @@ pub async fn run_stdio_agent(
     register_fs_watch_runtime();
     // Stamp binary version into unified log entries so zombie processes
     // are identifiable by version in diagnostic logs.
-    xai_grok_telemetry::unified_log::set_version(xai_grok_version::VERSION);
+    intelekt_telemetry::unified_log::set_version(intelekt_version::VERSION);
 
     // Clean up orphaned upload queue temp files from previous sessions (best-effort).
     // Uses DEFAULT_MAX_AGE to stay in sync with the upload queue's retry policy.
@@ -430,7 +430,7 @@ async fn run_headless_inner(
     memory_config: Option<crate::config::MemoryConfig>,
 ) -> anyhow::Result<()> {
     register_fs_watch_runtime();
-    xai_grok_telemetry::unified_log::set_version(xai_grok_version::VERSION);
+    intelekt_telemetry::unified_log::set_version(intelekt_version::VERSION);
     // `grok agent [headless]` serves non-TUI automation; stamp proxy requests
     // as headless. IDE-facing `grok agent stdio` stays interactive.
     crate::http::set_process_client_mode_headless();
@@ -544,7 +544,7 @@ async fn run_headless_inner(
         anyhow::bail!("{HEADLESS_NO_SESSION}");
     };
 
-    // Capture the grok build URL for the first-connection callback
+    // Capture the intelekt cli URL for the first-connection callback
     let grok_code_url = format!("{}/build", ctx.grok_ws_origin);
 
     // Create first-connection callback for headless-specific behavior
@@ -553,7 +553,7 @@ async fn run_headless_inner(
             // Print to stderr (not logger) so user sees it
             eprintln!();
             eprintln!(
-                "Open Grok Build: {} (press Enter to open in browser)",
+                "Open Intelekt CLI: {} (press Enter to open in browser)",
                 grok_code_url
             );
             eprintln!();
@@ -696,7 +696,7 @@ async fn migrate_devbox_auth_if_legacy(
     }
 
     info!("Devbox legacy auth detected, attempting migration to OIDC");
-    xai_grok_telemetry::unified_log::info(
+    intelekt_telemetry::unified_log::info(
         "devbox legacy auth migration: starting",
         None,
         Some(serde_json::json!({
@@ -715,7 +715,7 @@ async fn migrate_devbox_auth_if_legacy(
         Ok(new_auth) => new_auth,
         Err(e) => {
             tracing::warn!(error = ?e, "devbox legacy auth migration: devbox login helper call failed, continuing with legacy auth");
-            xai_grok_telemetry::unified_log::error(
+            intelekt_telemetry::unified_log::error(
                 "devbox legacy auth migration: mint failed",
                 None,
                 Some(serde_json::json!({ "error": e.to_string() })),
@@ -731,7 +731,7 @@ async fn migrate_devbox_auth_if_legacy(
             if let Err(e) = migration_auth_manager.remove_scope(crate::auth::LEGACY_AUTH_SCOPE) {
                 tracing::warn!(error = ?e, "Failed to remove legacy auth scope entry (non-fatal)");
             }
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "devbox legacy auth migration: succeeded",
                 None,
                 Some(serde_json::json!({
@@ -746,7 +746,7 @@ async fn migrate_devbox_auth_if_legacy(
         }
         Err(e) => {
             tracing::warn!(error = ?e, "devbox legacy auth migration: failed to save new auth, continuing with legacy");
-            xai_grok_telemetry::unified_log::error(
+            intelekt_telemetry::unified_log::error(
                 "devbox legacy auth migration: save failed",
                 None,
                 Some(serde_json::json!({ "error": e.to_string() })),
@@ -930,7 +930,7 @@ pub async fn run_leader(
     use tokio_util::sync::CancellationToken;
 
     register_fs_watch_runtime();
-    xai_grok_telemetry::unified_log::set_version(xai_grok_version::VERSION);
+    intelekt_telemetry::unified_log::set_version(intelekt_version::VERSION);
 
     // Clean up orphaned upload queue temp files from previous sessions
     // (best-effort). Detached onto a blocking thread so it never stalls leader
@@ -1040,7 +1040,7 @@ pub async fn run_leader(
         socket_path: socket_path.clone(),
         lock_path: lock.lock_path().clone(),
         ws_url_suffix: compute_ws_url_suffix(ws_url),
-        leader_binary_version: xai_grok_version::VERSION.to_string(),
+        leader_binary_version: intelekt_version::VERSION.to_string(),
     })
     .with_default_hub_url(agent_config.hub.url.clone());
 
@@ -1399,9 +1399,9 @@ pub async fn run_leader(
                 watch_paths.push(home.join(".claude.json"));
             }
             let auth_scope = agent_config.grok_com_config.auth_scope();
-            // Gated on user_grok_home() so a cwd-relative .grok/auth.json is never
+            // Gated on user_grok_home() so a cwd-relative .intelekt/auth.json is never
             // read as the user auth store when no home resolves.
-            let initial_auth_key_hash = xai_grok_config::user_grok_home()
+            let initial_auth_key_hash = intelekt_config::user_grok_home()
                 .map(|g| g.join("auth.json"))
                 .and_then(|auth_path| crate::auth::read_auth_json(&auth_path).ok())
                 .and_then(|store| {
@@ -1491,7 +1491,7 @@ pub async fn run_leader(
                                 expires_at = ?auth.expires_at,
                                 "Auth token hot-reloaded from config watcher"
                             );
-                            xai_grok_telemetry::unified_log::info(
+                            intelekt_telemetry::unified_log::info(
                                 "auth hot-swapped from disk",
                                 None,
                                 Some(serde_json::json!({
@@ -1523,7 +1523,7 @@ pub async fn run_leader(
                                 warn!(error = %e, "failed to inject auth-cleared cleanup into ACP stream");
                             }
                             models_manager_for_config.on_auth_changed().await;
-                            xai_grok_telemetry::unified_log::warn(
+                            intelekt_telemetry::unified_log::warn(
                                 "auth cleared from disk",
                                 None,
                                 None,
@@ -1581,7 +1581,7 @@ pub async fn run_leader(
                             }
                         }
                         ConfigUpdate::ModelsCacheChanged => {
-                            // External write to ~/.grok/models_cache.json
+                            // External write to ~/.intelekt/models_cache.json
                             // (another grok process fetched a fresher /v1/models
                             // catalog). Injected into the agent's ACP stream —
                             // NOT applied directly on the manager — so it is

@@ -2,7 +2,7 @@
 //! `session_id` and `turn_number` are auto-injected by `log_event` (which
 //! lives in shell's integration layer).
 //!
-//! These structs were extracted from `xai-grok-shell` so they can be
+//! These structs were extracted from `intelekt-shell` so they can be
 //! reused across binaries (TUI, sampler) without dragging the shell HTTP /
 //! Mixpanel client along. The `CompactionScope` helper that drives paired
 //! `compaction_triggered`/`compaction_completed` emission stays in shell --
@@ -1077,7 +1077,7 @@ pub struct SessionEnded {
 }
 
 // ---------------------------------------------------------------------------
-// Pager events (called from xai-grok-pager via log_event)
+// Pager events (called from intelekt-pager via log_event)
 // ---------------------------------------------------------------------------
 
 #[derive(Serialize)]
@@ -1092,7 +1092,7 @@ pub struct PlanSubmit {
 }
 
 /// Which option the user chose in the project-directory picker (shown on the
-/// first prompt when Grok Build is launched from a non-project directory).
+/// first prompt when Intelekt CLI is launched from a non-project directory).
 #[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ProjectPickerOutcome {
@@ -1482,7 +1482,7 @@ pub struct CreditLimitUpsellClicked {
 /// Emitted when a previously access-gated user re-authenticates and the gate
 /// is lifted — i.e. they subscribed (externally on grok.com) and came back.
 /// This is the actual conversion signal for SuperGrok Heavy subscriptions
-/// attributed to Grok Build: the user saw the gate in Grok Build, went and
+/// attributed to Intelekt CLI: the user saw the gate in Intelekt CLI, went and
 /// paid, then returned with access.
 #[derive(Serialize)]
 pub struct SubscriptionActivated {
@@ -1490,7 +1490,7 @@ pub struct SubscriptionActivated {
     pub auth_method: Option<String>,
     /// Whether the subscribe CTA was shown in this session before the gate
     /// was lifted (`access_gate_shown_logged`). When `true`, the conversion
-    /// is strongly attributable to Grok Build's upsell surface.
+    /// is strongly attributable to Intelekt CLI's upsell surface.
     pub upsell_shown_this_session: bool,
 }
 

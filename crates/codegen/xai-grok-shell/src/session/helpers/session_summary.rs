@@ -47,7 +47,7 @@ fn title_source_text(user_message: &str) -> String {
         &without_reminders
     };
     let mut display =
-        xai_grok_tools::implementations::skills::skill::extract_skill_display_text(base)
+        intelekt_tools::implementations::skills::skill::extract_skill_display_text(base)
             .unwrap_or_else(|| base.to_string());
     display.truncate(floor_char_boundary(&display, TITLE_SOURCE_MAX_BYTES));
     display

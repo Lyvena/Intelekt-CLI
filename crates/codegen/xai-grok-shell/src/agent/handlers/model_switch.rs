@@ -8,14 +8,14 @@ use crate::agent::mvp_agent::{
 use crate::session::SessionCommand;
 use agent_client_protocol::{self as acp};
 use tokio::sync::oneshot;
-use xai_grok_sampling_types::parse_reasoning_effort_meta;
+use intelekt_sampling_types::parse_reasoning_effort_meta;
 /// Apply a model switch to a session (no gate — `set_session_model` gates first).
 pub(crate) async fn apply(
     agent: &MvpAgent,
     args: acp::SetSessionModelRequest,
 ) -> Result<acp::SetSessionModelResponse, acp::Error> {
     tracing::info!("Received set session model request {args:?}");
-    xai_grok_telemetry::unified_log::info(
+    intelekt_telemetry::unified_log::info(
         "model changed",
         Some(args.session_id.0.as_ref()),
         Some(serde_json::json!({ "model" : args.model_id.0.as_ref() })),
@@ -40,7 +40,7 @@ pub(crate) async fn apply(
     let required_agent_type =
         resolve_required_agent_type(Some(model.info().agent_type.as_str()), session_default);
     let previous_model_id = handle.model_id.0.clone();
-    let mut pending_rebuild_definition: Option<xai_grok_agent::AgentDefinition> = None;
+    let mut pending_rebuild_definition: Option<intelekt_agent::AgentDefinition> = None;
     {
         let required = &required_agent_type;
         let turn_count = handle
@@ -68,7 +68,7 @@ pub(crate) async fn apply(
                 active_agent_type, required_agent = % required, turn_count,
                 "set_session_model: agent type mismatch rejected"
             );
-            xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::ModelSwitched {
+            intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::ModelSwitched {
                 session_id: session_id.0.to_string(),
                 previous_model_id: previous_model_id.to_string(),
                 new_model_id: model_id.0.to_string(),
@@ -88,7 +88,7 @@ pub(crate) async fn apply(
         }
         if is_mismatch && turn_count == 0 {
             let cwd = handle.tool_context.cwd.as_path();
-            let resolved = xai_grok_agent::discovery::by_name_in_cwd_with_plugins(
+            let resolved = intelekt_agent::discovery::by_name_in_cwd_with_plugins(
                 required,
                 cwd,
                 agent.plugin_registry_handle.snapshot().as_deref(),
@@ -161,8 +161,8 @@ pub(crate) async fn apply(
                     session_id = % session_id.0, model_id = % model_id.0, error = ? e,
                     "set_session_model: zero-turn harness rebuild failed; aborting model switch"
                 );
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::events::ModelSwitched {
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::events::ModelSwitched {
                         session_id: session_id.0.to_string(),
                         previous_model_id: previous_model_id.to_string(),
                         new_model_id: model_id.0.to_string(),
@@ -213,7 +213,7 @@ pub(crate) async fn apply(
         model_id.0.as_ref(),
         applied_effort.map(|eff| eff.to_string()),
     );
-    xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::ModelSwitched {
+    intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::ModelSwitched {
         session_id: session_id.0.to_string(),
         previous_model_id: previous_model_id.to_string(),
         new_model_id: model_id.0.to_string(),

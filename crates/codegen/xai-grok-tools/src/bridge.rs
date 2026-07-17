@@ -1,4 +1,4 @@
-//! ToolBridge: adapter that wraps `xai-grok-tools`'s `ToolRegistry` and
+//! ToolBridge: adapter that wraps `intelekt-tools`'s `ToolRegistry` and
 //! exposes it through a session layer.
 //!
 //! The bridge:

@@ -16,7 +16,7 @@ use super::common::*;
 /// transient leader-mode divergence). The test retries with fresh TUI spawns
 /// (same leader) until a pick lands the dismissal, then proves it sticks.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "PTY e2e; run with cargo test -p xai-grok-pager --test leader_pty_e2e -- --ignored --test-threads=1"]
+#[ignore = "PTY e2e; run with cargo test -p intelekt-pager --test leader_pty_e2e -- --ignored --test-threads=1"]
 async fn campaign_leader_mode_remote_dismiss_on_model_pick() {
     const CONFIG_MODEL: &str = "config-model";
     const CAMPAIGN_MODEL: &str = "campaign-model";
@@ -39,10 +39,10 @@ async fn campaign_leader_mode_remote_dismiss_on_model_pick() {
     }));
 
     // Seed config.toml with the user's own default model; a fixed leader
-    // socket under the shared GROK_HOME so every spawn elects/attaches to the
+    // socket under the shared INTELEKT_HOME so every spawn elects/attaches to the
     // same leader (mirrors `LeaderCluster`).
-    let grok_home = content.home().join(".grok");
-    std::fs::create_dir_all(&grok_home).expect("create GROK_HOME");
+    let grok_home = content.home().join(".intelekt");
+    std::fs::create_dir_all(&grok_home).expect("create INTELEKT_HOME");
     std::fs::write(
         grok_home.join("config.toml"),
         format!("[models]\ndefault = \"{CONFIG_MODEL}\"\n"),

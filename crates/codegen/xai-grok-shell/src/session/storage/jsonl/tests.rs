@@ -36,7 +36,7 @@ fn create_test_plan_state() -> TodoState {
 #[tokio::test]
 async fn write_compaction_segment_numbers_and_indexes_resume_safely() {
     use crate::extensions::notification::CompactionSegmentFile;
-    use xai_grok_sampling_types::ConversationItem;
+    use intelekt_sampling_types::ConversationItem;
     let temp_dir = TempDir::new().unwrap();
     let info = create_test_info();
     let seg = |summary: &str| CompactionSegmentFile {
@@ -71,7 +71,7 @@ async fn write_compaction_segment_numbers_and_indexes_resume_safely() {
 }
 #[tokio::test]
 async fn update_current_model_persists_leaves_and_clears_reasoning_effort() {
-    use xai_grok_sampling_types::ReasoningEffort;
+    use intelekt_sampling_types::ReasoningEffort;
     let temp_dir = TempDir::new().unwrap();
     let adapter = JsonlStorageAdapter::with_root(temp_dir.path().to_path_buf());
     let info = create_test_info();
@@ -121,7 +121,7 @@ async fn test_jsonl_round_trip() {
         .unwrap();
     let plan_state = create_test_plan_state();
     adapter.write_plan_state(&info, &plan_state).await.unwrap();
-    let new_model = acp::ModelId::new("grok-4.3");
+    let new_model = acp::ModelId::new("intelekt-4.3");
     adapter.update_current_model(&info, &new_model).await.unwrap();
     let loaded = adapter.load_session(&info).await.unwrap();
     assert_eq!(loaded.summary.info.id, info.id);
@@ -134,7 +134,7 @@ async fn test_jsonl_round_trip() {
 /// `load_session` / `load_rewind_points` still return them.
 #[tokio::test]
 async fn load_session_without_updates_defers_rewind_points() {
-    use xai_grok_workspace::session::file_state::RewindPoint;
+    use intelekt_workspace::session::file_state::RewindPoint;
     let temp_dir = TempDir::new().unwrap();
     let info = create_test_info();
     let adapter = JsonlStorageAdapter::with_root(temp_dir.path().to_path_buf());
@@ -152,7 +152,7 @@ async fn load_session_without_updates_defers_rewind_points() {
 /// merged/truncated set.
 #[tokio::test]
 async fn merge_rewind_points_from_persists_merged_set() {
-    use xai_grok_workspace::session::file_state::RewindPoint;
+    use intelekt_workspace::session::file_state::RewindPoint;
     let temp_dir = TempDir::new().unwrap();
     let info = create_test_info();
     let adapter = JsonlStorageAdapter::with_root(temp_dir.path().to_path_buf());
@@ -187,8 +187,8 @@ async fn merge_rewind_points_from_aborts_on_malformed_without_writing() {
 /// read-modify-write merge (not just index/count).
 #[tokio::test]
 async fn merge_rewind_points_from_round_trips_file_snapshots() {
-    use xai_grok_paths::RelPathBuf;
-    use xai_grok_workspace::session::file_state::{FileSnapshot, RewindPoint};
+    use intelekt_paths::RelPathBuf;
+    use intelekt_workspace::session::file_state::{FileSnapshot, RewindPoint};
     let temp_dir = TempDir::new().unwrap();
     let info = create_test_info();
     let adapter = JsonlStorageAdapter::with_root(temp_dir.path().to_path_buf());
@@ -221,7 +221,7 @@ async fn merge_rewind_points_from_round_trips_file_snapshots() {
 /// the target into place and leaves NO `*.jsonl.tmp` behind.
 #[tokio::test]
 async fn write_jsonl_leaves_no_temp_and_renames_target() {
-    use xai_grok_workspace::session::file_state::RewindPoint;
+    use intelekt_workspace::session::file_state::RewindPoint;
     let temp_dir = TempDir::new().unwrap();
     let info = create_test_info();
     let adapter = JsonlStorageAdapter::with_root(temp_dir.path().to_path_buf());
@@ -250,7 +250,7 @@ async fn write_jsonl_leaves_no_temp_and_renames_target() {
 /// `rewind_points.jsonl`, and ACU lines stay on disk.
 #[tokio::test]
 async fn reads_never_modify_rewind_or_updates_files() {
-    use xai_grok_workspace::session::file_state::{FileStateTracker, RewindPoint};
+    use intelekt_workspace::session::file_state::{FileStateTracker, RewindPoint};
     let temp_dir = TempDir::new().unwrap();
     let info = create_test_info();
     let adapter = JsonlStorageAdapter::with_root(temp_dir.path().to_path_buf());
@@ -526,7 +526,7 @@ async fn test_subagent_spawned_resumed_roundtrip() {
 #[tokio::test]
 async fn copy_session_data_copies_compaction_segments_when_enabled() {
     use crate::extensions::notification::CompactionSegmentFile;
-    use xai_grok_sampling_types::ConversationItem;
+    use intelekt_sampling_types::ConversationItem;
     let temp_dir = TempDir::new().unwrap();
     let adapter = JsonlStorageAdapter::with_root(temp_dir.path().to_path_buf());
     let source_info = Info {
@@ -742,13 +742,13 @@ async fn test_copy_session_data_with_model_override() {
     };
     let options = CopySessionOptions {
         parent_session_id: Some("source-model-test".to_string()),
-        new_model_id: Some("grok-3".to_string()),
+        new_model_id: Some("intelekt-3".to_string()),
         target_prompt_index: None,
         ..Default::default()
     };
     adapter.copy_session_data(&source_info, &target_info, options).await.unwrap();
     let loaded = adapter.load_session(&target_info).await.unwrap();
-    assert_eq!(loaded.summary.current_model_id.0.as_ref(), "grok-3");
+    assert_eq!(loaded.summary.current_model_id.0.as_ref(), "intelekt-3");
     assert_eq!(loaded.summary.parent_session_id, Some("source-model-test".to_string()));
 }
 #[tokio::test]
@@ -1110,8 +1110,8 @@ async fn test_append_feedback_creates_file_and_persists() {
             feedback_text: None,
             feedback_categories: vec![],
             message_id: None,
-            model_id: Some("grok-3-fast".into()),
-            resolved_model_id: Some("grok-4.5".into()),
+            model_id: Some("intelekt-3-fast".into()),
+            resolved_model_id: Some("intelekt-4.5".into()),
             model_fingerprint: None,
             context_type: None,
             feature_name: None,
@@ -1495,7 +1495,7 @@ async fn copy_tool_state_false_skips_tool_state() {
 }
 #[test]
 fn fork_filter_removes_synthetic_user_messages() {
-    use xai_grok_sampling_types::conversation::*;
+    use intelekt_sampling_types::conversation::*;
     let mut items = vec![
         ConversationItem::system("system prompt"),
         ConversationItem::user("real question"), ConversationItem::User(UserItem {
@@ -1540,7 +1540,7 @@ fn fork_filter_handles_consecutive_user_messages() {
 }
 #[test]
 fn fork_filter_consecutive_users_with_tool_calls() {
-    use xai_grok_sampling_types::conversation::*;
+    use intelekt_sampling_types::conversation::*;
     let mut items = vec![
         ConversationItem::system("sys"), ConversationItem::user("prefix"),
         ConversationItem::user("query"), ConversationItem::Assistant(AssistantItem {
@@ -1558,7 +1558,7 @@ fn fork_filter_consecutive_users_with_tool_calls() {
 }
 #[test]
 fn fork_filter_preserves_complete_tool_turn() {
-    use xai_grok_sampling_types::conversation::*;
+    use intelekt_sampling_types::conversation::*;
     let mut items = vec![
         ConversationItem::user("q"), ConversationItem::Assistant(AssistantItem { content
         : String::new().into(), tool_calls : vec![ToolCall { id : "tc1".into(), name :
@@ -1571,7 +1571,7 @@ fn fork_filter_preserves_complete_tool_turn() {
 }
 #[test]
 fn fork_filter_strips_incomplete_tool_turn() {
-    use xai_grok_sampling_types::conversation::*;
+    use intelekt_sampling_types::conversation::*;
     let mut items = vec![
         ConversationItem::user("q1"), ConversationItem::assistant("a1"),
         ConversationItem::user("q2"), ConversationItem::Assistant(AssistantItem { content
@@ -1622,8 +1622,8 @@ async fn fork_filter_clears_updates() {
 async fn init_session_stamps_configured_profile_on_new_session() {
     let tmp = TempDir::new().unwrap();
     let adapter = JsonlStorageAdapter::with_root(tmp.path().to_path_buf());
-    xai_grok_sandbox::set_configured_profile("workspace");
-    let expected = xai_grok_sandbox::configured_profile_name().map(String::from);
+    intelekt_sandbox::set_configured_profile("workspace");
+    let expected = intelekt_sandbox::configured_profile_name().map(String::from);
     let info = Info {
         id: acp::SessionId::new("new-sb"),
         cwd: "/new".to_string(),
@@ -1664,10 +1664,10 @@ fn fork_filter_empty_input_produces_empty() {
 }
 #[test]
 fn fork_filter_keeps_turn_with_reasoning_between_user_and_assistant() {
-    use xai_grok_sampling_types::conversation::*;
+    use intelekt_sampling_types::conversation::*;
     let mut items = vec![
         ConversationItem::system("sys"), ConversationItem::user("q"),
-        ConversationItem::Reasoning(xai_grok_sampling_types::synthesized_reasoning_item("thinking",)),
+        ConversationItem::Reasoning(intelekt_sampling_types::synthesized_reasoning_item("thinking",)),
         ConversationItem::assistant("a"),
     ];
     super::fork_filter_chat(&mut items);
@@ -1679,15 +1679,15 @@ fn fork_filter_keeps_turn_with_reasoning_between_user_and_assistant() {
 }
 #[test]
 fn fork_filter_keeps_multi_tool_cycle_turn_with_reasoning() {
-    use xai_grok_sampling_types::conversation::*;
+    use intelekt_sampling_types::conversation::*;
     let mut items = vec![
         ConversationItem::system("sys"), ConversationItem::user("q"),
-        ConversationItem::Reasoning(xai_grok_sampling_types::synthesized_reasoning_item("plan",)),
+        ConversationItem::Reasoning(intelekt_sampling_types::synthesized_reasoning_item("plan",)),
         ConversationItem::Assistant(AssistantItem { content : String::new().into(),
         tool_calls : vec![ToolCall { id : "tc1".into(), name : "bash".into(), arguments :
         "{}".into(), }], model_id : None, model_fingerprint : None, reasoning_effort :
         None, }), ConversationItem::tool_result("tc1", "output"),
-        ConversationItem::Reasoning(xai_grok_sampling_types::synthesized_reasoning_item("reflect",)),
+        ConversationItem::Reasoning(intelekt_sampling_types::synthesized_reasoning_item("reflect",)),
         ConversationItem::assistant("final text"),
     ];
     super::fork_filter_chat(&mut items);
@@ -1704,18 +1704,18 @@ fn fork_filter_keeps_multi_tool_cycle_turn_with_reasoning() {
 }
 #[test]
 fn fork_filter_keeps_multi_tool_turn_with_reasoning_between_results() {
-    use xai_grok_sampling_types::conversation::*;
+    use intelekt_sampling_types::conversation::*;
     let mut items = vec![
         ConversationItem::system("sys"), ConversationItem::user("q"),
-        ConversationItem::Reasoning(xai_grok_sampling_types::synthesized_reasoning_item("plan",)),
+        ConversationItem::Reasoning(intelekt_sampling_types::synthesized_reasoning_item("plan",)),
         ConversationItem::Assistant(AssistantItem { content : String::new().into(),
         tool_calls : vec![ToolCall { id : "tc1".into(), name : "bash".into(), arguments :
         "{}".into(), }, ToolCall { id : "tc2".into(), name : "grep".into(), arguments :
         "{}".into(), },], model_id : None, model_fingerprint : None, reasoning_effort :
         None, }), ConversationItem::tool_result("tc1", "out1"),
-        ConversationItem::Reasoning(xai_grok_sampling_types::synthesized_reasoning_item("mid")),
+        ConversationItem::Reasoning(intelekt_sampling_types::synthesized_reasoning_item("mid")),
         ConversationItem::tool_result("tc2", "out2"),
-        ConversationItem::Reasoning(xai_grok_sampling_types::synthesized_reasoning_item("reflect",)),
+        ConversationItem::Reasoning(intelekt_sampling_types::synthesized_reasoning_item("reflect",)),
         ConversationItem::assistant("final"),
     ];
     super::fork_filter_chat(&mut items);
@@ -1730,10 +1730,10 @@ fn fork_filter_keeps_multi_tool_turn_with_reasoning_between_results() {
 }
 #[test]
 fn fork_filter_drops_trailing_incomplete_goal_turn_after_reasoning() {
-    use xai_grok_sampling_types::conversation::*;
+    use intelekt_sampling_types::conversation::*;
     let mut items = vec![
         ConversationItem::system("sys"), ConversationItem::user("q"),
-        ConversationItem::Reasoning(xai_grok_sampling_types::synthesized_reasoning_item("thinking",)),
+        ConversationItem::Reasoning(intelekt_sampling_types::synthesized_reasoning_item("thinking",)),
         ConversationItem::assistant("a"), ConversationItem::user("/goal do the thing"),
     ];
     super::fork_filter_chat(&mut items);
@@ -2248,7 +2248,7 @@ fn strip_invalid_images_below_pixel_floor_stripped() {
 /// Write a chat_history.jsonl with the given lines into a fresh
 /// session dir, then call `read_chat_history_sync` and return the
 /// resulting `ConversationItem`s. Exercises the real on-read upgrade
-/// path end-to-end (loader + serde + xai_grok_sampling_types::
+/// path end-to-end (loader + serde + intelekt_sampling_types::
 /// upgrade_legacy_reasoning).
 fn load_lines(lines: &[&str]) -> Vec<ConversationItem> {
     let temp_dir = TempDir::new().unwrap();
@@ -2261,7 +2261,7 @@ fn load_lines(lines: &[&str]) -> Vec<ConversationItem> {
 }
 /// Real-shape legacy fixture from a web-search session.
 /// The assistant carries `reasoning: { text, encrypted, id }` inline —
-/// the legacy grok-build / Opus / chat-completions shape.
+/// the legacy intelekt-cli / Opus / chat-completions shape.
 /// BackendToolCall sits as its own sibling line (it was already a
 /// sibling variant in the legacy shape).
 #[test]
@@ -2271,7 +2271,7 @@ fn read_chat_history_upgrades_legacy_singular_reasoning_to_sibling() {
             r#"{"type":"system","content":"You are helpful."}"#,
             r#"{"type":"user","content":[{"type":"text","text":"cats and dogs"}]}"#,
             r#"{"type":"backend_tool_call","kind":{"tool_type":"web_search","id":"ws_legacy_1","status":"completed","action":{"type":"search","query":"cats and dogs","sources":[]}}}"#,
-            r#"{"type":"assistant","content":"results...","reasoning":{"text":"the results are about cats","encrypted":"enc-blob","id":"rs_legacy"},"model_id":"grok-build"}"#,
+            r#"{"type":"assistant","content":"results...","reasoning":{"text":"the results are about cats","encrypted":"enc-blob","id":"rs_legacy"},"model_id":"intelekt-cli"}"#,
         ],
     );
     assert_eq!(
@@ -2282,7 +2282,7 @@ fn read_chat_history_upgrades_legacy_singular_reasoning_to_sibling() {
         ConversationItem::Reasoning(r) => {
             assert_eq!(r.id, "rs_legacy");
             assert_eq!(r.encrypted_content.as_deref(), Some("enc-blob"));
-            let xai_grok_sampling_types::rs::SummaryPart::SummaryText(s) = &r.summary[0];
+            let intelekt_sampling_types::rs::SummaryPart::SummaryText(s) = &r.summary[0];
             assert_eq!(s.text, "the results are about cats");
         }
         other => panic!("expected reconstructed Reasoning at index 3, got {other:?}"),
@@ -2347,11 +2347,11 @@ fn read_chat_history_handles_hybrid_legacy_and_post_pr_lines() {
             r#"{"type":"system","content":"sys"}"#,
             r#"{"type":"user","content":[{"type":"text","text":"q1"}]}"#,
             r#"{"type":"backend_tool_call","kind":{"tool_type":"web_search","id":"ws_legacy_1","status":"completed","action":{"type":"search","query":"q1","sources":[]}}}"#,
-            r#"{"type":"assistant","content":"a1","reasoning":{"text":"legacy thinking","encrypted":"enc","id":"rs_legacy"},"model_id":"grok-build"}"#,
+            r#"{"type":"assistant","content":"a1","reasoning":{"text":"legacy thinking","encrypted":"enc","id":"rs_legacy"},"model_id":"intelekt-cli"}"#,
             r#"{"type":"user","content":[{"type":"text","text":"q2"}]}"#,
             r#"{"type":"reasoning","id":"rs_postpr","summary":[{"type":"summary_text","text":"new thinking"}]}"#,
             r#"{"type":"backend_tool_call","kind":{"tool_type":"web_search","id":"ws_postpr","status":"completed","action":{"type":"search","query":"q2","sources":[]}}}"#,
-            r#"{"type":"assistant","content":"a2","model_id":"grok-build"}"#,
+            r#"{"type":"assistant","content":"a2","model_id":"intelekt-cli"}"#,
         ],
     );
     let kinds: Vec<&'static str> = items
@@ -2392,7 +2392,7 @@ fn read_chat_history_handles_hybrid_legacy_and_post_pr_lines() {
     };
     assert_eq!(legacy_assistant.content.as_ref(), "a1");
     assert_eq!(
-        legacy_assistant.model_id.as_deref(), Some("grok-build"),
+        legacy_assistant.model_id.as_deref(), Some("intelekt-cli"),
         "model_id preserved across the upgrade"
     );
     let ConversationItem::Reasoning(reconstructed) = &items[3] else {
@@ -2400,7 +2400,7 @@ fn read_chat_history_handles_hybrid_legacy_and_post_pr_lines() {
     };
     assert_eq!(reconstructed.id, "rs_legacy");
     assert_eq!(reconstructed.encrypted_content.as_deref(), Some("enc"));
-    let xai_grok_sampling_types::rs::SummaryPart::SummaryText(s) = &reconstructed
+    let intelekt_sampling_types::rs::SummaryPart::SummaryText(s) = &reconstructed
         .summary[0];
     assert_eq!(s.text, "legacy thinking");
 }
@@ -2413,7 +2413,7 @@ fn read_chat_history_is_idempotent_on_post_pr_sessions() {
             r#"{"type":"system","content":"sys"}"#,
             r#"{"type":"user","content":[{"type":"text","text":"q"}]}"#,
             r#"{"type":"reasoning","id":"rs_x","summary":[{"type":"summary_text","text":"thought"}]}"#,
-            r#"{"type":"assistant","content":"a","model_id":"grok-build"}"#,
+            r#"{"type":"assistant","content":"a","model_id":"intelekt-cli"}"#,
         ],
     );
     let kinds: Vec<&'static str> = items
@@ -2527,7 +2527,7 @@ fn read_chat_history_skips_merged_line_from_interrupted_append() {
     let good_1 = r#"{"type":"user","content":[{"type":"text","text":"kept"}]}"#;
     let partial = r#"{"type":"assistant","content":"cut mid-wri"#;
     let merged_onto = r#"{"type":"user","content":[{"type":"text","text":"lost"}]}"#;
-    let good_2 = r#"{"type":"assistant","content":"after","model_id":"grok-build"}"#;
+    let good_2 = r#"{"type":"assistant","content":"after","model_id":"intelekt-cli"}"#;
     let raw = format!("{good_1}\n{partial}{merged_onto}\n{good_2}\n");
     let temp_dir = TempDir::new().unwrap();
     let (_, _, items) = load_raw_chat(&temp_dir, raw.as_bytes());

@@ -1,7 +1,7 @@
 //! Git marketplace source support.
 //!
 //! Provides persistent caching of git marketplace repos.
-//! Cache root: `~/.grok/marketplace-cache/<url-hash>/`
+//! Cache root: `~/.intelekt/marketplace-cache/<url-hash>/`
 
 use std::fs::{File, OpenOptions};
 use std::io;
@@ -144,7 +144,7 @@ fn is_cache_fresh(cache_dir: &Path) -> bool {
 
 /// Get the default cache root directory.
 pub fn default_cache_root() -> PathBuf {
-    xai_grok_config::grok_home().join("marketplace-cache")
+    intelekt_config::grok_home().join("marketplace-cache")
 }
 
 /// Deterministic hash for a URL (used as cache directory name).

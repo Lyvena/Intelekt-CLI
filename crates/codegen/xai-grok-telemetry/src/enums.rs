@@ -1,6 +1,6 @@
 //! Shared telemetry/config enums extracted from shell.
 //!
-//! These were originally defined inside `xai-grok-shell` (in
+//! These were originally defined inside `intelekt-shell` (in
 //! `session::mcp_servers` and `util::config`) but are referenced by
 //! telemetry payload structs in this crate, so they live here and shell
 //! re-exports them from their original paths to keep callers unchanged.

@@ -1,7 +1,7 @@
 //! Interactive markdown table rendering playground.
 //!
 //! Run with:
-//!   cargo run -p xai-grok-markdown --features playground --bin md-table-test
+//!   cargo run -p intelekt-markdown --features playground --bin md-table-test
 //!
 //! Controls:
 //!   Space        — toggle textarea focus
@@ -25,13 +25,13 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, StatefulWidgetRef, Wrap};
 
-use xai_grok_markdown::{
+use intelekt_markdown::{
     MarkdownBuffers, MarkdownStyle, StreamingMarkdownRenderer,
     render_markdown_ratatui_with_buffers_width,
 };
 use xai_ratatui_textarea::{TextArea, TextAreaState};
 
-// ── Tokyo Night Storm palette (matches xai-grok-pager) ──────────────────────
+// ── Tokyo Night Storm palette (matches intelekt-pager) ──────────────────────
 
 #[path = "playground_common.rs"]
 mod playground_common;

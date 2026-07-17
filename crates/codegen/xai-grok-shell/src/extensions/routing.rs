@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
 
 // Re-export from workspace crate (canonical home for fuzzy search).
-pub use xai_grok_workspace::file_system::{ClientId, TargetClientId};
+pub use intelekt_workspace::file_system::{ClientId, TargetClientId};
 
 /// Metadata from the request, used for routing notifications back to the
 /// correct client.

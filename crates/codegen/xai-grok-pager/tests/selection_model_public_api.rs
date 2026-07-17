@@ -1,5 +1,5 @@
 use ratatui::layout::Rect;
-use xai_grok_pager::scrollback::text_selection::ResolvedSelectionModel;
+use intelekt_pager::scrollback::text_selection::ResolvedSelectionModel;
 
 #[test]
 fn resolved_selection_model_supports_exhaustive_external_literals() {

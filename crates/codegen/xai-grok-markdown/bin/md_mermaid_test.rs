@@ -1,7 +1,7 @@
 //! Interactive Mermaid diagram rendering playground.
 //!
 //! Run with:
-//!   cargo run -p xai-grok-markdown --features playground --bin md-mermaid-test
+//!   cargo run -p intelekt-markdown --features playground --bin md-mermaid-test
 //!
 //! Controls:
 //!   Esc / Tab    — toggle textarea focus
@@ -23,7 +23,7 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, StatefulWidgetRef, Wrap};
 
-use xai_grok_markdown::{
+use intelekt_markdown::{
     MarkdownBuffers, MarkdownStyle, render_markdown_ratatui_with_buffers_width,
 };
 use xai_ratatui_textarea::{TextArea, TextAreaState};

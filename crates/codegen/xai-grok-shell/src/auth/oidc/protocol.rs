@@ -384,7 +384,7 @@ pub(super) fn build_authorize_url(
     let referrer = oauth2
         .and_then(|o| o.referrer.as_deref())
         .filter(|r| !r.is_empty())
-        .unwrap_or("grok-build");
+        .unwrap_or("intelekt-cli");
     url.push_str(&format!("&referrer={}", urlencoding::encode(referrer)));
     url
 }
@@ -411,7 +411,7 @@ pub(super) async fn exchange_code(
     let resp = with_alpha_test_key(
         crate::http::shared_client()
             .post(token_endpoint)
-            .header("x-grok-client-version", xai_grok_version::VERSION)
+            .header("x-grok-client-version", intelekt_version::VERSION)
             .form(&[
                 ("grant_type", "authorization_code"),
                 ("code", code),
@@ -789,7 +789,7 @@ mod tests {
             "nonce=nonce123",
             "scope=openid",
             "audience=api",
-            "referrer=grok-build",
+            "referrer=intelekt-cli",
         ] {
             assert!(url.contains(required), "missing param: {required}");
         }
@@ -813,7 +813,7 @@ mod tests {
             scopes: vec!["offline_access".into(), "grok-cli:access".into()],
             principal_type: Some("Team".into()),
             principal_id: Some("team-123".into()),
-            referrer: Some("grok-build".into()),
+            referrer: Some("intelekt-cli".into()),
         };
         let discovery = Discovery {
             authorization_endpoint: "https://auth.x.ai/authorize".into(),
@@ -836,7 +836,7 @@ mod tests {
         );
         assert!(url.contains("principal_type=Team"));
         assert!(url.contains("principal_id=team-123"));
-        assert!(url.contains("referrer=grok-build"));
+        assert!(url.contains("referrer=intelekt-cli"));
         assert_eq!(
             url.matches("referrer=").count(),
             1,
@@ -879,7 +879,7 @@ mod tests {
             "nonce123",
         );
         assert!(url.contains("referrer=grok-desktop"));
-        assert!(!url.contains("referrer=grok-build"));
+        assert!(!url.contains("referrer=intelekt-cli"));
         assert_eq!(
             url.matches("referrer=").count(),
             1,

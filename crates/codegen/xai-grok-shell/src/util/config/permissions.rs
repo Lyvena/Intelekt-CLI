@@ -1,9 +1,9 @@
 use toml::Value as TomlValue;
 
 /// How the agent handles tool execution permissions. Defined in
-/// `xai-grok-telemetry`; re-exported here so existing call sites continue
+/// `intelekt-telemetry`; re-exported here so existing call sites continue
 /// to work.
-pub use xai_grok_telemetry::enums::PermissionMode;
+pub use intelekt_telemetry::enums::PermissionMode;
 
 /// Parse a `permission_mode` canonical string to `PermissionMode`.
 ///
@@ -248,8 +248,8 @@ fn resolve_launch_yolo(requested: bool, policy_block: Option<&'static str>) -> E
 }
 
 /// Shared managed-policy pin predicate; canonical definition lives in
-/// `xai-grok-workspace`.
-use xai_grok_workspace::permission::resolution::yolo_disabled_by_policy;
+/// `intelekt-workspace`.
+use intelekt_workspace::permission::resolution::yolo_disabled_by_policy;
 
 /// Load `[ui] require_plan_approval` from config.toml.
 ///
@@ -704,11 +704,11 @@ mod tests {
     }
 
     // Pure tests for the policy predicate itself live next to its canonical
-    // definition in `xai_grok_workspace::permission::claude_compat`.
+    // definition in `intelekt_workspace::permission::claude_compat`.
 
     #[test]
     fn resolve_launch_yolo_policy_pin_neutralizes_requested_bypass() {
-        let warning = xai_grok_workspace::permission::resolution::YOLO_PIN_REASON_REQUIREMENTS;
+        let warning = intelekt_workspace::permission::resolution::YOLO_PIN_REASON_REQUIREMENTS;
         // Pin + requested bypass → forced off, warning to surface.
         assert_eq!(
             resolve_launch_yolo(true, Some(warning)),

@@ -11,13 +11,13 @@ use futures_util::stream::StreamExt;
 use reqwest::StatusCode;
 use serde_json::{Value, json};
 
-use xai_grok_shell::sampling::{
+use intelekt_shell::sampling::{
     ApiBackend, Client, ConversationItem, ConversationRequest, ConversationToolChoice,
     SamplingError, ToolCall, ToolSpec, rs,
 };
-use xai_grok_shell::session::storage::JsonlStorageAdapter;
-use xai_grok_test_support::sse::responses_api_reasoning_and_text_events;
-use xai_grok_test_support::{MockInferenceServer, ScriptedResponse, SseEvent};
+use intelekt_shell::session::storage::JsonlStorageAdapter;
+use intelekt_test_support::sse::responses_api_reasoning_and_text_events;
+use intelekt_test_support::{MockInferenceServer, ScriptedResponse, SseEvent};
 
 mod common;
 
@@ -453,7 +453,7 @@ async fn chat_completions_upgrade_folds_reconstructed_reasoning_into_request() {
     );
 }
 
-/// Upgrade path, grok-build / Responses API: a legacy session whose
+/// Upgrade path, intelekt-cli / Responses API: a legacy session whose
 /// assistant carries inline `reasoning: {text, encrypted, id}` must, on
 /// load, reconstruct a sibling Reasoning item that round-trips back to
 /// the Responses API as a **typed** `reasoning` input item — `summary`,
@@ -462,7 +462,7 @@ async fn chat_completions_upgrade_folds_reconstructed_reasoning_into_request() {
 /// through `reasoning_item_text`.
 #[tokio::test]
 async fn responses_upgrade_roundtrips_reconstructed_reasoning_as_typed_input() {
-    // 1. Seed a legacy grok-build chat_history.jsonl (inline reasoning
+    // 1. Seed a legacy intelekt-cli chat_history.jsonl (inline reasoning
     //    with encrypted_content + id — the older shape).
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(
@@ -472,7 +472,7 @@ async fn responses_upgrade_roundtrips_reconstructed_reasoning_as_typed_input() {
             "\n",
             r#"{"type":"user","content":[{"type":"text","text":"q1"}]}"#,
             "\n",
-            r#"{"type":"assistant","content":"a1","reasoning":{"text":"legacy grok-build reasoning","encrypted":"ENC_BLOB_xyz","id":"rs_grokbuild_legacy"},"model_id":"grok-build"}"#,
+            r#"{"type":"assistant","content":"a1","reasoning":{"text":"legacy intelekt-cli reasoning","encrypted":"ENC_BLOB_xyz","id":"rs_grokbuild_legacy"},"model_id":"intelekt-cli"}"#,
             "\n",
         ),
     )
@@ -528,7 +528,7 @@ async fn responses_upgrade_roundtrips_reconstructed_reasoning_as_typed_input() {
     );
     assert_eq!(
         summary[0].get("text").and_then(Value::as_str),
-        Some("legacy grok-build reasoning")
+        Some("legacy intelekt-cli reasoning")
     );
 }
 
@@ -550,7 +550,7 @@ async fn messages_upgrade_emits_reconstructed_reasoning_as_thinking_block() {
             "\n",
             r#"{"type":"user","content":[{"type":"text","text":"q1"}]}"#,
             "\n",
-            r#"{"type":"assistant","content":"a1","reasoning":{"text":"legacy anthropic thinking","encrypted":"SIGNATURE_abc","id":""},"model_id":"grok-4.5"}"#,
+            r#"{"type":"assistant","content":"a1","reasoning":{"text":"legacy anthropic thinking","encrypted":"SIGNATURE_abc","id":""},"model_id":"intelekt-4.5"}"#,
             "\n",
         ),
     )
@@ -712,7 +712,7 @@ async fn test_responses_api_streaming_text() {
     let mut completed = false;
     while let Some(event_result) = stream.next().await {
         let event = event_result.unwrap();
-        use xai_grok_shell::sampling::rs::ResponseStreamEvent;
+        use intelekt_shell::sampling::rs::ResponseStreamEvent;
         match event {
             ResponseStreamEvent::ResponseOutputTextDelta(delta) => {
                 content.push_str(&delta.delta);
@@ -755,10 +755,10 @@ async fn test_responses_api_streaming_tool_call() {
     let mut function_call_found = false;
     while let Some(event_result) = stream.next().await {
         let event = event_result.unwrap();
-        use xai_grok_shell::sampling::rs::ResponseStreamEvent;
+        use intelekt_shell::sampling::rs::ResponseStreamEvent;
         if let ResponseStreamEvent::ResponseCompleted(completed) = event {
             for output in completed.response.output {
-                use xai_grok_shell::sampling::rs::OutputItem;
+                use intelekt_shell::sampling::rs::OutputItem;
                 if let OutputItem::FunctionCall(fc) = output {
                     assert_eq!(fc.call_id, "call_xyz789");
                     assert_eq!(fc.name, "bash");
@@ -798,10 +798,10 @@ async fn test_responses_api_with_reasoning_and_encrypted_content() {
 
     while let Some(event_result) = stream.next().await {
         let event = event_result.unwrap();
-        use xai_grok_shell::sampling::rs::ResponseStreamEvent;
+        use intelekt_shell::sampling::rs::ResponseStreamEvent;
         if let ResponseStreamEvent::ResponseCompleted(completed) = event {
             for output in &completed.response.output {
-                use xai_grok_shell::sampling::rs::OutputItem;
+                use intelekt_shell::sampling::rs::OutputItem;
                 match output {
                     OutputItem::Reasoning(r) => {
                         // Check summary text
@@ -816,7 +816,7 @@ async fn test_responses_api_with_reasoning_and_encrypted_content() {
                     }
                     OutputItem::Message(msg) => {
                         for content in &msg.content {
-                            use xai_grok_shell::sampling::rs::OutputMessageContent;
+                            use intelekt_shell::sampling::rs::OutputMessageContent;
                             if let OutputMessageContent::OutputText(text) = content
                                 && text.text.contains("42")
                             {
@@ -861,10 +861,10 @@ async fn test_responses_api_reasoning_without_encrypted() {
     let mut found_reasoning = false;
     while let Some(event_result) = stream.next().await {
         let event = event_result.unwrap();
-        use xai_grok_shell::sampling::rs::ResponseStreamEvent;
+        use intelekt_shell::sampling::rs::ResponseStreamEvent;
         if let ResponseStreamEvent::ResponseCompleted(completed) = event {
             for output in &completed.response.output {
-                use xai_grok_shell::sampling::rs::OutputItem;
+                use intelekt_shell::sampling::rs::OutputItem;
                 if let OutputItem::Reasoning(r) = output {
                     found_reasoning = true;
                     // Should have summary but no encrypted content
@@ -1184,7 +1184,7 @@ async fn test_responses_api_request_format() {
 /// absorbed mid-stream without disturbing the typed event flow.
 #[tokio::test]
 async fn test_doom_loop_check_enabled_sends_header_and_absorbs_check_event() {
-    use xai_grok_sampling_types::doom_loop::{DOOM_LOOP_CHECK_EVENT_TYPE, SAMPLE_CHECK_EVENT_DATA};
+    use intelekt_sampling_types::doom_loop::{DOOM_LOOP_CHECK_EVENT_TYPE, SAMPLE_CHECK_EVENT_DATA};
 
     let server = MockInferenceServer::start().await.unwrap();
     let mut events =
@@ -1225,7 +1225,7 @@ async fn test_doom_loop_check_enabled_sends_header_and_absorbs_check_event() {
 /// frame identified only by its payload `type` tag.
 #[tokio::test]
 async fn test_doom_loop_check_disabled_sends_no_header_and_drops_check_frames() {
-    use xai_grok_sampling_types::doom_loop::{DOOM_LOOP_CHECK_EVENT_TYPE, SAMPLE_CHECK_EVENT_DATA};
+    use intelekt_sampling_types::doom_loop::{DOOM_LOOP_CHECK_EVENT_TYPE, SAMPLE_CHECK_EVENT_DATA};
 
     let server = MockInferenceServer::start().await.unwrap();
     let mut events =
@@ -1320,7 +1320,7 @@ async fn test_responses_api_multi_turn_with_tool_calls() {
     let mut completed = false;
     while let Some(event_result) = stream.next().await {
         let event = event_result.unwrap();
-        use xai_grok_shell::sampling::rs::ResponseStreamEvent;
+        use intelekt_shell::sampling::rs::ResponseStreamEvent;
         if let ResponseStreamEvent::ResponseCompleted(_) = event {
             completed = true;
         }
@@ -1365,7 +1365,7 @@ async fn test_api_backend_getter_returns_configured_value() {
 async fn test_responses_backend_hits_responses_endpoint_not_chat_completions() {
     // This test verifies that when ApiBackend::Responses is configured,
     // the client hits /v1/responses and NOT /v1/chat/completions.
-    // The session-level dispatch in `xai-grok-sampler` selects the
+    // The session-level dispatch in `intelekt-sampler` selects the
     // backend stream based on `SamplingClient::api_backend()`.
 
     let server = MockInferenceServer::start().await.unwrap();

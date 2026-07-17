@@ -519,11 +519,11 @@ impl SessionActor {
         let runtime_state = format_runtime_state_line(backing_task_count, turn_elapsed_seconds);
 
         let items = vec![
-            ConversationItem::System(xai_grok_sampling_types::SystemItem {
+            ConversationItem::System(intelekt_sampling_types::SystemItem {
                 content: std::sync::Arc::<str>::from(LAZINESS_CLASSIFIER_PROMPT),
             }),
-            ConversationItem::User(xai_grok_sampling_types::UserItem {
-                content: vec![xai_grok_sampling_types::ContentPart::Text {
+            ConversationItem::User(intelekt_sampling_types::UserItem {
+                content: vec![intelekt_sampling_types::ContentPart::Text {
                     text: std::sync::Arc::<str>::from(format!(
                         "{LAZINESS_USER_PREAMBLE}\
                          === BEGIN TRANSCRIPT ===\n\
@@ -560,7 +560,7 @@ impl SessionActor {
             x_grok_conv_id: Some(session_id_str.clone()),
             x_grok_req_id: Some(format!("{LAZINESS_REQ_ID_PREFIX}{}", uuid::Uuid::new_v4())),
             x_grok_session_id: Some(session_id_str),
-            x_grok_agent_id: Some(xai_grok_telemetry::id::agent_id()),
+            x_grok_agent_id: Some(intelekt_telemetry::id::agent_id()),
             ..ConversationRequest::default()
         };
 
@@ -842,7 +842,7 @@ impl SessionActor {
 
     async fn snapshot_todos_for_debug_log(&self) -> Vec<DebugTodoSnapshot> {
         use crate::tools::todo::{TodoState, TodoStatus};
-        use xai_grok_tools::types::resources::State;
+        use intelekt_tools::types::resources::State;
         let bridge = self.tool_bridge_handle();
         bridge
             .read_resource::<State<TodoState>>()
@@ -878,7 +878,7 @@ impl SessionActor {
             .list_background_tasks()
             .await
             .into_iter()
-            .filter(xai_grok_tools::computer::types::TaskSnapshot::is_outstanding)
+            .filter(intelekt_tools::computer::types::TaskSnapshot::is_outstanding)
             .count()
     }
 }

@@ -1,13 +1,13 @@
 //! Focused tests for the reactive managed re-auth routine's deterministic guard
 //! rails: owner-scoping and the per-server cooldown gate. The
 //! full re-fetch + swap + re-handshake loop is covered at the unit level by the
-//! `xai-grok-mcp` and `managed_mcp` tests; here we assert the `SessionActor`
+//! `intelekt-mcp` and `managed_mcp` tests; here we assert the `SessionActor`
 //! wiring around those primitives.
 
 use crate::session::acp_session::support::*;
 use crate::session::acp_session::*;
 use std::sync::Arc;
-use xai_grok_mcp::servers::McpClient;
+use intelekt_mcp::servers::McpClient;
 
 const MANAGED: &str = "grok_com_testconnector";
 

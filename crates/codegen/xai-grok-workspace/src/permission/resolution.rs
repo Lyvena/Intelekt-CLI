@@ -1,4 +1,4 @@
-//! Permission resolution engine: merges native `.grok/config.toml`,
+//! Permission resolution engine: merges native `.intelekt/config.toml`,
 //! managed/enterprise settings, and (via `claude_settings`) `.claude`
 //! settings into the effective `PermissionConfig`; MCP/marketplace
 //! allowlists; always-approve policy.
@@ -190,9 +190,9 @@ fn extract_toml_permissions(
 
 /// Load `[permission]` rules from requirements.toml layers. Trust keys on the
 /// `is_system` flag (set at load, never from `path`): system → `SystemRequirements`,
-/// user `~/.grok` → `Requirements`, so [`is_admin_source`] trusts only the root tier.
+/// user `~/.intelekt` → `Requirements`, so [`is_admin_source`] trusts only the root tier.
 fn load_requirements_permissions() -> Vec<Sourced<PermissionRule>> {
-    xai_grok_config::requirements_layers()
+    intelekt_config::requirements_layers()
         .into_iter()
         .flat_map(|layer| {
             let source = if layer.is_system {
@@ -209,11 +209,11 @@ fn load_requirements_permissions() -> Vec<Sourced<PermissionRule>> {
         .collect()
 }
 
-/// Find every `<dir>/.grok/config.toml` from `cwd` upward to the git repo
-/// root (or just `<cwd>/.grok/config.toml` when there is no git repo).
+/// Find every `<dir>/.intelekt/config.toml` from `cwd` upward to the git repo
+/// root (or just `<cwd>/.intelekt/config.toml` when there is no git repo).
 ///
 /// Returned paths are ordered from repo root (lowest priority) to `cwd`
-/// (highest priority), matching `xai-grok-shell::config::find_project_configs`.
+/// (highest priority), matching `intelekt-shell::config::find_project_configs`.
 fn find_project_grok_configs(cwd: &Path) -> Vec<PathBuf> {
     let git_root = git2::Repository::discover(cwd)
         .ok()
@@ -223,7 +223,7 @@ fn find_project_grok_configs(cwd: &Path) -> Vec<PathBuf> {
     if let Some(ref root) = git_root {
         let mut current = Some(cwd.to_path_buf());
         while let Some(dir) = current {
-            let p = dir.join(".grok").join("config.toml");
+            let p = dir.join(".intelekt").join("config.toml");
             if p.is_file() {
                 configs.push(p);
             }
@@ -234,7 +234,7 @@ fn find_project_grok_configs(cwd: &Path) -> Vec<PathBuf> {
         }
         configs.reverse();
     } else {
-        let p = cwd.join(".grok").join("config.toml");
+        let p = cwd.join(".intelekt").join("config.toml");
         if p.is_file() {
             configs.push(p);
         }
@@ -244,8 +244,8 @@ fn find_project_grok_configs(cwd: &Path) -> Vec<PathBuf> {
 
 /// Load `[permission]` rules from native Grok TOML config files:
 ///
-///   * `~/.grok/config.toml` (lowest priority)
-///   * Each `.grok/config.toml` from the git repo root down to `cwd`
+///   * `~/.intelekt/config.toml` (lowest priority)
+///   * Each `.intelekt/config.toml` from the git repo root down to `cwd`
 ///     (highest priority last)
 ///
 /// Returns the rules tagged with `RequirementSource::Config`. Empty if no
@@ -253,13 +253,13 @@ fn find_project_grok_configs(cwd: &Path) -> Vec<PathBuf> {
 fn load_config_toml_permissions(cwd: &Path) -> Vec<Sourced<PermissionRule>> {
     let mut rules = Vec::new();
 
-    // Global `~/.grok/config.toml` first (lowest priority within this layer).
-    // Gated on user_grok_home() so a project's .grok/config.toml is never read as
-    // global permissions when neither GROK_HOME nor a home dir resolves.
-    if let Some(global_path) = xai_grok_config::user_grok_home().map(|g| g.join("config.toml"))
+    // Global `~/.intelekt/config.toml` first (lowest priority within this layer).
+    // Gated on user_grok_home() so a project's .intelekt/config.toml is never read as
+    // global permissions when neither INTELEKT_HOME nor a home dir resolves.
+    if let Some(global_path) = intelekt_config::user_grok_home().map(|g| g.join("config.toml"))
         && global_path.is_file()
     {
-        match xai_grok_config::load_config_file(&global_path) {
+        match intelekt_config::load_config_file(&global_path) {
             Ok(value) => rules.extend(extract_toml_permissions(&value, || {
                 RequirementSource::Config {
                     path: global_path.clone(),
@@ -273,7 +273,7 @@ fn load_config_toml_permissions(cwd: &Path) -> Vec<Sourced<PermissionRule>> {
 
     // Project-scoped configs walking from git root down to cwd.
     for path in find_project_grok_configs(cwd) {
-        match xai_grok_config::load_config_file(&path) {
+        match intelekt_config::load_config_file(&path) {
             Ok(value) => rules.extend(extract_toml_permissions(&value, || {
                 RequirementSource::Config { path: path.clone() }
             })),
@@ -287,7 +287,7 @@ fn load_config_toml_permissions(cwd: &Path) -> Vec<Sourced<PermissionRule>> {
 }
 
 fn managed_config_permissions(
-    layers: &[xai_grok_config::ManagedConfigLayer],
+    layers: &[intelekt_config::ManagedConfigLayer],
 ) -> Vec<Sourced<PermissionRule>> {
     layers
         .iter()
@@ -439,7 +439,7 @@ impl ResolveInputs<'static> {
             policy_block: yolo_disabled_by_policy(),
             managed: managed_settings(),
             managed_config_rules: managed_config_permissions(
-                &xai_grok_config::managed_config_layers(),
+                &intelekt_config::managed_config_layers(),
             ),
         }
     }
@@ -718,7 +718,7 @@ use std::sync::OnceLock;
 /// Claude `managed-settings.json` subset we load.
 ///
 /// **Supported surface today:** a single file from
-/// [`xai_grok_config::claude_managed_settings_path`] (platform path such as
+/// [`intelekt_config::claude_managed_settings_path`] (platform path such as
 /// `/Library/Application Support/ClaudeCode/managed-settings.json`). We do
 /// **not** yet merge Claude's `managed-settings.d/` drop-ins, MDM plist, or
 /// Windows registry delivery.
@@ -739,7 +739,7 @@ pub fn managed_settings() -> &'static ManagedSettings {
 }
 
 fn load_managed_settings() -> ManagedSettings {
-    let Some(path) = xai_grok_config::claude_managed_settings_path() else {
+    let Some(path) = intelekt_config::claude_managed_settings_path() else {
         return ManagedSettings::default();
     };
     let Some(json) = read_managed_settings_json(&path) else {
@@ -962,7 +962,7 @@ pub const YOLO_PIN_REASON_LEGACY_YOLO: &str =
 /// toggle drive always-approve; to disable it in grok use a root-owned
 /// `requirements.toml`. Fails open on user-writable layers.
 pub fn yolo_disabled_by_policy() -> Option<&'static str> {
-    let layers = xai_grok_config::requirements_layers();
+    let layers = intelekt_config::requirements_layers();
     // The source label only names the layer in the non-bool warning; materialize
     // it as a PathBuf so the borrowed iterator below outlives the temporaries.
     let labeled: Vec<(PathBuf, &toml::Value)> = layers
@@ -991,7 +991,7 @@ fn requirements_lock_bool(ui: Option<&toml::Value>, key: &str, path: &Path) -> O
 }
 
 /// Pure form of [`yolo_disabled_by_policy`] over pre-loaded layers (testable
-/// without `~/.grok`); `path` only names the layer in a non-bool warning.
+/// without `~/.intelekt`); `path` only names the layer in a non-bool warning.
 fn resolve_yolo_policy_block<'a>(
     requirement_layers: impl Iterator<Item = (&'a Path, &'a toml::Value)>,
 ) -> Option<&'static str> {
@@ -1398,7 +1398,7 @@ mod tests {
 
     // Crate-shared lock serializing tests that mutate the global process
     // environment so concurrent test threads can't race on shared env state.
-    // Shared so `GROK_HOME`/`HOME` mutations here also serialize against the
+    // Shared so `INTELEKT_HOME`/`HOME` mutations here also serialize against the
     // other env-mutating test modules under single-process `cargo test --lib`.
     use crate::ENV_TEST_LOCK as ENV_LOCK;
 
@@ -1933,13 +1933,13 @@ mod tests {
 
     #[test]
     fn load_claude_env_merges_with_precedence() {
-        // GROK_HOME-isolate so the claude-import marker reads clean (an imported
+        // INTELEKT_HOME-isolate so the claude-import marker reads clean (an imported
         // dev machine would otherwise early-return an empty map and fail these
         // asserts); the project tier overrides any real `~/.claude`, so the
         // per-key assertions hold without isolating HOME.
         let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let home = tempfile::tempdir().unwrap();
-        let _home_guard = EnvVarGuard::set("GROK_HOME", home.path());
+        let _home_guard = EnvVarGuard::set("INTELEKT_HOME", home.path());
         let _marker_guard = EnvVarGuard::unset("_GROK_CLAUDE_MARKER_OVERRIDE");
         let tmp = tempfile::tempdir().unwrap();
         let claude_dir = tmp.path().join(".claude");
@@ -1967,12 +1967,12 @@ mod tests {
 
     #[test]
     fn load_claude_env_empty_when_no_settings() {
-        // Isolate GROK_HOME (claude-import marker) AND HOME (global `~/.claude`)
+        // Isolate INTELEKT_HOME (claude-import marker) AND HOME (global `~/.claude`)
         // so neither a dev machine's import marker nor its real `~/.claude` env
         // can trip the empty-map assertion.
         let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let home = tempfile::tempdir().unwrap();
-        let _home_guard = EnvVarGuard::set("GROK_HOME", home.path());
+        let _home_guard = EnvVarGuard::set("INTELEKT_HOME", home.path());
         let _real_home_guard = EnvVarGuard::set("HOME", home.path());
         let _marker_guard = EnvVarGuard::unset("_GROK_CLAUDE_MARKER_OVERRIDE");
         let tmp = tempfile::tempdir().unwrap();
@@ -1984,12 +1984,12 @@ mod tests {
     fn load_claude_env_with_project_drops_repo_env_when_untrusted() {
         // The repo-tree `.claude/settings.json` env is injected into every spawned
         // subprocess (BASH_ENV / GIT_SSH_COMMAND / …), so an untrusted folder must
-        // drop it. Isolate GROK_HOME so the claude-import marker reads clean (an
+        // drop it. Isolate INTELEKT_HOME so the claude-import marker reads clean (an
         // imported dev machine would otherwise early-return an empty map); the
         // unique key keeps it independent of the host's real `~/.claude`.
         let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let home = tempfile::tempdir().unwrap();
-        let _home_guard = EnvVarGuard::set("GROK_HOME", home.path());
+        let _home_guard = EnvVarGuard::set("INTELEKT_HOME", home.path());
         let _marker_guard = EnvVarGuard::unset("_GROK_CLAUDE_MARKER_OVERRIDE");
         let tmp = tempfile::tempdir().unwrap();
         let claude_dir = tmp.path().join(".claude");
@@ -3281,7 +3281,7 @@ mod tests {
     #[test]
     fn admin_source_trusts_only_root_owned_tiers() {
         // Only managed-settings and the system-dir requirements layer are admin;
-        // the user-writable `~/.grok/requirements.toml` is not, despite its path.
+        // the user-writable `~/.intelekt/requirements.toml` is not, despite its path.
         let p = std::path::PathBuf::from("x");
         assert!(is_admin_source(&RequirementSource::ManagedSettings {
             path: p.clone()
@@ -3290,7 +3290,7 @@ mod tests {
             path: "/etc/grok/requirements.toml".into(),
         }));
         assert!(!is_admin_source(&RequirementSource::Requirements {
-            path: "/home/u/.grok/requirements.toml".into(),
+            path: "/home/u/.intelekt/requirements.toml".into(),
         }));
         assert!(!is_admin_source(&RequirementSource::ManagedConfig {
             path: "/etc/grok/managed_config.toml".into(),
@@ -3324,7 +3324,7 @@ mod tests {
             sourced(
                 allow_any(Some("**/*")),
                 RequirementSource::Requirements {
-                    path: "/home/u/.grok/requirements.toml".into(),
+                    path: "/home/u/.intelekt/requirements.toml".into(),
                 },
             ),
             // Managed config: defaults tier, untrusted even from /etc/grok.
@@ -3403,7 +3403,7 @@ mod tests {
     fn drop_untrusted_freeform_catchalls_respects_source_and_scope() {
         let sourced = |value, source| Sourced { value, source };
         let untrusted = || RequirementSource::Requirements {
-            path: "/home/u/.grok/requirements.toml".into(),
+            path: "/home/u/.intelekt/requirements.toml".into(),
         };
         let admin = || RequirementSource::SystemRequirements {
             path: "/etc/grok/requirements.toml".into(),
@@ -4166,7 +4166,7 @@ mod tests {
         .unwrap();
 
         let layers =
-            xai_grok_config::managed_config_layers_at(Some(system.path()), Some(user.path()));
+            intelekt_config::managed_config_layers_at(Some(system.path()), Some(user.path()));
         assert!(layers[0].is_system && layers[0].path.starts_with(system.path()));
         assert!(!layers[1].is_system && layers[1].path.starts_with(user.path()));
         let rules = managed_config_permissions(&layers);
@@ -4183,7 +4183,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            xai_grok_config::managed_config_layers_at(Some(system.path()), Some(user.path())).len(),
+            intelekt_config::managed_config_layers_at(Some(system.path()), Some(user.path())).len(),
             1
         );
 

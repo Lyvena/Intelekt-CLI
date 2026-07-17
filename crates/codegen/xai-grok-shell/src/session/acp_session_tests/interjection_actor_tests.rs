@@ -81,7 +81,7 @@ async fn drain_interjection_with_images_attaches_image_parts() {
                 .content
                 .iter()
                 .filter_map(|p| match p {
-                    xai_grok_sampling_types::ContentPart::Image { url } => Some(url.as_ref()),
+                    intelekt_sampling_types::ContentPart::Image { url } => Some(url.as_ref()),
                     _ => None,
                 })
                 .collect();
@@ -144,7 +144,7 @@ async fn drain_interjection_expands_skill_slash_reference() {
             let dir = tempfile::tempdir().unwrap();
             let path = dir.path().join("SKILL.md");
             std::fs::write(&path, "Find sessions matching $ARGUMENTS").unwrap();
-            let skill = xai_grok_tools::implementations::skills::types::SkillInfo {
+            let skill = intelekt_tools::implementations::skills::types::SkillInfo {
                 name: "find-session".to_owned(),
                 description: "Find past sessions".to_owned(),
                 path: path.to_string_lossy().into_owned(),
@@ -162,7 +162,7 @@ async fn drain_interjection_expands_skill_slash_reference() {
                     None,
                     Some(256_000),
                     None,
-                    xai_grok_tools::types::compat::CompatConfig::default(),
+                    intelekt_tools::types::compat::CompatConfig::default(),
                 )
                 .await;
 
@@ -238,7 +238,7 @@ async fn drain_interjection_truncation_never_touches_image_data() {
                 .content
                 .iter()
                 .find_map(|p| match p {
-                    xai_grok_sampling_types::ContentPart::Image { url } => Some(url.as_ref()),
+                    intelekt_sampling_types::ContentPart::Image { url } => Some(url.as_ref()),
                     _ => None,
                 })
                 .expect("image part must survive truncation");

@@ -271,7 +271,7 @@ impl BackgroundTaskRegistry {
 /// Get output file path for a background task.
 ///
 /// Creates the directory structure if it doesn't exist.
-/// Path format: `~/.grok/sessions/{session_id}/tasks/{task_id}.log`
+/// Path format: `~/.intelekt/sessions/{session_id}/tasks/{task_id}.log`
 pub fn get_task_output_path(session_id: &str, task_id: &str) -> PathBuf {
     use crate::util::grok_home::grok_home;
 
@@ -297,7 +297,7 @@ pub struct BackgroundTaskManifestEntry {
     pub start_time: std::time::SystemTime,
     pub cwd: String,
     #[serde(default)]
-    pub kind: xai_grok_tools::computer::types::TaskKind,
+    pub kind: intelekt_tools::computer::types::TaskKind,
 }
 
 /// Persist a manifest of running background tasks to the session directory.
@@ -349,8 +349,8 @@ pub fn format_resumed_tasks_reminder(entries: &[BackgroundTaskManifestEntry]) ->
         let cmd = entry.display_command.as_deref().unwrap_or(&entry.command);
         let ago = format_duration_ago(now, entry.start_time);
         let kind_label = match entry.kind {
-            xai_grok_tools::computer::types::TaskKind::Monitor => " [monitor]",
-            xai_grok_tools::computer::types::TaskKind::Bash => "",
+            intelekt_tools::computer::types::TaskKind::Monitor => " [monitor]",
+            intelekt_tools::computer::types::TaskKind::Bash => "",
         };
         let _ = writeln!(
             buf,
@@ -613,7 +613,7 @@ mod tests {
             output_file: PathBuf::from(format!("/tmp/sessions/tasks/{task_id}.log")),
             start_time: std::time::SystemTime::now() - Duration::from_secs(secs_ago),
             cwd: "/home/user".to_string(),
-            kind: xai_grok_tools::computer::types::TaskKind::Bash,
+            kind: intelekt_tools::computer::types::TaskKind::Bash,
         }
     }
 
@@ -698,7 +698,7 @@ mod tests {
     #[test]
     fn format_reminder_labels_monitor_tasks() {
         let mut entry = make_manifest_entry("mon-1", 300);
-        entry.kind = xai_grok_tools::computer::types::TaskKind::Monitor;
+        entry.kind = intelekt_tools::computer::types::TaskKind::Monitor;
         let reminder = format_resumed_tasks_reminder(&[entry]);
         assert!(reminder.contains("[monitor]"));
     }
@@ -714,14 +714,14 @@ mod tests {
     fn manifest_roundtrip_preserves_kind() {
         let dir = tempfile::tempdir().unwrap();
         let mut entry = make_manifest_entry("mon-1", 60);
-        entry.kind = xai_grok_tools::computer::types::TaskKind::Monitor;
+        entry.kind = intelekt_tools::computer::types::TaskKind::Monitor;
         persist_manifest(dir.path(), vec![entry]);
 
         let loaded = load_and_clear_manifest(dir.path());
         assert_eq!(loaded.len(), 1);
         assert_eq!(
             loaded[0].kind,
-            xai_grok_tools::computer::types::TaskKind::Monitor
+            intelekt_tools::computer::types::TaskKind::Monitor
         );
     }
 

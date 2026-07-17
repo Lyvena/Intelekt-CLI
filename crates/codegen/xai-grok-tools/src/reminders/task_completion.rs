@@ -66,7 +66,7 @@ impl AutoWakeDeliveredIds {
     }
     /// Return a snapshot of the currently-marked IDs **without** draining them.
     ///
-    /// Used by the between-turn completion drain in `xai-grok-shell` to
+    /// Used by the between-turn completion drain in `intelekt-shell` to
     /// suppress completions already delivered via auto-wake synthetic prompts.
     /// Unlike [`drain`](Self::drain) (the per-tool-call surface's consumption
     /// point), this is read-only so the existing drain/un-mark lifecycle —
@@ -329,7 +329,7 @@ pub fn format_monitor_events(
 ///
 /// Subagents share the parent's terminal backend, so `list_tasks()` returns
 /// tasks owned by other sessions (the parent, sibling subagents). A task is in
-/// scope only when it has no recorded owner (legacy / non-grok-build backends)
+/// scope only when it has no recorded owner (legacy / non-intelekt-cli backends)
 /// or its owner matches the current session; cross-session tasks are filtered
 /// out so their completions surface in the owning session, not here.
 pub(crate) fn task_owned_by_session(task: &TaskSnapshot, my_owner: Option<&str>) -> bool {
@@ -507,7 +507,7 @@ pub fn format_between_turn_bash_completions(
 /// learned about from this tool result. Used by:
 /// - `TaskCompletionReminder::collect_reminders` to suppress the
 ///   per-tool-call `<system-reminder>` for the same ID.
-/// - `xai-grok-shell`'s `SessionActor` to sweep matching synthetic
+/// - `intelekt-shell`'s `SessionActor` to sweep matching synthetic
 ///   auto-wake prompts and notifications out of `pending_inputs` /
 ///   `pending_notifications` (closes the TOCTOU race that produces
 ///   trailing `<system-reminder>` items in `chat_history.jsonl`).

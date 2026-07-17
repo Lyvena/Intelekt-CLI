@@ -996,12 +996,12 @@
         let id = AgentId(0);
         {
             let agent = app.agents.get_mut(&id).unwrap();
-            seed_models(agent, "grok-3", &["grok-3", "grok-4"]);
+            seed_models(agent, "intelekt-3", &["intelekt-3", "intelekt-4"]);
         }
 
         // Unknown model → ignored → both markers untouched.
         assert!(!handle_ext_notification(
-            &model_changed_ext_with_event("sess-1", "grok-99-unknown", "sess-1-7"),
+            &model_changed_ext_with_event("sess-1", "intelekt-99-unknown", "sess-1-7"),
             &mut app
         ));
         assert_eq!(
@@ -1015,7 +1015,7 @@
 
         // Known model → applied → both markers advance.
         assert!(handle_ext_notification(
-            &model_changed_ext_with_event("sess-1", "grok-4", "sess-1-8"),
+            &model_changed_ext_with_event("sess-1", "intelekt-4", "sess-1-8"),
             &mut app
         ));
         assert_eq!(

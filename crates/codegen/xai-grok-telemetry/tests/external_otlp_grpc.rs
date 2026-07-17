@@ -17,7 +17,7 @@ fn external_stream_grpc_end_to_end() {
     let endpoint =
         col::start_collector_with_protocol(collected.clone(), col::CollectorProtocol::Grpc);
 
-    let mut cfg = xai_grok_telemetry::external::ExternalOtelConfig::resolve_with(
+    let mut cfg = intelekt_telemetry::external::ExternalOtelConfig::resolve_with(
         |name| match name {
             "GROK_EXTERNAL_OTEL" => Some("1".into()),
             "OTEL_LOGS_EXPORTER" | "OTEL_METRICS_EXPORTER" => Some("otlp".into()),
@@ -30,28 +30,28 @@ fn external_stream_grpc_end_to_end() {
         None,
     )
     .expect("double opt-in must resolve");
-    cfg.client = xai_grok_telemetry::external::config::ExternalClientInfo {
+    cfg.client = intelekt_telemetry::external::config::ExternalClientInfo {
         service_version: "0.0.0-test".into(),
         client_version: "0.0.0-test".into(),
         app_entrypoint: "cli".into(),
     };
 
-    xai_grok_telemetry::external::init(Some(cfg));
-    assert!(xai_grok_telemetry::external::is_active());
+    intelekt_telemetry::external::init(Some(cfg));
+    assert!(intelekt_telemetry::external::is_active());
 
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::SessionNew {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::SessionNew {
         session_id: "sess-grpc-1".into(),
         client_identifier: None,
         client_version: None,
         is_git_repo: true,
-        permission_mode: xai_grok_telemetry::enums::PermissionMode::Ask,
+        permission_mode: intelekt_telemetry::enums::PermissionMode::Ask,
     });
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::SessionHarness {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::SessionHarness {
         session_id: "sess-grpc-1".into(),
         client_identifier: Some("grok-pager".into()),
-        model_id: "grok-4".into(),
-        agent_name: "grok-build-plan".into(),
-        permission_mode: xai_grok_telemetry::enums::PermissionMode::Ask,
+        model_id: "intelekt-4".into(),
+        agent_name: "intelekt-cli-plan".into(),
+        permission_mode: intelekt_telemetry::enums::PermissionMode::Ask,
         mcp_server_names: vec![CANARY_MCP.into()],
         plugin_names: vec![],
         skill_names: vec![],
@@ -62,14 +62,14 @@ fn external_stream_grpc_end_to_end() {
         is_git_repo: true,
         auto_update: None,
     });
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::PromptSubmitted {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::PromptSubmitted {
         prompt_length: CANARY_PROMPT.len(),
-        model_id: "grok-4".into(),
+        model_id: "intelekt-4".into(),
         client_identifier: None,
         screen_mode: None,
         prompt_text: Some(CANARY_PROMPT.into()),
     });
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::ModelResponseReceived {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::ModelResponseReceived {
         model_id: CANARY_MODEL.into(),
         duration_ms: 5,
         stop_reason: Some("stop".into()),
@@ -79,7 +79,7 @@ fn external_stream_grpc_end_to_end() {
         cached_prompt_tokens: None,
     });
 
-    xai_grok_telemetry::external::flush();
+    intelekt_telemetry::external::flush();
     assert!(
         col::wait_until(std::time::Duration::from_secs(10), || {
             collected.logs_len() > 0 && collected.metrics_len() > 0
@@ -123,5 +123,5 @@ fn external_stream_grpc_end_to_end() {
         "MCP server name reached the gRPC wire"
     );
 
-    xai_grok_telemetry::external::shutdown();
+    intelekt_telemetry::external::shutdown();
 }

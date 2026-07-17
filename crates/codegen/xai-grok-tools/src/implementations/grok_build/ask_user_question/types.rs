@@ -2,13 +2,13 @@
 //!
 //! These types define the request/response contract between three crates:
 //!
-//! - **`xai-grok-tools`** — tool blocks on a oneshot, formats the result.
-//! - **`xai-grok-shell`** — coordinator receives requests over mpsc, calls the
+//! - **`intelekt-tools`** — tool blocks on a oneshot, formats the result.
+//! - **`intelekt-shell`** — coordinator receives requests over mpsc, calls the
 //!   client via ACP `ext_method`, sends results back over the oneshot.
-//! - **`xai-grok-pager`** — handles the `ExtMethod`, renders UI, returns a
+//! - **`intelekt-pager`** — handles the `ExtMethod`, renders UI, returns a
 //!   typed response.
 //!
-//! All three crates import these types from `xai-grok-tools`.
+//! All three crates import these types from `intelekt-tools`.
 
 use std::collections::HashMap;
 

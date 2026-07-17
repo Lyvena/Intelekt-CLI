@@ -15,10 +15,10 @@ impl DrainSource {
     pub(super) fn into_parts(
         self,
     ) -> (
-        xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalInput,
+        intelekt_tools::implementations::grok_build::update_goal::UpdateGoalInput,
         Option<
             tokio::sync::oneshot::Sender<
-                xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalAck,
+                intelekt_tools::implementations::grok_build::update_goal::UpdateGoalAck,
             >,
         >,
     ) {
@@ -34,10 +34,10 @@ impl DrainSource {
 pub(super) fn try_send_ack(
     ack_tx: Option<
         tokio::sync::oneshot::Sender<
-            xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalAck,
+            intelekt_tools::implementations::grok_build::update_goal::UpdateGoalAck,
         >,
     >,
-    ack: xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalAck,
+    ack: intelekt_tools::implementations::grok_build::update_goal::UpdateGoalAck,
 ) {
     if let Some(tx) = ack_tx {
         send_ack(tx, ack);
@@ -154,9 +154,9 @@ impl<F: FnOnce(&mut crate::session::goal_tracker::GoalTracker)> Drop for Tracker
 /// the receiver was dropped (benign — tool future aborted).
 pub(super) fn send_ack(
     ack_tx: tokio::sync::oneshot::Sender<
-        xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalAck,
+        intelekt_tools::implementations::grok_build::update_goal::UpdateGoalAck,
     >,
-    ack: xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalAck,
+    ack: intelekt_tools::implementations::grok_build::update_goal::UpdateGoalAck,
 ) {
     if ack_tx.send(ack).is_err() {
         tracing::debug!("update_goal ack receiver dropped before harness could respond");
@@ -702,14 +702,14 @@ mod fold_tokens_by_model_tests {
     #[test]
     fn mixed_models_sum_marginals_sorted_desc() {
         let records = vec![
-            rec(Some("g1"), 0, 100, Some("grok-3")),
-            rec(Some("g1"), 100, 500, Some("grok-4")), // marginal 400
-            rec(Some("g1"), 0, 50, Some("grok-3")),    // grok-3 total 150
+            rec(Some("g1"), 0, 100, Some("intelekt-3")),
+            rec(Some("g1"), 100, 500, Some("intelekt-4")), // marginal 400
+            rec(Some("g1"), 0, 50, Some("intelekt-3")),    // grok-3 total 150
         ];
         let out = fold_tokens_by_model(&records, "g1", "cur");
         assert_eq!(
             out,
-            vec![("grok-4".to_owned(), 400), ("grok-3".to_owned(), 150)]
+            vec![("intelekt-4".to_owned(), 400), ("intelekt-3".to_owned(), 150)]
         );
     }
 
@@ -736,27 +736,27 @@ mod fold_tokens_by_model_tests {
     #[test]
     fn single_distinct_model_collapses_to_one_entry() {
         let records = vec![
-            rec(Some("g1"), 0, 100, Some("grok-4")),
+            rec(Some("g1"), 0, 100, Some("intelekt-4")),
             rec(Some("g1"), 0, 200, None), // folds under current = grok-4
         ];
-        let out = fold_tokens_by_model(&records, "g1", "grok-4");
-        assert_eq!(out, vec![("grok-4".to_owned(), 300)]);
+        let out = fold_tokens_by_model(&records, "g1", "intelekt-4");
+        assert_eq!(out, vec![("intelekt-4".to_owned(), 300)]);
     }
 
     #[test]
     fn other_goal_records_excluded() {
         let records = vec![
-            rec(Some("g1"), 0, 100, Some("grok-4")),
-            rec(Some("g2"), 0, 999, Some("grok-4")),
-            rec(None, 0, 999, Some("grok-4")),
+            rec(Some("g1"), 0, 100, Some("intelekt-4")),
+            rec(Some("g2"), 0, 999, Some("intelekt-4")),
+            rec(None, 0, 999, Some("intelekt-4")),
         ];
         let out = fold_tokens_by_model(&records, "g1", "cur");
-        assert_eq!(out, vec![("grok-4".to_owned(), 100)]);
+        assert_eq!(out, vec![("intelekt-4".to_owned(), 100)]);
     }
 
     #[test]
     fn last_below_anchor_does_not_underflow() {
-        let records = vec![rec(Some("g1"), 500, 100, Some("grok-4"))];
+        let records = vec![rec(Some("g1"), 500, 100, Some("intelekt-4"))];
         // marginal saturates to 0 -> skipped as a zero-token entry.
         assert!(fold_tokens_by_model(&records, "g1", "cur").is_empty());
     }
@@ -765,9 +765,9 @@ mod fold_tokens_by_model_tests {
     fn captured_model_survives_mid_goal_current_model_switch() {
         // A record captured `grok-4` at spawn keeps it even though the
         // current model at aggregation time is `grok-3`.
-        let records = vec![rec(Some("g1"), 0, 100, Some("grok-4"))];
-        let out = fold_tokens_by_model(&records, "g1", "grok-3");
-        assert_eq!(out, vec![("grok-4".to_owned(), 100)]);
+        let records = vec![rec(Some("g1"), 0, 100, Some("intelekt-4"))];
+        let out = fold_tokens_by_model(&records, "g1", "intelekt-3");
+        assert_eq!(out, vec![("intelekt-4".to_owned(), 100)]);
     }
 
     #[test]
@@ -788,11 +788,11 @@ mod fold_tokens_by_model_tests {
         // An empty id folds into the SAME bucket as records that
         // explicitly captured the current model id.
         let records = vec![
-            rec(Some("g1"), 0, 100, Some("grok-4")),
+            rec(Some("g1"), 0, 100, Some("intelekt-4")),
             rec(Some("g1"), 0, 200, Some("")),
         ];
-        let out = fold_tokens_by_model(&records, "g1", "grok-4");
-        assert_eq!(out, vec![("grok-4".to_owned(), 300)]);
+        let out = fold_tokens_by_model(&records, "g1", "intelekt-4");
+        assert_eq!(out, vec![("intelekt-4".to_owned(), 300)]);
     }
 }
 
@@ -822,7 +822,7 @@ pub(crate) fn planner_failure_pause_message() -> String {
 }
 
 pub(crate) fn goal_slash_and_harness_available(goal_enabled: bool, tool_names: &[String]) -> bool {
-    use xai_grok_tools::implementations::grok_build::UPDATE_GOAL_TOOL_NAME;
+    use intelekt_tools::implementations::grok_build::UPDATE_GOAL_TOOL_NAME;
     goal_enabled && tool_names.iter().any(|n| n == UPDATE_GOAL_TOOL_NAME)
 }
 
@@ -1489,7 +1489,7 @@ impl SessionActor {
             .borrow()
             .tool_bridge()
             .update_resource(
-                xai_grok_tools::implementations::grok_build::task::types::GoalLoopActive(active),
+                intelekt_tools::implementations::grok_build::task::types::GoalLoopActive(active),
             )
             .await;
     }

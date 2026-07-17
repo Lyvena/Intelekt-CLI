@@ -11,7 +11,7 @@
 //! `needsauth`/`auth_expired` on terminal exhaustion) can be asserted.
 //!
 //! The mock is a hand-rolled axum streamable-HTTP server (same shape proven to
-//! handshake against rmcp 2.1 in `xai-grok-mcp/tests/repro_sse_flood.rs`): a
+//! handshake against rmcp 2.1 in `intelekt-mcp/tests/repro_sse_flood.rs`): a
 //! `POST` that answers `initialize` + `tools/list` while `reject == false` and
 //! `401`s while `reject == true`, plus a standing-GET SSE stream. A separate
 //! `GET /mcp/configs` route stands in for the cli-chat-proxy managed-config backend fetch, so
@@ -33,7 +33,7 @@ use chrono::Utc;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use xai_grok_mcp::servers::{ClientStateKind, HttpConfig, McpClient};
+use intelekt_mcp::servers::{ClientStateKind, HttpConfig, McpClient};
 
 const MANAGED: &str = "grok_com_testconnector";
 
@@ -409,7 +409,7 @@ async fn terminal_after_three_failures_pushes_needsauth_then_gates() {
 /// loop in `tool_calls.rs` keys on, plus the resulting side effect.
 #[tokio::test(flavor = "current_thread")]
 async fn entry_b_routes_auth_rejection_but_not_policy_denial() {
-    use xai_grok_mcp::servers::{is_auth_rejection_message, parse_mcp_tool_name};
+    use intelekt_mcp::servers::{is_auth_rejection_message, parse_mcp_tool_name};
 
     // Managed-prefix gate: only `grok_com_*` tools enter entry-B.
     let (managed_server, _) =

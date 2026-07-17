@@ -928,8 +928,8 @@ fn turn_end_fetches_prompt_suggestion_when_enabled() {
     };
     assert_eq!(*agent_id, id);
     assert!(session_id.is_some());
-    // No `grok-build-0.1` in the test catalog and no env override →
-    // `None` on the wire; the shell then uses its own `grok-build-0.1`
+    // No `intelekt-cli-0.1` in the test catalog and no env override →
+    // `None` on the wire; the shell then uses its own `intelekt-cli-0.1`
     // default (suggestion calls never use the session model).
     assert_eq!(*model, None);
 
@@ -1919,7 +1919,7 @@ fn send_prompt_works_after_reconnect_clears() {
 fn switch_model_holds_prompt_until_complete() {
     let mut app = test_app_with_agent();
     let id = AgentId(0);
-    let model_id = acp::ModelId::new(std::sync::Arc::from("grok-4.5"));
+    let model_id = acp::ModelId::new(std::sync::Arc::from("intelekt-4.5"));
 
     dispatch(
         Action::SwitchModel {
@@ -2053,7 +2053,7 @@ fn submit_question_answers_cancel_clears_local_modal_and_restores_prompt() {
     // exercising the prompt.restore + cleanup_question_state contract
     // that lives in `submit_question_answers` itself.
     use crate::views::question_view::{LocalQuestionKind, QuestionViewState};
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         Question, QuestionOption,
     };
 

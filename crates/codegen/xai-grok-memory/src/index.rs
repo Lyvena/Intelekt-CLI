@@ -20,7 +20,7 @@ use xai_sqlite_journal::JournalMode;
 use super::chunker::{chunk_hash, chunk_markdown};
 use super::schema;
 use super::storage::MemoryStorage;
-use xai_grok_config_types::MemoryIndexConfig;
+use intelekt_config_types::MemoryIndexConfig;
 
 static SQLITE_VEC_INIT: Once = Once::new();
 

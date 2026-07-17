@@ -3,8 +3,8 @@
 use crate::permission::types::EditPolicy;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use xai_grok_paths::AbsPathBuf;
-use xai_grok_tools::util::grok_home::grok_home;
+use intelekt_paths::AbsPathBuf;
+use intelekt_tools::util::grok_home::grok_home;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 #[serde(default)]
@@ -27,7 +27,7 @@ pub struct PermissionState {
 }
 
 fn state_dir_for_cwd(cwd: &AbsPathBuf) -> std::path::PathBuf {
-    xai_grok_config::sessions_cwd_dir(cwd.as_str())
+    intelekt_config::sessions_cwd_dir(cwd.as_str())
 }
 
 fn sanitize_client_id(id: &str) -> String {

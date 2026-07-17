@@ -1162,7 +1162,7 @@ impl ConversationItem {
 // ---------------------------------------------------------------------------
 //
 // Part of the Grok Compaction unification. Lets the shared, transport-agnostic
-// engine in `crates/common/xai-grok-compaction` operate over grok-build's
+// engine in `crates/common/intelekt-compaction` operate over intelekt-cli's
 // `ConversationItem` without depending on this crate — the orphan rule forces
 // the impls to live here, next to the type. Mirrors the harness's
 // `impl CompactionItem` for its own turn type.
@@ -1173,10 +1173,10 @@ impl ConversationItem {
 // rebuild the compacted history. Each factory constructor maps to the matching
 // `ConversationItem` constructor so the `SyntheticReason` tags that the
 // replay / spawn-time idempotence guards rely on are preserved.
-impl xai_grok_compaction::CompactionItem for ConversationItem {
-    fn role(&self) -> xai_grok_compaction::CompactionRole {
-        use xai_grok_compaction::CompactionRole;
-        // grok-build has no distinct `Developer` role; everything maps onto
+impl intelekt_compaction::CompactionItem for ConversationItem {
+    fn role(&self) -> intelekt_compaction::CompactionRole {
+        use intelekt_compaction::CompactionRole;
+        // intelekt-cli has no distinct `Developer` role; everything maps onto
         // the four `Role` variants `ConversationItem::role()` already returns.
         match self.role() {
             Role::System => CompactionRole::System,
@@ -1198,18 +1198,18 @@ impl xai_grok_compaction::CompactionItem for ConversationItem {
     }
 
     fn is_compaction_summary(&self) -> bool {
-        // grok-build has no structural marker that uniquely identifies a prior
+        // intelekt-cli has no structural marker that uniquely identifies a prior
         // compaction summary: the carrier is a `user_meta` item whose
         // `SyntheticReason::CompactionMeta` is also used for re-injected file
         // contents. Returning `false` is safe for the full-replace path, which
         // does not consult this (it summarizes the whole conversation). Revisit
-        // (add a dedicated marker) before routing grok-build history through
+        // (add a dedicated marker) before routing intelekt-cli history through
         // the shared `history`/`inter` filter.
         false
     }
 
-    fn attachment_refs(&self) -> Vec<xai_grok_compaction::CompactionFileRef> {
-        // grok-build `UserItem`s carry only `Text`/`Image { url }` content
+    fn attachment_refs(&self) -> Vec<intelekt_compaction::CompactionFileRef> {
+        // intelekt-cli `UserItem`s carry only `Text`/`Image { url }` content
         // parts — there is no id+name attachment-ref concept like the chat harness's
         // `GrokTurn`. The full-replace path does not read this; revisit if
         // image attachments need to survive into the `<grok_user_queries>`
@@ -1218,7 +1218,7 @@ impl xai_grok_compaction::CompactionItem for ConversationItem {
     }
 }
 
-impl xai_grok_compaction::CompactionItemFactory for ConversationItem {
+impl intelekt_compaction::CompactionItemFactory for ConversationItem {
     fn new_user(text: String) -> Self {
         Self::user(text)
     }
@@ -1368,7 +1368,7 @@ pub fn inject_streaming_reasoning_fallback(items: &mut Vec<ConversationItem>, te
 /// Singular `reasoning` path: builds a synthetic `rs::ReasoningItem`
 /// from the legacy `ReasoningContent { text, encrypted, id }`. `id` is
 /// preserved when present; Anthropic Thinking blocks never carried one
-/// ([stream/messages.rs:340](crates/codegen/xai-grok-sampler/src/stream/messages.rs))
+/// ([stream/messages.rs:340](crates/codegen/intelekt-sampler/src/stream/messages.rs))
 /// so the synthesized id is the empty string in that case.
 ///
 /// v0 `ChatRequestMessage` path: top-level `reasoning_content: String`
@@ -1619,7 +1619,7 @@ impl From<ChatRequestMessage> for ConversationItem {
 /// letters or emoji), so this helper must be used whenever we take a prefix
 /// of an argument string.
 ///
-/// This is `pub` so downstream crates (`xai-grok-shell`) can re-use it
+/// This is `pub` so downstream crates (`intelekt-shell`) can re-use it
 /// without duplicating the logic (R3).
 pub fn truncate_bytes(s: &str, max_bytes: usize) -> &str {
     if s.len() <= max_bytes {
@@ -1882,7 +1882,7 @@ impl From<ChatResponseMessage> for ConversationItem {
         // here. Reasoning is modelled as a sibling
         // `ConversationItem::Reasoning(_)` item which this single-item
         // conversion cannot emit. The streaming chat-completions consumer
-        // ([crates/codegen/xai-grok-sampler/src/stream/chat_completions.rs])
+        // ([crates/codegen/intelekt-sampler/src/stream/chat_completions.rs])
         // synthesizes a sibling Reasoning item directly into the
         // conversation; this `From` impl is only used in tests and legacy
         // paths.
@@ -3281,7 +3281,7 @@ pub fn build_messages_request(req: &ConversationRequest) -> crate::messages::Mes
 ///
 /// Note: Anthropic `Thinking` blocks are dropped here because this `From`
 /// can only return one item; the streaming Anthropic consumer
-/// ([crates/codegen/xai-grok-sampler/src/stream/messages.rs]) instead
+/// ([crates/codegen/intelekt-sampler/src/stream/messages.rs]) instead
 /// emits a sibling `ConversationItem::Reasoning(_)` directly into the
 /// conversation so reasoning text survives display + token estimation.
 impl From<crate::messages::MessagesResponse> for ConversationItem {
@@ -3331,7 +3331,7 @@ impl From<crate::messages::MessagesResponse> for ConversationItem {
 #[cfg(test)]
 mod compaction_item_bridge_tests {
     use super::*;
-    use xai_grok_compaction::{CompactionItem, CompactionItemFactory, CompactionRole};
+    use intelekt_compaction::{CompactionItem, CompactionItemFactory, CompactionRole};
 
     #[test]
     fn role_maps_every_variant() {
@@ -3407,7 +3407,7 @@ mod compaction_item_bridge_tests {
 
     #[test]
     fn metadata_accessors_are_conservative() {
-        // grok-build has no structural compaction-summary marker, and no
+        // intelekt-cli has no structural compaction-summary marker, and no
         // id+name attachment refs, so both return empty/false.
         assert!(!CompactionItem::is_compaction_summary(
             &ConversationItem::user("u")
@@ -3527,7 +3527,7 @@ mod tests {
         // single-item conversion produces None for reasoning_content. The
         // `conversation_to_chat_messages` helper is what carries reasoning
         // through; tested separately).
-        let assistant = ConversationItem::assistant_with_model("Hi there!", "grok-3");
+        let assistant = ConversationItem::assistant_with_model("Hi there!", "intelekt-3");
         let chat_msg = conversation_item_to_chat_message(assistant);
         assert_eq!(chat_msg.reasoning_content, None);
         let back: ConversationItem = chat_msg.into();
@@ -3545,11 +3545,11 @@ mod tests {
             ConversationItem::system("System prompt"),
             ConversationItem::user("User message"),
         ])
-        .with_model("grok-3")
+        .with_model("intelekt-3")
         .with_temperature(0.7);
 
         let chat_req: ChatCompletionRequest = req.into();
-        assert_eq!(chat_req.model, Some("grok-3".to_string()));
+        assert_eq!(chat_req.model, Some("intelekt-3".to_string()));
         assert_eq!(chat_req.temperature, Some(0.7));
         assert_eq!(chat_req.messages.len(), 2);
     }
@@ -3560,11 +3560,11 @@ mod tests {
             ConversationItem::system("System prompt"),
             ConversationItem::user("User message"),
         ])
-        .with_model("grok-3")
+        .with_model("intelekt-3")
         .with_temperature(0.7);
 
         let responses_req: rs::CreateResponse = (&req).into();
-        assert_eq!(responses_req.model, Some("grok-3".to_string()));
+        assert_eq!(responses_req.model, Some("intelekt-3".to_string()));
         assert_eq!(responses_req.temperature, Some(0.7));
 
         let rs::InputParam::Items(items) = responses_req.input else {
@@ -3821,7 +3821,7 @@ mod tests {
             instructions: None,
             max_output_tokens: None,
             metadata: None,
-            model: "grok-3".to_string(),
+            model: "intelekt-3".to_string(),
             object: "response".to_string(),
             output: vec![rs::OutputItem::Message(rs::OutputMessage {
                 content: vec![rs::OutputMessageContent::OutputText(
@@ -3863,7 +3863,7 @@ mod tests {
         let ConversationItem::Assistant(a) = &item else {
             panic!("Expected Assistant item");
         };
-        assert_eq!(a.model_id, Some("grok-3".to_string()));
+        assert_eq!(a.model_id, Some("intelekt-3".to_string()));
         assert_eq!(
             a.reasoning_effort, None,
             "no reasoning config on the response => no effort recorded"
@@ -3882,7 +3882,7 @@ mod tests {
             instructions: None,
             max_output_tokens: None,
             metadata: None,
-            model: "grok-3".to_string(),
+            model: "intelekt-3".to_string(),
             object: "response".to_string(),
             output: vec![rs::OutputItem::FunctionCall(rs::FunctionToolCall {
                 arguments: r#"{"path": "/bar.txt"}"#.to_string(),
@@ -3942,7 +3942,7 @@ mod tests {
             instructions: None,
             max_output_tokens: None,
             metadata: None,
-            model: "grok-3".to_string(),
+            model: "intelekt-3".to_string(),
             object: "response".to_string(),
             output: vec![],
             parallel_tool_calls: None,
@@ -4071,7 +4071,7 @@ mod tests {
                 name: "read_file".to_string(),
                 arguments: r#"{"path": "/test.txt"}"#.into(),
             }],
-            model_id: Some("grok-3".to_string()),
+            model_id: Some("intelekt-3".to_string()),
             model_fingerprint: None,
             reasoning_effort: None,
         };
@@ -4081,7 +4081,7 @@ mod tests {
 
         assert_eq!(chat_msg.text_content(), "Let me help you with that.");
         assert_eq!(chat_msg.tool_calls.len(), 1);
-        assert_eq!(chat_msg.model_id, Some("grok-3".to_string()));
+        assert_eq!(chat_msg.model_id, Some("intelekt-3".to_string()));
     }
 
     // ============================================================================
@@ -4270,7 +4270,7 @@ mod tests {
             instructions: None,
             max_output_tokens: None,
             metadata: None,
-            model: "grok-3".to_string(),
+            model: "intelekt-3".to_string(),
             object: "response".to_string(),
             output: vec![
                 rs::OutputItem::Reasoning(rs::ReasoningItem {
@@ -4343,7 +4343,7 @@ mod tests {
             instructions: None,
             max_output_tokens: None,
             metadata: None,
-            model: "grok-3".to_string(),
+            model: "intelekt-3".to_string(),
             object: "response".to_string(),
             output: vec![
                 rs::OutputItem::Reasoning(rs::ReasoningItem {
@@ -4433,7 +4433,7 @@ mod tests {
             instructions: None,
             max_output_tokens: None,
             metadata: None,
-            model: "grok-3".to_string(),
+            model: "intelekt-3".to_string(),
             object: "response".to_string(),
             output: vec![
                 rs::OutputItem::Reasoning(rs::ReasoningItem {
@@ -4526,7 +4526,7 @@ mod tests {
         let assistant_item = ConversationItem::Assistant(AssistantItem {
             content: "The answer is 42.".into(),
             tool_calls: vec![],
-            model_id: Some("grok-3".to_string()),
+            model_id: Some("intelekt-3".to_string()),
             model_fingerprint: None,
             reasoning_effort: None,
         });
@@ -4558,7 +4558,7 @@ mod tests {
             ConversationItem::Assistant(AssistantItem {
                 content: "The answer is 4.".into(),
                 tool_calls: vec![],
-                model_id: Some("grok-3".to_string()),
+                model_id: Some("intelekt-3".to_string()),
                 model_fingerprint: None,
                 reasoning_effort: None,
             }),
@@ -6193,7 +6193,7 @@ mod tests {
     fn test_transform_cwd_transforms_tool_call_arguments() {
         // Tool call arguments containing paths are transformed alongside text content.
         // This ensures the model sees consistent paths on the next turn.
-        let worktree = "/home/user/.grok/worktrees/project/ab-uuid-a";
+        let worktree = "/home/user/.intelekt/worktrees/project/ab-uuid-a";
         let root = "/home/user/project";
 
         let mut items = vec![ConversationItem::Assistant(AssistantItem {
@@ -6269,7 +6269,7 @@ mod tests {
         // via `transform_conversation_cwd` (see the `Reasoning(_)` arm),
         // which is a behavior improvement over the pre-refactor state
         // where it lived buried in AssistantItem.reasoning and was skipped.
-        let worktree = "/home/user/.grok/worktrees/project/ab-uuid-a";
+        let worktree = "/home/user/.intelekt/worktrees/project/ab-uuid-a";
         let root = "/home/user/project";
 
         let mut items = vec![
@@ -6285,7 +6285,7 @@ mod tests {
             ConversationItem::Assistant(AssistantItem {
                 content: format!("I edited {worktree}/src/main.rs").into(),
                 tool_calls: vec![],
-                model_id: Some("grok-3".to_string()),
+                model_id: Some("intelekt-3".to_string()),
                 model_fingerprint: None,
                 reasoning_effort: None,
             }),
@@ -6313,7 +6313,7 @@ mod tests {
         // End-to-end sync-back scenario: worktree paths -> root paths
         // This simulates what happens when a forked session's worktree
         // contents are synced back to the original root path.
-        let worktree = "/home/user/.grok/worktrees/myproject/fork-a";
+        let worktree = "/home/user/.intelekt/worktrees/myproject/fork-a";
         let root = "/home/user/myproject";
 
         let mut items = vec![
@@ -6382,7 +6382,7 @@ mod tests {
         // Tool call arguments are transformed so the fork session's history
         // has consistent worktree paths everywhere.
         let root = "/home/user/myproject";
-        let worktree = "/home/user/.grok/worktrees/myproject/fork-a";
+        let worktree = "/home/user/.intelekt/worktrees/myproject/fork-a";
 
         let mut items = vec![
             ConversationItem::system(format!("Working in {root}.")),
@@ -6519,7 +6519,7 @@ mod tests {
     #[test]
     fn test_transform_cwd_assistant_only_tool_calls_no_content() {
         // Assistant message with empty content but tool calls containing paths
-        let worktree = "/home/user/.grok/worktrees/proj/fork-a";
+        let worktree = "/home/user/.intelekt/worktrees/proj/fork-a";
         let root = "/home/user/proj";
 
         let mut items = vec![ConversationItem::assistant_tool_calls(vec![
@@ -6828,14 +6828,14 @@ mod tests {
     #[test]
     fn test_conversation_request_builder() {
         let req = ConversationRequest::new()
-            .with_model("grok-3")
+            .with_model("intelekt-3")
             .with_temperature(0.5)
             .with_max_output_tokens(1000)
             .with_conv_id("conv-123")
             .with_req_id("req-456")
             .with_tool_choice(ConversationToolChoice::Auto);
 
-        assert_eq!(req.model, Some("grok-3".to_string()));
+        assert_eq!(req.model, Some("intelekt-3".to_string()));
         assert_eq!(req.temperature, Some(0.5));
         assert_eq!(req.max_output_tokens, Some(1000));
         assert_eq!(req.x_grok_conv_id, Some("conv-123".to_string()));
@@ -6863,22 +6863,22 @@ mod tests {
             model_fingerprint: None,
             reasoning_effort: None,
         }
-        .with_model_id("grok-3");
+        .with_model_id("intelekt-3");
 
-        assert_eq!(item.model_id, Some("grok-3".to_string()));
+        assert_eq!(item.model_id, Some("intelekt-3".to_string()));
     }
 
     #[test]
     fn test_conversation_item_with_model_id() {
-        let item = ConversationItem::assistant("Hello").with_model_id("grok-3");
+        let item = ConversationItem::assistant("Hello").with_model_id("intelekt-3");
 
         let ConversationItem::Assistant(a) = item else {
             panic!("Expected Assistant");
         };
-        assert_eq!(a.model_id, Some("grok-3".to_string()));
+        assert_eq!(a.model_id, Some("intelekt-3".to_string()));
 
         // Non-assistant should be unchanged
-        let user = ConversationItem::user("Hi").with_model_id("grok-3");
+        let user = ConversationItem::user("Hi").with_model_id("intelekt-3");
         assert_matches!(user, ConversationItem::User(_));
     }
 
@@ -8067,7 +8067,7 @@ mod tests {
             instructions: None,
             max_output_tokens: None,
             metadata: Some(metadata),
-            model: "grok-4.5".into(),
+            model: "intelekt-4.5".into(),
             object: "response".into(),
             output: vec![rs::OutputItem::Message(rs::OutputMessage {
                 content: vec![rs::OutputMessageContent::OutputText(
@@ -8107,7 +8107,7 @@ mod tests {
             .expect("response produces at least a trailing Assistant");
         assert_matches!(item, ConversationItem::Assistant(ref a) => {
             assert_eq!(a.model_fingerprint.as_deref(), Some("fp_abc123"));
-            assert_eq!(a.model_id.as_deref(), Some("grok-4.5"));
+            assert_eq!(a.model_id.as_deref(), Some("intelekt-4.5"));
             assert_eq!(a.content.as_ref(), "hello");
         });
     }
@@ -8278,7 +8278,7 @@ mod tests {
             instructions: None,
             max_output_tokens: None,
             metadata: None,
-            model: "grok-build".to_string(),
+            model: "intelekt-cli".to_string(),
             object: "response".to_string(),
             output: vec![
                 make_reasoning("a", "thinking pre-search", None),
@@ -8588,7 +8588,7 @@ mod tests {
     //
     //   1. v1 assistant with `raw_output: Vec<OutputItem>` (backend-search era)
     //   2. v1 assistant with singular `reasoning: ReasoningContent`
-    //      (earlier grok-build / chat-completions written as v1)
+    //      (earlier intelekt-cli / chat-completions written as v1)
     //   3. v0 `ChatRequestMessage` with top-level `reasoning_content`
     //
     // Idempotent (current-format rows produce zero siblings) — verified by
@@ -8608,7 +8608,7 @@ mod tests {
                 "encrypted": "bIfXFNBiP8EI8F7pkKC1tgbYjvVuIctMAlCUGMii",
                 "id": "rs_00000000-0000-4000-8000-000000000001"
             },
-            "model_id": "grok-build",
+            "model_id": "intelekt-cli",
             "model_fingerprint": "fp_test000000000001"
         });
         let mut seen = std::collections::HashSet::new();
@@ -8796,7 +8796,7 @@ mod tests {
         let raw = serde_json::json!({
             "type": "assistant",
             "content": "answer",
-            "model_id": "grok-build"
+            "model_id": "intelekt-cli"
         });
         let mut seen = std::collections::HashSet::new();
         assert!(upgrade_legacy_reasoning(&raw, &mut seen).is_empty());

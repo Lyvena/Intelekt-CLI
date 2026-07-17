@@ -22,13 +22,13 @@ pub use load::*;
 pub use mcp::*;
 pub use permissions::*;
 pub use persist::*;
-// `remote` extracted to the `xai-grok-config-types` crate (dependency inversion);
+// `remote` extracted to the `intelekt-config-types` crate (dependency inversion);
 // re-exported so `crate::util::config::{RemoteSettings, GoalRoleModel}` keep working.
 pub use resolve::*;
 pub use settings_writes::*;
 pub use tips::*;
 pub use worktree::*;
-pub use xai_grok_config_types::{
+pub use intelekt_config_types::{
     CampaignOverride, ContextualHintsRemote, DisplayRefreshSettings, DoomLoopRecoverySettings,
     GoalRoleModel, RemoteSettings,
 };

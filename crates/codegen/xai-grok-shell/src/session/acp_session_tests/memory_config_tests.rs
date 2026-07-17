@@ -1,9 +1,9 @@
 use super::support::*;
 use super::*;
 use tokio::sync::mpsc;
-use xai_grok_paths::AbsPathBuf;
-use xai_grok_workspace::file_system::MockFs;
-use xai_grok_workspace::permission::PermissionHandle;
+use intelekt_paths::AbsPathBuf;
+use intelekt_workspace::file_system::MockFs;
+use intelekt_workspace::permission::PermissionHandle;
 #[test]
 fn initial_injection_backend_params_use_override_min_score() {
     let params = crate::session::memory::MemoryBackendParams {
@@ -97,7 +97,7 @@ async fn create_test_actor_with_memory(
     let (event_tx, _event_rx) = tokio::sync::mpsc::unbounded_channel::<SessionEvent>();
     let chat_state_handle = xai_chat_state::ChatStateActor::spawn(
         vec![],
-        xai_grok_sampling_types::SamplingConfig {
+        intelekt_sampling_types::SamplingConfig {
             base_url: "http://localhost".to_string(),
             model: "test".to_string(),
             max_completion_tokens: None,
@@ -274,7 +274,7 @@ async fn create_test_actor_with_memory(
         hook_registry: std::cell::RefCell::new(None),
         client_hooks: Default::default(),
         hook_resolved_workspace_root: String::new(),
-        vcs_kind: xai_grok_workspace::session::git::VcsKind::Git,
+        vcs_kind: intelekt_workspace::session::git::VcsKind::Git,
         hook_load_errors: std::cell::RefCell::new(Vec::new()),
         plugin_registry: std::cell::RefCell::new(None),
         plugin_registry_handle: None,
@@ -287,13 +287,13 @@ async fn create_test_actor_with_memory(
         session_turn_active: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
         streaming_turn_capture: parking_lot::Mutex::new(StreamingTurnCapture::default()),
         turn_stream_drained: parking_lot::Mutex::new(None),
-        sampler_handle: xai_grok_sampler::SamplerHandle::noop(),
+        sampler_handle: intelekt_sampler::SamplerHandle::noop(),
         rebuild_spec: crate::session::agent_rebuild::test_rebuild_spec_default(),
         image_description_model: crate::test_support::TEST_MODEL.to_owned(),
         image_describe_cache: Arc::new(crate::session::image_describe::ImageDescribeCache::new()),
         subagent_spawn_info: parking_lot::Mutex::new(HashMap::new()),
         subagent_token_records: parking_lot::Mutex::new(HashMap::new()),
-        workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+        workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
         trace_config_template: std::cell::RefCell::new(None),
     }
 }
@@ -475,7 +475,7 @@ async fn test_memory_storage_created_when_enabled() {
 /// idempotency guard alone is what suppresses re-injection.
 #[allow(clippy::field_reassign_with_default)]
 async fn create_injection_ready_actor(
-    initial_conversation: Vec<xai_grok_sampling_types::ConversationItem>,
+    initial_conversation: Vec<intelekt_sampling_types::ConversationItem>,
 ) -> SessionActor {
     let (gateway_tx, _gateway_rx) = mpsc::unbounded_channel();
     let (persistence_tx, _persistence_rx) = mpsc::unbounded_channel();
@@ -537,8 +537,8 @@ async fn test_first_turn_reminder_injects_without_persisted_block() {
     local
         .run_until(async {
             let actor = create_injection_ready_actor(vec![
-                xai_grok_sampling_types::ConversationItem::system("You are a helpful assistant."),
-                xai_grok_sampling_types::ConversationItem::user(
+                intelekt_sampling_types::ConversationItem::system("You are a helpful assistant."),
+                intelekt_sampling_types::ConversationItem::user(
                     "tell me about rust backend services conventions",
                 ),
             ])
@@ -569,7 +569,7 @@ async fn test_first_turn_reminder_skips_when_block_persisted() {
         .run_until(async {
             let persisted_block =
                 crate::session::helpers::memory_context::format_memory_reminder(&[
-                    xai_grok_tools::types::memory_backend::MemorySearchResult {
+                    intelekt_tools::types::memory_backend::MemorySearchResult {
                         chunk_id: "prev:0".into(),
                         path: "MEMORY.md".into(),
                         start_line: 0,
@@ -582,10 +582,10 @@ async fn test_first_turn_reminder_skips_when_block_persisted() {
                 ])
                 .unwrap();
             let actor = create_injection_ready_actor(vec![
-                xai_grok_sampling_types::ConversationItem::system(format!(
+                intelekt_sampling_types::ConversationItem::system(format!(
                     "You are a helpful assistant.\n\n{persisted_block}"
                 )),
-                xai_grok_sampling_types::ConversationItem::user(
+                intelekt_sampling_types::ConversationItem::user(
                     "tell me about rust backend services conventions",
                 ),
             ])

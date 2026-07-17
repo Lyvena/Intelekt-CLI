@@ -5,7 +5,7 @@
     unreachable_code,
     dead_code
 )]
-pub(crate) use xai_grok_telemetry::unified_log;
+pub(crate) use intelekt_telemetry::unified_log;
 pub use xai_tracing_macros::{teprintln, timed, tprintln};
 pub mod active_sessions;
 pub mod agent;
@@ -16,18 +16,18 @@ pub mod claude_import;
 pub mod claude_import_state;
 pub mod cli_models;
 pub mod config;
-pub use xai_grok_shell_base::cpu_profile;
-pub use xai_grok_shell_base::env;
+pub use intelekt_shell_base::cpu_profile;
+pub use intelekt_shell_base::env;
 pub mod extensions;
-pub use xai_grok_workspace::foreign_sessions;
+pub use intelekt_workspace::foreign_sessions;
 pub mod heap_profile;
-pub use xai_grok_http as http;
+pub use intelekt_http as http;
 pub mod inspect;
 pub mod instrumentation;
 pub mod leader;
 pub mod managed_config;
 pub mod mcp_doctor;
-pub use xai_grok_models as models;
+pub use intelekt_models as models;
 pub mod plugin;
 pub mod relay;
 pub mod remote;

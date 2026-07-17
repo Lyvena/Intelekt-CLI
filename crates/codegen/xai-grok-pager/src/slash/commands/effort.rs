@@ -98,7 +98,7 @@ mod tests {
     use crate::slash::commands::effort_levels::EFFORT_LEVELS;
     use agent_client_protocol as acp;
     use std::sync::Arc;
-    use xai_grok_shell::sampling::types::ReasoningEffort;
+    use intelekt_shell::sampling::types::ReasoningEffort;
 
     fn model_with_reasoning(id: &str, name: &str) -> (acp::ModelId, acp::ModelInfo) {
         let id = acp::ModelId::new(Arc::from(id));
@@ -292,7 +292,7 @@ mod tests {
     #[test]
     fn non_reasoning_model_errors() {
         let mut state = ModelState::default();
-        let (id, info) = plain_model("grok-4.5", "Grok 4.5");
+        let (id, info) = plain_model("intelekt-4.5", "Grok 4.5");
         state.available.insert(id.clone(), info);
         state.current = Some(id);
         let mut ctx = dummy_exec_ctx(&state);
@@ -326,7 +326,7 @@ mod tests {
         assert!(cmd.suggest_args(&ctx, "").is_none());
 
         let mut plain = ModelState::default();
-        let (id, info) = plain_model("grok-4.5", "Grok 4.5");
+        let (id, info) = plain_model("intelekt-4.5", "Grok 4.5");
         plain.available.insert(id.clone(), info);
         plain.current = Some(id);
         let ctx = AppCtx {

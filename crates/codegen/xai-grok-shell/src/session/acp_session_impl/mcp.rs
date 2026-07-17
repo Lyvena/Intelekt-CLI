@@ -168,7 +168,7 @@ impl SessionActor {
                         scope(),
                         Some(elapsed_ms),
                         None,
-                        Some(xai_grok_telemetry::events::McpErrorType::Auth.as_str()),
+                        Some(intelekt_telemetry::events::McpErrorType::Auth.as_str()),
                     );
                     self.unregister_server_tools(server_name);
                     self.refresh_mcp_snapshot_and_schedule_reminder().await;
@@ -593,7 +593,7 @@ impl SessionActor {
         {
             return;
         }
-        use xai_grok_tools::implementations::search_tool::{
+        use intelekt_tools::implementations::search_tool::{
             build_delta_reminder, build_server_reminder, fingerprint_servers,
         };
         let server_summaries = self.connected_server_summaries();
@@ -689,7 +689,7 @@ impl SessionActor {
     /// (`util::config::disabled_mcp_server_names`). Used by the
     /// auto-restart task to gate on the live configuration each
     /// backoff iteration — the user may have toggled the server off
-    /// or removed it from `~/.grok/config.toml` while we were
+    /// or removed it from `~/.intelekt/config.toml` while we were
     /// sleeping.
     ///
     /// HTTP / HttpAuth entries always return `false` here, which is
@@ -700,8 +700,8 @@ impl SessionActor {
     ///
     /// Performs one synchronous read of the per-cwd disabled-MCP
     /// list (`crate::util::config::disabled_mcp_server_names`,
-    /// which parses `~/.grok/config.toml` + the project
-    /// `.grok/config.toml`) on every call. The auto-restart task
+    /// which parses `~/.intelekt/config.toml` + the project
+    /// `.intelekt/config.toml`) on every call. The auto-restart task
     /// calls this at most:
     ///   - once at schedule time (`maybe_schedule_restart`), and
     ///   - once per backoff iteration (≤3 per restart window).
@@ -859,7 +859,7 @@ impl SessionActor {
     /// dispatcher — the handler re-reads the slot on every emit.
     ///
     /// **Contract:**
-    /// [`xai_grok_mcp::servers`] test
+    /// [`intelekt_mcp::servers`] test
     /// `client_handler_observes_post_handshake_set_event_tx`
     /// builds a handler from a
     /// client whose slot is `None`, then installs a sender via
@@ -957,13 +957,13 @@ impl SessionActor {
         }
         if let Some(tx) = event_tx {
             new_client.set_event_tx(Some(tx.clone()));
-            let _ = tx.send(xai_grok_mcp::servers::McpClientEvent::ToolsChanged {
+            let _ = tx.send(intelekt_mcp::servers::McpClientEvent::ToolsChanged {
                 server: server.to_string(),
             });
         }
         let arc_client = std::sync::Arc::new(new_client);
         let _ = arc_client
-            .arm_liveness_watcher(xai_grok_mcp::liveness::DEFAULT_POLL_INTERVAL)
+            .arm_liveness_watcher(intelekt_mcp::liveness::DEFAULT_POLL_INTERVAL)
             .await;
         {
             let mut mcp_state = self.mcp_state.lock().await;
@@ -1506,12 +1506,12 @@ impl SessionActor {
                                 .copied()
                                 .unwrap_or("unknown")
                             {
-                                "stdio" => xai_grok_telemetry::events::McpTransport::Stdio,
-                                "sse" => xai_grok_telemetry::events::McpTransport::Sse,
-                                _ => xai_grok_telemetry::events::McpTransport::Http,
+                                "stdio" => intelekt_telemetry::events::McpTransport::Stdio,
+                                "sse" => intelekt_telemetry::events::McpTransport::Sse,
+                                _ => intelekt_telemetry::events::McpTransport::Http,
                             };
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::McpServerConnected {
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::McpServerConnected {
                                     server_name: server_name.clone(),
                                     tool_count,
                                     transport: transport_enum,
@@ -1553,15 +1553,15 @@ impl SessionActor {
                             };
                             let error_type_label = match error_cat {
                                 xai_file_utils::events::McpErrorCategory::AuthRequired => {
-                                    xai_grok_telemetry::events::McpErrorType::Auth
+                                    intelekt_telemetry::events::McpErrorType::Auth
                                 }
                                 xai_file_utils::events::McpErrorCategory::Timeout => {
-                                    xai_grok_telemetry::events::McpErrorType::Timeout
+                                    intelekt_telemetry::events::McpErrorType::Timeout
                                 }
-                                _ => xai_grok_telemetry::events::McpErrorType::HandshakeFailed,
+                                _ => intelekt_telemetry::events::McpErrorType::HandshakeFailed,
                             };
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::McpServerFailed {
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::McpServerFailed {
                                     server_name: server_name.clone(),
                                     error_type: error_type_label,
                                     duration_ms: elapsed.as_millis() as u64,
@@ -1599,7 +1599,7 @@ impl SessionActor {
                                 servers_auth_required += 1;
                             }
                             let detail = (!needs_auth).then(|| {
-                                xai_grok_tools::util::truncate_str_with_marker(&e.to_string(), 200)
+                                intelekt_tools::util::truncate_str_with_marker(&e.to_string(), 200)
                                     .into_owned()
                             });
                             mcp_state.record_init_failure(&server_name, needs_auth, detail);
@@ -1614,7 +1614,7 @@ impl SessionActor {
                 for c in mcp_clients {
                     let arc = std::sync::Arc::new(c);
                     let _ = arc
-                        .arm_liveness_watcher(xai_grok_mcp::liveness::DEFAULT_POLL_INTERVAL)
+                        .arm_liveness_watcher(intelekt_mcp::liveness::DEFAULT_POLL_INTERVAL)
                         .await;
                     mcp_state
                         .owned_clients
@@ -1629,8 +1629,8 @@ impl SessionActor {
                     "mcp_bg_handshake: clients inserted, calling notify_waiters"
                 );
                 mcp_handshakes_done.notify_waiters();
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::events::McpInitCompleted {
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::events::McpInitCompleted {
                         total_duration_ms: handshake_start.elapsed().as_millis() as u64,
                         server_count,
                         servers_succeeded,
@@ -1754,8 +1754,8 @@ impl SessionActor {
     /// the server list.
     pub(crate) fn connected_server_summaries(
         &self,
-    ) -> Vec<xai_grok_tools::types::tool_index::ServerSummary> {
-        use xai_grok_tools::types::tool_index::ToolSearchIndex;
+    ) -> Vec<intelekt_tools::types::tool_index::ServerSummary> {
+        use intelekt_tools::types::tool_index::ToolSearchIndex;
         crate::session::tool_index::Bm25ToolSearchIndex::new(self.tool_metadata_snapshot.clone())
             .list_server_summaries()
     }
@@ -1783,7 +1783,7 @@ impl SessionActor {
     pub(super) async fn mcp_announcement_snapshot(&self) -> Option<McpAnnouncementSnapshot> {
         let server_summaries = self.connected_server_summaries();
         let mut text =
-            xai_grok_tools::implementations::search_tool::build_server_reminder(&server_summaries)?;
+            intelekt_tools::implementations::search_tool::build_server_reminder(&server_summaries)?;
         if let Some(hint) = self.rendered_mcp_hint().await {
             text.push_str(&hint);
         }

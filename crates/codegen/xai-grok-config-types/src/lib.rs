@@ -16,7 +16,7 @@ pub use permission::*;
 mod pool;
 pub use pool::*;
 use serde::{Deserialize, Serialize};
-use xai_grok_announcements::RemoteAnnouncement;
+use intelekt_announcements::RemoteAnnouncement;
 /// A remote `campaigns[]` entry: an `id` gate plus a full-power
 /// flattened config patch (the JSON sibling of a `[[campaigns]]` TOML override).
 #[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq, Eq)]
@@ -463,7 +463,7 @@ pub struct RemoteSettings {
     /// per-run and never persisted, so a remote "enable" could never reach
     /// init; org-wide enable ships via managed config instead. Applied
     /// in-process (tighten-only) via
-    /// `xai_grok_telemetry::external::apply_remote_policy`.
+    /// `intelekt_telemetry::external::apply_remote_policy`.
     #[serde(default)]
     pub external_otel_disabled: Option<bool>,
     /// Force the external stream's content gates (`OTEL_LOG_USER_PROMPTS`,
@@ -528,7 +528,7 @@ pub struct RemoteSettings {
     /// ghost text), from the `grok_build_settings` remote settings flag. Sits below
     /// env (`GROK_PROMPT_SUGGESTIONS_MODEL`) and `[models] prompt_suggestion`
     /// in config.toml, above the client hint and the built-in
-    /// `grok-build-0.1` default. The effective model is catalog-guarded: when
+    /// `intelekt-cli-0.1` default. The effective model is catalog-guarded: when
     /// it is not in the shell's model catalog the suggestion request is
     /// skipped entirely (never the session model). See
     /// `ModelOverrideConfig::resolve` and `handle_suggest_prompt`.
@@ -706,7 +706,7 @@ pub struct RemoteSettings {
     /// When `None` or `Some(false)`, sessions are shown in a flat list.
     #[serde(default)]
     pub session_picker_grouped: Option<bool>,
-    /// Whether the user is allowed to use Grok Build. Set by remote settings
+    /// Whether the user is allowed to use Intelekt CLI. Set by remote settings
     /// `grok_build_access_gate` targeting rules. `None` = no server response
     /// yet (client uses own fallback check). `Some(false)` = blocked.
     #[serde(default)]
@@ -908,15 +908,15 @@ where
 }
 /// A model + the harness whose system prompt / toolset flavor that model must
 /// run against. The pair is the atomic configurable unit because a model is
-/// only guaranteed to work with a compatible harness (cursor vs grok-build).
+/// only guaranteed to work with a compatible harness (cursor vs intelekt-cli).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GoalRoleModel {
-    /// Model id, e.g. "grok-4". Resolved against available models at
+    /// Model id, e.g. "intelekt-4". Resolved against available models at
     /// spawn time; unknown/unauthorized ⇒ fail-open to current model.
     pub model: String,
-    /// Harness `agent_type` (e.g. "cursor", "grok-build-plan") whose
+    /// Harness `agent_type` (e.g. "cursor", "intelekt-cli-plan") whose
     /// `AgentDefinition` decides the role subagent's harness flavor (system
-    /// prompt + cursor-vs-grok-build toolset), applied REGARDLESS of the
+    /// prompt + cursor-vs-intelekt-cli toolset), applied REGARDLESS of the
     /// session/parent agent. Resolved by NAME (project/plugin/builtin lookup,
     /// then re-flavored by the subagent toolset resolver) — NOT via the main
     /// session's env/ACP/strict-harness precedence chain. NOT a subagent type:
@@ -960,18 +960,18 @@ mod tests {
     }
     #[test]
     fn remote_settings_image_description_model_round_trip() {
-        let json = r#"{"image_description_model": "grok-build"}"#;
+        let json = r#"{"image_description_model": "intelekt-cli"}"#;
         let s: RemoteSettings = serde_json::from_str(json).unwrap();
-        assert_eq!(s.image_description_model.as_deref(), Some("grok-build"));
+        assert_eq!(s.image_description_model.as_deref(), Some("intelekt-cli"));
         let out = serde_json::to_string(&s).unwrap();
         let s2: RemoteSettings = serde_json::from_str(&out).unwrap();
         assert_eq!(s2.image_description_model, s.image_description_model);
     }
     #[test]
     fn remote_settings_prompt_suggestion_model_round_trip() {
-        let json = r#"{"prompt_suggestion_model": "grok-build-0.1"}"#;
+        let json = r#"{"prompt_suggestion_model": "intelekt-cli-0.1"}"#;
         let s: RemoteSettings = serde_json::from_str(json).unwrap();
-        assert_eq!(s.prompt_suggestion_model.as_deref(), Some("grok-build-0.1"));
+        assert_eq!(s.prompt_suggestion_model.as_deref(), Some("intelekt-cli-0.1"));
         let out = serde_json::to_string(&s).unwrap();
         let s2: RemoteSettings = serde_json::from_str(&out).unwrap();
         assert_eq!(s2.prompt_suggestion_model, s.prompt_suggestion_model);
@@ -1038,12 +1038,12 @@ mod tests {
     #[test]
     fn remote_settings_goal_planner_model_round_trip() {
         let json =
-            r#"{"goal_planner_model": {"model": "grok-4", "agent_type": "general-purpose"}}"#;
+            r#"{"goal_planner_model": {"model": "intelekt-4", "agent_type": "general-purpose"}}"#;
         let s: RemoteSettings = serde_json::from_str(json).unwrap();
         assert_eq!(
             s.goal_planner_model,
             Some(GoalRoleModel {
-                model: "grok-4".to_string(),
+                model: "intelekt-4".to_string(),
                 agent_type: "general-purpose".to_string(),
             })
         );
@@ -1053,12 +1053,12 @@ mod tests {
     }
     #[test]
     fn remote_settings_goal_strategist_model_round_trip() {
-        let json = r#"{"goal_strategist_model": {"model": "grok-4.5", "agent_type": "cursor"}}"#;
+        let json = r#"{"goal_strategist_model": {"model": "intelekt-4.5", "agent_type": "cursor"}}"#;
         let s: RemoteSettings = serde_json::from_str(json).unwrap();
         assert_eq!(
             s.goal_strategist_model,
             Some(GoalRoleModel {
-                model: "grok-4.5".to_string(),
+                model: "intelekt-4.5".to_string(),
                 agent_type: "cursor".to_string(),
             })
         );
@@ -1069,19 +1069,19 @@ mod tests {
     #[test]
     fn remote_settings_goal_skeptic_models_fully_valid_pool_round_trips() {
         let json = r#"{"goal_skeptic_models": [
-            {"model": "grok-4", "agent_type": "general-purpose"},
-            {"model": "grok-3", "agent_type": "cursor"}
+            {"model": "intelekt-4", "agent_type": "general-purpose"},
+            {"model": "intelekt-3", "agent_type": "cursor"}
         ]}"#;
         let s: RemoteSettings = serde_json::from_str(json).unwrap();
         assert_eq!(
             s.goal_skeptic_models,
             vec![
                 GoalRoleModel {
-                    model: "grok-4".to_string(),
+                    model: "intelekt-4".to_string(),
                     agent_type: "general-purpose".to_string(),
                 },
                 GoalRoleModel {
-                    model: "grok-3".to_string(),
+                    model: "intelekt-3".to_string(),
                     agent_type: "cursor".to_string(),
                 },
             ]
@@ -1093,20 +1093,20 @@ mod tests {
     #[test]
     fn remote_settings_goal_skeptic_models_one_bad_item_does_not_poison_pool() {
         let json = r#"{"goal_skeptic_models": [
-            {"model": "grok-4", "agent_type": "general-purpose"},
+            {"model": "intelekt-4", "agent_type": "general-purpose"},
             {"model": "grok-broken"},
-            {"model": "grok-3", "agent_type": "cursor"}
+            {"model": "intelekt-3", "agent_type": "cursor"}
         ]}"#;
         let s: RemoteSettings = serde_json::from_str(json).unwrap();
         assert_eq!(
             s.goal_skeptic_models,
             vec![
                 GoalRoleModel {
-                    model: "grok-4".to_string(),
+                    model: "intelekt-4".to_string(),
                     agent_type: "general-purpose".to_string(),
                 },
                 GoalRoleModel {
-                    model: "grok-3".to_string(),
+                    model: "intelekt-3".to_string(),
                     agent_type: "cursor".to_string(),
                 },
             ]
@@ -1153,13 +1153,13 @@ mod tests {
     fn remote_settings_goal_skeptic_models_missing_model_entry_dropped() {
         let json = r#"{"goal_skeptic_models": [
             {"agent_type": "general-purpose"},
-            {"model": "grok-3", "agent_type": "cursor"}
+            {"model": "intelekt-3", "agent_type": "cursor"}
         ]}"#;
         let s: RemoteSettings = serde_json::from_str(json).unwrap();
         assert_eq!(
             s.goal_skeptic_models,
             vec![GoalRoleModel {
-                model: "grok-3".to_string(),
+                model: "intelekt-3".to_string(),
                 agent_type: "cursor".to_string(),
             }]
         );
@@ -1168,14 +1168,14 @@ mod tests {
     fn remote_settings_goal_skeptic_models_wrong_typed_scalar_dropped() {
         let json = r#"{"goal_skeptic_models": [
             {"model": 123, "agent_type": "general-purpose"},
-            {"model": "grok-3", "agent_type": ["cursor"]},
-            {"model": "grok-4", "agent_type": "general-purpose"}
+            {"model": "intelekt-3", "agent_type": ["cursor"]},
+            {"model": "intelekt-4", "agent_type": "general-purpose"}
         ]}"#;
         let s: RemoteSettings = serde_json::from_str(json).unwrap();
         assert_eq!(
             s.goal_skeptic_models,
             vec![GoalRoleModel {
-                model: "grok-4".to_string(),
+                model: "intelekt-4".to_string(),
                 agent_type: "general-purpose".to_string(),
             }]
         );
@@ -1183,13 +1183,13 @@ mod tests {
     #[test]
     fn remote_settings_goal_skeptic_models_extra_unknown_fields_kept() {
         let json = r#"{"goal_skeptic_models": [
-            {"model": "grok-4", "agent_type": "general-purpose", "reasoning_effort": "high"}
+            {"model": "intelekt-4", "agent_type": "general-purpose", "reasoning_effort": "high"}
         ]}"#;
         let s: RemoteSettings = serde_json::from_str(json).unwrap();
         assert_eq!(
             s.goal_skeptic_models,
             vec![GoalRoleModel {
-                model: "grok-4".to_string(),
+                model: "intelekt-4".to_string(),
                 agent_type: "general-purpose".to_string(),
             }]
         );
@@ -1241,28 +1241,28 @@ mod tests {
     fn remote_settings_goal_role_models_malformed_pair_does_not_drop_other_fields() {
         let json = r#"{
             "goal_planner_model": {"model": "broken"},
-            "goal_strategist_model": {"model": "grok-4.5", "agent_type": "cursor"},
-            "default_model": "grok-4"
+            "goal_strategist_model": {"model": "intelekt-4.5", "agent_type": "cursor"},
+            "default_model": "intelekt-4"
         }"#;
         let s: RemoteSettings = serde_json::from_str(json).unwrap();
         assert_eq!(s.goal_planner_model, None);
         assert_eq!(
             s.goal_strategist_model,
             Some(GoalRoleModel {
-                model: "grok-4.5".to_string(),
+                model: "intelekt-4.5".to_string(),
                 agent_type: "cursor".to_string(),
             })
         );
-        assert_eq!(s.default_model.as_deref(), Some("grok-4"));
+        assert_eq!(s.default_model.as_deref(), Some("intelekt-4"));
     }
     #[test]
     fn remote_settings_goal_role_model_extra_unknown_fields_kept_single_pair() {
-        let json = r#"{"goal_planner_model": {"model": "grok-4", "agent_type": "general-purpose", "future": true}}"#;
+        let json = r#"{"goal_planner_model": {"model": "intelekt-4", "agent_type": "general-purpose", "future": true}}"#;
         let s: RemoteSettings = serde_json::from_str(json).unwrap();
         assert_eq!(
             s.goal_planner_model,
             Some(GoalRoleModel {
-                model: "grok-4".to_string(),
+                model: "intelekt-4".to_string(),
                 agent_type: "general-purpose".to_string(),
             })
         );

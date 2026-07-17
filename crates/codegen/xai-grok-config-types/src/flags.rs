@@ -1,7 +1,7 @@
 //! Config-value resolution leaf types and per-model laziness config,
-//! extracted from xai-grok-shell for dependency inversion.
+//! extracted from intelekt-shell for dependency inversion.
 
-use xai_grok_config::env_bool;
+use intelekt_config::env_bool;
 
 /// Where a resolved config value came from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, strum::Display)]

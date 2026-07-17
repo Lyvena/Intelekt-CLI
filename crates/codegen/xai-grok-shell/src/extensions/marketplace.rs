@@ -1,7 +1,7 @@
 //! `x.ai/marketplace/*` extension handlers.
 //!
 //! Provides marketplace browsing and install endpoints for the pager modal.
-//! Delegates to `xai-grok-plugin-marketplace` crate for scanning and install logic.
+//! Delegates to `intelekt-plugin-marketplace` crate for scanning and install logic.
 
 use agent_client_protocol as acp;
 use xai_hooks_plugins_types::{
@@ -13,7 +13,7 @@ use crate::agent::MvpAgent;
 
 type ExtResult = Result<acp::ExtResponse, acp::Error>;
 
-fn load_filtered_marketplace_sources() -> Vec<xai_grok_plugin_marketplace::MarketplaceSource> {
+fn load_filtered_marketplace_sources() -> Vec<intelekt_plugin_marketplace::MarketplaceSource> {
     crate::plugin::load_filtered_marketplace_sources()
 }
 
@@ -32,15 +32,15 @@ async fn handle_list(agent: &MvpAgent, args: &acp::ExtRequest) -> ExtResult {
         .iter()
         .map(|s| {
             let url = match &s.kind {
-                xai_grok_plugin_marketplace::SourceKind::Git { url, .. } => url.as_str(),
-                xai_grok_plugin_marketplace::SourceKind::Local { path } => {
+                intelekt_plugin_marketplace::SourceKind::Git { url, .. } => url.as_str(),
+                intelekt_plugin_marketplace::SourceKind::Local { path } => {
                     path.to_str().unwrap_or("?")
                 }
             };
             format!("{}={}", s.name, url)
         })
         .collect();
-    xai_grok_telemetry::unified_log::info(
+    intelekt_telemetry::unified_log::info(
         "marketplace handle_list: sources loaded",
         None,
         Some(serde_json::json!({
@@ -77,7 +77,7 @@ async fn handle_list(agent: &MvpAgent, args: &acp::ExtRequest) -> ExtResult {
             .iter()
             .filter(|p| p.components.is_some())
             .count();
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "marketplace handle_list: source scanned",
             None,
             Some(serde_json::json!({
@@ -98,7 +98,7 @@ async fn handle_list(agent: &MvpAgent, args: &acp::ExtRequest) -> ExtResult {
     let t_auto = std::time::Instant::now();
     let session_id = super::parse_session_id(args);
     auto_install_defaults(agent, &sources, &results, session_id.as_ref(), false).await;
-    xai_grok_telemetry::unified_log::info(
+    intelekt_telemetry::unified_log::info(
         "marketplace handle_list: complete",
         None,
         Some(serde_json::json!({
@@ -124,18 +124,18 @@ async fn handle_action(agent: &MvpAgent, args: &acp::ExtRequest) -> ExtResult {
             for source in &sources {
                 if let Some(ref filter) = source_url_or_path {
                     let identity = match &source.kind {
-                        xai_grok_plugin_marketplace::SourceKind::Local { path } => {
+                        intelekt_plugin_marketplace::SourceKind::Local { path } => {
                             path.display().to_string()
                         }
-                        xai_grok_plugin_marketplace::SourceKind::Git { url, .. } => url.clone(),
+                        intelekt_plugin_marketplace::SourceKind::Git { url, .. } => url.clone(),
                     };
                     if &identity != filter {
                         continue;
                     }
                 }
-                if let xai_grok_plugin_marketplace::SourceKind::Git { url, branch } = &source.kind {
-                    let cache_root = xai_grok_plugin_marketplace::git::default_cache_root();
-                    if let Err(e) = xai_grok_plugin_marketplace::git::force_sync_source_cache(
+                if let intelekt_plugin_marketplace::SourceKind::Git { url, branch } = &source.kind {
+                    let cache_root = intelekt_plugin_marketplace::git::default_cache_root();
+                    if let Err(e) = intelekt_plugin_marketplace::git::force_sync_source_cache(
                         url,
                         branch.as_deref(),
                         &cache_root,
@@ -193,15 +193,15 @@ async fn handle_update(
     source_url_or_path: &str,
     plugin_relative_path: &str,
 ) -> xai_hooks_plugins_types::ActionOutcome {
-    use xai_grok_plugin_marketplace::installer;
+    use intelekt_plugin_marketplace::installer;
     use xai_hooks_plugins_types::{ActionOutcome, OutcomeStatus};
 
     let sources = load_filtered_marketplace_sources();
 
-    let source_identity = |s: &xai_grok_plugin_marketplace::MarketplaceSource| -> String {
+    let source_identity = |s: &intelekt_plugin_marketplace::MarketplaceSource| -> String {
         match &s.kind {
-            xai_grok_plugin_marketplace::SourceKind::Local { path } => path.display().to_string(),
-            xai_grok_plugin_marketplace::SourceKind::Git { url, .. } => url.clone(),
+            intelekt_plugin_marketplace::SourceKind::Local { path } => path.display().to_string(),
+            intelekt_plugin_marketplace::SourceKind::Git { url, .. } => url.clone(),
         }
     };
 
@@ -221,7 +221,7 @@ async fn handle_update(
     };
 
     let plugin_path =
-        match xai_grok_plugin_marketplace::MarketplaceRelativePath::parse(plugin_relative_path) {
+        match intelekt_plugin_marketplace::MarketplaceRelativePath::parse(plugin_relative_path) {
             Ok(path) => path,
             Err(e) => {
                 return ActionOutcome {
@@ -236,17 +236,17 @@ async fn handle_update(
 
     let marketplace_lease;
     let marketplace_root = match &source.kind {
-        xai_grok_plugin_marketplace::SourceKind::Local { path } => {
+        intelekt_plugin_marketplace::SourceKind::Local { path } => {
             marketplace_lease = None;
             path.clone()
         }
-        xai_grok_plugin_marketplace::SourceKind::Git { url, branch } => {
-            let cache_root = xai_grok_plugin_marketplace::git::default_cache_root();
-            match xai_grok_plugin_marketplace::git::sync_source_cache_with_mode(
+        intelekt_plugin_marketplace::SourceKind::Git { url, branch } => {
+            let cache_root = intelekt_plugin_marketplace::git::default_cache_root();
+            match intelekt_plugin_marketplace::git::sync_source_cache_with_mode(
                 url,
                 branch.as_deref(),
                 &cache_root,
-                xai_grok_plugin_marketplace::git::SyncMode::Force,
+                intelekt_plugin_marketplace::git::SyncMode::Force,
             ) {
                 Ok(lease) => {
                     let path = lease.path.clone();
@@ -265,7 +265,7 @@ async fn handle_update(
         }
     };
 
-    let scan = xai_grok_plugin_marketplace::scan_marketplace(&marketplace_root);
+    let scan = intelekt_plugin_marketplace::scan_marketplace(&marketplace_root);
     let entry = match scan
         .entries
         .into_iter()
@@ -282,12 +282,12 @@ async fn handle_update(
         }
     };
 
-    let provenance = xai_grok_agent::plugins::install_registry::MarketplaceProvenance {
+    let provenance = intelekt_agent::plugins::install_registry::MarketplaceProvenance {
         source_url_or_path: source_url_or_path.to_string(),
         source_display_name: source.name.clone(),
         plugin_subdir: plugin_relative_path.to_string(),
     };
-    let mut registry = xai_grok_agent::plugins::install_registry::InstallRegistry::load();
+    let mut registry = intelekt_agent::plugins::install_registry::InstallRegistry::load();
     let update_result = installer::update_from_marketplace_entry_transactional(
         &marketplace_root,
         &entry,
@@ -321,7 +321,7 @@ async fn handle_update(
                 requires_restart: false,
             }
         }
-        Err(xai_grok_agent::plugins::install_registry::InstallError::PluginNotFound { .. }) => {
+        Err(intelekt_agent::plugins::install_registry::InstallError::PluginNotFound { .. }) => {
             ActionOutcome {
                 status: OutcomeStatus::NotFound,
                 message: format!(
@@ -345,16 +345,16 @@ async fn handle_install(
     source_url_or_path: &str,
     plugin_relative_path: &str,
 ) -> xai_hooks_plugins_types::ActionOutcome {
-    use xai_grok_plugin_marketplace::installer;
+    use intelekt_plugin_marketplace::installer;
     use xai_hooks_plugins_types::{ActionOutcome, OutcomeStatus};
 
     let sources = load_filtered_marketplace_sources();
 
     // Helper: get canonical URL/path for a source.
-    let source_identity = |s: &xai_grok_plugin_marketplace::MarketplaceSource| -> String {
+    let source_identity = |s: &intelekt_plugin_marketplace::MarketplaceSource| -> String {
         match &s.kind {
-            xai_grok_plugin_marketplace::SourceKind::Local { path } => path.display().to_string(),
-            xai_grok_plugin_marketplace::SourceKind::Git { url, .. } => url.clone(),
+            intelekt_plugin_marketplace::SourceKind::Local { path } => path.display().to_string(),
+            intelekt_plugin_marketplace::SourceKind::Git { url, .. } => url.clone(),
         }
     };
 
@@ -392,12 +392,12 @@ async fn handle_install(
 
     if let Some((remote_url, remote_ref, remote_sha, remote_subdir)) = remote_entry {
         // URL-sourced plugin: clone from remote git URL.
-        let provenance = xai_grok_agent::plugins::install_registry::MarketplaceProvenance {
+        let provenance = intelekt_agent::plugins::install_registry::MarketplaceProvenance {
             source_url_or_path: source_url_or_path.to_string(),
             source_display_name: source.name.clone(),
             plugin_subdir: plugin_relative_path.to_string(),
         };
-        let mut registry = xai_grok_agent::plugins::install_registry::InstallRegistry::load();
+        let mut registry = intelekt_agent::plugins::install_registry::InstallRegistry::load();
         match installer::install_from_remote_url(
             &remote_url,
             remote_ref.as_deref(),
@@ -447,17 +447,17 @@ async fn handle_install(
         // Local-sourced plugin: resolve from marketplace directory.
         let marketplace_lease;
         let marketplace_root = match &source.kind {
-            xai_grok_plugin_marketplace::SourceKind::Local { path } => {
+            intelekt_plugin_marketplace::SourceKind::Local { path } => {
                 marketplace_lease = None;
                 path.clone()
             }
-            xai_grok_plugin_marketplace::SourceKind::Git { url, branch } => {
-                let cache_root = xai_grok_plugin_marketplace::git::default_cache_root();
-                match xai_grok_plugin_marketplace::git::sync_source_cache_with_mode(
+            intelekt_plugin_marketplace::SourceKind::Git { url, branch } => {
+                let cache_root = intelekt_plugin_marketplace::git::default_cache_root();
+                match intelekt_plugin_marketplace::git::sync_source_cache_with_mode(
                     url,
                     branch.as_deref(),
                     &cache_root,
-                    xai_grok_plugin_marketplace::git::SyncMode::UseTtl,
+                    intelekt_plugin_marketplace::git::SyncMode::UseTtl,
                 ) {
                     Ok(lease) => {
                         let cached_path = lease.path.clone();
@@ -477,7 +477,7 @@ async fn handle_install(
         };
 
         let plugin_path =
-            match xai_grok_plugin_marketplace::MarketplaceRelativePath::parse(plugin_relative_path)
+            match intelekt_plugin_marketplace::MarketplaceRelativePath::parse(plugin_relative_path)
             {
                 Ok(path) => path,
                 Err(e) => {
@@ -510,13 +510,13 @@ async fn handle_install(
         };
         let plugin_relative_path = plugin_path.as_str();
 
-        let provenance = xai_grok_agent::plugins::install_registry::MarketplaceProvenance {
+        let provenance = intelekt_agent::plugins::install_registry::MarketplaceProvenance {
             source_url_or_path: source_url_or_path.to_string(),
             source_display_name: source.name.clone(),
             plugin_subdir: plugin_relative_path.to_string(),
         };
 
-        let mut registry = xai_grok_agent::plugins::install_registry::InstallRegistry::load();
+        let mut registry = intelekt_agent::plugins::install_registry::InstallRegistry::load();
         let install_result = installer::install_from_marketplace(
             &marketplace_root,
             plugin_relative_path,
@@ -570,10 +570,10 @@ async fn handle_uninstall(
     source_url_or_path: &str,
     plugin_relative_path: &str,
 ) -> xai_hooks_plugins_types::ActionOutcome {
-    use xai_grok_plugin_marketplace::installer;
+    use intelekt_plugin_marketplace::installer;
     use xai_hooks_plugins_types::{ActionOutcome, OutcomeStatus};
 
-    let mut registry = xai_grok_agent::plugins::install_registry::InstallRegistry::load();
+    let mut registry = intelekt_agent::plugins::install_registry::InstallRegistry::load();
 
     // Find the installed entry by marketplace provenance.
     let found = installer::find_installed_marketplace_plugin(
@@ -637,12 +637,12 @@ async fn handle_uninstall(
 /// When `force_refresh` is true, removes and re-copies from source.
 async fn auto_install_defaults(
     agent: &MvpAgent,
-    sources: &[xai_grok_plugin_marketplace::MarketplaceSource],
+    sources: &[intelekt_plugin_marketplace::MarketplaceSource],
     results: &[MarketplaceScanResult],
     session_id: Option<&acp::SessionId>,
     force_refresh: bool,
 ) {
-    use xai_grok_plugin_marketplace::installer;
+    use intelekt_plugin_marketplace::installer;
 
     let mut any_changed = false;
 
@@ -663,20 +663,20 @@ async fn auto_install_defaults(
         // Resolve marketplace root.
         let marketplace_lease;
         let marketplace_root = match &source.kind {
-            xai_grok_plugin_marketplace::SourceKind::Local { path } => {
+            intelekt_plugin_marketplace::SourceKind::Local { path } => {
                 marketplace_lease = None;
                 path.clone()
             }
-            xai_grok_plugin_marketplace::SourceKind::Git { url, branch } => {
-                let cache_root = xai_grok_plugin_marketplace::git::default_cache_root();
-                match xai_grok_plugin_marketplace::git::sync_source_cache_with_mode(
+            intelekt_plugin_marketplace::SourceKind::Git { url, branch } => {
+                let cache_root = intelekt_plugin_marketplace::git::default_cache_root();
+                match intelekt_plugin_marketplace::git::sync_source_cache_with_mode(
                     url,
                     branch.as_deref(),
                     &cache_root,
                     if force_refresh {
-                        xai_grok_plugin_marketplace::git::SyncMode::Force
+                        intelekt_plugin_marketplace::git::SyncMode::Force
                     } else {
-                        xai_grok_plugin_marketplace::git::SyncMode::UseTtl
+                        intelekt_plugin_marketplace::git::SyncMode::UseTtl
                     },
                 ) {
                     Ok(lease) => {
@@ -690,7 +690,7 @@ async fn auto_install_defaults(
         };
 
         // Check if already installed.
-        let mut reg = xai_grok_agent::plugins::install_registry::InstallRegistry::load();
+        let mut reg = intelekt_agent::plugins::install_registry::InstallRegistry::load();
         let existing = installer::find_installed_marketplace_plugin(
             &reg,
             &scan.source_url_or_path,
@@ -706,10 +706,10 @@ async fn auto_install_defaults(
             let _ = std::fs::remove_dir_all(&old_dir);
             reg.remove(&existing_key);
             let _ = reg.save();
-            reg = xai_grok_agent::plugins::install_registry::InstallRegistry::load();
+            reg = intelekt_agent::plugins::install_registry::InstallRegistry::load();
         }
 
-        let provenance = xai_grok_agent::plugins::install_registry::MarketplaceProvenance {
+        let provenance = intelekt_agent::plugins::install_registry::MarketplaceProvenance {
             source_url_or_path: scan.source_url_or_path.clone(),
             source_display_name: source.name.clone(),
             plugin_subdir: "default-skills".to_string(),
@@ -741,11 +741,11 @@ async fn auto_install_defaults(
 }
 
 fn scan_source(
-    source: &xai_grok_plugin_marketplace::MarketplaceSource,
+    source: &intelekt_plugin_marketplace::MarketplaceSource,
 ) -> (MarketplaceScanResult, bool) {
     let lease;
     let (source_kind, source_url_or_path, root) = match &source.kind {
-        xai_grok_plugin_marketplace::SourceKind::Local { path } => {
+        intelekt_plugin_marketplace::SourceKind::Local { path } => {
             lease = None;
             (
                 "local".to_string(),
@@ -753,19 +753,19 @@ fn scan_source(
                 Some(path.clone()),
             )
         }
-        xai_grok_plugin_marketplace::SourceKind::Git { url, branch } => {
-            let cache_root = xai_grok_plugin_marketplace::git::default_cache_root();
+        intelekt_plugin_marketplace::SourceKind::Git { url, branch } => {
+            let cache_root = intelekt_plugin_marketplace::git::default_cache_root();
             let t_git = std::time::Instant::now();
-            match xai_grok_plugin_marketplace::git::sync_source_cache_with_mode(
+            match intelekt_plugin_marketplace::git::sync_source_cache_with_mode(
                 url,
                 branch.as_deref(),
                 &cache_root,
-                xai_grok_plugin_marketplace::git::SyncMode::UseTtl,
+                intelekt_plugin_marketplace::git::SyncMode::UseTtl,
             ) {
                 Ok(cache_lease) => {
                     let cached_path = cache_lease.path.clone();
                     lease = Some(cache_lease);
-                    xai_grok_telemetry::unified_log::info(
+                    intelekt_telemetry::unified_log::info(
                         "scan_source: git sync done",
                         None,
                         Some(serde_json::json!({
@@ -807,18 +807,18 @@ fn scan_source(
         }
     };
 
-    let scan = xai_grok_plugin_marketplace::scan_marketplace(&root);
+    let scan = intelekt_plugin_marketplace::scan_marketplace(&root);
     let catalog_loaded = scan.catalog_loaded;
     let discovered = scan.entries;
     drop(lease);
 
     // Cross-reference with install registry.
-    let registry = xai_grok_agent::plugins::install_registry::InstallRegistry::load();
+    let registry = intelekt_agent::plugins::install_registry::InstallRegistry::load();
     let plugins = discovered
         .into_iter()
         .map(|p| {
             let (install_status, installed_version) =
-                match xai_grok_plugin_marketplace::installer::find_installed_marketplace_plugin(
+                match intelekt_plugin_marketplace::installer::find_installed_marketplace_plugin(
                     &registry,
                     &source_url_or_path,
                     &p.relative_path,
@@ -853,7 +853,7 @@ fn scan_source(
 }
 
 fn to_plugin_entry(
-    p: xai_grok_plugin_marketplace::MarketplaceEntry,
+    p: intelekt_plugin_marketplace::MarketplaceEntry,
     install_status: String,
     installed_version: Option<String>,
 ) -> MarketplacePluginEntry {
@@ -882,7 +882,7 @@ fn to_plugin_entry(
     }
 }
 
-/// Add a new git or local-path marketplace source to `~/.grok/config.toml`.
+/// Add a new git or local-path marketplace source to `~/.intelekt/config.toml`.
 async fn handle_add_source(url: &str) -> xai_hooks_plugins_types::ActionOutcome {
     use crate::plugin::{self, MarketplaceAddInput};
     use xai_hooks_plugins_types::{ActionOutcome, OutcomeStatus};
@@ -924,7 +924,7 @@ async fn handle_add_source(url: &str) -> xai_hooks_plugins_types::ActionOutcome 
     // Local paths never match the git-URL allowlist, so a restricted
     // strictKnownMarketplaces policy blocks them — intentionally fail-closed.
     let allowlist =
-        &xai_grok_workspace::permission::resolution::managed_settings().marketplace_allowlist;
+        &intelekt_workspace::permission::resolution::managed_settings().marketplace_allowlist;
     if allowlist.is_restricted() && !allowlist.is_url_allowed(&identity) {
         return ActionOutcome {
             status: OutcomeStatus::ValidationError,
@@ -937,17 +937,17 @@ async fn handle_add_source(url: &str) -> xai_hooks_plugins_types::ActionOutcome 
     let config = crate::config::load_effective_config()
         .ok()
         .unwrap_or(toml::Value::Table(toml::map::Map::new()));
-    let existing = xai_grok_plugin_marketplace::load_sources(&config);
+    let existing = intelekt_plugin_marketplace::load_sources(&config);
     let already_configured = match &input {
         MarketplaceAddInput::GitUrl(git_url) => {
             let normalized = git_url.trim_end_matches(".git");
             existing.iter().any(|s| {
-                matches!(&s.kind, xai_grok_plugin_marketplace::SourceKind::Git { url: u, .. }
+                matches!(&s.kind, intelekt_plugin_marketplace::SourceKind::Git { url: u, .. }
                     if u.trim_end_matches(".git") == normalized)
             })
         }
         MarketplaceAddInput::LocalPath(path) => existing.iter().any(|s| {
-            matches!(&s.kind, xai_grok_plugin_marketplace::SourceKind::Local { path: p }
+            matches!(&s.kind, intelekt_plugin_marketplace::SourceKind::Local { path: p }
                 if p == path)
         }),
     };
@@ -961,9 +961,9 @@ async fn handle_add_source(url: &str) -> xai_hooks_plugins_types::ActionOutcome 
     }
 
     let is_official = matches!(&input, MarketplaceAddInput::GitUrl(u)
-        if xai_grok_plugin_marketplace::is_official_source_url(u));
+        if intelekt_plugin_marketplace::is_official_source_url(u));
     let name = if is_official {
-        xai_grok_plugin_marketplace::OFFICIAL_SOURCE_NAME.to_string()
+        intelekt_plugin_marketplace::OFFICIAL_SOURCE_NAME.to_string()
     } else {
         match &input {
             MarketplaceAddInput::GitUrl(u) => plugin::name_from_url(u),
@@ -972,8 +972,8 @@ async fn handle_add_source(url: &str) -> xai_hooks_plugins_types::ActionOutcome 
     };
 
     // Run the write under SAVE_LOCK + flock, off the reactor.
-    let config_path = xai_grok_config::grok_home().join("config.toml");
-    let grok_home = xai_grok_config::grok_home();
+    let config_path = intelekt_config::grok_home().join("config.toml");
+    let grok_home = intelekt_config::grok_home();
     let _save_guard = crate::util::config::lock_config_writes().await;
     let write = {
         let name = name.clone();
@@ -1094,7 +1094,7 @@ fn add_marketplace_source(
     crate::util::config::atomic_write_string(config_path, &doc.to_string())
 }
 
-/// Remove a marketplace source from `~/.grok/config.toml` and uninstall all
+/// Remove a marketplace source from `~/.intelekt/config.toml` and uninstall all
 /// plugins that were installed from it.
 async fn handle_remove_source(source_url_or_path: &str) -> xai_hooks_plugins_types::ActionOutcome {
     let src = source_url_or_path.to_string();
@@ -1118,7 +1118,7 @@ fn remove_source_locked(source_url_or_path: &str) -> xai_hooks_plugins_types::Ac
     use crate::plugin;
     use xai_hooks_plugins_types::{ActionOutcome, OutcomeStatus};
 
-    let grok_home = xai_grok_config::grok_home();
+    let grok_home = intelekt_config::grok_home();
     let _flock = acquire_init_lock(&grok_home).ok();
 
     let uninstalled = plugin::uninstall_marketplace_source_plugins(source_url_or_path);
@@ -1126,7 +1126,7 @@ fn remove_source_locked(source_url_or_path: &str) -> xai_hooks_plugins_types::Ac
     // Remove the source and (if official) set the flag in ONE atomic write so a
     // crash can't drop the flag and re-add the source next startup.
     let config_path = grok_home.join("config.toml");
-    let is_official = xai_grok_plugin_marketplace::is_official_source_url(source_url_or_path);
+    let is_official = intelekt_plugin_marketplace::is_official_source_url(source_url_or_path);
     let mut removed_from_config = false;
     let content = match crate::util::config::read_to_string_or_empty(&config_path) {
         Ok(c) => c,
@@ -1336,14 +1336,14 @@ pub fn ensure_official_marketplace_source(grok_home: &std::path::Path) {
     // (settings.json / known_marketplaces.json) under grok_home. Scoped to
     // grok_home only (not ~/.claude) to keep tests hermetic; a user with the URL
     // solely in ~/.claude gets one duplicate entry that the UI dedupes by URL.
-    let toml_sources = xai_grok_plugin_marketplace::load_sources(&parsed);
-    let json_sources = xai_grok_plugin_marketplace::load_extra_sources_from_settings_in(
+    let toml_sources = intelekt_plugin_marketplace::load_sources(&parsed);
+    let json_sources = intelekt_plugin_marketplace::load_extra_sources_from_settings_in(
         &toml_sources,
         std::slice::from_ref(&grok_home.to_path_buf()),
     );
     let already_present = toml_sources.iter().chain(json_sources.iter()).any(|s| {
-        matches!(&s.kind, xai_grok_plugin_marketplace::SourceKind::Git { url, .. }
-            if xai_grok_plugin_marketplace::is_official_source_url(url))
+        matches!(&s.kind, intelekt_plugin_marketplace::SourceKind::Git { url, .. }
+            if intelekt_plugin_marketplace::is_official_source_url(url))
     });
 
     let write_result = if already_present {
@@ -1352,9 +1352,9 @@ pub fn ensure_official_marketplace_source(grok_home: &std::path::Path) {
     } else {
         add_marketplace_source(
             &config_path,
-            xai_grok_plugin_marketplace::OFFICIAL_SOURCE_NAME,
+            intelekt_plugin_marketplace::OFFICIAL_SOURCE_NAME,
             &crate::plugin::MarketplaceAddInput::GitUrl(
-                xai_grok_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL.to_string(),
+                intelekt_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL.to_string(),
             ),
             true,
         )
@@ -1363,7 +1363,7 @@ pub fn ensure_official_marketplace_source(grok_home: &std::path::Path) {
     match write_result {
         Ok(()) if !already_present => {
             tracing::info!(
-                url = xai_grok_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL,
+                url = intelekt_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL,
                 "auto-registered official xAI marketplace source"
             );
         }
@@ -1380,11 +1380,11 @@ mod official_source_tests {
 
     fn read_sources(
         config_path: &std::path::Path,
-    ) -> Vec<xai_grok_plugin_marketplace::MarketplaceSource> {
+    ) -> Vec<intelekt_plugin_marketplace::MarketplaceSource> {
         let raw = std::fs::read_to_string(config_path).unwrap_or_default();
         let parsed: toml::Value =
             toml::from_str(&raw).unwrap_or_else(|_| toml::Value::Table(Default::default()));
-        xai_grok_plugin_marketplace::load_sources(&parsed)
+        intelekt_plugin_marketplace::load_sources(&parsed)
     }
 
     fn read_flag(config_path: &std::path::Path) -> bool {
@@ -1426,7 +1426,7 @@ mod official_source_tests {
         assert_eq!(sources[0].name, "my-plugins");
         assert!(matches!(
             &sources[0].kind,
-            xai_grok_plugin_marketplace::SourceKind::Local { path } if path == &dir
+            intelekt_plugin_marketplace::SourceKind::Local { path } if path == &dir
         ));
         // The path must not be mangled into a git URL.
         let raw = std::fs::read_to_string(&config_path).unwrap();
@@ -1465,8 +1465,8 @@ mod official_source_tests {
         let sources = read_sources(&config_path);
         assert!(
             !sources.iter().any(|s| matches!(&s.kind,
-                xai_grok_plugin_marketplace::SourceKind::Git { url, .. }
-                    if xai_grok_plugin_marketplace::is_official_source_url(url))),
+                intelekt_plugin_marketplace::SourceKind::Git { url, .. }
+                    if intelekt_plugin_marketplace::is_official_source_url(url))),
             "official source must not be re-added after removal"
         );
     }
@@ -1485,12 +1485,12 @@ mod official_source_tests {
         assert_eq!(sources.len(), 1);
         assert_eq!(
             sources[0].name,
-            xai_grok_plugin_marketplace::OFFICIAL_SOURCE_NAME
+            intelekt_plugin_marketplace::OFFICIAL_SOURCE_NAME
         );
         assert!(matches!(
             &sources[0].kind,
-            xai_grok_plugin_marketplace::SourceKind::Git { url, .. }
-                if url == xai_grok_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL
+            intelekt_plugin_marketplace::SourceKind::Git { url, .. }
+                if url == intelekt_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL
         ));
         assert!(read_flag(&config_path));
     }
@@ -1548,8 +1548,8 @@ mod official_source_tests {
             &config_path,
             format!(
                 "[[marketplace.sources]]\nname = \"{}\"\ngit = \"{}\"\n",
-                xai_grok_plugin_marketplace::OFFICIAL_SOURCE_NAME,
-                xai_grok_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL,
+                intelekt_plugin_marketplace::OFFICIAL_SOURCE_NAME,
+                intelekt_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL,
             ),
         )
         .unwrap();
@@ -1571,7 +1571,7 @@ mod official_source_tests {
             plugins_dir.join("known_marketplaces.json"),
             format!(
                 r#"{{"xai-official":{{"source":{{"source":"git","url":"{}"}}}}}}"#,
-                xai_grok_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL,
+                intelekt_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL,
             ),
         )
         .unwrap();
@@ -1597,7 +1597,7 @@ mod official_source_tests {
             home.join("settings.json"),
             format!(
                 r#"{{"extraKnownMarketplaces":{{"xai-official":{{"source":{{"source":"git","url":"{}"}}}}}}}}"#,
-                xai_grok_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL,
+                intelekt_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL,
             ),
         )
         .unwrap();
@@ -1623,8 +1623,8 @@ mod official_source_tests {
             &config_path,
             format!(
                 "[[marketplace.sources]]\nname = \"{}\"\ngit = \"{}\"\nbranch = \"some-branch\"\n",
-                xai_grok_plugin_marketplace::OFFICIAL_SOURCE_NAME,
-                xai_grok_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL,
+                intelekt_plugin_marketplace::OFFICIAL_SOURCE_NAME,
+                intelekt_plugin_marketplace::OFFICIAL_SOURCE_GIT_URL,
             ),
         )
         .unwrap();
@@ -1673,7 +1673,7 @@ mod conversion_tests {
 
     #[test]
     fn to_plugin_entry_carries_homepage_and_keywords() {
-        let entry = xai_grok_plugin_marketplace::MarketplaceEntry {
+        let entry = intelekt_plugin_marketplace::MarketplaceEntry {
             name: "demo".into(),
             version: Some("1.0.0".into()),
             description: Some("demo".into()),

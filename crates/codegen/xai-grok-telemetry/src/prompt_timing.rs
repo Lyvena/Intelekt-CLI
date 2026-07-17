@@ -1,6 +1,6 @@
 //! Per-turn prompt latency measurement.
 //!
-//! Extracted from `xai-grok-shell::session::prompt_timing`.
+//! Extracted from `intelekt-shell::session::prompt_timing`.
 
 use std::time::Instant;
 

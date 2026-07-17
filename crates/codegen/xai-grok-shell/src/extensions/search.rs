@@ -7,8 +7,8 @@ use crate::session::ExtMethodResult;
 use agent_client_protocol as acp;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use xai_grok_workspace::file_system::ContentSearchRequest as ContentSearchRequestParams;
-use xai_grok_workspace::workspace_ops::{FuzzyChangeReq, FuzzyCloseReq, FuzzyOpenReq};
+use intelekt_workspace::file_system::ContentSearchRequest as ContentSearchRequestParams;
+use intelekt_workspace::workspace_ops::{FuzzyChangeReq, FuzzyCloseReq, FuzzyOpenReq};
 
 type ExtResult = Result<acp::ExtResponse, acp::Error>;
 

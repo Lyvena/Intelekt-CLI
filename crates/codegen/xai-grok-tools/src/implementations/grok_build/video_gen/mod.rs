@@ -54,7 +54,7 @@ const VALID_IMAGINE_VIDEO_ASPECT_RATIOS: &[&str] = &["1:1", "16:9", "9:16", "3:2
 const VALID_VIDEO_RESOLUTIONS: &[&str] = &["480p", "720p"];
 const IMAGINE_VIDEO_DURATIONS_SECS: &[u32] = &[6, 10];
 
-pub use xai_grok_tools_api::slash_commands::{
+pub use intelekt_tools_api::slash_commands::{
     IMAGE_TO_VIDEO_TOOL_NAME, IMAGINE_VIDEO_COMMAND_NAME, imagine_video_instruction,
     imagine_video_usage_message,
 };
@@ -697,7 +697,7 @@ impl VideoGenConfig {
 /// free / X Basic user calls a video tool. The model relays it to the user;
 /// the deliberate `/imagine-video` slash command shows the SuperGrok upsell
 /// modal instead.
-pub(crate) const TIER_RESTRICTED_UPSELL: &str = "Video generation is a SuperGrok feature and isn't available on the free or X Basic tier. Let the user know they can unlock image and video generation by upgrading to SuperGrok: https://grok.com/supergrok?referrer=grok-build. Do not retry this tool.";
+pub(crate) const TIER_RESTRICTED_UPSELL: &str = "Video generation is a SuperGrok feature and isn't available on the free or X Basic tier. Let the user know they can unlock image and video generation by upgrading to SuperGrok: https://grok.com/supergrok?referrer=intelekt-cli. Do not retry this tool.";
 
 fn default_resolution_name() -> String {
     DEFAULT_RESOLUTION.to_owned()

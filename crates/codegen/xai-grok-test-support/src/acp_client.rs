@@ -45,9 +45,9 @@ fn spawn_agent_process(
     // headless `debug_cmd`).
     for k in [
         "GROK_DEBUG_LOG",
-        "GROK_LOG_FILE",
+        "INTELEKT_LOG_FILE",
         "GROK_LOG_SAMPLING",
-        "GROK_HOOKS_LOG",
+        "INTELEKT_HOOKS_LOG",
     ] {
         cmd.env_remove(k);
     }

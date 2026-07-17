@@ -13,7 +13,7 @@ use tracing_subscriber::fmt::writer::BoxMakeWriter;
 use tracing_subscriber::layer::{Context, Layer};
 use tracing_subscriber::registry::LookupSpan;
 
-use xai_grok_config::grok_home;
+use intelekt_config::grok_home;
 
 const ENV_ENABLED: &str = "GROK_INSTRUMENTATION";
 const ENV_LOG_PATH: &str = "GROK_INSTRUMENTATION_LOG";
@@ -21,7 +21,7 @@ const DEFAULT_LOG_DIR: &str = "logs";
 const DEFAULT_LOG_FILE: &str = "instrumentation.log";
 const DEFAULT_TRACE_FILE: &str = "instrumentation.trace.json";
 
-pub const TARGET: &str = "xai_grok_instrumentation";
+pub const TARGET: &str = "intelekt_instrumentation";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstrumentationMode {

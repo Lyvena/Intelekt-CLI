@@ -2,7 +2,7 @@
 //!
 //! All calls route through [`track`]. Precedence: env > config > remote config > default.
 //!
-//! Extracted from `xai-grok-shell::agent::telemetry::track`. The HTTP client is
+//! Extracted from `intelekt-shell::agent::telemetry::track`. The HTTP client is
 //! injected via [`init`]/[`init_if_needed`] so this crate avoids depending on
 //! shell's `User-Agent` builder (which couples to the `permission` module).
 

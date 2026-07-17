@@ -1,7 +1,7 @@
-//! AcpFsAdapter: implements `xai-grok-tools::AsyncFileSystem` using ACP gateway calls.
+//! AcpFsAdapter: implements `intelekt-tools::AsyncFileSystem` using ACP gateway calls.
 //!
 //! This adapter enables file tool execution over ACP (remote filesystem).
-//! It translates xai-grok-tools' `AsyncFileSystem` trait into ACP protocol calls:
+//! It translates intelekt-tools' `AsyncFileSystem` trait into ACP protocol calls:
 //!   `read_file()` → read_text_file
 //!   `write_file()` → write_text_file
 //!   `delete_file()` → not supported by ACP (returns error)
@@ -12,9 +12,9 @@ use std::path::Path;
 
 use agent_client_protocol as acp;
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
-use xai_grok_tools::computer::types::{AsyncFileSystem, ComputerError};
+use intelekt_tools::computer::types::{AsyncFileSystem, ComputerError};
 
-/// Wraps xai-grok-shell's ACP gateway to satisfy xai-grok-tools' AsyncFileSystem.
+/// Wraps intelekt-shell's ACP gateway to satisfy intelekt-tools' AsyncFileSystem.
 ///
 /// When a client advertises `clientCapabilities.fs.readTextFile` and `writeTextFile`,
 /// file operations from tools (read_file, search_replace, etc.) are routed through

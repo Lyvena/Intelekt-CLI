@@ -96,7 +96,7 @@ impl ConversationsClient {
             .ok()
             .filter(|s| !s.is_empty())
             .or_else(|| {
-                std::env::var("GROK_CODE_WEB_URL")
+                std::env::var("INTELEKT_CODE_WEB_URL")
                     .ok()
                     .filter(|s| !s.is_empty())
             })
@@ -128,7 +128,7 @@ impl ConversationsClient {
                 self.auth.grok_com_config().token_header.clone(),
             )
             .header("x-userid", &auth.user_id)
-            .header("x-grok-client-version", xai_grok_version::VERSION)
+            .header("x-grok-client-version", intelekt_version::VERSION)
             .header(
                 "x-grok-client-identifier",
                 crate::http::process_client_identifier(),

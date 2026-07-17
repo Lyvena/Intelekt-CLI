@@ -32,7 +32,7 @@ pub enum EmbeddedEditor {
 /// (matching the sibling `detect_*_from_env` detectors via `env_get`).
 ///
 /// Adding a new env marker here requires extending
-/// `HOST_TERMINAL_ENV_VARS` in `xai-grok-pager-pty-harness/src/pty.rs`
+/// `HOST_TERMINAL_ENV_VARS` in `intelekt-pager-pty-harness/src/pty.rs`
 /// (test-env hygiene).
 pub fn embedded_editor_from_env(env: &HashMap<String, String>) -> Option<EmbeddedEditor> {
     // Markers can't distinguish editor-inside-tmux (the 100%-repro bug; don't wrap)

@@ -1,4 +1,4 @@
-//! Integration tests for xai-grok-hooks.
+//! Integration tests for intelekt-hooks.
 //!
 //! These tests use inline shell command strings (routed via `sh -c`) to verify
 //! the full dispatch pipeline: discovery → matching → execution → result.
@@ -9,11 +9,11 @@
 
 use std::path::Path;
 
-use xai_grok_hooks::discovery::load_hooks;
-use xai_grok_hooks::dispatcher;
-use xai_grok_hooks::event::*;
-use xai_grok_hooks::result::HookDecision;
-use xai_grok_hooks::runner::RunContext;
+use intelekt_hooks::discovery::load_hooks;
+use intelekt_hooks::dispatcher;
+use intelekt_hooks::event::*;
+use intelekt_hooks::result::HookDecision;
+use intelekt_hooks::runner::RunContext;
 
 /// Helper: write a JSON hook file.
 fn write_hook(dir: &Path, filename: &str, content: &str) {
@@ -280,7 +280,7 @@ async fn non_blocking_dispatch() {
     assert_eq!(results.len(), 1);
     assert!(matches!(
         &results[0],
-        xai_grok_hooks::result::HookRunResult::Success { .. }
+        intelekt_hooks::result::HookRunResult::Success { .. }
     ));
 }
 
@@ -544,7 +544,7 @@ async fn new_event_types_fire_and_receive_correct_envelope() {
         assert!(
             matches!(
                 &results[0],
-                xai_grok_hooks::result::HookRunResult::Success { .. }
+                intelekt_hooks::result::HookRunResult::Success { .. }
             ),
             "{}: hook did not succeed: {:?}",
             case.json_key,
@@ -825,7 +825,7 @@ async fn http_hook_url_env_expansion_end_to_end() {
     );
     assert_eq!(pre_result.results.len(), 1);
     let run = &pre_result.results[0];
-    use xai_grok_hooks::result::HookRunResult;
+    use intelekt_hooks::result::HookRunResult;
     let info = match run {
         HookRunResult::Failed {
             http_info, error, ..

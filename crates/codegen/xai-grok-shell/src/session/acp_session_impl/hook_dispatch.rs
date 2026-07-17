@@ -92,8 +92,8 @@ pub(super) fn notification_hook_for_update(
 }
 
 impl SessionActor {
-    pub(super) fn hook_run_ctx(&self) -> xai_grok_hooks::runner::RunContext<'_> {
-        xai_grok_hooks::runner::RunContext {
+    pub(super) fn hook_run_ctx(&self) -> intelekt_hooks::runner::RunContext<'_> {
+        intelekt_hooks::runner::RunContext {
             session_id: &self.session_info.id.0,
             workspace_root: &self.hook_resolved_workspace_root,
         }
@@ -119,17 +119,17 @@ impl SessionActor {
         event_name: &str,
         tool_name: Option<&str>,
         prompt_id: Option<&str>,
-        results: &[xai_grok_hooks::result::HookRunResult],
+        results: &[intelekt_hooks::result::HookRunResult],
     ) {
         if results.is_empty()
             || results
                 .iter()
-                .all(|r| matches!(r, xai_grok_hooks::result::HookRunResult::Skipped { .. }))
+                .all(|r| matches!(r, intelekt_hooks::result::HookRunResult::Skipped { .. }))
         {
             return;
         }
         use crate::extensions::notification::{HookRunEntryDto, HookRunStatusDto};
-        use xai_grok_hooks::result::HookRunResult;
+        use intelekt_hooks::result::HookRunResult;
 
         let runs: Vec<HookRunEntryDto> = results
             .iter()
@@ -213,8 +213,8 @@ impl SessionActor {
     /// hook listens for `event`, so it stays inert when unused.
     pub(super) async fn dispatch_hook(
         &self,
-        event: xai_grok_hooks::event::HookEventName,
-        payload: xai_grok_hooks::event::HookPayload,
+        event: intelekt_hooks::event::HookEventName,
+        payload: intelekt_hooks::event::HookPayload,
         prompt_id: Option<&str>,
         tool_name: Option<&str>,
     ) {
@@ -228,7 +228,7 @@ impl SessionActor {
         };
         let ctx = self.hook_run_ctx();
         let results =
-            xai_grok_hooks::dispatcher::dispatch_non_blocking(&registry, event, &envelope, &ctx)
+            intelekt_hooks::dispatcher::dispatch_non_blocking(&registry, event, &envelope, &ctx)
                 .await;
         self.send_hook_execution(&event.to_string(), tool_name, prompt_id, &results)
             .await;
@@ -240,28 +240,28 @@ impl SessionActor {
         &self,
         event_name: &str,
         tool_name: Option<&str>,
-        results: &[xai_grok_hooks::result::HookRunResult],
+        results: &[intelekt_hooks::result::HookRunResult],
     ) {
         let tool = tool_name.map(|s| s.to_string());
         for r in results {
             let (hook_name, elapsed, outcome) = match r {
-                xai_grok_hooks::result::HookRunResult::Success {
+                intelekt_hooks::result::HookRunResult::Success {
                     hook_name, elapsed, ..
                 } => (
                     hook_name,
                     elapsed,
-                    xai_grok_telemetry::events::HookOutcome::Success,
+                    intelekt_telemetry::events::HookOutcome::Success,
                 ),
-                xai_grok_hooks::result::HookRunResult::Failed {
+                intelekt_hooks::result::HookRunResult::Failed {
                     hook_name, elapsed, ..
                 } => (
                     hook_name,
                     elapsed,
-                    xai_grok_telemetry::events::HookOutcome::Error,
+                    intelekt_telemetry::events::HookOutcome::Error,
                 ),
-                xai_grok_hooks::result::HookRunResult::Skipped { .. } => continue,
+                intelekt_hooks::result::HookRunResult::Skipped { .. } => continue,
             };
-            xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::HookExecuted {
+            intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::HookExecuted {
                 hook_name: hook_name.clone(),
                 event: event_name.to_string(),
                 tool_name: tool.clone(),
@@ -341,7 +341,7 @@ mod notification_hook_filter_tests {
     #[test]
     fn task_completed_does_not_fire_via_filter() {
         let update = XaiSessionUpdate::TaskCompleted {
-            task_snapshot: xai_grok_tools::types::TaskSnapshot {
+            task_snapshot: intelekt_tools::types::TaskSnapshot {
                 task_id: "task-1".into(),
                 command: "echo hi".into(),
                 display_command: None,

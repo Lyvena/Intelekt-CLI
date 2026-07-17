@@ -16,7 +16,7 @@ const RG_BYTES: &[u8] = include_bytes!(concat!(
 #[cfg(bundle_rg)]
 fn resolve_bundled_rg() -> std::io::Result<PathBuf> {
     use std::{fs, os::unix::fs::PermissionsExt};
-    let p = xai_grok_tools::util::grok_home::grok_home()
+    let p = intelekt_tools::util::grok_home::grok_home()
         .join("vendor")
         .join(concat!(
             "rg-",

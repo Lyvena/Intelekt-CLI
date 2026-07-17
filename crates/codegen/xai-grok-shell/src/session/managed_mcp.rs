@@ -12,10 +12,10 @@
 //!   - Managed        — header injection + auto-create missing connectors
 //!
 //! The transport/cache/injection core lives in
-//! `xai_grok_shell_session_support::managed_mcp` and is re-exported here so
+//! `intelekt_shell_session_support::managed_mcp` and is re-exported here so
 //! `crate::session::managed_mcp::…` paths keep resolving unchanged.
 
-pub use xai_grok_shell_session_support::managed_mcp::*;
+pub use intelekt_shell_session_support::managed_mcp::*;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -89,8 +89,8 @@ pub fn merge_managed_mcp_servers(
     client_mcp_servers: Vec<acp::McpServer>,
     cwd: &std::path::Path,
     managed_configs: &[ManagedMcpConfig],
-    plugin_registry: Option<&xai_grok_agent::plugins::PluginRegistry>,
-    compat: &xai_grok_tools::types::compat::CompatConfig,
+    plugin_registry: Option<&intelekt_agent::plugins::PluginRegistry>,
+    compat: &intelekt_tools::types::compat::CompatConfig,
 ) -> Vec<acp::McpServer> {
     merge_managed_mcp_servers_with_policy(
         client_mcp_servers,
@@ -109,8 +109,8 @@ pub fn merge_managed_mcp_servers_with_policy(
     client_mcp_servers: Vec<acp::McpServer>,
     cwd: &std::path::Path,
     managed_configs: &[ManagedMcpConfig],
-    plugin_registry: Option<&xai_grok_agent::plugins::PluginRegistry>,
-    compat: &xai_grok_tools::types::compat::CompatConfig,
+    plugin_registry: Option<&intelekt_agent::plugins::PluginRegistry>,
+    compat: &intelekt_tools::types::compat::CompatConfig,
 ) -> Vec<McpServerWithPolicy> {
     let mut servers: HashMap<String, acp::McpServer> =
         merge_managed_mcp_servers_sourced(cwd, plugin_registry, compat)
@@ -140,7 +140,7 @@ pub fn merge_managed_mcp_servers_with_policy(
     // a trusted/unrecorded workspace. Composes with the managed-deny allowlist
     // applied next (both filters run on the survivors).
     let merged = crate::agent::folder_trust::filter_untrusted_project_mcp(cwd, merged);
-    let allowlist = &xai_grok_workspace::permission::resolution::managed_settings().mcp_allowlist;
+    let allowlist = &intelekt_workspace::permission::resolution::managed_settings().mcp_allowlist;
     apply_mcp_server_policy(merged, &disabled, allowlist)
 }
 
@@ -168,7 +168,7 @@ impl McpDisabledReason {
     /// Classify why a blocked server was rejected by the managed-settings
     /// MCP policy: an explicit deny match vs a missing allowlist entry.
     pub fn for_blocked_server(
-        policy: &xai_grok_workspace::permission::resolution::McpServerAllowlist,
+        policy: &intelekt_workspace::permission::resolution::McpServerAllowlist,
         server: &acp::McpServer,
     ) -> Self {
         let source = policy.source_path.clone().unwrap_or_default();
@@ -197,7 +197,7 @@ pub struct McpServerWithPolicy {
 fn apply_mcp_server_policy(
     merged: Vec<acp::McpServer>,
     disabled: &std::collections::HashSet<String>,
-    allowlist: &xai_grok_workspace::permission::resolution::McpServerAllowlist,
+    allowlist: &intelekt_workspace::permission::resolution::McpServerAllowlist,
 ) -> Vec<McpServerWithPolicy> {
     merged
         .into_iter()
@@ -228,19 +228,19 @@ fn apply_mcp_server_policy(
 /// Like [`merge_managed_mcp_servers`] but returns `ConfigSource` alongside each server.
 pub fn merge_managed_mcp_servers_sourced(
     cwd: &std::path::Path,
-    plugin_registry: Option<&xai_grok_agent::plugins::PluginRegistry>,
-    compat: &xai_grok_tools::types::compat::CompatConfig,
+    plugin_registry: Option<&intelekt_agent::plugins::PluginRegistry>,
+    compat: &intelekt_tools::types::compat::CompatConfig,
 ) -> Vec<(
     acp::McpServer,
-    xai_grok_tools::types::config_source::ConfigSource,
+    intelekt_tools::types::config_source::ConfigSource,
 )> {
     let _mcp_merge_timer = crate::instrumentation::timer("mcp_merge_managed");
-    use xai_grok_tools::types::config_source::ConfigSource;
+    use intelekt_tools::types::config_source::ConfigSource;
 
     let toml_claimed_names = crate::util::config::all_toml_mcp_server_names(cwd);
 
     let config_source = ConfigSource::ConfigToml {
-        path: xai_grok_tools::util::grok_home::grok_home().join("config.toml"),
+        path: intelekt_tools::util::grok_home::grok_home().join("config.toml"),
     };
 
     // Use the TOML-only loader so that entries from imported editor configs
@@ -421,7 +421,7 @@ fn load_plugin_mcp_servers_from_value(
     plugin_root: &str,
     plugin_data: &str,
 ) -> (Vec<acp::McpServer>, crate::util::config::McpOAuthConfigMap) {
-    let normalized = xai_grok_agent::plugins::manifest::normalize_inline_mcp_servers(root);
+    let normalized = intelekt_agent::plugins::manifest::normalize_inline_mcp_servers(root);
     let Ok(config) = serde_json::from_value::<crate::util::config::McpConfig>(normalized) else {
         tracing::warn!(plugin = plugin_name, "failed to parse plugin MCP config");
         return (vec![], crate::util::config::McpOAuthConfigMap::new());
@@ -436,7 +436,7 @@ fn load_plugin_mcp_servers_from_config(
     plugin_data: &str,
 ) -> (Vec<acp::McpServer>, crate::util::config::McpOAuthConfigMap) {
     let sub = |s: &str| -> String {
-        let s = xai_grok_agent::plugins::manifest::substitute_env_vars(s, plugin_root, plugin_data);
+        let s = intelekt_agent::plugins::manifest::substitute_env_vars(s, plugin_root, plugin_data);
         crate::config::expand_env_vars_in_string(&s)
     };
     let label = format!("plugin:{}", plugin_name);
@@ -444,7 +444,7 @@ fn load_plugin_mcp_servers_from_config(
 }
 
 pub fn collect_plugin_oauth_configs(
-    plugin_registry: Option<&xai_grok_agent::plugins::PluginRegistry>,
+    plugin_registry: Option<&intelekt_agent::plugins::PluginRegistry>,
 ) -> crate::util::config::McpOAuthConfigMap {
     let mut oauth_configs = crate::util::config::McpOAuthConfigMap::new();
     let Some(registry) = plugin_registry else {
@@ -516,7 +516,7 @@ mod tests {
     fn auto_inject_creates_server_for_unmatched_managed_config() {
         let managed = vec![make_managed("Slack", "https://mcp.slack.com/sse", "user")];
         let cwd = empty_cwd();
-        let compat = xai_grok_tools::types::compat::CompatConfig::default();
+        let compat = intelekt_tools::types::compat::CompatConfig::default();
         let merged = merge_managed_mcp_servers(vec![], cwd.path(), &managed, None, &compat);
         let slack = merged
             .iter()
@@ -548,7 +548,7 @@ mod tests {
             .headers(vec![]),
         )];
         let cwd = empty_cwd();
-        let compat = xai_grok_tools::types::compat::CompatConfig::default();
+        let compat = intelekt_tools::types::compat::CompatConfig::default();
         let merged = merge_managed_mcp_servers(client, cwd.path(), &[], None, &compat);
         assert!(
             merged.iter().any(|s| matches!(
@@ -568,7 +568,7 @@ mod tests {
     /// public `McpServerAllowlist::new`.
     #[test]
     fn merge_drops_denied_server_and_classifies_as_denylist() {
-        use xai_grok_workspace::permission::resolution::{AllowedMcpServer, McpServerAllowlist};
+        use intelekt_workspace::permission::resolution::{AllowedMcpServer, McpServerAllowlist};
 
         // Deny-only policy (no allowlist) blocking one host.
         let allowlist = McpServerAllowlist::new(
@@ -632,7 +632,7 @@ mod tests {
     /// `Denylist` hit, exact-match only (no substring over-match).
     #[test]
     fn merge_drops_server_denied_by_name_including_managed_prefix() {
-        use xai_grok_workspace::permission::resolution::{AllowedMcpServer, McpServerAllowlist};
+        use intelekt_workspace::permission::resolution::{AllowedMcpServer, McpServerAllowlist};
 
         let allowlist = McpServerAllowlist::new(
             vec![],
@@ -692,7 +692,7 @@ mod tests {
     /// literal) so this fails if policy/runtime name normalization ever drifts.
     #[test]
     fn policy_server_name_matches_to_managed_name_transform() {
-        use xai_grok_workspace::permission::resolution::{AllowedMcpServer, McpServerAllowlist};
+        use intelekt_workspace::permission::resolution::{AllowedMcpServer, McpServerAllowlist};
 
         let managed_server = |runtime: &str| {
             vec![acp::McpServer::Http(
@@ -744,7 +744,7 @@ mod tests {
             make_managed("Linear", "https://mcp.linear.app", "team"),
         ];
         let cwd = empty_cwd();
-        let compat = xai_grok_tools::types::compat::CompatConfig::default();
+        let compat = intelekt_tools::types::compat::CompatConfig::default();
         let merged = merge_managed_mcp_servers(vec![], cwd.path(), &managed, None, &compat);
         let linear_count = merged
             .iter()
@@ -764,7 +764,7 @@ mod tests {
             .headers(vec![]),
         )];
         let cwd = empty_cwd();
-        let compat = xai_grok_tools::types::compat::CompatConfig::default();
+        let compat = intelekt_tools::types::compat::CompatConfig::default();
         let merged = merge_managed_mcp_servers(client, cwd.path(), &managed, None, &compat);
         let slack_count = merged
             .iter()
@@ -797,9 +797,9 @@ mod tests {
     #[test]
     fn lower_precedence_http_servers_are_blocked_by_toml_name_claims() {
         let cwd = tempfile::tempdir().unwrap();
-        std::fs::create_dir_all(cwd.path().join(".grok")).unwrap();
+        std::fs::create_dir_all(cwd.path().join(".intelekt")).unwrap();
         std::fs::write(
-            cwd.path().join(".grok").join("config.toml"),
+            cwd.path().join(".intelekt").join("config.toml"),
             r#"
 [mcp_servers.github]
 url = "https://config.example.com/mcp"
@@ -820,7 +820,7 @@ enabled = false
         )
         .unwrap();
 
-        let compat = xai_grok_tools::types::compat::CompatConfig::default();
+        let compat = intelekt_tools::types::compat::CompatConfig::default();
         let merged = merge_managed_mcp_servers(vec![], cwd.path(), &[], None, &compat);
         assert!(
             !merged.iter().any(|server| matches!(
@@ -848,7 +848,7 @@ enabled = false
             .unwrap();
             cwd
         }
-        let compat = xai_grok_tools::types::compat::CompatConfig::default();
+        let compat = intelekt_tools::types::compat::CompatConfig::default();
 
         let untrusted = repo_with_project_server();
         crate::agent::folder_trust::record_for_test(untrusted.path(), false);
@@ -893,8 +893,8 @@ enabled = false
         let (servers, _) = load_plugin_mcp_servers_from_config(
             &config,
             "team-tool",
-            "/home/user/.grok/plugins/team-tool",
-            "/home/user/.grok/plugin-data/team-tool",
+            "/home/user/.intelekt/plugins/team-tool",
+            "/home/user/.intelekt/plugin-data/team-tool",
         );
 
         assert_eq!(servers.len(), 1, "should create one server");
@@ -909,7 +909,7 @@ enabled = false
                 assert_eq!(command.display().to_string(), "python3");
                 assert_eq!(
                     args.as_slice(),
-                    &["/home/user/.grok/plugins/team-tool/mcp-echo-server.py"]
+                    &["/home/user/.intelekt/plugins/team-tool/mcp-echo-server.py"]
                 );
             }
             other => panic!("expected Stdio server, got {:?}", other),
@@ -968,10 +968,10 @@ enabled = false
 
     #[test]
     fn plugin_server_deduped_across_file_and_inline() {
-        use xai_grok_agent::plugins::PluginRegistry;
-        use xai_grok_agent::plugins::PluginScope;
-        use xai_grok_agent::plugins::discovery::{DiscoveredPlugin, PluginId};
-        use xai_grok_agent::plugins::manifest::{PathOrInline, PluginManifest};
+        use intelekt_agent::plugins::PluginRegistry;
+        use intelekt_agent::plugins::PluginScope;
+        use intelekt_agent::plugins::discovery::{DiscoveredPlugin, PluginId};
+        use intelekt_agent::plugins::manifest::{PathOrInline, PluginManifest};
 
         let tmp = tempfile::tempdir().unwrap();
         let plugin_root = tmp.path().join("sentry");
@@ -1008,7 +1008,7 @@ enabled = false
             root: plugin_root.clone(),
             canonical_root: plugin_root.clone(),
             scope: PluginScope::User,
-            origin: xai_grok_agent::plugins::PluginOrigin::UserGrok,
+            origin: intelekt_agent::plugins::PluginOrigin::UserGrok,
             trusted: true,
             skill_dirs: vec![],
             command_dirs: vec![],
@@ -1021,7 +1021,7 @@ enabled = false
         let registry = PluginRegistry::from_discovered(vec![dp], &[], &["sentry".to_string()]);
 
         let cwd = tempfile::tempdir().unwrap();
-        let compat = xai_grok_tools::types::compat::CompatConfig::default();
+        let compat = intelekt_tools::types::compat::CompatConfig::default();
         let sourced = merge_managed_mcp_servers_sourced(cwd.path(), Some(&registry), &compat);
 
         let sentry_count = sourced
@@ -1036,10 +1036,10 @@ enabled = false
 
     #[test]
     fn plugin_same_name_different_url_keeps_file_server() {
-        use xai_grok_agent::plugins::PluginRegistry;
-        use xai_grok_agent::plugins::PluginScope;
-        use xai_grok_agent::plugins::discovery::{DiscoveredPlugin, PluginId};
-        use xai_grok_agent::plugins::manifest::{PathOrInline, PluginManifest};
+        use intelekt_agent::plugins::PluginRegistry;
+        use intelekt_agent::plugins::PluginScope;
+        use intelekt_agent::plugins::discovery::{DiscoveredPlugin, PluginId};
+        use intelekt_agent::plugins::manifest::{PathOrInline, PluginManifest};
 
         let tmp = tempfile::tempdir().unwrap();
         let plugin_root = tmp.path().join("sentry");
@@ -1076,7 +1076,7 @@ enabled = false
             root: plugin_root.clone(),
             canonical_root: plugin_root.clone(),
             scope: PluginScope::User,
-            origin: xai_grok_agent::plugins::PluginOrigin::UserGrok,
+            origin: intelekt_agent::plugins::PluginOrigin::UserGrok,
             trusted: true,
             skill_dirs: vec![],
             command_dirs: vec![],
@@ -1089,7 +1089,7 @@ enabled = false
         let registry = PluginRegistry::from_discovered(vec![dp], &[], &["sentry".to_string()]);
 
         let cwd = tempfile::tempdir().unwrap();
-        let compat = xai_grok_tools::types::compat::CompatConfig::default();
+        let compat = intelekt_tools::types::compat::CompatConfig::default();
         let sourced = merge_managed_mcp_servers_sourced(cwd.path(), Some(&registry), &compat);
 
         let sentry: Vec<&acp::McpServer> = sourced
@@ -1112,10 +1112,10 @@ enabled = false
 
     #[test]
     fn collect_plugin_oauth_configs_reads_byo_client_id_from_mcp_json() {
-        use xai_grok_agent::plugins::PluginRegistry;
-        use xai_grok_agent::plugins::PluginScope;
-        use xai_grok_agent::plugins::discovery::{DiscoveredPlugin, PluginId};
-        use xai_grok_agent::plugins::manifest::PluginManifest;
+        use intelekt_agent::plugins::PluginRegistry;
+        use intelekt_agent::plugins::PluginScope;
+        use intelekt_agent::plugins::discovery::{DiscoveredPlugin, PluginId};
+        use intelekt_agent::plugins::manifest::PluginManifest;
 
         let tmp = tempfile::tempdir().unwrap();
         let plugin_root = tmp.path().join("slack");
@@ -1150,7 +1150,7 @@ enabled = false
             root: plugin_root.clone(),
             canonical_root: plugin_root.clone(),
             scope: PluginScope::User,
-            origin: xai_grok_agent::plugins::PluginOrigin::UserGrok,
+            origin: intelekt_agent::plugins::PluginOrigin::UserGrok,
             trusted: true,
             skill_dirs: vec![],
             command_dirs: vec![],

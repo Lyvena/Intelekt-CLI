@@ -176,10 +176,10 @@ impl AgentView {
                         );
                     }
                     if ctx.source.tip_showing() {
-                        xai_grok_telemetry::session_ctx::log_event(
-                            xai_grok_telemetry::events::ContextualTip {
-                                tip: xai_grok_telemetry::events::ContextualTipKind::ImageInput,
-                                action: xai_grok_telemetry::events::ContextualTipAction::Accepted,
+                        intelekt_telemetry::session_ctx::log_event(
+                            intelekt_telemetry::events::ContextualTip {
+                                tip: intelekt_telemetry::events::ContextualTipKind::ImageInput,
+                                action: intelekt_telemetry::events::ContextualTipAction::Accepted,
                             },
                         );
                     }
@@ -1196,10 +1196,10 @@ pub(super) mod paste_key_tests {
     pub(in crate::app::agent_view) fn make_question_view_state_in_input_mode()
     -> crate::views::question_view::QuestionViewState {
         let question =
-            xai_grok_tools::implementations::grok_build::ask_user_question::Question {
+            intelekt_tools::implementations::grok_build::ask_user_question::Question {
                 question: "Pick one?".to_string(),
                 options: vec![
-                xai_grok_tools::implementations::grok_build::ask_user_question::QuestionOption
+                intelekt_tools::implementations::grok_build::ask_user_question::QuestionOption
                 { label : "A".to_string(), description : "Option A".to_string(), preview
                 : None, id : None, },
             ],

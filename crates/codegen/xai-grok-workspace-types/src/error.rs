@@ -13,9 +13,9 @@
 //!   manually at the workspace-crate boundary via
 //!   [`WorkspaceError::from_io`].
 //!
-//! - **`Tool`**: a natural definition would be `Tool(#[from] xai_grok_tools::ToolError)`.
+//! - **`Tool`**: a natural definition would be `Tool(#[from] intelekt_tools::ToolError)`.
 //!   That coupling would force this crate to depend on
-//!   `xai-grok-tools`, which would defeat the lightweight
+//!   `intelekt-tools`, which would defeat the lightweight
 //!   wire-types-only goal. Tool errors are surfaced as a generic
 //!   `Tool { code, message }` payload here; the runtime workspace crate
 //!   is responsible for translating its native `ToolError` into and out
@@ -52,7 +52,7 @@ use crate::identity::SessionId;
 ///
 /// Every variant is fully serializable so it can travel over the gRPC
 /// transport. Conversion from non-serializable runtime errors (most
-/// notably `std::io::Error` and `xai_grok_tools::ToolError`) happens
+/// notably `std::io::Error` and `intelekt_tools::ToolError`) happens
 /// at the workspace-crate boundary -- see this module's doc comment.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Error)]
 #[serde(tag = "type", content = "data", rename_all = "snake_case")]

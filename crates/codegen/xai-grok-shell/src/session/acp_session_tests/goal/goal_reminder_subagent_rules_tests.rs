@@ -31,7 +31,7 @@ fn enable_todo_gate_policy(actor: &SessionActor) {
     let policy = resolve_reminder_policy(None, true);
     let mut agent_slot = actor.agent.borrow_mut();
     let agent = &*agent_slot;
-    *agent_slot = xai_grok_agent::Agent::new(
+    *agent_slot = intelekt_agent::Agent::new(
         agent.definition().clone(),
         agent.prompt_context().clone(),
         agent.system_prompt().to_string(),
@@ -129,7 +129,7 @@ async fn setup_goal_includes_simplified_prompt() {
 }
 #[tokio::test(flavor = "current_thread")]
 async fn goal_enabled_without_update_goal_disables_harness_continuation_and_todo_gate() {
-    use xai_grok_tools::implementations::grok_build::UPDATE_GOAL_TOOL_NAME;
+    use intelekt_tools::implementations::grok_build::UPDATE_GOAL_TOOL_NAME;
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async {

@@ -42,7 +42,7 @@ use std::os::unix::fs::OpenOptionsExt;
 ///
 /// # Example
 /// ```ignore
-/// use xai_grok_shell_base::util::secure_file::write_secure_file;
+/// use intelekt_shell_base::util::secure_file::write_secure_file;
 ///
 /// let token = "secret_token";
 /// write_secure_file("/path/to/auth.json", token.as_bytes())?;

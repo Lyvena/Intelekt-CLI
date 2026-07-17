@@ -1,7 +1,7 @@
 //! Tool-related shapes referenced from `ToolChunk`.
 //!
 //! TODO(workspace): align with the canonical tool types in
-//! `xai-grok-tools` (`ToolDef`, `ToolCallResult`, `ToolProgress`).
+//! `intelekt-tools` (`ToolDef`, `ToolCallResult`, `ToolProgress`).
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

@@ -487,7 +487,7 @@ impl<'a, 'b, 'syn, 'oc> MarkdownParser<'a, 'b, 'syn, 'oc> {
         self.pending_code_block = None;
 
         for (event, range) in
-            TextMergeWithOffset::new(xai_grok_markdown_core::offset_events(self.text))
+            TextMergeWithOffset::new(intelekt_markdown_core::offset_events(self.text))
         {
             self.on_event(event, range);
         }

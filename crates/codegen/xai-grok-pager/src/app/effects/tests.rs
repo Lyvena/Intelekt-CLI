@@ -1,6 +1,6 @@
 #![cfg_attr(rustfmt, rustfmt::skip)]
 use super::*;
-use xai_grok_shell::extensions::billing::{BillingConfig, Cent, UsagePeriod};
+use intelekt_shell::extensions::billing::{BillingConfig, Cent, UsagePeriod};
 /// The invalid-params server detail survives `attach_prompt_usage`
 /// wrapping `error.data` as `{message, promptUsage}`.
 #[test]
@@ -18,7 +18,7 @@ fn format_acp_error_reads_detail_from_wrapped_data() {
 }
 #[test]
 fn format_acp_error_rate_limit_is_auth_aware() {
-    use xai_grok_shell::sampling::error::{
+    use intelekt_shell::sampling::error::{
         RATE_LIMITED_ERROR_CODE, RATE_LIMITED_USER_MESSAGE_API_KEY,
         RATE_LIMITED_USER_MESSAGE_OAUTH,
     };
@@ -173,7 +173,7 @@ fn session_list_partial_absent_for_healthy_or_meta_less_responses() {
 /// a session resume.
 #[test]
 fn parse_kill_outcome_reads_result_envelope() {
-    use xai_grok_tools::types::KillOutcome;
+    use intelekt_tools::types::KillOutcome;
     let resp = r#"{"result":{"taskId":"t-1","outcome":"not_found"}}"#;
     assert_eq!(parse_kill_outcome(resp), Some(KillOutcome::NotFound));
     let resp = r#"{"result":{"taskId":"t-1","outcome":"killed"}}"#;
@@ -186,9 +186,9 @@ fn parse_kill_outcome_reads_result_envelope() {
 /// typed outcome (guards against the two sides drifting apart).
 #[test]
 fn parse_kill_outcome_round_trips_agent_serialization() {
-    use xai_grok_shell::extensions::task::KillTaskResponse;
-    use xai_grok_shell::session::result::ExtMethodResult;
-    use xai_grok_tools::types::KillOutcome;
+    use intelekt_shell::extensions::task::KillTaskResponse;
+    use intelekt_shell::session::result::ExtMethodResult;
+    use intelekt_tools::types::KillOutcome;
     let wire = serde_json::to_string(
             &ExtMethodResult::success(KillTaskResponse {
                 task_id: "t-1".into(),
@@ -259,7 +259,7 @@ fn parse_subagent_kill_outcome_unknown_kind_falls_back_to_legacy_bool() {
 /// against drifting apart.
 #[test]
 fn parse_subagent_kill_outcome_round_trips_agent_serialization() {
-    use xai_grok_shell::extensions::task::{
+    use intelekt_shell::extensions::task::{
         CancelSubagentResponse, SubagentCancelOutcomeDto,
     };
     let wire = serde_json::to_string(
@@ -559,7 +559,7 @@ fn credit_balance_effective_blends_budget_for_legacy_shape_under_100() {
 }
 #[test]
 fn parse_worktree_restore_payload_full() {
-    use xai_grok_workspace::session::git::RestoreDegree;
+    use intelekt_workspace::session::git::RestoreDegree;
     let value = serde_json::json!(
         { "codeRestored" : true, "restoreSummary" :
         "checked out abc12345, staged: true, unstaged: false, untracked: 3",
@@ -572,7 +572,7 @@ fn parse_worktree_restore_payload_full() {
 }
 #[test]
 fn parse_worktree_restore_payload_head_only() {
-    use xai_grok_workspace::session::git::RestoreDegree;
+    use intelekt_workspace::session::git::RestoreDegree;
     let value = serde_json::json!(
         { "codeRestored" : true, "restoreSummary" :
         "checked out abc (session registry disabled — staged/unstaged/untracked not restored)",
@@ -601,7 +601,7 @@ fn parse_worktree_restore_payload_rejects_unknown_degree() {
 }
 #[test]
 fn parse_session_load_restore_meta_full_shape() {
-    use xai_grok_workspace::session::git::RestoreDegree;
+    use intelekt_workspace::session::git::RestoreDegree;
     let meta = serde_json::json!(
         { "codeRestore" : { "restored" : true, "summary" : "checked out abc12345",
         "degree" : "head_only", } }
@@ -716,16 +716,16 @@ fn spawn_fake_acp_agent(
     });
     counter
 }
-/// Redirect `GROK_HOME` to a tempdir for test isolation.
+/// Redirect `INTELEKT_HOME` to a tempdir for test isolation.
 fn setup_grok_home_in_tempdir() -> tempfile::TempDir {
     let tmp = tempfile::tempdir().expect("tempdir creation");
     unsafe {
-        std::env::set_var("GROK_HOME", tmp.path());
+        std::env::set_var("INTELEKT_HOME", tmp.path());
     }
     tmp
 }
 fn register_session_in(root: &std::path::Path, id: &str) -> acp::SessionId {
-    use xai_grok_shell::active_sessions::{ActiveSession, register_in};
+    use intelekt_shell::active_sessions::{ActiveSession, register_in};
     let session_id = acp::SessionId::new(id);
     register_in(
             root,
@@ -746,7 +746,7 @@ fn unregister_best_effort_removes_entry_when_lock_free() {
     let sid = register_session_in(dir.path(), "s1");
     unregister_active_session_best_effort_in(dir.path(), &sid);
     assert!(
-        xai_grok_shell::active_sessions::list_in(dir.path()).expect("list").is_empty(),
+        intelekt_shell::active_sessions::list_in(dir.path()).expect("list").is_empty(),
         "lock-free unregister must remove the entry",
     );
 }
@@ -782,7 +782,7 @@ fn unregister_best_effort_is_nonblocking_under_lock_contention() {
         returned, "contended unregister blocked on the shared flock instead of skipping",
     );
     assert_eq!(
-        xai_grok_shell::active_sessions::list_in(dir.path()).expect("list").len(), 1,
+        intelekt_shell::active_sessions::list_in(dir.path()).expect("list").len(), 1,
         "contended unregister must leave the entry for collect_crashed",
     );
 }
@@ -1244,7 +1244,7 @@ async fn foreign_scan_task_echoes_sequence_without_enabled_sources() {
     execute(
         Effect::ScanForeignSessions {
             cwd: PathBuf::from("/path/that/must/not/be-read"),
-            compat: xai_grok_workspace::foreign_sessions::EnabledForeignSessionSources::default(),
+            compat: intelekt_workspace::foreign_sessions::EnabledForeignSessionSources::default(),
             grok_home: PathBuf::from("/path/that/must/not/be-read"),
             coordinator: app_coordinator.clone(),
             seq: 41,
@@ -1297,7 +1297,7 @@ async fn foreign_resume_detection_runs_as_task_result() {
     let (quit, _) = execute(
         Effect::DetectForeignResumeHint {
             canonical_cwd: canonical_cwd.clone(),
-            compat: xai_grok_workspace::foreign_sessions::EnabledForeignSessionSources::default(),
+            compat: intelekt_workspace::foreign_sessions::EnabledForeignSessionSources::default(),
             grok_home: PathBuf::from("/path/that/must/not-be-read"),
             launch_token: 8,
         },
@@ -1448,7 +1448,7 @@ async fn debounce_session_search_echoes_query_and_seq() {
 #[test]
 fn agent_profile_names_are_valid_builtins() {
     use std::str::FromStr;
-    use xai_grok_agent::config::BuiltinAgentName;
+    use intelekt_agent::config::BuiltinAgentName;
     let test_cases: &[(SessionFlags, &str)] = &[
         (
             SessionFlags {
@@ -1457,7 +1457,7 @@ fn agent_profile_names_are_valid_builtins() {
                 ask_user: false,
                 ..Default::default()
             },
-            "grok-build-plan",
+            "intelekt-cli-plan",
         ),
         (
             SessionFlags {
@@ -1466,7 +1466,7 @@ fn agent_profile_names_are_valid_builtins() {
                 ask_user: false,
                 ..Default::default()
             },
-            "grok-build-plan-no-subagents",
+            "intelekt-cli-plan-no-subagents",
         ),
         (
             SessionFlags {
@@ -1475,7 +1475,7 @@ fn agent_profile_names_are_valid_builtins() {
                 ask_user: true,
                 ..Default::default()
             },
-            "grok-build-plan",
+            "intelekt-cli-plan",
         ),
         (
             SessionFlags {
@@ -1484,7 +1484,7 @@ fn agent_profile_names_are_valid_builtins() {
                 ask_user: true,
                 ..Default::default()
             },
-            "grok-build-plan-no-subagents",
+            "intelekt-cli-plan-no-subagents",
         ),
         (
             SessionFlags {
@@ -1493,7 +1493,7 @@ fn agent_profile_names_are_valid_builtins() {
                 ask_user: true,
                 ..Default::default()
             },
-            "grok-build-ask-user",
+            "intelekt-cli-ask-user",
         ),
         (
             SessionFlags {
@@ -1502,7 +1502,7 @@ fn agent_profile_names_are_valid_builtins() {
                 ask_user: true,
                 ..Default::default()
             },
-            "grok-build-ask-user",
+            "intelekt-cli-ask-user",
         ),
     ];
     for (flags, expected_name) in test_cases {
@@ -1519,13 +1519,13 @@ fn agent_profile_names_are_valid_builtins() {
         );
     }
 }
-/// Default flags produce no agent profile (uses grok-build default).
+/// Default flags produce no agent profile (uses intelekt-cli default).
 #[test]
 fn default_flags_produce_no_profile() {
     let flags = SessionFlags::default();
     assert_eq!(flags.agent_profile(), None);
 }
-/// --subagents alone produces no profile (grok-build already has TaskTool).
+/// --subagents alone produces no profile (intelekt-cli already has TaskTool).
 #[test]
 fn subagents_without_plan_produces_no_profile() {
     let flags = SessionFlags {
@@ -1558,7 +1558,7 @@ fn runtime_default_flags_produce_plan_meta() {
         ..Default::default()
     };
     let meta = flags.to_meta().unwrap();
-    assert_eq!(meta["agentProfile"], "grok-build-plan");
+    assert_eq!(meta["agentProfile"], "intelekt-cli-plan");
     assert!(meta.get("askUserQuestion").is_none());
     assert_eq!(meta["yoloMode"], false);
 }
@@ -1575,7 +1575,7 @@ fn plan_only_meta() {
         ..Default::default()
     };
     let meta = flags.to_meta().unwrap();
-    assert_eq!(meta["agentProfile"], "grok-build-plan-no-subagents");
+    assert_eq!(meta["agentProfile"], "intelekt-cli-plan-no-subagents");
     assert_eq!(meta["askUserQuestion"], false);
     assert_eq!(meta["yoloMode"], false);
 }
@@ -1591,11 +1591,11 @@ fn plan_with_subagents_meta() {
         ..Default::default()
     };
     let meta = flags.to_meta().unwrap();
-    assert_eq!(meta["agentProfile"], "grok-build-plan");
+    assert_eq!(meta["agentProfile"], "intelekt-cli-plan");
     assert_eq!(meta["askUserQuestion"], false);
     assert_eq!(meta["yoloMode"], false);
 }
-/// --ask-user alone selects the grok-build-ask-user profile.
+/// --ask-user alone selects the intelekt-cli-ask-user profile.
 #[serial_test::serial(GROK_AGENT)]
 #[test]
 fn ask_user_alone_meta() {
@@ -1607,7 +1607,7 @@ fn ask_user_alone_meta() {
         ..Default::default()
     };
     let meta = flags.to_meta().unwrap();
-    assert_eq!(meta["agentProfile"], "grok-build-ask-user");
+    assert_eq!(meta["agentProfile"], "intelekt-cli-ask-user");
     assert!(meta.get("askUserQuestion").is_none());
     assert_eq!(meta["yoloMode"], false);
 }
@@ -1623,14 +1623,14 @@ fn plan_with_ask_user_uses_plan_profile() {
         ..Default::default()
     };
     let meta = flags.to_meta().unwrap();
-    assert_eq!(meta["agentProfile"], "grok-build-plan-no-subagents");
+    assert_eq!(meta["agentProfile"], "intelekt-cli-plan-no-subagents");
     assert!(meta.get("askUserQuestion").is_none());
     assert_eq!(meta["yoloMode"], false);
 }
 /// --no-plan --no-subagents --no-ask-user picks the default profile but
 /// must still emit `askUserQuestion: false` so the shell can strip the
 /// tool at the builder. Mirrors the runtime: `subagents` toggle alone
-/// does not need an `agentProfile` (default `grok-build` already has it).
+/// does not need an `agentProfile` (default `intelekt-cli` already has it).
 #[test]
 fn subagents_alone_emits_only_ask_user_question_disable() {
     let flags = SessionFlags {
@@ -1643,7 +1643,7 @@ fn subagents_alone_emits_only_ask_user_question_disable() {
     assert!(meta.get("agentProfile").is_none());
     assert_eq!(meta["askUserQuestion"], false);
 }
-/// All three flags on at the runtime default produce grok-build-plan
+/// All three flags on at the runtime default produce intelekt-cli-plan
 /// and no `askUserQuestion` field.
 #[serial_test::serial(GROK_AGENT)]
 #[test]
@@ -1656,7 +1656,7 @@ fn all_flags_meta() {
         ..Default::default()
     };
     let meta = flags.to_meta().unwrap();
-    assert_eq!(meta["agentProfile"], "grok-build-plan");
+    assert_eq!(meta["agentProfile"], "intelekt-cli-plan");
     assert!(meta.get("askUserQuestion").is_none());
     assert_eq!(meta["yoloMode"], false);
 }
@@ -1852,11 +1852,11 @@ fn to_meta_yolo_suppresses_auto_mode() {
 #[test]
 fn agent_profile_definitions_have_correct_names() {
     use std::str::FromStr;
-    use xai_grok_agent::config::BuiltinAgentName;
+    use intelekt_agent::config::BuiltinAgentName;
     for name in [
-        "grok-build-plan",
-        "grok-build-plan-no-subagents",
-        "grok-build-ask-user",
+        "intelekt-cli-plan",
+        "intelekt-cli-plan-no-subagents",
+        "intelekt-cli-ask-user",
     ] {
         let builtin = BuiltinAgentName::from_str(name).unwrap();
         let def = builtin.definition();
@@ -1870,9 +1870,9 @@ fn make_session_info(
     resolved: Option<&str>,
     used: u64,
     total: u64,
-) -> xai_grok_shell::session::SessionInfoResponse {
-    use xai_grok_shell::session::acp_types::{ContextInfo, SessionInfoData};
-    xai_grok_shell::session::SessionInfoResponse {
+) -> intelekt_shell::session::SessionInfoResponse {
+    use intelekt_shell::session::acp_types::{ContextInfo, SessionInfoData};
+    intelekt_shell::session::SessionInfoResponse {
         session_id: "test-session-id".into(),
         cwd: "/tmp/test".into(),
         data: SessionInfoData {
@@ -1905,20 +1905,20 @@ fn format_session_info_shows_conversation_id_when_present() {
 }
 #[test]
 fn format_session_info_shows_resolved_when_enabled_and_different() {
-    let info = make_session_info("grok-4.5", Some("grok-4.3"), 1000, 10000);
+    let info = make_session_info("intelekt-4.5", Some("intelekt-4.3"), 1000, 10000);
     let text = format_session_info(&info, None, true);
     assert!(text.contains("Model: grok-4.5 (grok-4.3)"));
 }
 #[test]
 fn format_session_info_hides_resolved_when_disabled() {
-    let info = make_session_info("grok-4.5", Some("grok-4.3"), 1000, 10000);
+    let info = make_session_info("intelekt-4.5", Some("intelekt-4.3"), 1000, 10000);
     let text = format_session_info(&info, None, false);
     assert!(text.contains("Model: grok-4.5"));
-    assert!(! text.contains("grok-4.3"));
+    assert!(! text.contains("intelekt-4.3"));
 }
 #[test]
 fn format_session_info_no_parens_when_resolved_matches_requested() {
-    let info = make_session_info("grok-4.5", Some("grok-4.5"), 1000, 10000);
+    let info = make_session_info("intelekt-4.5", Some("intelekt-4.5"), 1000, 10000);
     let text = format_session_info(&info, None, true);
     assert!(text.contains("Model: grok-4.5"));
     assert!(! text.contains("(grok-4.5)"));
@@ -1941,7 +1941,7 @@ fn format_session_info_hides_model_hash_for_noncoding_without_flag() {
 }
 #[test]
 fn format_session_info_shows_model_hash_for_coding_slug_without_flag() {
-    let mut info = make_session_info("grok-build", None, 1000, 10000);
+    let mut info = make_session_info("intelekt-cli", None, 1000, 10000);
     info.data.model_fingerprint = Some("abc123".into());
     info.data.show_model_fingerprint = false;
     let text = format_session_info(&info, None, false);
@@ -1949,7 +1949,7 @@ fn format_session_info_shows_model_hash_for_coding_slug_without_flag() {
 }
 #[test]
 fn session_picker_summary_strips_skill_xml() {
-    use xai_grok_tools::implementations::skills::skill::extract_skill_display_text;
+    use intelekt_tools::implementations::skills::skill::extract_skill_display_text;
     let summary = "<command-name>pr-babysit</command-name>\n\
                         <command-message>/pr-babysit</command-message>\n\
                         <command-args>check</command-args>"
@@ -1959,7 +1959,7 @@ fn session_picker_summary_strips_skill_xml() {
 }
 #[test]
 fn session_picker_summary_preserves_normal_text() {
-    use xai_grok_tools::implementations::skills::skill::extract_skill_display_text;
+    use intelekt_tools::implementations::skills::skill::extract_skill_display_text;
     let summary = "Fix authentication bug in login flow".to_string();
     let display = extract_skill_display_text(&summary).unwrap_or(summary);
     assert_eq!(display, "Fix authentication bug in login flow");
@@ -2010,7 +2010,7 @@ fn session_picker_entry_maps_to_dormant_roster_row() {
         cwd: "/repo/app".to_string(),
         hostname: Some("box".to_string()),
         source: "local".to_string(),
-        model_id: Some("grok-4".to_string()),
+        model_id: Some("intelekt-4".to_string()),
         num_messages: 3,
         last_active_at: Some(updated),
         branch: None,
@@ -2023,7 +2023,7 @@ fn session_picker_entry_maps_to_dormant_roster_row() {
     assert_eq!(roster.title.as_deref(), Some("Wire up dashboard"));
     assert_eq!(roster.cwd, "/repo/app");
     assert!(roster.is_worktree, "worktree_label present → is_worktree");
-    assert_eq!(roster.model_id.as_deref(), Some("grok-4"));
+    assert_eq!(roster.model_id.as_deref(), Some("intelekt-4"));
     assert_eq!(roster.activity, RosterActivity::Dormant);
     assert!(! roster.resident);
     assert_eq!(roster.last_change_unix_ms, updated.timestamp_millis());

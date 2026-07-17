@@ -3,7 +3,7 @@
 //! the apply outcome the sync orchestration consumes.
 
 use serde::Deserialize;
-use xai_grok_config::signed_policy::now_unix;
+use intelekt_config::signed_policy::now_unix;
 
 /// Which credential a config fetch used — tailors error messages and the
 /// post-fetch confirmation (team vs deployment).
@@ -19,7 +19,7 @@ impl ManagedConfigSource {
     }
 
     /// The 401/403 error tailored to the credential (don't tell a team user to
-    /// check `GROK_DEPLOYMENT_KEY`).
+    /// check `INTELEKT_DEPLOYMENT_KEY`).
     pub(super) fn auth_rejected_error(self) -> ManagedConfigError {
         if self.is_team() {
             ManagedConfigError::TeamAuthRejected
@@ -38,7 +38,7 @@ pub enum ManagedConfigError {
     )]
     ConnectionInterrupted(String),
     #[error(
-        "The deployment key was rejected. Confirm that GROK_DEPLOYMENT_KEY is set correctly and hasn't expired."
+        "The deployment key was rejected. Confirm that INTELEKT_DEPLOYMENT_KEY is set correctly and hasn't expired."
     )]
     DeploymentKeyRejected,
     #[error(
@@ -58,7 +58,7 @@ pub enum ManagedConfigError {
     )]
     SignatureRejected,
     #[error(
-        "Can't save the configuration to ~/.grok. Make sure the directory exists and is writable.\n  ({0})"
+        "Can't save the configuration to ~/.intelekt. Make sure the directory exists and is writable.\n  ({0})"
     )]
     DiskWrite(#[from] std::io::Error),
 }
@@ -90,7 +90,7 @@ pub(super) struct ManagedConfigResponse {
     /// a rollover server dual-signs, each payload signed by ITS OWN key. The
     /// signed payload's policy is the trusted copy when verification is on.
     #[serde(default)]
-    pub(super) signatures: Option<Vec<xai_grok_config::signed_policy::SignatureEnvelope>>,
+    pub(super) signatures: Option<Vec<intelekt_config::signed_policy::SignatureEnvelope>>,
 }
 
 impl ManagedConfigResponse {
@@ -104,8 +104,8 @@ impl ManagedConfigResponse {
     /// outer key_id only PICKS — verification re-selects the key from the signed bytes.
     pub(super) fn signature_sidecar(
         &self,
-    ) -> Option<xai_grok_config::signed_policy::SignatureEnvelope> {
-        self.signature_sidecar_with(xai_grok_config::signed_policy::embedded_key_id_trusted)
+    ) -> Option<intelekt_config::signed_policy::SignatureEnvelope> {
+        self.signature_sidecar_with(intelekt_config::signed_policy::embedded_key_id_trusted)
     }
 
     /// Predicate-injected core of [`Self::signature_sidecar`] so tests can pick
@@ -113,7 +113,7 @@ impl ManagedConfigResponse {
     fn signature_sidecar_with(
         &self,
         key_id_trusted: impl Fn(&str) -> bool,
-    ) -> Option<xai_grok_config::signed_policy::SignatureEnvelope> {
+    ) -> Option<intelekt_config::signed_policy::SignatureEnvelope> {
         let envelopes = self.signatures.as_deref()?;
         envelopes
             .iter()
@@ -169,8 +169,8 @@ impl ApplyOutcome {
 /// A fetched envelope that passed verification: the sidecar to persist, plus its
 /// parsed (now-trusted) payload.
 pub(super) struct VerifiedEnvelope {
-    pub(super) sidecar: xai_grok_config::signed_policy::SignatureEnvelope,
-    pub(super) payload: xai_grok_config::signed_policy::SignedPayload,
+    pub(super) sidecar: intelekt_config::signed_policy::SignatureEnvelope,
+    pub(super) payload: intelekt_config::signed_policy::SignedPayload,
 }
 
 /// Verify the signed envelope without persisting anything. The legacy body fields must
@@ -180,7 +180,7 @@ pub(super) fn verify_signed_envelope(
     body: &ManagedConfigResponse,
     active_team_id: Option<&str>,
 ) -> Result<VerifiedEnvelope, String> {
-    use xai_grok_config::signed_policy;
+    use intelekt_config::signed_policy;
     let sidecar = body.signature_sidecar().ok_or_else(|| {
         "managed policy is required but the server returned no signature".to_owned()
     })?;
@@ -200,7 +200,7 @@ mod tests {
     /// (picking must not invent absence); no array (old/unsigned server) → None.
     #[test]
     fn signature_sidecar_picks_trusted_envelope_then_falls_back() {
-        use xai_grok_config::signed_policy::SignatureEnvelope;
+        use intelekt_config::signed_policy::SignatureEnvelope;
         let envelope = |kid: &str| SignatureEnvelope {
             signed_payload: format!("payload-{kid}"),
             signature: format!("sig-{kid}"),

@@ -36,7 +36,7 @@ pub struct NotificationMeta {
     /// non-monotonic counter runs of a multi-resume history.
     pub event_id: Option<String>,
     /// Monotonic per-process sequence parsed from `eventId`
-    /// (`"{sessionId}-{counter}"`, see `xai-grok-shell util::event_id`). The
+    /// (`"{sessionId}-{counter}"`, see `intelekt-shell util::event_id`). The
     /// agent stamps the SAME `eventId` on the live emission and on the persisted
     /// line that is later replayed, so a client can dedup an event it receives
     /// twice (replay/live overlap, a re-emit after the reconnect gate, or
@@ -47,7 +47,7 @@ pub struct NotificationMeta {
 }
 
 /// Serializable counterpart of the replay stamp the agent injects on
-/// replayed notifications (`_meta.isReplay`, stamped by xai-grok-shell's
+/// replayed notifications (`_meta.isReplay`, stamped by intelekt-shell's
 /// `forward_raw_replay_line` during `session/load`).
 ///
 /// [`NotificationMeta::from_json`] is the parse side; this is the build
@@ -90,7 +90,7 @@ pub mod user_message_chunk_meta {
     /// Prompt index for rewind / attribution.
     pub const PROMPT_INDEX: &str = "promptIndex";
     /// When true, the chunk must not become a scrollback user prompt
-    /// ([`xai_grok_shell::session::PromptOrigin::hide_user_echo_from_scrollback`]).
+    /// ([`intelekt_shell::session::PromptOrigin::hide_user_echo_from_scrollback`]).
     pub const HIDE_FROM_SCROLLBACK: &str = "hideFromScrollback";
 }
 

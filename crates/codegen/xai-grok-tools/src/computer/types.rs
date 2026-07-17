@@ -238,8 +238,8 @@ impl TaskSnapshot {
 /// Result of killing a terminal task.
 ///
 /// Serialized over the wire in the `x.ai/task/kill` ext response
-/// (`xai-grok-shell::extensions::task::KillTaskResponse`) and deserialized
-/// by clients (xai-grok-pager), so it derives both serde directions.
+/// (`intelekt-shell::extensions::task::KillTaskResponse`) and deserialized
+/// by clients (intelekt-pager), so it derives both serde directions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum KillOutcome {
@@ -255,8 +255,8 @@ pub enum KillOutcome {
 /// The single abstraction over terminal execution backends.
 ///
 /// Implemented by:
-/// - `LocalTerminalBackend` (in xai-grok-tools, spawns processes)
-/// - `AcpTerminalBackend` (in xai-grok-shell, calls ACP protocol)
+/// - `LocalTerminalBackend` (in intelekt-tools, spawns processes)
+/// - `AcpTerminalBackend` (in intelekt-shell, calls ACP protocol)
 #[async_trait::async_trait]
 pub trait TerminalBackend: Send + Sync {
     /// Run a command. Blocks until completion or timeout.

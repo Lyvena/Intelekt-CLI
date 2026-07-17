@@ -1,4 +1,4 @@
-//! Test-only helpers shared across `xai-grok-hooks` unit + integration tests.
+//! Test-only helpers shared across `intelekt-hooks` unit + integration tests.
 //!
 //! This module is gated on `#[cfg(test)]` and is exported as `pub(crate)`
 //! so any in-crate `#[cfg(test)] mod tests` can use it. Integration tests

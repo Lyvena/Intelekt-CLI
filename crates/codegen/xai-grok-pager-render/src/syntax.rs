@@ -6,7 +6,7 @@
 
 use std::sync::OnceLock;
 
-pub use xai_grok_markdown::Syntect;
+pub use intelekt_markdown::Syntect;
 
 use crate::theme::ThemeKind;
 

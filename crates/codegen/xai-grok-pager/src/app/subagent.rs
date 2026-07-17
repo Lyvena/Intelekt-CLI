@@ -107,19 +107,19 @@ struct SubagentMetaSlice {
     worktree_path: Option<String>,
 }
 thread_local! {
-    static REPLAY_GROK_HOME : std::cell::RefCell < Option < std::path::PathBuf >> = const
+    static REPLAY_INTELEKT_HOME : std::cell::RefCell < Option < std::path::PathBuf >> = const
     { std::cell::RefCell::new(None) };
 }
 /// Override grok home for disk-replay unit tests (thread-local; production never sets this).
 #[cfg(test)]
 pub(crate) fn set_replay_grok_home_for_tests(home: Option<std::path::PathBuf>) {
-    REPLAY_GROK_HOME.with(|h| *h.borrow_mut() = home);
+    REPLAY_INTELEKT_HOME.with(|h| *h.borrow_mut() = home);
 }
 fn effective_grok_home() -> std::path::PathBuf {
-    if let Some(home) = REPLAY_GROK_HOME.with(|h| h.borrow().clone()) {
+    if let Some(home) = REPLAY_INTELEKT_HOME.with(|h| h.borrow().clone()) {
         return home;
     }
-    xai_grok_shell::util::grok_home::grok_home()
+    intelekt_shell::util::grok_home::grok_home()
 }
 /// Best-effort enrichment from the shell's on-disk `meta.json`.
 pub(crate) fn enrich_from_meta(
@@ -172,7 +172,7 @@ pub(crate) fn replay_inherited_updates(
 ) {
     let home = effective_grok_home();
     let updates =
-        match xai_grok_shell::session::storage::load_updates_for_replay_at(child_session_id, &home)
+        match intelekt_shell::session::storage::load_updates_for_replay_at(child_session_id, &home)
         {
             Ok(Some(u)) => u,
             Ok(None) => return,
@@ -767,14 +767,14 @@ mod tests {
     #[test]
     fn subagent_meta_all_fields() {
         assert_eq!(
-            format_subagent_meta(Some("researcher"), Some("analyst"), Some("grok-3")),
+            format_subagent_meta(Some("researcher"), Some("analyst"), Some("intelekt-3")),
             " (researcher \u{00b7} analyst \u{00b7} grok-3)"
         );
     }
     #[test]
     fn subagent_meta_partial_skips_nones() {
         assert_eq!(
-            format_subagent_meta(Some("researcher"), None, Some("grok-3")),
+            format_subagent_meta(Some("researcher"), None, Some("intelekt-3")),
             " (researcher \u{00b7} grok-3)"
         );
     }
@@ -816,7 +816,7 @@ mod tests {
     #[test]
     fn subagent_meta_collapses_duplicate_persona_role() {
         assert_eq!(
-            format_subagent_meta(Some("reviewer"), Some("reviewer"), Some("grok-3")),
+            format_subagent_meta(Some("reviewer"), Some("reviewer"), Some("intelekt-3")),
             " (reviewer \u{00b7} grok-3)"
         );
     }
@@ -844,7 +844,7 @@ mod tests {
     #[test]
     fn subagent_meta_drops_both_empty_persona_role() {
         assert_eq!(
-            format_subagent_meta(Some(""), Some(" "), Some("grok-3")),
+            format_subagent_meta(Some(""), Some(" "), Some("intelekt-3")),
             " (grok-3)"
         );
     }

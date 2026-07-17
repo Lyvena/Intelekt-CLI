@@ -3,7 +3,7 @@
 //! Resolves the local env/config/default stack into a diagnostic report.
 
 use serde::Serialize;
-use xai_grok_tools::types::compat::{COMPAT_CELLS, CompatCell, CompatConfig};
+use intelekt_tools::types::compat::{COMPAT_CELLS, CompatCell, CompatConfig};
 
 /// Derive the vendor origin from a file path. Returns `Some("cursor")` or
 /// `Some("claude")` when the path passes through a vendor config directory;
@@ -119,7 +119,7 @@ pub(super) fn resolve_inspect_compat(
     effective_config: Result<&toml::Value, ()>,
 ) -> ExternalCompatReport {
     resolve_inspect_compat_with_env(effective_config, |cell| {
-        xai_grok_config::env_bool(cell.env_var())
+        intelekt_config::env_bool(cell.env_var())
     })
 }
 

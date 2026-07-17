@@ -7,7 +7,7 @@ impl SessionActor {
     /// alias of `--trust`: also allows repo-local MCP/LSP for this folder.
     pub(super) fn do_hooks_trust_project(cwd: &str) -> Result<std::path::PathBuf, String> {
         let root =
-            xai_grok_workspace::session::git::find_git_root_from_path(std::path::Path::new(cwd))
+            intelekt_workspace::session::git::find_git_root_from_path(std::path::Path::new(cwd))
                 .map_err(|_| {
                     "Not in a git repository. Project hooks require a git worktree root."
                         .to_string()
@@ -22,7 +22,7 @@ impl SessionActor {
         cwd: &str,
     ) -> Result<(std::path::PathBuf, bool), String> {
         let root =
-            xai_grok_workspace::session::git::find_git_root_from_path(std::path::Path::new(cwd))
+            intelekt_workspace::session::git::find_git_root_from_path(std::path::Path::new(cwd))
                 .map_err(|_| "Not in a git repository.".to_string())?;
         // revoke_folder_trust persists set_untrusted AND downgrades the decision
         // cache so the untrust takes effect on the next reload, not just restart.
@@ -51,18 +51,18 @@ impl SessionActor {
         let toolset = bridge.toolset();
         let mut resources = toolset.resources.lock().await;
         let existing = resources
-            .get::<xai_grok_tools::types::resources::TruncationCfg>()
+            .get::<intelekt_tools::types::resources::TruncationCfg>()
             .map(|c| c.0.clone());
         match (resolved, existing) {
             (resolved, Some(mut cfg)) => {
                 if cfg.mcp_max_output_bytes != resolved {
                     cfg.mcp_max_output_bytes = resolved;
-                    resources.insert(xai_grok_tools::types::resources::TruncationCfg(cfg));
+                    resources.insert(intelekt_tools::types::resources::TruncationCfg(cfg));
                 }
             }
             (Some(v), None) => {
-                resources.insert(xai_grok_tools::types::resources::TruncationCfg(
-                    xai_grok_tools::types::context::TruncationConfig {
+                resources.insert(intelekt_tools::types::resources::TruncationCfg(
+                    intelekt_tools::types::context::TruncationConfig {
                         mcp_max_output_bytes: Some(v),
                         ..Default::default()
                     },
@@ -159,7 +159,7 @@ impl SessionActor {
                         requires_restart: false,
                     };
                 }
-                // CWE-427: add_hooks_path() validates path is under ~/.grok/.
+                // CWE-427: add_hooks_path() validates path is under ~/.intelekt/.
                 match crate::config::add_hooks_path(&path) {
                     Ok(()) => ActionOutcome {
                         status: OutcomeStatus::Success,
@@ -206,7 +206,7 @@ impl SessionActor {
                 }
             }
             HooksAction::Disable { hook_name } => {
-                match xai_grok_hooks::trust::disable_hook(&hook_name) {
+                match intelekt_hooks::trust::disable_hook(&hook_name) {
                     Ok(()) => ActionOutcome {
                         status: OutcomeStatus::Success,
                         message: format!("Disabled hook: {hook_name}"),
@@ -222,7 +222,7 @@ impl SessionActor {
                 }
             }
             HooksAction::Enable { hook_name } => {
-                match xai_grok_hooks::trust::enable_hook(&hook_name) {
+                match intelekt_hooks::trust::enable_hook(&hook_name) {
                     Ok(true) => ActionOutcome {
                         status: OutcomeStatus::Success,
                         message: format!("Enabled hook: {hook_name}"),
@@ -250,9 +250,9 @@ impl SessionActor {
                 let mut toggled = 0usize;
                 for name in &hook_names {
                     let ok = if disable {
-                        xai_grok_hooks::trust::disable_hook(name).is_ok()
+                        intelekt_hooks::trust::disable_hook(name).is_ok()
                     } else {
-                        xai_grok_hooks::trust::enable_hook(name).is_ok()
+                        intelekt_hooks::trust::enable_hook(name).is_ok()
                     };
                     if ok {
                         toggled += 1;
@@ -306,14 +306,14 @@ impl SessionActor {
                 }
                 let cwd = std::path::Path::new(&self.session_info.cwd);
                 let install_source =
-                    xai_grok_agent::plugins::git_install::parse_install_source(&source, cwd);
-                let registry = xai_grok_agent::plugins::InstallRegistry::load();
-                match xai_grok_agent::plugins::git_install::install_from_source(
+                    intelekt_agent::plugins::git_install::parse_install_source(&source, cwd);
+                let registry = intelekt_agent::plugins::InstallRegistry::load();
+                match intelekt_agent::plugins::git_install::install_from_source(
                     &install_source,
                     &registry,
                 ) {
                     Ok(result) => {
-                        let repo = xai_grok_agent::plugins::git_install::build_installed_repo(
+                        let repo = intelekt_agent::plugins::git_install::build_installed_repo(
                             &result,
                             &install_source,
                         );
@@ -361,7 +361,7 @@ impl SessionActor {
                 }
                 // Extract plugin name from ID (last segment of "scope/hex8/name").
                 let plugin_name = plugin_id.rsplit('/').next().unwrap_or(&plugin_id);
-                let mut registry = xai_grok_agent::plugins::InstallRegistry::load();
+                let mut registry = intelekt_agent::plugins::InstallRegistry::load();
                 match registry.find_plugin(plugin_name) {
                     None => ActionOutcome {
                         status: OutcomeStatus::NotFound,
@@ -390,7 +390,7 @@ impl SessionActor {
 
                         // Proceed with removal.
                         if let Err(e) =
-                            xai_grok_agent::plugins::git_install::remove_repo_path(&repo_path)
+                            intelekt_agent::plugins::git_install::remove_repo_path(&repo_path)
                         {
                             tracing::warn!("Failed to remove repo path: {e}");
                         }
@@ -411,7 +411,7 @@ impl SessionActor {
                 }
             }
             PluginsAction::Update { plugin_id } => {
-                let registry = xai_grok_agent::plugins::InstallRegistry::load();
+                let registry = intelekt_agent::plugins::InstallRegistry::load();
                 let all_repos = registry.list();
                 if all_repos.is_empty() {
                     return ActionOutcome {
@@ -424,7 +424,7 @@ impl SessionActor {
 
                 let repos_to_update: Vec<(
                     String,
-                    xai_grok_agent::plugins::install_registry::InstalledRepo,
+                    intelekt_agent::plugins::install_registry::InstalledRepo,
                 )> = if let Some(ref id) = plugin_id {
                     let name = id.rsplit('/').next().unwrap_or(id);
                     match registry.find_plugin(name) {
@@ -448,9 +448,9 @@ impl SessionActor {
                 let mut messages = Vec::new();
                 let mut any_updated = false;
                 for (key, repo) in &repos_to_update {
-                    match xai_grok_agent::plugins::git_install::update_repo(key, repo) {
+                    match intelekt_agent::plugins::git_install::update_repo(key, repo) {
                         Ok(status) => {
-                            use xai_grok_agent::plugins::git_install::UpdateStatus;
+                            use intelekt_agent::plugins::git_install::UpdateStatus;
                             match status {
                                 UpdateStatus::Updated(result) => {
                                     if result.changed {
@@ -622,7 +622,7 @@ impl SessionActor {
     /// (the parent module) can invoke it after an interactive folder-trust
     /// grant — same visibility as `apply_plugin_registry_snapshot` below.
     pub(super) async fn reload_hooks_impl(self: &std::sync::Arc<Self>) -> String {
-        let git_root = xai_grok_workspace::session::git::find_git_root_from_path(
+        let git_root = intelekt_workspace::session::git::find_git_root_from_path(
             std::path::Path::new(&self.session_info.cwd),
         )
         .ok();
@@ -648,7 +648,7 @@ impl SessionActor {
             for plugin in pr.active_plugins() {
                 if let Some(ref hooks_path) = plugin.hooks_path {
                     let (specs, warnings) =
-                        xai_grok_agent::plugins::hooks_adapter::parse_plugin_hooks(
+                        intelekt_agent::plugins::hooks_adapter::parse_plugin_hooks(
                             hooks_path,
                             &plugin.name,
                             &plugin.root_str(),
@@ -661,7 +661,7 @@ impl SessionActor {
                 }
                 if let Some(ref inline_value) = plugin.inline_hooks {
                     let (specs, warnings) =
-                        xai_grok_agent::plugins::hooks_adapter::parse_plugin_hooks_from_value(
+                        intelekt_agent::plugins::hooks_adapter::parse_plugin_hooks_from_value(
                             inline_value,
                             &plugin.name,
                             &plugin.root_str(),
@@ -722,13 +722,13 @@ impl SessionActor {
     /// pass `false` for the cheap skip-unchanged path.
     pub(super) async fn reload_plugins_impl(
         self: &Arc<Self>,
-        handle: &xai_grok_agent::plugins::SharedPluginRegistryHandle,
+        handle: &intelekt_agent::plugins::SharedPluginRegistryHandle,
         force: bool,
     ) -> String {
         let session_cwd = std::path::Path::new(&self.session_info.cwd);
 
         let sid = self.session_info.id.0.as_ref();
-        xai_grok_telemetry::unified_log::info("reload_plugins_impl: start", Some(sid), None);
+        intelekt_telemetry::unified_log::info("reload_plugins_impl: start", Some(sid), None);
 
         // Folder-trust gates repo-local project plugins (hooks/MCP). Resolve and
         // record the verdict for this cwd BEFORE the plugins-config read below,
@@ -751,7 +751,7 @@ impl SessionActor {
         let count = handle.reload(Some(session_cwd), &discovery_config, project_trusted, force);
         let discover_ms = t2.elapsed().as_millis();
 
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "reload_plugins_impl: discovery done",
             Some(sid),
             Some(serde_json::json!({
@@ -805,8 +805,8 @@ impl SessionActor {
     /// process-wide fan-out (which knows nothing about per-session dirs).
     pub(crate) fn preserve_session_plugin_dirs(
         &self,
-        incoming: Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>>,
-    ) -> Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>> {
+        incoming: Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>>,
+    ) -> Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>> {
         let dirs = self.session_plugin_dirs();
         if dirs.is_empty() {
             return incoming;
@@ -831,7 +831,7 @@ impl SessionActor {
     /// Returns `(hooks_reloaded, mcp_changed, skill_count)`.
     pub(super) async fn apply_plugin_registry_snapshot(
         self: &Arc<Self>,
-        new_registry_snapshot: Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>>,
+        new_registry_snapshot: Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>>,
     ) -> (usize, bool, usize) {
         let sid = self.session_info.id.0.as_ref();
         let session_cwd = std::path::Path::new(&self.session_info.cwd);
@@ -848,7 +848,7 @@ impl SessionActor {
                 // File-based hooks
                 if let Some(ref hooks_path) = plugin.hooks_path {
                     let (specs, warnings) =
-                        xai_grok_agent::plugins::hooks_adapter::parse_plugin_hooks(
+                        intelekt_agent::plugins::hooks_adapter::parse_plugin_hooks(
                             hooks_path,
                             &plugin.name,
                             &plugin.root_str(),
@@ -862,7 +862,7 @@ impl SessionActor {
                 // Inline hooks
                 if let Some(ref inline_value) = plugin.inline_hooks {
                     let (specs, warnings) =
-                        xai_grok_agent::plugins::hooks_adapter::parse_plugin_hooks_from_value(
+                        intelekt_agent::plugins::hooks_adapter::parse_plugin_hooks_from_value(
                             inline_value,
                             &plugin.name,
                             &plugin.root_str(),
@@ -883,14 +883,14 @@ impl SessionActor {
                     hook_reg.append_specs(new_specs);
                 } else if !new_specs.is_empty() {
                     let (mut new_reg, _) =
-                        xai_grok_hooks::discovery::load_hooks_from_sources(&[], &[]);
+                        intelekt_hooks::discovery::load_hooks_from_sources(&[], &[]);
                     new_reg.append_specs(new_specs);
                     *reg = Some(Arc::new(new_reg));
                 }
             }
         }
 
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "reload_plugins_impl: hooks done",
             Some(sid),
             Some(serde_json::json!({
@@ -932,7 +932,7 @@ impl SessionActor {
             if (!diff.added.is_empty() || !diff.removed.is_empty())
                 && let Some(tx) = &dispatch_event_tx
             {
-                let _ = tx.send(xai_grok_mcp::servers::McpClientEvent::ConfigDiff {
+                let _ = tx.send(intelekt_mcp::servers::McpClientEvent::ConfigDiff {
                     added: diff.added.clone(),
                     removed: diff.removed.clone(),
                 });
@@ -960,7 +960,7 @@ impl SessionActor {
             false
         };
 
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "reload_plugins_impl: MCP done",
             Some(sid),
             Some(serde_json::json!({
@@ -972,7 +972,7 @@ impl SessionActor {
         // Refresh skills: re-scan from disk using the (already-updated) plugin registry.
         let t_skills = std::time::Instant::now();
         let skill_count = self.reload_skills_from_disk().await;
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "reload_plugins_impl: skills done",
             Some(sid),
             Some(serde_json::json!({
@@ -1029,7 +1029,7 @@ impl SessionActor {
                 .await;
         }
 
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "apply_plugin_registry_snapshot: complete",
             Some(sid),
             Some(serde_json::json!({

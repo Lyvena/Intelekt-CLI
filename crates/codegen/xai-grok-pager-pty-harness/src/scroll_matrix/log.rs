@@ -2,7 +2,7 @@
 //! synchronization.
 //!
 //! Wire schema source of truth: the pager's `ScrollLogRecord` in
-//! `xai-grok-pager/src/input/scroll_log.rs`. [`ScrollLogLine`] mirrors it
+//! `intelekt-pager/src/input/scroll_log.rs`. [`ScrollLogLine`] mirrors it
 //! field-for-field with every always-emitted field **required** (see the
 //! module docs in [`super`] for the drift-tripwire rationale).
 
@@ -284,7 +284,7 @@ mod tests {
     // (compact JSON, snake_case evt/trigger, config echo flattened onto
     // stream_start, skip-if-None optionals) — copied from the wire format
     // pinned by `scroll_log_records_flood_flushes_and_capped_finalize_drop`
-    // in `xai-grok-pager/src/input/mouse/tests.rs`.
+    // in `intelekt-pager/src/input/mouse/tests.rs`.
     const START: &str = r#"{"ts_ms":0.0,"evt":"stream_start","trigger":"event","kind":"unknown","events_total":0,"events_since_flush":0,"accel":1.0,"desired":0.0,"applied_total":0,"flushed":0,"backlog_after":0,"carry":0.0,"cap":6,"mode":"trackpad","ept":3,"wheel_lpt":3,"trackpad_lpt":3,"invert":false,"speed":1.0,"viewport_height":40}"#;
     const FLUSH_FIRST: &str = r#"{"ts_ms":16.0,"evt":"flush","trigger":"event","kind":"trackpad","events_total":9,"events_since_flush":9,"avg_interval_ms":2.0,"accel":1.0,"desired":9.4,"applied_total":6,"flushed":6,"backlog_after":3,"carry":0.4,"cap":6}"#;
     const FLUSH_SECOND: &str = r#"{"ts_ms":32.0,"evt":"flush","trigger":"tick","kind":"trackpad","events_total":17,"events_since_flush":8,"avg_interval_ms":2.0,"accel":1.0,"desired":17.4,"applied_total":12,"flushed":6,"backlog_after":5,"carry":0.4,"cap":6,"ms_since_prev_flush":16.0}"#;

@@ -133,7 +133,7 @@ mod tests {
             attempts: 2,
             accepted_after_budget: true,
             top_trigger: Some("tail_repetition:4@thinking".to_string()),
-            model: "grok-4.5".to_string(),
+            model: "intelekt-4.5".to_string(),
         })
         .unwrap();
         assert_eq!(
@@ -144,7 +144,7 @@ mod tests {
                 "attempts": 2,
                 "accepted_after_budget": true,
                 "top_trigger": "tail_repetition:4@thinking",
-                "model": "grok-4.5",
+                "model": "intelekt-4.5",
             })
         );
         let no_trigger = serde_json::to_value(super::DoomLoopRecovery {
@@ -153,7 +153,7 @@ mod tests {
             attempts: 1,
             accepted_after_budget: false,
             top_trigger: None,
-            model: "grok-4.5".to_string(),
+            model: "intelekt-4.5".to_string(),
         })
         .unwrap();
         assert!(no_trigger.get("top_trigger").is_none(), "None is omitted");

@@ -5,7 +5,7 @@
 //!
 //! - Grok chat intra FullReplace ([`crate::intra_compaction`]) and inter
 //!   (appends after sampling via [`append_reminder_block`])
-//! - grok-build full-replace ([`crate::code_compaction`] assemble's
+//! - intelekt-cli full-replace ([`crate::code_compaction`] assemble's
 //!   `system_reminder`)
 //!
 //! **What lives here:** pure formatting of the three **common** active-agent

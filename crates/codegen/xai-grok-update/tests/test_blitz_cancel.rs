@@ -2,7 +2,7 @@
 //! truncation / corruption / cancel at every point, and after every iteration
 //! assert the single invariant that makes the brick impossible:
 //!
-//! > `~/.grok/bin/grok` resolves to a binary that passes the smoke-test, OR it
+//! > `~/.intelekt/bin/grok` resolves to a binary that passes the smoke-test, OR it
 //! > is still the previous-good binary. It is never a broken/partial binary,
 //! > and a `.tmp` never masquerades as the active binary.
 //!
@@ -29,7 +29,7 @@ use common::{
     can_exec_shell_scripts, host_platform, make_update_config, reset_home, small_good_artifact,
     test_home,
 };
-use xai_grok_update::auto_update::install_internal_from_base;
+use intelekt_update::auto_update::install_internal_from_base;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Artifacts + fixtures
@@ -58,7 +58,7 @@ fn seed_previous_good(home: &Path, version: &str, platform: &str) -> PathBuf {
     std::fs::set_permissions(&prev, std::fs::Permissions::from_mode(0o755)).unwrap();
 
     let rel = format!("../downloads/grok-{version}-{platform}");
-    for name in ["grok", "agent"] {
+    for name in ["intelekt", "agent"] {
         let link = bin.join(name);
         let _ = std::fs::remove_file(&link);
         std::os::unix::fs::symlink(&rel, &link).unwrap();
@@ -80,7 +80,7 @@ enum Expect {
 /// link is always runnable and is never a `.tmp` or a partial file. Applied
 /// to both `grok` and `agent` — `swap_managed_bin_links` moves them together.
 fn assert_invariant(home: &Path, prev_good: &Path, new_binary: &Path, expect: Expect) {
-    for name in ["grok", "agent"] {
+    for name in ["intelekt", "agent"] {
         assert_link_invariant(home, name, prev_good, new_binary, expect);
     }
 }
@@ -293,7 +293,7 @@ async fn smoke_test_rejects_garbage_and_keeps_previous_good() {
 
     let new_binary = home
         .join("downloads")
-        .join(format!("grok-0.1.181-{platform}"));
+        .join(format!("intelekt-0.1.181-{platform}"));
     assert_invariant(home, &prev_good, &new_binary, Expect::PreviousGood);
 
     // A subsequent clean serve must succeed.
@@ -382,7 +382,7 @@ async fn blitz_fuzz_bounded() {
 
 /// The "test it a million times, cancelling at every point" stress run. Gated
 /// behind `#[ignore]`; invoke via `just blitz-stress` or
-/// `cargo nextest run -p xai-grok-update --run-ignored all`.
+/// `cargo nextest run -p intelekt-update --run-ignored all`.
 #[tokio::test(flavor = "multi_thread")]
 #[serial]
 #[ignore = "stress: 100k iterations, run via `just blitz-stress`"]

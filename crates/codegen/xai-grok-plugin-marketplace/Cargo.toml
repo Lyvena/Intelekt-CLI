@@ -1,6 +1,6 @@
 [package]
 license = "Apache-2.0"
-name = "xai-grok-plugin-marketplace"
+name = "intelekt-plugin-marketplace"
 version = "0.1.0"
 edition.workspace = true
 
@@ -16,8 +16,8 @@ toml = { workspace = true }
 tracing = { workspace = true }
 chrono = { workspace = true }
 xai-tty-utils = { workspace = true }
-xai-grok-agent = { workspace = true }
-xai-grok-config = { workspace = true }
+intelekt-agent = { workspace = true }
+intelekt-config = { workspace = true }
 xai-hooks-plugins-types = { workspace = true }
 
 [dev-dependencies]

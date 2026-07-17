@@ -1,7 +1,7 @@
 //! Shared announcement types, persistence, and formatting for Grok CLI apps.
 //!
-//! This crate provides the common logic used by `xai-grok-shell` and
-//! `xai-grok-pager` for handling announcements (banner notifications).
+//! This crate provides the common logic used by `intelekt-shell` and
+//! `intelekt-pager` for handling announcements (banner notifications).
 
 use std::collections::BTreeSet;
 use std::path::PathBuf;
@@ -126,7 +126,7 @@ pub fn prune_hidden_announcement_ids(
     ids.len() != before
 }
 
-/// Read hidden announcement ids from `~/.grok/announcements.json`.
+/// Read hidden announcement ids from `~/.intelekt/announcements.json`.
 /// Returns an empty set (everything visible) on missing or malformed file.
 pub async fn read_hidden_announcement_ids() -> BTreeSet<String> {
     let path = announcements_state_path();
@@ -136,7 +136,7 @@ pub async fn read_hidden_announcement_ids() -> BTreeSet<String> {
     }
 }
 
-/// Write hidden announcement ids to `~/.grok/announcements.json`.
+/// Write hidden announcement ids to `~/.intelekt/announcements.json`.
 pub async fn write_hidden_announcement_ids(ids: &BTreeSet<String>) {
     let path = announcements_state_path();
     if let Some(s) = serialize_hidden_announcement_ids(ids) {
@@ -145,7 +145,7 @@ pub async fn write_hidden_announcement_ids(ids: &BTreeSet<String>) {
 }
 
 fn announcements_state_path() -> PathBuf {
-    xai_grok_tools::util::grok_home::grok_home().join("announcements.json")
+    intelekt_tools::util::grok_home::grok_home().join("announcements.json")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

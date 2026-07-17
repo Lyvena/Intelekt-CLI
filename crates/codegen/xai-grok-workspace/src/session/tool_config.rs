@@ -12,10 +12,10 @@ use crate::error::{WorkspaceError, WorkspaceResult};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
-use xai_grok_tools::registry::types::{
+use intelekt_tools::registry::types::{
     FinalizedToolset, ToolConfig, ToolRegistryBuilder, ToolServerConfig,
 };
-use xai_grok_tools::types::tool::ToolKind;
+use intelekt_tools::types::tool::ToolKind;
 /// Create-shaped entry of the resolution pipeline: run
 /// [`resolve_session_toolset_rebuild`] around a FRESH factory-built
 /// session-lifetime terminal backend, and return that backend so the caller
@@ -32,9 +32,9 @@ pub(crate) fn resolve_session_toolset(
     session_id: &str,
     factory: &dyn SessionContextFactory,
     local_registry: Option<xai_computer_hub_sdk::LocalRegistry>,
-    lsp: Option<std::sync::Arc<dyn xai_grok_tools::implementations::lsp::LspBackend>>,
+    lsp: Option<std::sync::Arc<dyn intelekt_tools::implementations::lsp::LspBackend>>,
     viewer_ctx: Option<xai_tool_runtime::WorkspaceViewerContext>,
-    notification_handle: Option<xai_grok_tools::notification::types::ToolNotificationHandle>,
+    notification_handle: Option<intelekt_tools::notification::types::ToolNotificationHandle>,
 ) -> WorkspaceResult<(
     ToolServerConfig,
     Arc<FinalizedToolset>,
@@ -84,10 +84,10 @@ pub(crate) fn resolve_session_toolset_rebuild(
     session_id: &str,
     factory: &dyn SessionContextFactory,
     local_registry: Option<xai_computer_hub_sdk::LocalRegistry>,
-    lsp: Option<std::sync::Arc<dyn xai_grok_tools::implementations::lsp::LspBackend>>,
+    lsp: Option<std::sync::Arc<dyn intelekt_tools::implementations::lsp::LspBackend>>,
     viewer_ctx: Option<xai_tool_runtime::WorkspaceViewerContext>,
-    notification_handle: Option<xai_grok_tools::notification::types::ToolNotificationHandle>,
-    terminal_backend: Arc<dyn xai_grok_tools::computer::types::TerminalBackend>,
+    notification_handle: Option<intelekt_tools::notification::types::ToolNotificationHandle>,
+    terminal_backend: Arc<dyn intelekt_tools::computer::types::TerminalBackend>,
 ) -> WorkspaceResult<(ToolServerConfig, Arc<FinalizedToolset>)> {
     let mut builder = factory.registry_builder();
     if let Some(lr) = local_registry {
@@ -123,7 +123,7 @@ pub(crate) fn resolve_session_toolset_rebuild(
         .finalize_with_trunc_config(
             finalize_config,
             ctx,
-            xai_grok_tools::types::context::TruncationConfig::default(),
+            intelekt_tools::types::context::TruncationConfig::default(),
             viewer_ctx,
         )
         .map_err(|errs| {
@@ -317,7 +317,7 @@ pub(crate) use crate::ENV_TEST_LOCK as TOOL_STATE_ENV_LOCK;
 ///
 /// [`build_terminal_backend`]: crate::config::SessionContextFactory::build_terminal_backend
 /// [`build_session_context`]: crate::config::SessionContextFactory::build_session_context
-/// [`LocalTerminalBackend`]: xai_grok_tools::computer::local::LocalTerminalBackend
+/// [`LocalTerminalBackend`]: intelekt_tools::computer::local::LocalTerminalBackend
 pub struct WorkspaceSessionContextFactory {
     auth: Option<xai_computer_hub_sdk::SharedAuthProvider>,
     api_base_url: Option<String>,
@@ -392,15 +392,15 @@ impl SessionContextFactory for WorkspaceSessionContextFactory {
         session_id: &str,
         cwd: PathBuf,
         session_env: Arc<HashMap<String, String>>,
-        backend: Arc<dyn xai_grok_tools::computer::types::TerminalBackend>,
-    ) -> xai_grok_tools::registry::types::SessionContext {
-        use xai_grok_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig;
-        use xai_grok_tools::implementations::grok_build::image_gen::ImageGenConfig;
-        use xai_grok_tools::implementations::grok_build::video_gen::VideoGenConfig;
-        use xai_grok_tools::implementations::web_search::WebSearchConfig;
-        let fs = Arc::new(xai_grok_tools::computer::local::LocalFs)
-            as Arc<dyn xai_grok_tools::computer::types::AsyncFileSystem>;
-        let notification_handle = xai_grok_tools::notification::ToolNotificationHandle::noop();
+        backend: Arc<dyn intelekt_tools::computer::types::TerminalBackend>,
+    ) -> intelekt_tools::registry::types::SessionContext {
+        use intelekt_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig;
+        use intelekt_tools::implementations::grok_build::image_gen::ImageGenConfig;
+        use intelekt_tools::implementations::grok_build::video_gen::VideoGenConfig;
+        use intelekt_tools::implementations::web_search::WebSearchConfig;
+        let fs = Arc::new(intelekt_tools::computer::local::LocalFs)
+            as Arc<dyn intelekt_tools::computer::types::AsyncFileSystem>;
+        let notification_handle = intelekt_tools::notification::ToolNotificationHandle::noop();
         let (image_gen_config, video_gen_config, web_search_config, app_builder_deployer_config) =
             if let (Some(auth), Some(url)) = (&self.auth, &self.api_base_url) {
                 let cred = auth.current();
@@ -449,7 +449,7 @@ impl SessionContextFactory for WorkspaceSessionContextFactory {
                     AppBuilderDeployerConfig::default(),
                 )
             };
-        xai_grok_tools::registry::types::SessionContext {
+        intelekt_tools::registry::types::SessionContext {
             backend,
             fs,
             cwd,
@@ -470,12 +470,12 @@ impl SessionContextFactory for WorkspaceSessionContextFactory {
             api_key_provider: None,
             auth_provider: self.auth.clone(),
             attribution_callback: None,
-            system_reminder_tag: xai_grok_tools::reminders::DEFAULT_REMINDER_TAG,
+            system_reminder_tag: intelekt_tools::reminders::DEFAULT_REMINDER_TAG,
         }
     }
     fn build_terminal_backend(&self) -> crate::config::SessionTerminalBackend {
         crate::config::SessionTerminalBackend::local(
-            xai_grok_tools::computer::local::LocalTerminalBackend::with_persistent_shell(),
+            intelekt_tools::computer::local::LocalTerminalBackend::with_persistent_shell(),
         )
     }
     fn registry_builder(&self) -> ToolRegistryBuilder {
@@ -491,14 +491,14 @@ impl SessionContextFactory for WorkspaceSessionContextFactory {
 /// Mirrors the shell's `inject_proxy_headers` logic.
 fn build_proxy_headers(base_url: &str) -> indexmap::IndexMap<String, String> {
     let mut headers = indexmap::IndexMap::new();
-    let version = xai_grok_version::VERSION;
+    let version = intelekt_version::VERSION;
     headers.insert(
         "user-agent".to_string(),
-        format!("xai-grok-workspace/{version}"),
+        format!("intelekt-workspace/{version}"),
     );
     headers.insert("x-grok-client-version".to_string(), version.to_string());
     if base_url.contains("cli-chat-proxy") || base_url.contains("chat-proxy") {
-        headers.insert("X-XAI-Token-Auth".to_string(), "xai-grok-cli".to_string());
+        headers.insert("X-XAI-Token-Auth".to_string(), "intelekt-cli".to_string());
         headers.insert(
             "x-authenticateresponse".to_string(),
             "authenticate-response".to_string(),
@@ -508,9 +508,9 @@ fn build_proxy_headers(base_url: &str) -> indexmap::IndexMap<String, String> {
 }
 /// Build web fetch config. Enabled with default params unless
 /// `GROK_DISABLE_WEB_FETCH=1` is set.
-fn build_web_fetch_config() -> xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig
+fn build_web_fetch_config() -> intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig
 {
-    use xai_grok_tools::implementations::grok_build::web_fetch::{WebFetchConfig, WebFetchParams};
+    use intelekt_tools::implementations::grok_build::web_fetch::{WebFetchConfig, WebFetchParams};
     if std::env::var("GROK_DISABLE_WEB_FETCH").is_ok_and(|v| v == "1" || v == "true") {
         return WebFetchConfig::Disabled;
     }
@@ -521,7 +521,7 @@ fn build_web_fetch_config() -> xai_grok_tools::implementations::grok_build::web_
     WebFetchConfig::Enabled { params }
 }
 fn default_web_search_model() -> String {
-    std::env::var("GROK_WEB_SEARCH_MODEL").unwrap_or_else(|_| "grok-4.20-multi-agent".to_string())
+    std::env::var("GROK_WEB_SEARCH_MODEL").unwrap_or_else(|_| "intelekt-4.20-multi-agent".to_string())
 }
 #[cfg(any(test, feature = "test-support"))]
 pub mod test_support {
@@ -530,12 +530,12 @@ pub mod test_support {
     use std::path::PathBuf;
     use std::sync::Arc;
     use tempfile::TempDir;
-    use xai_grok_tools::computer::local::{LocalFs, LocalTerminalBackend};
-    use xai_grok_tools::notification::ToolNotificationHandle;
-    use xai_grok_tools::registry::types::{
+    use intelekt_tools::computer::local::{LocalFs, LocalTerminalBackend};
+    use intelekt_tools::notification::ToolNotificationHandle;
+    use intelekt_tools::registry::types::{
         SessionContext, ToolConfig, ToolRegistryBuilder, ToolServerConfig,
     };
-    use xai_grok_tools::types::tool::ToolKind;
+    use intelekt_tools::types::tool::ToolKind;
     /// Test factory: builds a `SessionContext` rooted at a per-test temp dir.
     pub struct TestSessionContextFactory {
         pub temp: TempDir,
@@ -558,7 +558,7 @@ pub mod test_support {
             session_id: &str,
             cwd: PathBuf,
             session_env: Arc<HashMap<String, String>>,
-            backend: Arc<dyn xai_grok_tools::computer::types::TerminalBackend>,
+            backend: Arc<dyn intelekt_tools::computer::types::TerminalBackend>,
         ) -> SessionContext {
             let session_root = self
                 .temp
@@ -586,7 +586,7 @@ pub mod test_support {
                 api_key_provider: None,
                 auth_provider: None,
                 attribution_callback: None,
-                system_reminder_tag: xai_grok_tools::reminders::DEFAULT_REMINDER_TAG,
+                system_reminder_tag: intelekt_tools::reminders::DEFAULT_REMINDER_TAG,
             }
         }
         fn build_terminal_backend(&self) -> crate::config::SessionTerminalBackend {
@@ -628,7 +628,7 @@ mod tests {
     use std::collections::HashMap;
     use std::path::PathBuf;
     use std::sync::Arc;
-    use xai_grok_tools::types::tool::ToolKind;
+    use intelekt_tools::types::tool::ToolKind;
     fn factory_for_test() -> Arc<dyn SessionContextFactory> {
         Arc::new(test_support::TestSessionContextFactory::new())
     }
@@ -1126,7 +1126,7 @@ mod tests {
     /// disk; a DIFFERENT session_id cold-starts with no cross-contamination.
     #[tokio::test]
     async fn tool_state_rehydrates_same_session_and_cold_starts_other() {
-        use xai_grok_tools::types::resources::{State, WebCitationCounter};
+        use intelekt_tools::types::resources::{State, WebCitationCounter};
         let factory = test_support::TestSessionContextFactory::new();
         let cwd = PathBuf::from("/tmp");
         let (_eff, ts_a, _backend_a) = resolve_session_toolset(

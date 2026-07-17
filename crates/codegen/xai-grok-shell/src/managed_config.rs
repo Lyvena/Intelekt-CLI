@@ -10,9 +10,9 @@ use response::{ApplyOutcome, ManagedConfigResponse, ManagedConfigSource, verify_
 /// Server-synced policy artifacts. Excludes the sync marker ([`remove_managed_config_files`]
 /// removes that last, only on full success).
 pub const MANAGED_ARTIFACT_FILES: [&str; 3] = [
-    xai_grok_config::MANAGED_CONFIG_FILENAME,
-    xai_grok_config::REQUIREMENTS_FILENAME,
-    xai_grok_config::signed_policy::SIGNATURE_SIDECAR_FILE,
+    intelekt_config::MANAGED_CONFIG_FILENAME,
+    intelekt_config::REQUIREMENTS_FILENAME,
+    intelekt_config::signed_policy::SIGNATURE_SIDECAR_FILE,
 ];
 
 /// Delete server-synced files then the marker (never `config.toml`).
@@ -25,17 +25,17 @@ fn remove_managed_config_files(home: &std::path::Path) {
     if artifacts_removed {
         remove_synced_file(
             home,
-            xai_grok_config::MANAGED_CONFIG_CACHE_FILE,
+            intelekt_config::MANAGED_CONFIG_CACHE_FILE,
             "removed managed config file",
         );
     }
     // Best-effort sweep of mid-write `.tmp` leftovers (a concurrent writer's temp may go too —
     // its rename fails and self-heals).
     let atomic_write_tmp_prefixes = [
-        format!("{}.", xai_grok_config::MANAGED_CONFIG_CACHE_FILE),
+        format!("{}.", intelekt_config::MANAGED_CONFIG_CACHE_FILE),
         format!(
             "{}.",
-            xai_grok_config::signed_policy::SIGNATURE_SIDECAR_FILE
+            intelekt_config::signed_policy::SIGNATURE_SIDECAR_FILE
         ),
     ];
     if let Ok(entries) = std::fs::read_dir(home) {
@@ -250,11 +250,11 @@ fn apply_managed_config(
 
     let artifacts = [
         (
-            xai_grok_config::MANAGED_CONFIG_FILENAME,
+            intelekt_config::MANAGED_CONFIG_FILENAME,
             body.managed_config.as_deref(),
         ),
         (
-            xai_grok_config::REQUIREMENTS_FILENAME,
+            intelekt_config::REQUIREMENTS_FILENAME,
             body.requirements.as_deref(),
         ),
     ];
@@ -309,7 +309,7 @@ fn map_transport_failure(failure: crate::http::TransportFailure) -> ManagedConfi
     }
 }
 
-/// Map a `reqwest` send failure to a `ManagedConfigError` via the shared `xai-grok-http` classifier.
+/// Map a `reqwest` send failure to a `ManagedConfigError` via the shared `intelekt-http` classifier.
 fn map_send_error(e: &reqwest::Error) -> ManagedConfigError {
     map_transport_failure(crate::http::TransportFailure::classify(e))
 }
@@ -417,7 +417,7 @@ pub fn resolve_deployment_id(deployment_key: Option<&str>) -> Option<String> {
         .or_else(|| Some(crate::agent::config::deployment_id_from_key(key)))
 }
 
-/// Resolve deployment key from `GROK_DEPLOYMENT_KEY` env var, then config files.
+/// Resolve deployment key from `INTELEKT_DEPLOYMENT_KEY` env var, then config files.
 pub fn resolve_deployment_key() -> Option<String> {
     let config_val = crate::config::load_effective_config()
         .map_err(|e| tracing::warn!("failed to load config files for deployment key: {e}"))
@@ -430,7 +430,7 @@ pub fn resolve_deployment_key() -> Option<String> {
         });
     crate::agent::config::resolve_string_flag(
         None,
-        "GROK_DEPLOYMENT_KEY",
+        "INTELEKT_DEPLOYMENT_KEY",
         config_val.as_deref(),
         None,
     )
@@ -455,7 +455,7 @@ pub fn is_fetch_enabled() -> bool {
         .unwrap_or(true)
 }
 
-/// Fetch managed config + requirements and write to `~/.grok/`, trying the
+/// Fetch managed config + requirements and write to `~/.intelekt/`, trying the
 /// deployment key first, then a signed-in team. `Ok(false)` when neither applies.
 pub async fn sync() -> Result<bool, ManagedConfigError> {
     Ok(sync_with_budget(SyncBudget::Standard, None).await?.wrote)
@@ -616,7 +616,7 @@ fn apply_fetched(
 ) -> std::io::Result<ApplyOutcome> {
     // Verify before lock/persist: prior trusted policy survives a bad fetch. Pure so a
     // lock-skip never reports Applied for an envelope that would have failed.
-    let verified = if xai_grok_config::signed_policy::verification_active() {
+    let verified = if intelekt_config::signed_policy::verification_active() {
         match verify_signed_envelope(body, active_team_id_any_expiry().as_deref()) {
             Ok(verified) => Some(verified),
             Err(e) => {
@@ -650,12 +650,12 @@ fn apply_fetched(
     // Sidecar after policy files so a present sidecar covers the final set; clear dir squats
     // that would fail the atomic rename forever.
     if let Some(verified) = verified {
-        clear_squatting_dir(&home.join(xai_grok_config::signed_policy::SIGNATURE_SIDECAR_FILE));
-        xai_grok_config::signed_policy::write_sidecar(&home, &verified.sidecar)?;
+        clear_squatting_dir(&home.join(intelekt_config::signed_policy::SIGNATURE_SIDECAR_FILE));
+        intelekt_config::signed_policy::write_sidecar(&home, &verified.sidecar)?;
     }
     // Marker last, still under the lock: written post-release, a concurrent purge could
     // delete the files it describes. A squatting dir would fail the atomic rename forever.
-    clear_squatting_dir(&home.join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE));
+    clear_squatting_dir(&home.join(intelekt_config::MANAGED_CONFIG_CACHE_FILE));
     crate::config::mark_managed_config_synced_at(
         &home,
         crate::config::SyncMarker {
@@ -934,7 +934,7 @@ fn managed_policy_gate_decision(
 /// and exit codes stay out of the library.
 #[derive(Debug)]
 pub enum SetupOutcome {
-    /// Config was written to `~/.grok`.
+    /// Config was written to `~/.intelekt`.
     Installed,
     /// The principal is valid but the server has no config for it.
     NothingConfigured,
@@ -975,7 +975,7 @@ pub async fn fetch_setup_report() -> Result<SetupReport, ManagedConfigError> {
     // Match the installer's trust decision: a payload `grok setup` would refuse
     // is reported as an error, not printed as installable config.
     if source.is_some()
-        && xai_grok_config::signed_policy::verification_active()
+        && intelekt_config::signed_policy::verification_active()
         && let Err(e) = verify_signed_envelope(&body, active_team_id_any_expiry().as_deref())
     {
         tracing::warn!("managed config signature rejected: {e}");

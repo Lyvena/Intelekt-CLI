@@ -162,13 +162,13 @@ fn merge_hints_config_layers(
     let mut merged = crate::config::load_system_managed_config()
         .unwrap_or_else(|_| TomlValue::Table(TomlMap::new()));
     if let Some(m) = managed {
-        xai_grok_config::deep_merge_toml(&mut merged, m);
+        intelekt_config::deep_merge_toml(&mut merged, m);
     }
     if let Some(u) = user {
-        xai_grok_config::deep_merge_toml(&mut merged, u);
+        intelekt_config::deep_merge_toml(&mut merged, u);
     }
     if let Some(r) = requirements {
-        xai_grok_config::deep_merge_toml(&mut merged, r);
+        intelekt_config::deep_merge_toml(&mut merged, r);
     }
     merged
 }

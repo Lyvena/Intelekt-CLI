@@ -1,8 +1,8 @@
 //! `AgentRebuildSpec` — the canonical recipe for constructing an
-//! [`xai_grok_agent::Agent`] for a given session.
+//! [`intelekt_agent::Agent`] for a given session.
 //!
 //! INVARIANT: This is the **only** place in the shell crate that calls
-//! [`xai_grok_agent::AgentBuilder::new`]. Both initial session spawn
+//! [`intelekt_agent::AgentBuilder::new`]. Both initial session spawn
 //! ([`crate::session::acp_session::spawn_session_actor`]) and zero-turn
 //! harness rebuild
 //! ([`crate::session::acp_session::SessionActor::handle_rebuild_agent_for_definition`])
@@ -10,7 +10,7 @@
 //!
 //! ## Why this exists
 //!
-//! [`xai_grok_agent::Agent`] owns an [`xai_grok_tools::bridge::ToolBridge`]
+//! [`intelekt_agent::Agent`] owns an [`intelekt_tools::bridge::ToolBridge`]
 //! that carries session-scoped channels (notification handle, terminal/fs
 //! backends, subagent senders, scheduler set, plugin registry, attribution
 //! callback). The Agent is therefore session-bound — it cannot be shared
@@ -20,7 +20,7 @@
 //! retain every input that the original `AgentBuilder` chain consumed.
 //! `AgentRebuildSpec` is exactly that retained bag of inputs.
 //!
-//! ## WHEN ADDING A NEW [`xai_grok_agent::AgentBuilder`]`::with_*` KNOB
+//! ## WHEN ADDING A NEW [`intelekt_agent::AgentBuilder`]`::with_*` KNOB
 //!
 //! 1. Add the corresponding field to [`AgentRebuildSpec`].
 //! 2. Pass it through in [`AgentRebuildSpec::build_agent`]. The destructure
@@ -42,26 +42,26 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::mpsc::UnboundedSender;
-use xai_grok_agent::config::AgentDefinition;
-use xai_grok_agent::error::AgentBuildError;
-use xai_grok_agent::prompt::context::PromptAudience;
-use xai_grok_agent::prompt::skills::SkillsConfig;
-use xai_grok_agent::{Agent, AgentBuilder, CompactionPolicy, ReminderPolicy};
-use xai_grok_tools::computer::types::{AsyncFileSystem, TerminalBackend};
-use xai_grok_tools::implementations::grok_build::ask_user_question::types::UserQuestionRequest;
-use xai_grok_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig;
-use xai_grok_tools::implementations::grok_build::image_gen::ImageGenConfig;
-use xai_grok_tools::implementations::grok_build::task::types::{
+use intelekt_agent::config::AgentDefinition;
+use intelekt_agent::error::AgentBuildError;
+use intelekt_agent::prompt::context::PromptAudience;
+use intelekt_agent::prompt::skills::SkillsConfig;
+use intelekt_agent::{Agent, AgentBuilder, CompactionPolicy, ReminderPolicy};
+use intelekt_tools::computer::types::{AsyncFileSystem, TerminalBackend};
+use intelekt_tools::implementations::grok_build::ask_user_question::types::UserQuestionRequest;
+use intelekt_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig;
+use intelekt_tools::implementations::grok_build::image_gen::ImageGenConfig;
+use intelekt_tools::implementations::grok_build::task::types::{
     MonitorEventBuffer, SubagentEvent, TaskModelValidator,
 };
-use xai_grok_tools::implementations::grok_build::video_gen::VideoGenConfig;
-use xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig;
-use xai_grok_tools::implementations::lsp::LspBackend;
-use xai_grok_tools::implementations::web_search::WebSearchConfig;
-use xai_grok_tools::notification::ToolNotificationHandle;
-use xai_grok_tools::types::SharedApiKeyProvider;
-use xai_grok_tools::types::compat::CompatConfig;
-use xai_grok_tools::types::memory_backend::MemoryBackend;
+use intelekt_tools::implementations::grok_build::video_gen::VideoGenConfig;
+use intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig;
+use intelekt_tools::implementations::lsp::LspBackend;
+use intelekt_tools::implementations::web_search::WebSearchConfig;
+use intelekt_tools::notification::ToolNotificationHandle;
+use intelekt_tools::types::SharedApiKeyProvider;
+use intelekt_tools::types::compat::CompatConfig;
+use intelekt_tools::types::memory_backend::MemoryBackend;
 /// Shell-resolved per-tool `ToolConfig.params` JSON maps, bundled into one
 /// named struct so the spawn telescopes carry a single argument instead of
 /// adjacent identically-typed positionals that a caller could transpose.
@@ -113,9 +113,9 @@ pub(crate) struct AgentRebuildSpec {
     pub context_window_tokens: u64,
     pub prompt_working_directory: Option<String>,
     pub lsp: Option<Arc<dyn LspBackend>>,
-    pub plugin_registry: Option<Arc<xai_grok_agent::plugins::PluginRegistry>>,
+    pub plugin_registry: Option<Arc<intelekt_agent::plugins::PluginRegistry>>,
     pub api_key_provider: Option<SharedApiKeyProvider>,
-    pub attribution_callback: Option<xai_grok_tools::SharedAttributionCallback>,
+    pub attribution_callback: Option<intelekt_tools::SharedAttributionCallback>,
     pub tool_params_json: ResolvedToolParamsJson,
     pub subagent_event_tx: Option<UnboundedSender<SubagentEvent>>,
     pub monitor_event_buffer: Option<MonitorEventBuffer>,
@@ -126,12 +126,12 @@ pub(crate) struct AgentRebuildSpec {
     pub path_not_found_hints: bool,
     pub mcp_state: Arc<tokio::sync::Mutex<crate::session::mcp_servers::McpState>>,
     pub managed_gateway_tool_client:
-        Option<xai_grok_tools::types::resources::ManagedGatewayToolClient>,
+        Option<intelekt_tools::types::resources::ManagedGatewayToolClient>,
     pub is_non_interactive: bool,
     pub system_prompt_label: String,
     pub owner_session_id: Option<String>,
     pub parent_scheduler_handle:
-        Option<xai_grok_tools::implementations::grok_build::scheduler::types::SchedulerHandle>,
+        Option<intelekt_tools::implementations::grok_build::scheduler::types::SchedulerHandle>,
 }
 impl AgentRebuildSpec {
     /// Build a fresh [`Agent`] from this spec and an [`AgentDefinition`].
@@ -162,7 +162,7 @@ impl AgentRebuildSpec {
         self: &Arc<Self>,
         definition: AgentDefinition,
         persisted_skill_names: Option<std::collections::HashSet<String>>,
-        preloaded_skills: Option<Vec<xai_grok_tools::implementations::skills::types::SkillInfo>>,
+        preloaded_skills: Option<Vec<intelekt_tools::implementations::skills::types::SkillInfo>>,
     ) -> Result<Agent, AgentBuildError> {
         self.build_agent_inner(definition, persisted_skill_names, preloaded_skills)
             .await
@@ -172,7 +172,7 @@ impl AgentRebuildSpec {
         self: &Arc<Self>,
         definition: AgentDefinition,
         persisted_skill_names: Option<std::collections::HashSet<String>>,
-        preloaded_skills: Option<Vec<xai_grok_tools::implementations::skills::types::SkillInfo>>,
+        preloaded_skills: Option<Vec<intelekt_tools::implementations::skills::types::SkillInfo>>,
     ) -> Result<Agent, AgentBuildError> {
         let Self {
             working_directory,
@@ -316,10 +316,10 @@ impl AgentRebuildSpec {
             }))
             .await;
         if let Some(event_tx) = subagent_event_tx.clone() {
-            use xai_grok_tools::implementations::grok_build::task::backend::{
+            use intelekt_tools::implementations::grok_build::task::backend::{
                 ChannelBackend, SubagentBackendResource,
             };
-            use xai_grok_tools::implementations::grok_build::task::types::{
+            use intelekt_tools::implementations::grok_build::task::types::{
                 SessionIdResource, SubagentDepthCounter, SubagentEventSender,
             };
             let backend = SubagentBackendResource(Arc::new(ChannelBackend::new(event_tx.clone())));
@@ -342,13 +342,13 @@ impl AgentRebuildSpec {
         }
         agent
             .tool_bridge()
-            .update_resource(xai_grok_tools::types::resources::RespectGitignore(
+            .update_resource(intelekt_tools::types::resources::RespectGitignore(
                 *respect_gitignore,
             ))
             .await;
         agent
             .tool_bridge()
-            .update_resource(xai_grok_tools::types::resources::PathNotFoundHints(
+            .update_resource(intelekt_tools::types::resources::PathNotFoundHints(
                 *path_not_found_hints,
             ))
             .await;
@@ -356,7 +356,7 @@ impl AgentRebuildSpec {
             agent.tool_bridge().update_resource(client).await;
         }
         {
-            use xai_grok_tools::implementations::grok_build::ask_user_question::UserQuestionSender;
+            use intelekt_tools::implementations::grok_build::ask_user_question::UserQuestionSender;
             agent
                 .tool_bridge()
                 .update_resource(UserQuestionSender(user_question_tx.clone()))
@@ -375,11 +375,11 @@ pub(crate) fn test_rebuild_spec_default() -> Arc<AgentRebuildSpec> {
     Arc::new(AgentRebuildSpec {
         working_directory: std::env::temp_dir(),
         terminal_backend: Arc::new(
-            xai_grok_tools::computer::local::LocalTerminalBackend::new_local(
-                xai_grok_tools::computer::local::SearchShadowConfig::default(),
+            intelekt_tools::computer::local::LocalTerminalBackend::new_local(
+                intelekt_tools::computer::local::SearchShadowConfig::default(),
             ),
         ),
-        fs_backend: Arc::new(xai_grok_tools::computer::local::LocalFs),
+        fs_backend: Arc::new(intelekt_tools::computer::local::LocalFs),
         tools_notification_handle: ToolNotificationHandle::noop(),
         bridge_state_path: std::env::temp_dir().join("test_tool_state.json"),
         session_env: Arc::new(HashMap::new()),
@@ -425,7 +425,7 @@ pub(crate) fn test_rebuild_spec_default() -> Arc<AgentRebuildSpec> {
         )),
         managed_gateway_tool_client: None,
         is_non_interactive: false,
-        system_prompt_label: xai_grok_agent::DEFAULT_SYSTEM_PROMPT_LABEL.to_string(),
+        system_prompt_label: intelekt_agent::DEFAULT_SYSTEM_PROMPT_LABEL.to_string(),
         owner_session_id: Some("test-session".to_string()),
         parent_scheduler_handle: None,
     })
@@ -440,7 +440,7 @@ mod tests {
     fn task_description(agent: &Agent) -> String {
         let toolset = agent.tool_bridge().toolset();
         let task_name = toolset
-            .tool_name_for_kind(xai_grok_tools::types::tool::ToolKind::Task)
+            .tool_name_for_kind(intelekt_tools::types::tool::ToolKind::Task)
             .expect("GrokBuild Task tool should be present");
         toolset
             .tool_definitions()

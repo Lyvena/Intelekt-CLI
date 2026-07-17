@@ -561,7 +561,7 @@ pub(crate) fn sanitize_screen_mode(raw: &str) -> &'static str {
         .unwrap_or("other")
 }
 
-/// Built-in tool names (closed enum surface in `xai-grok-tools`) that pass
+/// Built-in tool names (closed enum surface in `intelekt-tools`) that pass
 /// verbatim through `tool_name` sanitization. Pinned by test; everything else
 /// collapses (common MCP-name handling; fail-closed for the rest).
 pub(crate) const BUILTIN_TOOL_NAMES: &[&str] = &[

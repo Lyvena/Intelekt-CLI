@@ -1,6 +1,6 @@
 //! Telemetry-engine configuration.
 //!
-//! Extracted from `xai-grok-shell::agent::config` so the data-collector
+//! Extracted from `intelekt-shell::agent::config` so the data-collector
 //! engine can construct a [`TelemetryClient`](crate::client::TelemetryClient)
 //! without a build-time dependency on the shell.
 //!
@@ -197,7 +197,7 @@ impl TelemetryConfig {
 }
 /// Parse an env var as a boolean. Returns `None` if unset or unrecognized.
 ///
-/// Local copy of `xai_grok_shell::agent::config::env_bool` so this crate
+/// Local copy of `intelekt_shell::agent::config::env_bool` so this crate
 /// stays free of a shell back-edge. Shell keeps its own copy for callers
 /// outside the telemetry config path.
 fn env_bool(name: &str) -> Option<bool> {

@@ -3,7 +3,7 @@
 //! whose standing-GET behavior is the variable under test. Each GET the fake
 //! server counts corresponds to one rmcp `WARN sse stream error: ...` line.
 //!
-//! Run with: cargo test -p xai-grok-mcp --test repro_sse_flood -- --nocapture
+//! Run with: cargo test -p intelekt-mcp --test repro_sse_flood -- --nocapture
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -18,10 +18,10 @@ use axum::routing::get;
 use futures::StreamExt;
 use serde_json::{Value, json};
 
-use xai_grok_mcp::mcp_http_client::{McpHttpClient, WarnBudget};
-use xai_grok_mcp::rmcp::ServiceExt;
-use xai_grok_mcp::rmcp::transport::StreamableHttpClientTransport;
-use xai_grok_mcp::rmcp::transport::streamable_http_client::StreamableHttpClientTransportConfig;
+use intelekt_mcp::mcp_http_client::{McpHttpClient, WarnBudget};
+use intelekt_mcp::rmcp::ServiceExt;
+use intelekt_mcp::rmcp::transport::StreamableHttpClientTransport;
+use intelekt_mcp::rmcp::transport::streamable_http_client::StreamableHttpClientTransportConfig;
 
 /// Gap letting the first body chunk flush before the abort, so the client
 /// sees a *body* death (rmcp's zero-backoff flood path) rather than a failed

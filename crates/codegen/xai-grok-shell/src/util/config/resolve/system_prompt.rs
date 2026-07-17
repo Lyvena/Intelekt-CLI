@@ -1,6 +1,6 @@
 pub const ENV_SYSTEM_PROMPT_LABEL: &str = "GROK_SYSTEM_PROMPT_LABEL";
 
-pub const DEFAULT_SYSTEM_PROMPT_LABEL: &str = xai_grok_agent::DEFAULT_SYSTEM_PROMPT_LABEL;
+pub const DEFAULT_SYSTEM_PROMPT_LABEL: &str = intelekt_agent::DEFAULT_SYSTEM_PROMPT_LABEL;
 
 /// Resolve system-prompt identity label.
 /// Precedence: env → config per-model → `[agent]` → GB per-model → GB global →

@@ -1,12 +1,12 @@
 //! I/O integration tests for the auto-update crate.
 //!
-//! These tests touch global process state — `GROK_HOME` (a `OnceLock` in
-//! `xai-grok-config`), `GROK_TEST_VERSION`, and `NPM_TOKEN` — so they
-//! must run serially. Once `GROK_HOME` is initialized for a process, it can't
+//! These tests touch global process state — `INTELEKT_HOME` (a `OnceLock` in
+//! `intelekt-config`), `GROK_TEST_VERSION`, and `NPM_TOKEN` — so they
+//! must run serially. Once `INTELEKT_HOME` is initialized for a process, it can't
 //! be changed; we set it from a single shared `OnceLock` and reset the
 //! contents of the directory between tests.
 //!
-//! The patterns here mirror the GROK_HOME isolation used in other
+//! The patterns here mirror the INTELEKT_HOME isolation used in other
 //! integration tests.
 
 mod common;
@@ -17,7 +17,7 @@ use std::time::Duration;
 use serial_test::serial;
 
 use common::{reset_home, test_home};
-use xai_grok_update::write_version_cache;
+use intelekt_update::write_version_cache;
 
 /// Path to the version cache file inside the test home.
 fn version_cache_path() -> PathBuf {
@@ -156,7 +156,7 @@ fn write_cache_with_timestamp(version: &str, ts: time::OffsetDateTime) {
 /// its on-disk contract: file shape + freshness logic via the public
 /// `GrokVersion` JSON layout.
 async fn cache_is_fresh() -> bool {
-    // Mirror the implementation: look at version.json under GROK_HOME,
+    // Mirror the implementation: look at version.json under INTELEKT_HOME,
     // parse, and check the TTL.
     let path = version_cache_path();
     let Ok(body) = tokio::fs::read_to_string(&path).await else {
@@ -295,7 +295,7 @@ async fn get_installed_version_uses_env_var_override() {
     unsafe {
         std::env::set_var("GROK_TEST_VERSION", "9.9.9");
     }
-    let v = xai_grok_update::version::get_installed_grok_version();
+    let v = intelekt_update::version::get_installed_grok_version();
     assert_eq!(v, "9.9.9");
     unsafe {
         std::env::remove_var("GROK_TEST_VERSION");
@@ -311,7 +311,7 @@ async fn get_installed_version_falls_back_to_cargo_pkg_version_when_env_unset() 
     unsafe {
         std::env::remove_var("GROK_TEST_VERSION");
     }
-    let v = xai_grok_update::version::get_installed_grok_version();
+    let v = intelekt_update::version::get_installed_grok_version();
     // The compile-time CARGO_PKG_VERSION must be a parseable semver string.
     let _: semver::Version = v
         .parse()
@@ -328,13 +328,13 @@ async fn get_installed_version_with_env_var_takes_precedence() {
         unsafe {
             std::env::remove_var("GROK_TEST_VERSION");
         }
-        xai_grok_update::version::get_installed_grok_version()
+        intelekt_update::version::get_installed_grok_version()
     };
 
     unsafe {
         std::env::set_var("GROK_TEST_VERSION", "0.0.0-test");
     }
-    let overridden = xai_grok_update::version::get_installed_grok_version();
+    let overridden = intelekt_update::version::get_installed_grok_version();
     assert_ne!(real, overridden);
     assert_eq!(overridden, "0.0.0-test");
 
@@ -352,7 +352,7 @@ async fn get_installed_version_handles_alpha_prerelease_in_env() {
     unsafe {
         std::env::set_var("GROK_TEST_VERSION", "0.1.200-alpha.5");
     }
-    let v = xai_grok_update::version::get_installed_grok_version();
+    let v = intelekt_update::version::get_installed_grok_version();
     assert_eq!(v, "0.1.200-alpha.5");
     unsafe {
         std::env::remove_var("GROK_TEST_VERSION");
@@ -370,7 +370,7 @@ async fn get_installed_version_does_not_validate_env_var_format() {
     unsafe {
         std::env::set_var("GROK_TEST_VERSION", "not-a-version");
     }
-    let v = xai_grok_update::version::get_installed_grok_version();
+    let v = intelekt_update::version::get_installed_grok_version();
     assert_eq!(v, "not-a-version");
     unsafe {
         std::env::remove_var("GROK_TEST_VERSION");

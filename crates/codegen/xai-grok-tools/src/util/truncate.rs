@@ -133,7 +133,7 @@ pub fn truncate_with_preview(
 ///
 /// Use this when the reader needs to distinguish a natural string ending
 /// from a truncation (e.g., model-visible listings). For purely visual
-/// width-based truncation in the TUI, see `xai_grok_pager`'s own helpers.
+/// width-based truncation in the TUI, see `intelekt_pager`'s own helpers.
 pub fn truncate_str_with_marker(s: &str, max_bytes: usize) -> Cow<'_, str> {
     if s.len() <= max_bytes {
         return Cow::Borrowed(s);

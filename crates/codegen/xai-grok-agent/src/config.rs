@@ -1,4 +1,4 @@
-//! Agent definition types — parsed from `.grok/agents/*.md` files.
+//! Agent definition types — parsed from `.intelekt/agents/*.md` files.
 use crate::error::AgentBuildError;
 use crate::prompt::context::TemplateOverride;
 use crate::prompt::user_message::UserMessageTemplate;
@@ -7,14 +7,14 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 use strum::{AsRefStr, Display, EnumIter, EnumString, IntoStaticStr};
-use xai_grok_tools::implementations::codex;
-use xai_grok_tools::implementations::grok_build;
-use xai_grok_tools::implementations::grok_build_concise;
-use xai_grok_tools::implementations::memory;
-use xai_grok_tools::implementations::opencode;
-use xai_grok_tools::implementations::search_tool;
-use xai_grok_tools::implementations::use_tool;
-use xai_grok_tools::registry::types::{ToolConfig, ToolServerConfig};
+use intelekt_tools::implementations::codex;
+use intelekt_tools::implementations::grok_build;
+use intelekt_tools::implementations::grok_build_concise;
+use intelekt_tools::implementations::memory;
+use intelekt_tools::implementations::opencode;
+use intelekt_tools::implementations::search_tool;
+use intelekt_tools::implementations::use_tool;
+use intelekt_tools::registry::types::{ToolConfig, ToolServerConfig};
 /// Process-global registry of externally-provided toolset presets.
 ///
 /// # Visibility
@@ -218,9 +218,9 @@ fn grok_computer_toolset() -> ToolServerConfig {
 /// Native (in-crate) toolset presets.
 fn native_toolset_presets() -> Vec<(&'static str, ToolServerConfig)> {
     vec![
-        ("grok-build", workspace_grok_build_toolset()),
-        ("grok-build-concise", grok_build_concise_toolset()),
-        ("grok-build-plan", grok_build_plan_toolset()),
+        ("intelekt-cli", workspace_grok_build_toolset()),
+        ("intelekt-cli-concise", grok_build_concise_toolset()),
+        ("intelekt-cli-plan", grok_build_plan_toolset()),
         ("codex", codex_toolset()),
         ("explore", explore_toolset()),
         ("plan", plan_toolset()),
@@ -310,9 +310,9 @@ fn grok_build_concise_toolset() -> ToolServerConfig {
 /// `FileToolset::Hashline.tool_configs(&hashline_config)` — they carry the
 /// scheme parameters as tool params.
 pub fn grok_build_hashline_toolset(
-    hashline_tools: Vec<xai_grok_tools::registry::types::ToolConfig>,
+    hashline_tools: Vec<intelekt_tools::registry::types::ToolConfig>,
 ) -> ToolServerConfig {
-    let mut tools: Vec<xai_grok_tools::registry::types::ToolConfig> = vec![bash_tool_config()];
+    let mut tools: Vec<intelekt_tools::registry::types::ToolConfig> = vec![bash_tool_config()];
     tools.extend(hashline_tools);
     tools.extend([
         (&grok_build::ListDirTool).into(),
@@ -385,9 +385,9 @@ fn plan_toolset() -> ToolServerConfig {
         behavior_preset: None,
     }
 }
-/// Grok Build + plan mode toolset.
+/// Intelekt CLI + plan mode toolset.
 ///
-/// Extends the default `grok-build` toolset with plan mode tools:
+/// Extends the default `intelekt-cli` toolset with plan mode tools:
 /// `enter_plan_mode`, `exit_plan_mode`, and `ask_user_question`.
 /// This allows the agent to enter a structured planning phase before
 /// writing code, with user-approved plans.
@@ -456,7 +456,7 @@ fn orchestrator_toolset() -> ToolServerConfig {
         behavior_preset: None,
     }
 }
-/// Grok Build + plan mode toolset WITHOUT subagent tools.
+/// Intelekt CLI + plan mode toolset WITHOUT subagent tools.
 ///
 /// Same as `grok_build_plan_toolset` but excludes `TaskTool`,
 /// `TaskOutputTool`, and `KillTaskTool`. Use this when the shell
@@ -486,7 +486,7 @@ fn grok_build_plan_no_subagents_toolset() -> ToolServerConfig {
         behavior_preset: None,
     }
 }
-/// Default Grok Build toolset + `ask_user_question`.
+/// Default Intelekt CLI toolset + `ask_user_question`.
 ///
 /// Same as `default_grok_build_toolset` with the `AskUserQuestionTool` added,
 /// allowing the agent to ask structured questions without full plan mode.
@@ -541,7 +541,7 @@ fn opencode_toolset() -> ToolServerConfig {
 ///
 /// In YAML frontmatter / JSON:
 /// - `model: inherit` or omitted → `Inherit`
-/// - `model: grok-3-fast` → `Override("grok-3-fast")`
+/// - `model: grok-3-fast` → `Override("intelekt-3-fast")`
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum ModelOverride {
     /// Use the parent session's model.
@@ -666,7 +666,7 @@ pub enum BuiltinAgentName {
     Explore,
     Plan,
     BrowserUse,
-    #[strum(serialize = "grok-build-orchestrator")]
+    #[strum(serialize = "intelekt-cli-orchestrator")]
     GrokBuildOrchestrator,
 }
 /// Strict-harness predicate by name. Resolves via `BuiltinAgentName` and
@@ -703,7 +703,7 @@ impl BuiltinAgentName {
         &[Self::GeneralPurpose, Self::Explore, Self::Plan]
     }
 }
-/// Portable agent identity — parsed from .grok/agents/*.md.
+/// Portable agent identity — parsed from .intelekt/agents/*.md.
 /// Usable as both a top-level agent and a subagent definition.
 ///
 /// This is the stable, version-controllable contract. It does NOT
@@ -868,11 +868,11 @@ fn default_prompt_mode() -> PromptMode {
 /// Where the agent definition was discovered.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum AgentScope {
-    /// .grok/agents/ (project-level, highest priority)
+    /// .intelekt/agents/ (project-level, highest priority)
     Project,
-    /// ~/.grok/agents/ (user-level)
+    /// ~/.intelekt/agents/ (user-level)
     User,
-    /// ~/.grok/bundled/agents/ (lowest-priority bundled cache)
+    /// ~/.intelekt/bundled/agents/ (lowest-priority bundled cache)
     Bundled,
     /// Built-in agent (e.g., default_grok_build(), browser_use()).
     #[default]
@@ -1068,11 +1068,11 @@ const _: () = assert!(AgentColor::VALID_VALUES.len() == <AgentColor as strum::En
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
 pub enum MemoryScope {
-    /// `~/.grok/agent-memory/<name>/`
+    /// `~/.intelekt/agent-memory/<name>/`
     User,
-    /// `<project>/.grok/agent-memory/<name>/`
+    /// `<project>/.intelekt/agent-memory/<name>/`
     Project,
-    /// `<project>/.grok/agent-memory-local/<name>/`
+    /// `<project>/.intelekt/agent-memory-local/<name>/`
     Local,
 }
 impl MemoryScope {
@@ -1089,18 +1089,18 @@ impl MemoryScope {
     pub fn resolve_dir(self, agent_name: &str, project_cwd: &std::path::Path) -> ResolvedMemoryDir {
         match self {
             Self::User => ResolvedMemoryDir {
-                path: xai_grok_config::grok_home()
+                path: intelekt_config::grok_home()
                     .join("agent-memory")
                     .join(agent_name),
                 is_project_scoped: false,
             },
             Self::Project => ResolvedMemoryDir {
-                path: project_cwd.join(".grok/agent-memory").join(agent_name),
+                path: project_cwd.join(".intelekt/agent-memory").join(agent_name),
                 is_project_scoped: true,
             },
             Self::Local => ResolvedMemoryDir {
                 path: project_cwd
-                    .join(".grok/agent-memory-local")
+                    .join(".intelekt/agent-memory-local")
                     .join(agent_name),
                 is_project_scoped: true,
             },
@@ -1191,7 +1191,7 @@ impl serde::Serialize for McpServerRef {
 /// Bash tool config overrides (agent-definition layer).
 ///
 /// NOTE: Uses `camelCase` for YAML frontmatter. The `AgentBuilder` maps
-/// these into `xai_grok_tools::registry::types::ToolsetConfig.bash`
+/// these into `intelekt_tools::registry::types::ToolsetConfig.bash`
 /// which uses the tools crate's `BashToolConfig` type.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1309,17 +1309,17 @@ impl AgentDefinition {
     /// Determine the scope of a definition file based on its path.
     fn scope_from_path(path: &Path) -> AgentScope {
         let path_str = path.to_string_lossy();
-        let grok = xai_grok_config::user_grok_home();
+        let grok = intelekt_config::user_grok_home();
         let home = dirs::home_dir();
         for (dir, scope) in crate::discovery::user_agent_dirs(home.as_deref(), grok.as_deref()) {
             if path.starts_with(&dir) {
                 return scope;
             }
         }
-        if path_str.contains(".grok/agents/") || path_str.contains(".grok\\agents\\") {
+        if path_str.contains(".intelekt/agents/") || path_str.contains(".grok\\agents\\") {
             return AgentScope::Project;
         }
-        if path_str.contains(".grok/bundled/agents/")
+        if path_str.contains(".intelekt/bundled/agents/")
             || path_str.contains(".grok\\bundled\\agents\\")
         {
             return AgentScope::Bundled;
@@ -1377,7 +1377,7 @@ impl AgentDefinition {
     /// stock harness, so a client-supplied `_meta.agentProfile` must NOT
     /// override it. Strict iff any of: bespoke `system_prompt` template,
     /// bespoke `user_message_template`, or curated toolset
-    /// (`!inject_default_tools`). Stock `grok-build*` agents leave all
+    /// (`!inject_default_tools`). Stock `intelekt-cli*` agents leave all
     /// three at defaults and are non-strict.
     pub fn is_strict_harness(&self) -> bool {
         use crate::prompt::context::TemplateOverride;
@@ -1393,7 +1393,7 @@ impl AgentDefinition {
     /// definition doesn't already have (read-only toolsets stay read-only).
     pub fn override_file_tools(
         &mut self,
-        file_tools: Vec<xai_grok_tools::registry::types::ToolConfig>,
+        file_tools: Vec<intelekt_tools::registry::types::ToolConfig>,
     ) {
         const FILE_TOOL_SLOTS: &[[&str; 2]] = &[
             ["GrokBuild:read_file", "GrokBuildHashline:hashline_read"],
@@ -1461,47 +1461,47 @@ impl AgentDefinition {
     pub fn default_grok_build() -> Self {
         Self::base(
             BuiltinAgentName::GrokBuild,
-            "Grok Build agent for software engineering tasks.",
+            "Intelekt CLI agent for software engineering tasks.",
         )
     }
-    /// Grok Build Concise agent definition — concise output format for SFT/RL.
+    /// Intelekt CLI Concise agent definition — concise output format for SFT/RL.
     pub fn grok_build_concise() -> Self {
         Self {
             tool_config: grok_build_concise_toolset(),
             agents_md: false,
             ..Self::base(
                 BuiltinAgentName::GrokBuildConcise,
-                "Grok Build agent with concise output format.",
+                "Intelekt CLI agent with concise output format.",
             )
         }
     }
-    /// Grok Build agent with plan mode tools.
+    /// Intelekt CLI agent with plan mode tools.
     pub fn grok_build_plan() -> Self {
         Self {
             tool_config: grok_build_plan_toolset(),
             ..Self::base(
                 BuiltinAgentName::GrokBuildPlan,
-                "Grok Build agent with plan mode support.",
+                "Intelekt CLI agent with plan mode support.",
             )
         }
     }
-    /// Grok Build + plan mode WITHOUT subagent tools.
+    /// Intelekt CLI + plan mode WITHOUT subagent tools.
     pub fn grok_build_plan_no_subagents() -> Self {
         Self {
             tool_config: grok_build_plan_no_subagents_toolset(),
             ..Self::base(
                 BuiltinAgentName::GrokBuildPlanNoSubagents,
-                "Grok Build agent with plan mode (no subagents).",
+                "Intelekt CLI agent with plan mode (no subagents).",
             )
         }
     }
-    /// Default Grok Build agent with the `ask_user_question` tool.
+    /// Default Intelekt CLI agent with the `ask_user_question` tool.
     pub fn grok_build_ask_user() -> Self {
         Self {
             tool_config: grok_build_ask_user_toolset(),
             ..Self::base(
                 BuiltinAgentName::GrokBuildAskUser,
-                "Grok Build agent with ask-user-question tool.",
+                "Intelekt CLI agent with ask-user-question tool.",
             )
         }
     }
@@ -1573,7 +1573,7 @@ impl AgentDefinition {
             )
         }
     }
-    /// Grok Build Orchestrator — GBL model with full GrokBuild tools
+    /// Intelekt CLI Orchestrator — GBL model with full GrokBuild tools
     /// (skills, MCPs, plan mode) that delegates coding/exploration to
     /// subagents.
     ///
@@ -1638,10 +1638,10 @@ mod tests {
     #[test]
     fn toolset_for_preset_resolves_known_names() {
         for name in [
-            "grok-build",
+            "intelekt-cli",
             "grok_build",
-            "grok-build-concise",
-            "grok-build-plan",
+            "intelekt-cli-concise",
+            "intelekt-cli-plan",
             "codex",
             "explore",
             "plan",
@@ -1657,7 +1657,7 @@ mod tests {
     }
     #[test]
     fn presets_select_distinct_toolsets_by_size() {
-        let gb = toolset_for_preset("grok-build").unwrap();
+        let gb = toolset_for_preset("intelekt-cli").unwrap();
         let plan = toolset_for_preset("plan").unwrap();
         let explore = toolset_for_preset("explore").unwrap();
         assert!(explore.tools.len() < plan.tools.len());
@@ -1674,7 +1674,7 @@ mod tests {
     #[test]
     fn grok_computer_preset_is_curated_grok_build_subset() {
         let gc = toolset_for_preset("grok-computer").unwrap();
-        let gb = toolset_for_preset("grok-build").unwrap();
+        let gb = toolset_for_preset("intelekt-cli").unwrap();
         let gb_ids: std::collections::HashSet<&str> =
             gb.tools.iter().map(|t| t.id.as_str()).collect();
         let exclusive_ids = grok_computer_exclusive_ids();
@@ -1685,13 +1685,13 @@ mod tests {
             }
             assert!(
                 gb_ids.contains(t.id.as_str()),
-                "grok-computer tool `{}` must also ship in the grok-build preset",
+                "grok-computer tool `{}` must also ship in the intelekt-cli preset",
                 t.id
             );
         }
         assert!(
             gc.tools.len() < gb.tools.len(),
-            "grok-computer should be a curated subset of grok-build"
+            "grok-computer should be a curated subset of intelekt-cli"
         );
     }
     #[test]
@@ -1724,7 +1724,7 @@ mod tests {
         }
     }
     /// The grok-computer preset must ship a full-file write tool (legacy
-    /// `write_file` parity) — the same OpenCode `write` tool the grok-build
+    /// `write_file` parity) — the same OpenCode `write` tool the intelekt-cli
     /// preset uses. Guards against `search_replace` being the only
     /// file-mutation path, which has no single-tool full-rewrite when the
     /// empty-old_string overwrite guard is enabled.
@@ -1801,22 +1801,22 @@ mod tests {
     }
     #[test]
     fn is_strict_harness_agent_type_classifies_by_name() {
-        for strict in ["codex", "grok-build-orchestrator"] {
+        for strict in ["codex", "intelekt-cli-orchestrator"] {
             assert!(
                 is_strict_harness_agent_type(strict),
                 "{strict} should be strict"
             );
         }
         for non_strict in [
-            "grok-build",
-            "grok-build-plan",
-            "grok-build-concise",
-            "grok-build-ask-user",
+            "intelekt-cli",
+            "intelekt-cli-plan",
+            "intelekt-cli-concise",
+            "intelekt-cli-ask-user",
             "opencode",
             "browser-use",
             "custom-user-agent",
             "",
-            "grok-build-totally-made-up",
+            "intelekt-cli-totally-made-up",
         ] {
             assert!(
                 !is_strict_harness_agent_type(non_strict),
@@ -1971,8 +1971,8 @@ Agent.
     fn test_model_override_display_shows_id() {
         assert_eq!(ModelOverride::Inherit.to_string(), "inherit");
         assert_eq!(
-            ModelOverride::Override("grok-3-fast".to_string()).to_string(),
-            "grok-3-fast"
+            ModelOverride::Override("intelekt-3-fast".to_string()).to_string(),
+            "intelekt-3-fast"
         );
     }
     #[test]
@@ -1998,7 +1998,7 @@ Agent body.
         assert_eq!(def.background, Some(true));
         assert_eq!(def.color, Some(AgentColor::Blue));
         assert_eq!(def.initial_prompt.as_deref(), Some("hello world"));
-        assert_eq!(def.model, ModelOverride::Override("grok-3".to_string()));
+        assert_eq!(def.model, ModelOverride::Override("intelekt-3".to_string()));
     }
     #[test]
     fn test_parse_minimal_definition() {
@@ -2043,13 +2043,13 @@ description: Minimal agent
         let proj = MemoryScope::Project.resolve_dir("a", cwd);
         assert_eq!(
             proj.path,
-            std::path::PathBuf::from("/project/.grok/agent-memory/a")
+            std::path::PathBuf::from("/project/.intelekt/agent-memory/a")
         );
         assert!(proj.is_project_scoped);
         let local = MemoryScope::Local.resolve_dir("a", cwd);
         assert_eq!(
             local.path,
-            std::path::PathBuf::from("/project/.grok/agent-memory-local/a")
+            std::path::PathBuf::from("/project/.intelekt/agent-memory-local/a")
         );
         assert!(local.is_project_scoped);
     }
@@ -2231,7 +2231,7 @@ description: Test default tool config
         let bundled = tmp
             .path()
             .join("nested")
-            .join(".grok")
+            .join(".intelekt")
             .join("bundled")
             .join("agents")
             .join("bundled-agent.md");
@@ -2262,7 +2262,7 @@ description: Test default tool config
     #[test]
     fn test_from_json_has_default_toolset_with_task_tool() {
         let json = serde_json::json!(
-            { "name" : "grok-build", "description" : "Multi-surface coding agent.",
+            { "name" : "intelekt-cli", "description" : "Multi-surface coding agent.",
             "promptMode" : "extend", "permissionMode" : "dontAsk", "agentsMd" : true,
             "promptBody" : "You are a coding assistant." }
         );
@@ -2364,9 +2364,9 @@ description: Test default tool config
     }
     #[test]
     fn test_model_override_serde_explicit_model_id() {
-        let yaml = "\"grok-3-fast\"";
+        let yaml = "\"intelekt-3-fast\"";
         let m: ModelOverride = serde_yaml::from_str(yaml).unwrap();
-        assert_eq!(m, ModelOverride::Override("grok-3-fast".to_string()));
+        assert_eq!(m, ModelOverride::Override("intelekt-3-fast".to_string()));
     }
     #[test]
     fn test_model_override_serialize_inherit() {
@@ -2376,9 +2376,9 @@ description: Test default tool config
     }
     #[test]
     fn test_model_override_serialize_override() {
-        let m = ModelOverride::Override("grok-3-fast".to_string());
+        let m = ModelOverride::Override("intelekt-3-fast".to_string());
         let s = serde_json::to_string(&m).unwrap();
-        assert_eq!(s, "\"grok-3-fast\"");
+        assert_eq!(s, "\"intelekt-3-fast\"");
     }
     #[test]
     fn test_model_override_in_frontmatter() {
@@ -2386,7 +2386,7 @@ description: Test default tool config
         let def = AgentDefinition::parse(content).unwrap();
         assert_eq!(
             def.model,
-            ModelOverride::Override("grok-3-fast".to_string())
+            ModelOverride::Override("intelekt-3-fast".to_string())
         );
     }
     #[test]
@@ -2416,9 +2416,9 @@ description: Test default tool config
     fn test_builtin_agent_name_strum_round_trip() {
         use std::str::FromStr;
         for (s, expected) in [
-            ("grok-build", BuiltinAgentName::GrokBuild),
-            ("grok-build-concise", BuiltinAgentName::GrokBuildConcise),
-            ("grok-build-ask-user", BuiltinAgentName::GrokBuildAskUser),
+            ("intelekt-cli", BuiltinAgentName::GrokBuild),
+            ("intelekt-cli-concise", BuiltinAgentName::GrokBuildConcise),
+            ("intelekt-cli-ask-user", BuiltinAgentName::GrokBuildAskUser),
             ("codex", BuiltinAgentName::Codex),
             ("opencode", BuiltinAgentName::Opencode),
             ("general-purpose", BuiltinAgentName::GeneralPurpose),

@@ -32,7 +32,7 @@ pub(crate) enum SamplerTurnOutcome {
     /// Model responded, with per-call latency stats for `shell.turn.inference_done`.
     Response(
         Box<ConversationResponse>,
-        Box<xai_grok_sampler::InferenceLatencyStats>,
+        Box<intelekt_sampler::InferenceLatencyStats>,
     ),
     CompactAndResubmit,
     /// Auth recovery succeeded; the outer loop should retry once.
@@ -199,8 +199,8 @@ pub(crate) enum DrainPurpose {
 /// Origin of a drain entry. `Pending` entries had their acks resolved
 /// at defer time; `Channel` entries still carry a live oneshot.
 pub(crate) enum DrainSource {
-    Pending(xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalInput),
-    Channel(xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalEnvelope),
+    Pending(intelekt_tools::implementations::grok_build::update_goal::UpdateGoalInput),
+    Channel(intelekt_tools::implementations::grok_build::update_goal::UpdateGoalEnvelope),
 }
 
 /// Reason a NotAchieved verdict was synthesized without invoking the

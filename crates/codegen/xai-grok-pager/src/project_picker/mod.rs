@@ -7,7 +7,7 @@ pub mod sources;
 
 use std::path::{Path, PathBuf};
 
-use xai_grok_tools::implementations::grok_build::ask_user_question::{Question, QuestionOption};
+use intelekt_tools::implementations::grok_build::ask_user_question::{Question, QuestionOption};
 
 /// `resolved_paths` is index-aligned with the leading `question.options`.
 /// The trailing "Don't ask me again" option at `dont_ask_index` has no
@@ -78,8 +78,8 @@ pub fn build_project_question(
 
     ProjectQuestion {
         question: Question {
-            question: "Run Grok Build in a project directory?\n\n\
-                 This gives Grok Build full context of your codebase for better results."
+            question: "Run Intelekt CLI in a project directory?\n\n\
+                 This gives Intelekt CLI full context of your codebase for better results."
                 .into(),
             id: None,
             options,

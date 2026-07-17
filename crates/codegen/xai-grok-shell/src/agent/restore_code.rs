@@ -1,8 +1,8 @@
 //! Thin wire-format adapter that wraps the shared
-//! [`xai_grok_workspace::session::git::build_restore_decision`] helper
+//! [`intelekt_workspace::session::git::build_restore_decision`] helper
 //! into the JSON shape emitted by `LoadSession` on `_meta.codeRestore`.
 use serde_json::Value;
-use xai_grok_workspace::session::git::{
+use intelekt_workspace::session::git::{
     CheckoutSessionOutcome, RestoreKind, build_restore_decision,
 };
 /// Build the `codeRestore` JSON meta, or `None` when no restore should

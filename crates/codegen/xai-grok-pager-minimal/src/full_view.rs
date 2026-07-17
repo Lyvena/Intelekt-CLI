@@ -18,13 +18,13 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier};
 
-use xai_grok_pager::app::app_view::AppView;
-use xai_grok_pager::minimal_api;
-use xai_grok_pager::render::Renderable;
-use xai_grok_pager::scrollback::entry::ScrollbackEntry;
-use xai_grok_pager::scrollback::types::DisplayMode;
-use xai_grok_pager::scrollback::wrappers::EntryRenderer;
-use xai_grok_pager::theme::Theme;
+use intelekt_pager::app::app_view::AppView;
+use intelekt_pager::minimal_api;
+use intelekt_pager::render::Renderable;
+use intelekt_pager::scrollback::entry::ScrollbackEntry;
+use intelekt_pager::scrollback::types::DisplayMode;
+use intelekt_pager::scrollback::wrappers::EntryRenderer;
+use intelekt_pager::theme::Theme;
 
 /// Fixed render width for the transcript. A stable, readable column count
 /// independent of the current terminal size (the pager wraps to the real
@@ -83,8 +83,8 @@ pub fn pump_transcript(app: &mut AppView) {
         // sessions run entirely with the toggle off have no thinking entries
         // for any view to show. This override covers the sessions that do:
         // toggle on at ingestion (the default), or toggled off mid-session.
-        let prev_thinking = xai_grok_pager::appearance::cache::load_show_thinking_blocks();
-        xai_grok_pager::appearance::cache::set_show_thinking_blocks(true);
+        let prev_thinking = intelekt_pager::appearance::cache::load_show_thinking_blocks();
+        intelekt_pager::appearance::cache::set_show_thinking_blocks(true);
         let start = Instant::now();
         while build.next < build.ids.len() {
             let eid = build.ids[build.next];
@@ -104,7 +104,7 @@ pub fn pump_transcript(app: &mut AppView) {
                 break;
             }
         }
-        xai_grok_pager::appearance::cache::set_show_thinking_blocks(prev_thinking);
+        intelekt_pager::appearance::cache::set_show_thinking_blocks(prev_thinking);
     }
 
     if build.next < build.ids.len() {
@@ -122,12 +122,12 @@ pub fn pump_transcript(app: &mut AppView) {
 /// event loop adds `-R` for `less`). Errors surface as a system block on the
 /// build's owning agent (which may differ from the active view — the user can
 /// tab away while the build runs).
-fn finish_transcript(app: &mut AppView, id: xai_grok_pager::app::agent::AgentId, out: String) {
+fn finish_transcript(app: &mut AppView, id: intelekt_pager::app::agent::AgentId, out: String) {
     if out.is_empty() {
         if let Some(agent) = app.agents.get_mut(&id) {
             agent
                 .scrollback
-                .push_block(xai_grok_pager::scrollback::block::RenderBlock::system(
+                .push_block(intelekt_pager::scrollback::block::RenderBlock::system(
                     "No conversation transcript to view yet",
                 ));
         }
@@ -142,7 +142,7 @@ fn finish_transcript(app: &mut AppView, id: xai_grok_pager::app::agent::AgentId,
         Err(e) => {
             if let Some(agent) = app.agents.get_mut(&id) {
                 agent.scrollback.push_block(
-                    xai_grok_pager::scrollback::block::RenderBlock::system(format!(
+                    intelekt_pager::scrollback::block::RenderBlock::system(format!(
                         "Failed to write transcript: {e}"
                     )),
                 );
@@ -157,7 +157,7 @@ fn finish_transcript(app: &mut AppView, id: xai_grok_pager::app::agent::AgentId,
 fn render_entry_to_ansi(
     entry: &ScrollbackEntry,
     theme: &Theme,
-    appearance: &xai_grok_pager::appearance::AppearanceConfig,
+    appearance: &intelekt_pager::appearance::AppearanceConfig,
     cwd: &std::path::Path,
     out: &mut String,
 ) {
@@ -297,7 +297,7 @@ fn color_code(color: Color, bg: bool) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_pager::scrollback::block::RenderBlock;
+    use intelekt_pager::scrollback::block::RenderBlock;
 
     fn test_cwd() -> &'static std::path::Path {
         std::path::Path::new("/test/session")
@@ -312,13 +312,13 @@ mod tests {
     fn transcript_includes_thinking_when_pump_enables_toggle() {
         let theme = Theme::current();
         let appearance = super::super::commit::committed_appearance(
-            &xai_grok_pager::appearance::AppearanceConfig::default(),
+            &intelekt_pager::appearance::AppearanceConfig::default(),
         );
         let entry = ScrollbackEntry::new(RenderBlock::thinking(
             "deep reasoning about haikus and syllables",
         ));
 
-        xai_grok_pager::appearance::cache::set_show_thinking_blocks(false);
+        intelekt_pager::appearance::cache::set_show_thinking_blocks(false);
         let mut out = String::new();
         render_entry_to_ansi(&entry, &theme, &appearance, test_cwd(), &mut out);
         assert!(
@@ -327,10 +327,10 @@ mod tests {
         );
 
         // What `pump_transcript` sets for the duration of a slice.
-        xai_grok_pager::appearance::cache::set_show_thinking_blocks(true);
+        intelekt_pager::appearance::cache::set_show_thinking_blocks(true);
         let mut out = String::new();
         render_entry_to_ansi(&entry, &theme, &appearance, test_cwd(), &mut out);
-        xai_grok_pager::appearance::cache::set_show_thinking_blocks(false);
+        intelekt_pager::appearance::cache::set_show_thinking_blocks(false);
         assert!(
             out.contains("reasoning"),
             "thinking content included in the transcript: {out:?}"
@@ -342,14 +342,14 @@ mod tests {
     /// transcript, not just the collapsed "Thought for Xs" header.
     #[test]
     fn transcript_expands_streamed_thinking_body() {
-        use xai_grok_pager::scrollback::state::ScrollbackState;
+        use intelekt_pager::scrollback::state::ScrollbackState;
 
         let theme = Theme::current();
         let appearance = super::super::commit::committed_appearance(
-            &xai_grok_pager::appearance::AppearanceConfig::default(),
+            &intelekt_pager::appearance::AppearanceConfig::default(),
         );
 
-        xai_grok_pager::appearance::cache::set_show_thinking_blocks(true);
+        intelekt_pager::appearance::cache::set_show_thinking_blocks(true);
         let mut sb = ScrollbackState::new();
         let id = sb.push_block(RenderBlock::thinking_streaming());
         assert!(sb.push_chunk_to_thinking(id, "REASONINGBODY pondering "));
@@ -359,7 +359,7 @@ mod tests {
         let entry = sb.get_by_id(id).expect("thinking entry");
         let mut out = String::new();
         render_entry_to_ansi(entry, &theme, &appearance, test_cwd(), &mut out);
-        xai_grok_pager::appearance::cache::set_show_thinking_blocks(false);
+        intelekt_pager::appearance::cache::set_show_thinking_blocks(false);
 
         assert!(
             out.contains("REASONINGBODY"),
@@ -371,7 +371,7 @@ mod tests {
     fn transcript_uses_owning_session_cwd_for_tool_paths() {
         let theme = Theme::current();
         let appearance = super::super::commit::committed_appearance(
-            &xai_grok_pager::appearance::AppearanceConfig::default(),
+            &intelekt_pager::appearance::AppearanceConfig::default(),
         );
         let entry =
             ScrollbackEntry::new(RenderBlock::edit("/alternate/worktree/src/main.rs", None));

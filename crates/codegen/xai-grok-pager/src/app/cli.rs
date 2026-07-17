@@ -55,7 +55,7 @@ pub enum Command {
     /// Fetch and install managed configuration
     Setup {
         /// Print the fetched configuration as JSON instead of installing it;
-        /// writes nothing to ~/.grok.
+        /// writes nothing to ~/.intelekt.
         #[arg(long)]
         json: bool,
     },
@@ -79,7 +79,7 @@ Examples:
   grok wrap docker exec -it my-container bash
   grok wrap kubectl exec -it my-pod -- bash
 
-See ~/.grok/README.md for more information.
+See ~/.intelekt/README.md for more information.
 ")]
     Wrap(WrapArgs),
     /// Export a session transcript as Markdown
@@ -135,7 +135,7 @@ See ~/.grok/README.md for more information.
     ///
     /// Centralised, agent-native overview of every session (top-level and
     /// subagents). Disabled when `[dashboard].enabled = false` in
-    /// `~/.grok/config.toml` or when the `GROK_AGENT_DASHBOARD=0` env
+    /// `~/.intelekt/config.toml` or when the `GROK_AGENT_DASHBOARD=0` env
     /// var is set.
     Dashboard,
 }
@@ -402,15 +402,15 @@ fn version_with_channel() -> &'static str {
     use std::sync::OnceLock;
     static V: OnceLock<String> = OnceLock::new();
     V.get_or_init(|| {
-        let label = xai_grok_update::channel_label();
-        xai_grok_version::display_version_with_commit(env!("VERSION_WITH_COMMIT"), label)
+        let label = intelekt_update::channel_label();
+        intelekt_version::display_version_with_commit(env!("VERSION_WITH_COMMIT"), label)
     })
 }
 #[derive(Debug, Clone, Parser)]
 #[command(
-    name = "grok",
+    name = "intelekt",
     version = version_with_channel(),
-    about = "Grok Build TUI",
+    about = "Intelekt CLI TUI",
     disable_version_flag = true,
     next_display_order = None,
     help_template = "\
@@ -434,7 +434,7 @@ pub struct PagerArgs {
     /// Working directory.
     #[arg(long)]
     pub cwd: Option<PathBuf>,
-    /// Use a custom leader socket path instead of the default `~/.grok/leader.sock`.
+    /// Use a custom leader socket path instead of the default `~/.intelekt/leader.sock`.
     #[arg(
         long = "leader-socket",
         value_name = "PATH",
@@ -634,7 +634,7 @@ pub struct PagerArgs {
         long = "permission-mode",
         value_name = "MODE",
         value_parser = clap::builder::PossibleValuesParser::new(
-            xai_grok_shell::agent::config::PermissionMode::VALID_VALUES
+            intelekt_shell::agent::config::PermissionMode::VALID_VALUES
         )
     )]
     pub permission_mode_flag: Option<String>,
@@ -712,7 +712,7 @@ pub struct PagerArgs {
     /// into the terminal's native scrollback (use the terminal's own scroll /
     /// selection); a small pinned region holds the prompt + running turn.
     /// Session-scoped only — does not write config. To default plain `grok` to
-    /// minimal, set `[ui] screen_mode = "minimal"` in ~/.grok/config.toml.
+    /// minimal, set `[ui] screen_mode = "minimal"` in ~/.intelekt/config.toml.
     #[arg(long = "minimal")]
     pub minimal: bool,
     /// Open in the standard fullscreen TUI for this session, overriding a
@@ -721,7 +721,7 @@ pub struct PagerArgs {
     /// policy (--no-alt-screen, [terminal] alt_screen, terminal auto-detection).
     #[arg(long = "fullscreen", conflicts_with = "minimal")]
     pub fullscreen: bool,
-    /// Write sampling events to ~/.grok/logs/sampling.jsonl.
+    /// Write sampling events to ~/.intelekt/logs/sampling.jsonl.
     #[arg(long = "log-sampling", env = "GROK_LOG_SAMPLING", hide = true)]
     pub log_sampling: bool,
     /// Show the login screen even when credentials are already available.
@@ -778,8 +778,8 @@ impl PagerArgs {
             .map(std::path::Path::new)
             .and_then(|p| p.file_name())
             .and_then(|n| n.to_str())
-            .filter(|n| *n == "grok" || *n == "agent")
-            .unwrap_or("grok")
+            .filter(|n| *n == "intelekt" || *n == "agent")
+            .unwrap_or("intelekt")
             .to_owned();
         let mut args = Self::parse_from(std::iter::once(bin_name).chain(std::env::args().skip(1)));
         if let Some(socket) = args.leader_socket.take() {
@@ -861,13 +861,13 @@ impl PagerArgs {
         let cwd = cwd_str.as_deref();
         match self.resume_target() {
             ResumeTarget::SessionId(id) => {
-                xai_grok_shell::session::persistence::resumed_session_sandbox_profile(
+                intelekt_shell::session::persistence::resumed_session_sandbox_profile(
                     Some(&id),
                     cwd,
                 )
             }
             ResumeTarget::MostRecentForCwd => {
-                xai_grok_shell::session::persistence::resumed_session_sandbox_profile(None, cwd)
+                intelekt_shell::session::persistence::resumed_session_sandbox_profile(None, cwd)
             }
             ResumeTarget::None => None,
         }
@@ -877,8 +877,8 @@ impl PagerArgs {
     fn resolve_startup_sandbox(explicit: Option<&str>, saved: Option<String>) -> SandboxStartup {
         match (explicit, saved) {
             (Some(x), Some(s))
-                if x.parse::<xai_grok_sandbox::ProfileName>().ok()
-                    != s.parse::<xai_grok_sandbox::ProfileName>().ok() =>
+                if x.parse::<intelekt_sandbox::ProfileName>().ok()
+                    != s.parse::<intelekt_sandbox::ProfileName>().ok() =>
             {
                 SandboxStartup::Conflict {
                     requested: x.to_owned(),
@@ -906,7 +906,7 @@ mod tests {
     use super::*;
     #[test]
     fn version_flag_exits_zero() {
-        let err = PagerArgs::try_parse_from(["grok", "--version"]).unwrap_err();
+        let err = PagerArgs::try_parse_from(["intelekt", "--version"]).unwrap_err();
         assert_eq!(err.kind(), clap::error::ErrorKind::DisplayVersion);
         assert!(
             err.exit_code() == 0,
@@ -916,7 +916,7 @@ mod tests {
     }
     #[test]
     fn version_short_flag_exits_zero() {
-        let err = PagerArgs::try_parse_from(["grok", "-v"]).unwrap_err();
+        let err = PagerArgs::try_parse_from(["intelekt", "-v"]).unwrap_err();
         assert_eq!(err.kind(), clap::error::ErrorKind::DisplayVersion);
         assert!(
             err.exit_code() == 0,
@@ -927,35 +927,35 @@ mod tests {
     #[test]
     fn resume_target_classifies_flags() {
         assert_eq!(
-            PagerArgs::try_parse_from(["grok"]).unwrap().resume_target(),
+            PagerArgs::try_parse_from(["intelekt"]).unwrap().resume_target(),
             ResumeTarget::None
         );
         assert_eq!(
-            PagerArgs::try_parse_from(["grok", "-c"])
+            PagerArgs::try_parse_from(["intelekt", "-c"])
                 .unwrap()
                 .resume_target(),
             ResumeTarget::MostRecentForCwd
         );
         assert_eq!(
-            PagerArgs::try_parse_from(["grok", "--resume"])
+            PagerArgs::try_parse_from(["intelekt", "--resume"])
                 .unwrap()
                 .resume_target(),
             ResumeTarget::MostRecentForCwd
         );
         assert_eq!(
-            PagerArgs::try_parse_from(["grok", "--resume", "sess-1"])
+            PagerArgs::try_parse_from(["intelekt", "--resume", "sess-1"])
                 .unwrap()
                 .resume_target(),
             ResumeTarget::SessionId("sess-1".to_string())
         );
         assert_eq!(
-            PagerArgs::try_parse_from(["grok", "-s", "sess-2"])
+            PagerArgs::try_parse_from(["intelekt", "-s", "sess-2"])
                 .unwrap()
                 .resume_target(),
             ResumeTarget::None
         );
         assert_eq!(
-            PagerArgs::try_parse_from(["grok", "-r", "old", "--fork-session"])
+            PagerArgs::try_parse_from(["intelekt", "-r", "old", "--fork-session"])
                 .unwrap()
                 .resume_target(),
             ResumeTarget::SessionId("old".to_string())
@@ -966,11 +966,11 @@ mod tests {
     /// invocation would be ambiguous.
     #[test]
     fn minimal_and_fullscreen_flags_conflict() {
-        let args = PagerArgs::try_parse_from(["grok", "--minimal"]).unwrap();
+        let args = PagerArgs::try_parse_from(["intelekt", "--minimal"]).unwrap();
         assert!(args.minimal && !args.fullscreen);
-        let args = PagerArgs::try_parse_from(["grok", "--fullscreen"]).unwrap();
+        let args = PagerArgs::try_parse_from(["intelekt", "--fullscreen"]).unwrap();
         assert!(args.fullscreen && !args.minimal);
-        let err = PagerArgs::try_parse_from(["grok", "--minimal", "--fullscreen"]).unwrap_err();
+        let err = PagerArgs::try_parse_from(["intelekt", "--minimal", "--fullscreen"]).unwrap_err();
         assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict);
     }
     #[test]
@@ -982,7 +982,7 @@ mod tests {
         std::fs::write(&file, "x").unwrap();
         let missing = tmp.path().join("missing");
         let args = PagerArgs::try_parse_from([
-            "grok".as_ref(),
+            "intelekt".as_ref(),
             "agent".as_ref(),
             "--no-leader".as_ref(),
             "--plugin-dir".as_ref(),
@@ -1040,19 +1040,19 @@ mod tests {
     #[test]
     fn startup_sandbox_profile_no_resume() {
         assert_eq!(
-            PagerArgs::try_parse_from(["grok", "--sandbox", "strict"])
+            PagerArgs::try_parse_from(["intelekt", "--sandbox", "strict"])
                 .unwrap()
                 .startup_sandbox_profile(None),
             SandboxStartup::Apply(Some("strict".to_string()))
         );
         assert_eq!(
-            PagerArgs::try_parse_from(["grok", "--sandbox", ""])
+            PagerArgs::try_parse_from(["intelekt", "--sandbox", ""])
                 .unwrap()
                 .startup_sandbox_profile(None),
             SandboxStartup::Apply(None)
         );
         assert_eq!(
-            PagerArgs::try_parse_from(["grok"])
+            PagerArgs::try_parse_from(["intelekt"])
                 .unwrap()
                 .startup_sandbox_profile(None),
             SandboxStartup::Apply(None)
@@ -1060,7 +1060,7 @@ mod tests {
     }
     #[test]
     fn leader_socket_flag_parses_at_root() {
-        let args = PagerArgs::try_parse_from(["grok", "--leader-socket", "/tmp/leader-x.sock"])
+        let args = PagerArgs::try_parse_from(["intelekt", "--leader-socket", "/tmp/leader-x.sock"])
             .expect("--leader-socket parses at the root");
         assert_eq!(
             args.leader_socket.as_deref(),
@@ -1070,7 +1070,7 @@ mod tests {
     #[test]
     fn leader_socket_flag_is_global_for_subcommands() {
         let args = PagerArgs::try_parse_from([
-            "grok",
+            "intelekt",
             "agent",
             "leader",
             "--leader-socket",
@@ -1084,12 +1084,12 @@ mod tests {
     }
     #[test]
     fn leader_socket_flag_defaults_to_none() {
-        let args = PagerArgs::try_parse_from(["grok"]).expect("bare grok parses");
+        let args = PagerArgs::try_parse_from(["intelekt"]).expect("bare grok parses");
         assert!(args.leader_socket.is_none());
     }
     #[test]
     fn leader_mgmt_list_info_kill_parse() {
-        let list = PagerArgs::try_parse_from(["grok", "leader", "list", "--json"])
+        let list = PagerArgs::try_parse_from(["intelekt", "leader", "list", "--json"])
             .expect("grok leader list --json");
         assert!(matches!(
             list.command,
@@ -1097,7 +1097,7 @@ mod tests {
                 command: LeaderMgmtCommand::List { json: true },
             }))
         ));
-        let info = PagerArgs::try_parse_from(["grok", "leader", "info", "--pid", "42"])
+        let info = PagerArgs::try_parse_from(["intelekt", "leader", "info", "--pid", "42"])
             .expect("grok leader info --pid");
         assert!(matches!(
             info.command,
@@ -1108,25 +1108,25 @@ mod tests {
                 },
             }))
         ));
-        let kill = PagerArgs::try_parse_from(["grok", "leader", "kill"]).expect("grok leader kill");
+        let kill = PagerArgs::try_parse_from(["intelekt", "leader", "kill"]).expect("grok leader kill");
         assert!(matches!(
             kill.command,
             Some(Command::Leader(LeaderMgmtArgs {
                 command: LeaderMgmtCommand::Kill,
             }))
         ));
-        assert!(PagerArgs::try_parse_from(["grok", "leader", "profile"]).is_err());
+        assert!(PagerArgs::try_parse_from(["intelekt", "leader", "profile"]).is_err());
     }
     #[test]
     fn debug_file_flag_parses_and_is_global() {
-        let root = PagerArgs::try_parse_from(["grok", "--debug-file", "/tmp/fire.txt"])
+        let root = PagerArgs::try_parse_from(["intelekt", "--debug-file", "/tmp/fire.txt"])
             .expect("--debug-file parses at the root");
         assert_eq!(
             root.debug_file.as_deref(),
             Some(std::path::Path::new("/tmp/fire.txt"))
         );
         let sub =
-            PagerArgs::try_parse_from(["grok", "agent", "stdio", "--debug-file", "/tmp/f.txt"])
+            PagerArgs::try_parse_from(["intelekt", "agent", "stdio", "--debug-file", "/tmp/f.txt"])
                 .expect("--debug-file parses after a subcommand (global)");
         assert_eq!(
             sub.debug_file.as_deref(),
@@ -1135,96 +1135,96 @@ mod tests {
     }
     #[test]
     fn debug_file_flag_defaults_to_none() {
-        let args = PagerArgs::try_parse_from(["grok"]).expect("bare grok parses");
+        let args = PagerArgs::try_parse_from(["intelekt"]).expect("bare grok parses");
         assert!(args.debug_file.is_none());
     }
     #[test]
     fn positional_prompt_seeds_interactive_session() {
         let args =
-            PagerArgs::try_parse_from(["grok", "fix the bug"]).expect("positional prompt parses");
+            PagerArgs::try_parse_from(["intelekt", "fix the bug"]).expect("positional prompt parses");
         assert_eq!(args.initial_prompt(), Some("fix the bug"));
         assert!(args.command.is_none());
         assert!(args.single.is_none());
     }
     #[test]
     fn bare_grok_has_no_initial_prompt() {
-        let args = PagerArgs::try_parse_from(["grok"]).expect("bare grok parses");
+        let args = PagerArgs::try_parse_from(["intelekt"]).expect("bare grok parses");
         assert_eq!(args.initial_prompt(), None);
     }
     #[test]
     fn initial_prompt_trims_and_ignores_whitespace_only() {
-        let args = PagerArgs::try_parse_from(["grok", "  spaced  "]).expect("padded prompt parses");
+        let args = PagerArgs::try_parse_from(["intelekt", "  spaced  "]).expect("padded prompt parses");
         assert_eq!(args.initial_prompt(), Some("spaced"));
-        let blank = PagerArgs::try_parse_from(["grok", "   "]).expect("blank prompt parses");
+        let blank = PagerArgs::try_parse_from(["intelekt", "   "]).expect("blank prompt parses");
         assert_eq!(blank.initial_prompt(), None);
     }
     #[test]
     fn subcommand_takes_precedence_over_positional_prompt() {
-        let args = PagerArgs::try_parse_from(["grok", "logout"]).expect("subcommand parses");
+        let args = PagerArgs::try_parse_from(["intelekt", "logout"]).expect("subcommand parses");
         assert!(matches!(args.command, Some(Command::Logout)));
         assert!(args.prompt.is_none());
     }
     #[test]
     fn positional_prompt_conflicts_with_headless_single() {
-        let err = PagerArgs::try_parse_from(["grok", "-p", "headless", "interactive"])
+        let err = PagerArgs::try_parse_from(["intelekt", "-p", "headless", "interactive"])
             .expect_err("positional prompt + --single must conflict");
         assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict);
     }
     #[test]
     fn worktree_flag_and_initial_prompt_combine() {
-        let a = PagerArgs::try_parse_from(["grok", "do the thing", "-w"])
+        let a = PagerArgs::try_parse_from(["intelekt", "do the thing", "-w"])
             .expect("prompt then bare -w parses");
         assert_eq!(a.initial_prompt(), Some("do the thing"));
         assert_eq!(a.worktree.as_deref(), Some(""));
-        let b = PagerArgs::try_parse_from(["grok", "--worktree=feat", "do the thing"])
+        let b = PagerArgs::try_parse_from(["intelekt", "--worktree=feat", "do the thing"])
             .expect("--worktree=name + positional parses");
         assert_eq!(b.initial_prompt(), Some("do the thing"));
         assert_eq!(b.worktree.as_deref(), Some("feat"));
-        let c = PagerArgs::try_parse_from(["grok", "-w", "x"]).expect("-w x parses");
+        let c = PagerArgs::try_parse_from(["intelekt", "-w", "x"]).expect("-w x parses");
         assert_eq!(c.worktree.as_deref(), Some("x"));
         assert_eq!(c.initial_prompt(), None);
     }
     #[test]
     fn trust_flag_parses_on_pager_and_alias() {
-        let bare = PagerArgs::try_parse_from(["grok"]).expect("bare grok parses");
+        let bare = PagerArgs::try_parse_from(["intelekt"]).expect("bare grok parses");
         assert!(!bare.trust);
-        let long = PagerArgs::try_parse_from(["grok", "--trust"]).expect("--trust parses");
+        let long = PagerArgs::try_parse_from(["intelekt", "--trust"]).expect("--trust parses");
         assert!(long.trust);
         let alias =
-            PagerArgs::try_parse_from(["grok", "--trust-folder"]).expect("--trust-folder parses");
+            PagerArgs::try_parse_from(["intelekt", "--trust-folder"]).expect("--trust-folder parses");
         assert!(alias.trust);
     }
     #[test]
     fn reasoning_effort_and_effort_alias_parse_same_field() {
-        let long = PagerArgs::try_parse_from(["grok", "--reasoning-effort", "high"])
+        let long = PagerArgs::try_parse_from(["intelekt", "--reasoning-effort", "high"])
             .expect("--reasoning-effort parses");
         assert_eq!(long.reasoning_effort.as_deref(), Some("high"));
         let alias =
-            PagerArgs::try_parse_from(["grok", "--effort", "high"]).expect("--effort alias parses");
+            PagerArgs::try_parse_from(["intelekt", "--effort", "high"]).expect("--effort alias parses");
         assert_eq!(alias.reasoning_effort.as_deref(), Some("high"));
     }
     #[test]
     fn reasoning_effort_accepts_max_and_remapped_ids() {
-        let max = PagerArgs::try_parse_from(["grok", "--effort", "max"]).expect("max parses");
+        let max = PagerArgs::try_parse_from(["intelekt", "--effort", "max"]).expect("max parses");
         assert_eq!(max.reasoning_effort.as_deref(), Some("max"));
         let deep =
-            PagerArgs::try_parse_from(["grok", "--reasoning-effort", "deep"]).expect("deep parses");
+            PagerArgs::try_parse_from(["intelekt", "--reasoning-effort", "deep"]).expect("deep parses");
         assert_eq!(deep.reasoning_effort.as_deref(), Some("deep"));
     }
     #[test]
     fn reasoning_effort_last_flag_wins_when_both_names_set() {
         let args =
-            PagerArgs::try_parse_from(["grok", "--reasoning-effort", "low", "--effort", "high"])
+            PagerArgs::try_parse_from(["intelekt", "--reasoning-effort", "low", "--effort", "high"])
                 .expect("both effort flag names parse");
         assert_eq!(args.reasoning_effort.as_deref(), Some("high"));
         let reverse =
-            PagerArgs::try_parse_from(["grok", "--effort", "high", "--reasoning-effort", "low"])
+            PagerArgs::try_parse_from(["intelekt", "--effort", "high", "--reasoning-effort", "low"])
                 .expect("both effort flag names parse (reverse order)");
         assert_eq!(reverse.reasoning_effort.as_deref(), Some("low"));
     }
     #[test]
     fn agent_args_effort_alias_parses() {
-        let args = PagerArgs::try_parse_from(["grok", "agent", "--effort", "max", "stdio"])
+        let args = PagerArgs::try_parse_from(["intelekt", "agent", "--effort", "max", "stdio"])
             .expect("agent --effort parses");
         let Command::Agent(agent) = args.command.expect("agent subcommand") else {
             panic!("expected agent subcommand");

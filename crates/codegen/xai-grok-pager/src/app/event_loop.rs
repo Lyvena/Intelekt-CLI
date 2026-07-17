@@ -153,7 +153,7 @@ fn reconnect_restore_outcome(
 /// Compute the folder-trust verdict for the session cwd and seed
 /// [`AppView::trust_state`]. Pager-side mirror of the agent's resolve: read the
 /// local store, scan for repo-local code-exec config, and run the pure
-/// [`decide`](xai_grok_workspace::folder_trust::decide) precedence.
+/// [`decide`](intelekt_workspace::folder_trust::decide) precedence.
 ///
 /// `TrustOutcome::Prompt` (interactive + untrusted + repo configs present)
 /// becomes `TrustState::Pending` (show the question); everything else becomes
@@ -161,13 +161,13 @@ fn reconnect_restore_outcome(
 /// local build) short-circuits before any I/O.
 fn seed_trust_state(
     app: &mut AppView,
-    remote: Option<&xai_grok_shell::util::config::RemoteSettings>,
+    remote: Option<&intelekt_shell::util::config::RemoteSettings>,
 ) {
     use std::io::IsTerminal;
-    use xai_grok_workspace::folder_trust::{
+    use intelekt_workspace::folder_trust::{
         TrustOutcome, decide, decide_inputs_with_interactive, feature_enabled,
     };
-    use xai_grok_workspace::trust::workspace_key;
+    use intelekt_workspace::trust::workspace_key;
 
     let feature = feature_enabled(remote);
     if !feature {
@@ -252,7 +252,7 @@ fn suspend_for_child(
         .then(|| crossterm::cursor::position().ok())
         .flatten();
     if screen_mode.is_fullscreen() {
-        xai_grok_shell::util::with_locked_stderr(|stderr| {
+        intelekt_shell::util::with_locked_stderr(|stderr| {
             let _ = crossterm::execute!(stderr, crossterm::terminal::LeaveAlternateScreen);
         });
     }
@@ -260,7 +260,7 @@ fn suspend_for_child(
     run_child();
     let _ = crossterm::terminal::enable_raw_mode();
     if screen_mode.is_fullscreen() {
-        xai_grok_shell::util::with_locked_stderr(|stderr| {
+        intelekt_shell::util::with_locked_stderr(|stderr| {
             let _ = crossterm::execute!(stderr, crossterm::terminal::EnterAlternateScreen);
         });
     }
@@ -463,11 +463,11 @@ pub(crate) async fn run(
     config_watcher: &mut ConfigWatcher,
     args: &PagerArgs,
     session_cwd: Option<std::path::PathBuf>,
-    remote_settings: Option<xai_grok_shell::util::config::RemoteSettings>,
+    remote_settings: Option<intelekt_shell::util::config::RemoteSettings>,
     term_state: TerminalState,
     materialized: crate::app::session_startup::MaterializedStartup,
     bg_update_rx: Option<
-        tokio::sync::oneshot::Receiver<Option<xai_grok_update::auto_update::UpdateAvailable>>,
+        tokio::sync::oneshot::Receiver<Option<intelekt_update::auto_update::UpdateAvailable>>,
     >,
 ) -> anyhow::Result<RunResult> {
     // Initialize tracing capture. The channel `rx` will be wired to a
@@ -512,7 +512,7 @@ pub(crate) async fn run(
     let remote_permission_mode = remote_settings
         .as_ref()
         .and_then(|s| s.permission_mode.as_deref());
-    let launch_yolo = xai_grok_shell::util::config::effective_yolo_for_launch(
+    let launch_yolo = intelekt_shell::util::config::effective_yolo_for_launch(
         args.yolo,
         args.permission_mode_flag.as_deref(),
         remote_permission_mode,
@@ -520,7 +520,7 @@ pub(crate) async fn run(
     app.default_yolo = launch_yolo.yolo;
     // Gated launch-auto (CLI `--permission-mode auto` or config). Hoisted so it can
     // be re-applied after `load_initial_ui_config()` replaces `current_ui` below.
-    let launch_auto = xai_grok_shell::util::config::effective_auto_for_launch(
+    let launch_auto = intelekt_shell::util::config::effective_auto_for_launch(
         args.yolo,
         args.permission_mode_flag.as_deref(),
         remote_permission_mode,
@@ -530,7 +530,7 @@ pub(crate) async fn run(
     }
     // One effective-config read for launch-mode ownership + the display
     // resolve below (the launch resolvers above keep their own internal read).
-    let launch_effective_ui = xai_grok_shell::config::load_effective_config()
+    let launch_effective_ui = intelekt_shell::config::load_effective_config()
         .ok()
         .and_then(|root| root.get("ui").cloned());
     // Soft-default owns the mode only when neither CLI nor effective TOML
@@ -538,7 +538,7 @@ pub(crate) async fn run(
     let cli_owns_mode = args.yolo || args.permission_mode_flag.is_some();
     let toml_owns_mode = launch_effective_ui
         .as_ref()
-        .and_then(xai_grok_shell::util::config::permission_mode_from_ui_if_set)
+        .and_then(intelekt_shell::util::config::permission_mode_from_ui_if_set)
         .is_some();
     app.permission_mode_from_soft_default = !cli_owns_mode && !toml_owns_mode;
     // Cached pin snapshot gating dispatch's runtime always-approve toggles. A
@@ -551,7 +551,7 @@ pub(crate) async fn run(
         // Consumed by `switch_to_agent` once the first agent view opens.
         app.yolo_launch_block_notice = Some(warning);
     }
-    app.require_plan_approval = xai_grok_shell::util::config::load_require_plan_approval();
+    app.require_plan_approval = intelekt_shell::util::config::load_require_plan_approval();
     app.plan_mode = !args.no_plan;
     app.subagents = !args.no_subagents;
     app.ask_user = !args.no_ask_user;
@@ -560,7 +560,7 @@ pub(crate) async fn run(
     if let Some(ref agent) = args.agent {
         match crate::headless::resolve_agent_arg(agent) {
             crate::headless::ResolvedAgent::FilePath(path) => {
-                match xai_grok_shell::agent::config::AgentDefinition::from_file(&path) {
+                match intelekt_shell::agent::config::AgentDefinition::from_file(&path) {
                     Ok(def) => app.agent_override = Some(def.to_json_value()),
                     Err(e) => {
                         tracing::warn!("--agent: failed to load agent file: {e}");
@@ -604,7 +604,7 @@ pub(crate) async fn run(
         .as_ref()
         .and_then(|s| s.sharing_enabled)
         .unwrap_or(false);
-    app.plugin_cta_enabled = xai_grok_config::env_bool("GROK_PLUGIN_CTA")
+    app.plugin_cta_enabled = intelekt_config::env_bool("GROK_PLUGIN_CTA")
         .or_else(|| remote_settings.as_ref().and_then(|s| s.plugin_cta))
         .unwrap_or(false);
     // Voice is applied after auth_meta so API-key detection is accurate.
@@ -616,7 +616,7 @@ pub(crate) async fn run(
             _ => None,
         })
         .or_else(|| {
-            xai_grok_shell::config::load_effective_config()
+            intelekt_shell::config::load_effective_config()
                 .ok()
                 .and_then(|cfg| cfg.get("cli")?.get("session_picker_grouped")?.as_bool())
         })
@@ -695,7 +695,7 @@ pub(crate) async fn run(
             // preferred_method pin unavailable — no advertised method to start.
             app.auth_state = super::app_view::AuthState::Pending {
                 error: Some(
-                    xai_grok_shell::agent::auth_method::PREFERRED_API_KEY_UNAVAILABLE.to_string(),
+                    intelekt_shell::agent::auth_method::PREFERRED_API_KEY_UNAVAILABLE.to_string(),
                 ),
             };
             vec![]
@@ -707,14 +707,14 @@ pub(crate) async fn run(
     };
 
     if let Some(meta) = connection.auth_meta.as_ref() {
-        match serde_json::from_value::<xai_grok_shell::auth::AuthMeta>(meta.clone()) {
+        match serde_json::from_value::<intelekt_shell::auth::AuthMeta>(meta.clone()) {
             Ok(auth_meta) => app.apply_auth_meta(&auth_meta),
             Err(e) => tracing::warn!("failed to deserialize auth_meta: {e}"),
         }
     } else {
         // No cached session — check if the API key is the active credential.
         app.is_api_key_auth = app.auth_methods.iter().any(|m| {
-            m.id().0.as_ref() == xai_grok_shell::agent::auth_method::XAI_API_KEY_METHOD_ID
+            m.id().0.as_ref() == intelekt_shell::agent::auth_method::XAI_API_KEY_METHOD_ID
         });
         // No AuthMeta on this path — hide `/usage` for API keys.
         if app.is_api_key_auth {
@@ -749,27 +749,27 @@ pub(crate) async fn run(
     }
 
     // Load persisted per-ID hidden state
-    app.hidden_announcement_ids = xai_grok_announcements::read_hidden_announcement_ids().await;
+    app.hidden_announcement_ids = intelekt_announcements::read_hidden_announcement_ids().await;
 
     // Load config layers once, resolve announcements, tips, and feature flags.
-    let requirements = xai_grok_shell::config::load_merged_requirements();
-    let user_config = xai_grok_shell::config::load_from_disk().ok();
-    let managed_config = xai_grok_shell::config::load_managed_config().ok();
+    let requirements = intelekt_shell::config::load_merged_requirements();
+    let user_config = intelekt_shell::config::load_from_disk().ok();
+    let managed_config = intelekt_shell::config::load_managed_config().ok();
 
     // Full merge when every layer parses; partial merge below if any layer fails.
-    let effective_config = match xai_grok_shell::config::load_effective_config() {
+    let effective_config = match intelekt_shell::config::load_effective_config() {
         Ok(raw) => Some(raw),
         Err(e) => {
             tracing::debug!(error = %e, "failed to load effective config, using partial layers");
             None
         }
     };
-    let compat = xai_grok_shell::agent::config::resolve_compat_sessions_from_raw(
+    let compat = intelekt_shell::agent::config::resolve_compat_sessions_from_raw(
         effective_config.as_ref().ok_or(()),
         remote_settings.as_ref(),
     );
     app.foreign_session_compat =
-        xai_grok_workspace::foreign_sessions::EnabledForeignSessionSources {
+        intelekt_workspace::foreign_sessions::EnabledForeignSessionSources {
             claude: compat.claude.sessions,
             codex: compat.codex.sessions,
             cursor: compat.cursor.sessions,
@@ -784,10 +784,10 @@ pub(crate) async fn run(
             // Voice inherits the same resolved endpoints base as chat
             // (config > GROK_XAI_API_BASE_URL env > default).
             let endpoints_base =
-                xai_grok_shell::agent::config::EndpointsConfig::from_config_value(raw)
+                intelekt_shell::agent::config::EndpointsConfig::from_config_value(raw)
                     .xai_api_base_url;
             app.voice_config =
-                xai_grok_voice::VoiceConfig::from_config_table(table, Some(&endpoints_base));
+                intelekt_voice::VoiceConfig::from_config_table(table, Some(&endpoints_base));
         }
     }
     // Stamp request-identity headers so the STT handshake attributes voice usage
@@ -798,7 +798,7 @@ pub(crate) async fn run(
     app.voice_config.client_identifier = crate::client_identity::HEADLESS_CLIENT_TYPE.to_string();
     app.voice_config.user_agent = crate::client_identity::client_user_agent();
 
-    app.zdr_access_enabled = xai_grok_shell::util::config::resolve_zdr_access_enabled(
+    app.zdr_access_enabled = intelekt_shell::util::config::resolve_zdr_access_enabled(
         requirements.as_ref(),
         user_config.as_ref(),
         managed_config.as_ref(),
@@ -811,7 +811,7 @@ pub(crate) async fn run(
 
     // Full layered resolve (env/requirements/remote may beat plain `[ui]`).
     crate::appearance::cache::set_show_thinking_blocks(
-        xai_grok_shell::util::config::resolve_show_thinking_blocks(
+        intelekt_shell::util::config::resolve_show_thinking_blocks(
             requirements.as_ref(),
             user_config.as_ref(),
             managed_config.as_ref(),
@@ -820,7 +820,7 @@ pub(crate) async fn run(
         .value,
     );
     crate::appearance::cache::set_group_tool_verbs(
-        xai_grok_shell::util::config::resolve_group_tool_verbs(
+        intelekt_shell::util::config::resolve_group_tool_verbs(
             requirements.as_ref(),
             user_config.as_ref(),
             managed_config.as_ref(),
@@ -829,7 +829,7 @@ pub(crate) async fn run(
         .value,
     );
     crate::appearance::cache::set_collapsed_edit_blocks(
-        xai_grok_shell::util::config::resolve_collapsed_edit_blocks(
+        intelekt_shell::util::config::resolve_collapsed_edit_blocks(
             requirements.as_ref(),
             user_config.as_ref(),
             managed_config.as_ref(),
@@ -847,7 +847,7 @@ pub(crate) async fn run(
     }
 
     {
-        use xai_grok_shell::util::config::{resolve_announcements, resolve_tips};
+        use intelekt_shell::util::config::{resolve_announcements, resolve_tips};
 
         let remote_announcements = remote_settings
             .as_ref()
@@ -858,7 +858,7 @@ pub(crate) async fn run(
             managed_config.as_ref(),
             remote_announcements,
         );
-        app.active_announcements = xai_grok_announcements::filter_expired(announcements);
+        app.active_announcements = intelekt_announcements::filter_expired(announcements);
         if !app.active_announcements.is_empty() {
             use rand::Rng;
             let idx = rand::rng().random_range(0..app.active_announcements.len());
@@ -875,12 +875,12 @@ pub(crate) async fn run(
         );
 
         if !app.tips.is_empty() {
-            let grok_home = xai_grok_tools::util::grok_home::grok_home();
-            app.tip = xai_grok_shell::util::tips::pick_and_advance(&app.tips, &grok_home);
+            let grok_home = intelekt_tools::util::grok_home::grok_home();
+            app.tip = intelekt_shell::util::tips::pick_and_advance(&app.tips, &grok_home);
         }
     }
 
-    let hints = xai_grok_shell::util::config::resolve_hints(
+    let hints = intelekt_shell::util::config::resolve_hints(
         effective_config.as_ref(),
         requirements.as_ref(),
         user_config.as_ref(),
@@ -978,7 +978,7 @@ pub(crate) async fn run(
         );
     }
 
-    // Apply initial config (may come from existing ~/.grok/pager.toml).
+    // Apply initial config (may come from existing ~/.intelekt/pager.toml).
     let mut initial_config = config_watcher.current().clone();
     // The cache holds the USER compact value; the render value is derived
     // (auto-compact while the startup terminal is short).
@@ -1018,11 +1018,11 @@ pub(crate) async fn run(
     } else if let Some(cli) = args.permission_mode_flag.as_deref() {
         // CLI always-approve/auto that did not become launch_yolo/launch_auto
         // (policy pin / gate) display as Ask.
-        xai_grok_shell::util::config::clamped_display_permission_mode(
-            xai_grok_shell::util::config::parse_permission_mode_canonical(cli),
+        intelekt_shell::util::config::clamped_display_permission_mode(
+            intelekt_shell::util::config::parse_permission_mode_canonical(cli),
         )
     } else {
-        xai_grok_shell::util::config::resolved_display_permission_mode(
+        intelekt_shell::util::config::resolved_display_permission_mode(
             launch_effective_ui.as_ref(),
             remote_permission_mode,
         )
@@ -1044,7 +1044,7 @@ pub(crate) async fn run(
     // Resolve the per-tip contextual hints now that `current_ui` is hydrated and
     // propagate the prompt-relevant tips to any agents built at startup. New
     // agents adopt the gates at creation; settings toggles re-apply at runtime.
-    let resolved_hints = xai_grok_shell::util::config::resolve_contextual_hints(
+    let resolved_hints = intelekt_shell::util::config::resolve_contextual_hints(
         &app.current_ui.contextual_hints,
         app.remote_contextual_hints.as_ref(),
     );
@@ -1054,7 +1054,7 @@ pub(crate) async fn run(
     // explicitly enabled. Resolved in shell config (env override > effective
     // config > the parsed `UiConfig` field) so a partial `UiConfig` deserialize
     // failure cannot silently drop it.
-    let mouse_toggle = xai_grok_shell::util::config::resolve_mouse_reporting_toggle(
+    let mouse_toggle = intelekt_shell::util::config::resolve_mouse_reporting_toggle(
         effective_config.as_ref(),
         &app.current_ui,
     );
@@ -1189,7 +1189,7 @@ pub(crate) async fn run(
     // capture is compiled in: true for production CLI builds on macOS/Windows
     // (cpal) and Linux (subprocess recorder), false for Bazel builds (no
     // capture in the test sandbox).
-    let mut voice_rx = None::<tokio::sync::mpsc::Receiver<xai_grok_voice::VoiceEvent>>;
+    let mut voice_rx = None::<tokio::sync::mpsc::Receiver<intelekt_voice::VoiceEvent>>;
     let voice_auth_factory = connection.auth_manager.clone();
 
     // Animation tick: only scheduled when there are running entries.
@@ -1510,7 +1510,7 @@ pub(crate) async fn run(
                 let (cmd_tx, cmd_rx) = tokio::sync::mpsc::channel(32);
                 let (event_tx, event_rx) = tokio::sync::mpsc::channel(128);
                 let voice_config = app.voice_config.clone();
-                tokio::spawn(xai_grok_voice::run_voice_pipeline(
+                tokio::spawn(intelekt_voice::run_voice_pipeline(
                     voice_config,
                     voice_auth.clone(),
                     cmd_rx,
@@ -2021,8 +2021,8 @@ pub(crate) async fn run(
             // Hot-reload: config file changed (dev mode) or initial load.
             Ok(()) = config_watcher.changed() => {
                 let mut config = config_watcher.current().clone();
-                // Preserve fields persisted via `~/.grok/config.toml [ui]`
-                // rather than `~/.grok/pager.toml`. The watcher only knows
+                // Preserve fields persisted via `~/.intelekt/config.toml [ui]`
+                // rather than `~/.intelekt/pager.toml`. The watcher only knows
                 // about pager.toml, so a hot-reload would otherwise revert
                 // these to their hardcoded defaults. Compact carries the
                 // PRE-reload render value; the canonical re-derive below owns
@@ -2232,9 +2232,9 @@ pub(crate) async fn run(
                                 for (agent_id, plan) in load_plans {
                                     // Reconnect path — no resolved compat in scope; default
                                     // (all-on) preserves existing behavior.
-                                    let mcp_servers = xai_grok_shell::util::config::load_mcp_servers(
+                                    let mcp_servers = intelekt_shell::util::config::load_mcp_servers(
                                         &plan.cwd,
-                                        &xai_grok_tools::types::compat::CompatConfig::default(),
+                                        &intelekt_tools::types::compat::CompatConfig::default(),
                                     );
                                     let load_req = acp::LoadSessionRequest::new(plan.session_id, plan.cwd).mcp_servers(mcp_servers).meta(plan.meta.as_object().cloned());
                                     match acp_send(load_req, &acp_tx).await {
@@ -2453,9 +2453,9 @@ pub(crate) async fn run(
 ///
 /// Load `UiConfig` from the shell's layered config at startup.
 /// Falls back to `UiConfig::default()` on any failure.
-pub(crate) fn load_initial_ui_config() -> xai_grok_shell::agent::config::UiConfig {
-    use xai_grok_shell::agent::config::UiConfig;
-    let Ok(root) = xai_grok_shell::config::load_effective_config() else {
+pub(crate) fn load_initial_ui_config() -> intelekt_shell::agent::config::UiConfig {
+    use intelekt_shell::agent::config::UiConfig;
+    let Ok(root) = intelekt_shell::config::load_effective_config() else {
         return UiConfig::default();
     };
     let Some(ui_value) = root.get("ui").cloned() else {
@@ -2474,7 +2474,7 @@ struct InitialConfigSessionBools {
 }
 
 fn load_initial_config_session_bools() -> InitialConfigSessionBools {
-    let Ok(root) = xai_grok_shell::config::load_effective_config() else {
+    let Ok(root) = intelekt_shell::config::load_effective_config() else {
         return InitialConfigSessionBools::default();
     };
     let cli_bool = |key: &str| -> Option<bool> { root.get("cli")?.get(key)?.as_bool() };
@@ -2790,7 +2790,7 @@ async fn drain_and_process(
         // every Space release during normal typing.
         if let Event::Key(ke) = ev
             && app.voice_mode_enabled
-            && xai_grok_voice::AUDIO_SUPPORTED
+            && intelekt_voice::AUDIO_SUPPORTED
             && is_voice_chord(ke)
             && (ke.kind != KeyEventKind::Release || app.voice_hold_owned())
         {

@@ -241,9 +241,9 @@ pub enum PermissionCommand {
     ResetState,
     Shutdown,
 }
-impl From<&xai_grok_tools::types::ToolInput> for AccessKind {
-    fn from(input: &xai_grok_tools::types::ToolInput) -> Self {
-        use xai_grok_tools::types::ToolInput;
+impl From<&intelekt_tools::types::ToolInput> for AccessKind {
+    fn from(input: &intelekt_tools::types::ToolInput) -> Self {
+        use intelekt_tools::types::ToolInput;
         match input {
             ToolInput::ReadFile(r) => AccessKind::Read(Some(r.path.clone())),
             ToolInput::ListDir(l) => AccessKind::Read(Some(l.target_directory.clone())),
@@ -354,7 +354,7 @@ pub enum ToolFilter {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RequirementSource {
     Unknown,
-    /// User-writable `~/.grok/requirements.toml` — untrusted for keeping a
+    /// User-writable `~/.intelekt/requirements.toml` — untrusted for keeping a
     /// catch-all allow under the pin (a restricted user can edit it).
     Requirements {
         path: std::path::PathBuf,
@@ -490,8 +490,8 @@ mod tests {
     }
     #[test]
     fn hashline_edit_maps_to_edit_access() {
-        use xai_grok_tools::implementations::grok_build_hashline::edit::types::HashlineEditInput;
-        use xai_grok_tools::types::ToolInput;
+        use intelekt_tools::implementations::grok_build_hashline::edit::types::HashlineEditInput;
+        use intelekt_tools::types::ToolInput;
         let input = ToolInput::HashlineEdit(HashlineEditInput {
             file_path: "src/main.rs".into(),
             edits: vec![],
@@ -504,8 +504,8 @@ mod tests {
     }
     #[test]
     fn bash_maps_to_bash_access() {
-        use xai_grok_tools::implementations::grok_build::bash::BashToolInput;
-        use xai_grok_tools::types::ToolInput;
+        use intelekt_tools::implementations::grok_build::bash::BashToolInput;
+        use intelekt_tools::types::ToolInput;
         let input = ToolInput::Bash(BashToolInput {
             command: "cargo test".into(),
             timeout: None,
@@ -520,8 +520,8 @@ mod tests {
     }
     #[test]
     fn use_tool_maps_to_mcp_tool_access() {
-        use xai_grok_tools::implementations::use_tool::UseToolInput;
-        use xai_grok_tools::types::ToolInput;
+        use intelekt_tools::implementations::use_tool::UseToolInput;
+        use intelekt_tools::types::ToolInput;
         let input = ToolInput::UseTool(UseToolInput {
             tool_name: "linear__save_issue".into(),
             tool_input: serde_json::json!({ "title" : "test" }),
@@ -535,8 +535,8 @@ mod tests {
     }
     #[test]
     fn monitor_maps_to_bash_access() {
-        use xai_grok_tools::implementations::grok_build::monitor::types::MonitorInput;
-        use xai_grok_tools::types::ToolInput;
+        use intelekt_tools::implementations::grok_build::monitor::types::MonitorInput;
+        use intelekt_tools::types::ToolInput;
         let input = ToolInput::Monitor(MonitorInput {
             command: "tail -f /var/log/syslog".into(),
             description: "watch syslog".into(),
@@ -552,8 +552,8 @@ mod tests {
     }
     #[test]
     fn search_replace_maps_to_edit_access() {
-        use xai_grok_tools::implementations::grok_build::search_replace::SearchReplaceInput;
-        use xai_grok_tools::types::ToolInput;
+        use intelekt_tools::implementations::grok_build::search_replace::SearchReplaceInput;
+        use intelekt_tools::types::ToolInput;
         let input = ToolInput::SearchReplace(SearchReplaceInput {
             file_path: "lib.rs".into(),
             old_string: "old".into(),
@@ -568,8 +568,8 @@ mod tests {
     }
     #[test]
     fn web_fetch_maps_to_web_fetch_access() {
-        use xai_grok_tools::implementations::grok_build::web_fetch::WebFetchInput;
-        use xai_grok_tools::types::ToolInput;
+        use intelekt_tools::implementations::grok_build::web_fetch::WebFetchInput;
+        use intelekt_tools::types::ToolInput;
         let input = ToolInput::WebFetch(WebFetchInput {
             url: "https://custom.example.com/api".into(),
         });
@@ -582,8 +582,8 @@ mod tests {
     }
     #[test]
     fn web_search_maps_to_web_search_access() {
-        use xai_grok_tools::implementations::grok_build::web_search::WebSearchInput;
-        use xai_grok_tools::types::ToolInput;
+        use intelekt_tools::implementations::grok_build::web_search::WebSearchInput;
+        use intelekt_tools::types::ToolInput;
         let input = ToolInput::WebSearch(WebSearchInput {
             query: "rust lang".into(),
             allowed_domains: None,
@@ -596,8 +596,8 @@ mod tests {
     }
     #[test]
     fn apply_patch_maps_to_edit_access() {
-        use xai_grok_tools::implementations::codex::apply_patch::ApplyPatchInput;
-        use xai_grok_tools::types::ToolInput;
+        use intelekt_tools::implementations::codex::apply_patch::ApplyPatchInput;
+        use intelekt_tools::types::ToolInput;
         let input = ToolInput::ApplyPatch(ApplyPatchInput {
             patch: String::new(),
         });
@@ -609,8 +609,8 @@ mod tests {
     }
     #[test]
     fn write_tool_maps_to_edit_access() {
-        use xai_grok_tools::implementations::opencode::write::WriteInput;
-        use xai_grok_tools::types::ToolInput;
+        use intelekt_tools::implementations::opencode::write::WriteInput;
+        use intelekt_tools::types::ToolInput;
         let input = ToolInput::Write(WriteInput {
             file_path: "/tmp/secret.txt".into(),
             content: "overwritten".into(),

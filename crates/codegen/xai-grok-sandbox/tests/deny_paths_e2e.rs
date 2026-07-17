@@ -156,8 +156,8 @@ fn bwrap_available() -> bool {
 }
 
 /// The custom profile under test, read from the env the parent set.
-fn profile_from_env() -> xai_grok_sandbox::ProfileName {
-    xai_grok_sandbox::ProfileName::Custom(std::env::var(PROFILE_ENV).expect(PROFILE_ENV))
+fn profile_from_env() -> intelekt_sandbox::ProfileName {
+    intelekt_sandbox::ProfileName::Custom(std::env::var(PROFILE_ENV).expect(PROFILE_ENV))
 }
 
 // ── Subprocess entry point ──────────────────────────────────────────────
@@ -178,12 +178,12 @@ fn subprocess_entry() {
 
     #[cfg(target_os = "linux")]
     {
-        if !xai_grok_sandbox::is_inside_bwrap() {
+        if !intelekt_sandbox::is_inside_bwrap() {
             // Drive the REAL routing the shell uses at startup — computing the
             // custom profile's deny set (exact paths AND launch-time glob
             // expansion), building placeholders, and failing closed on a partial
             // bind — rather than hand-rolling a single-path `bwrap_reexec_command`.
-            match xai_grok_sandbox::bwrap_reexec_for_profile(&profile_from_env(), workspace) {
+            match intelekt_sandbox::bwrap_reexec_for_profile(&profile_from_env(), workspace) {
                 Some(mut cmd) => {
                     use std::os::unix::process::CommandExt;
                     let err = cmd.exec(); // returns only if exec failed
@@ -202,7 +202,7 @@ fn subprocess_entry() {
 
     match scenario.as_str() {
         "block_deny" => {
-            let mut sandbox = xai_grok_sandbox::SandboxManager::new(profile_from_env(), workspace);
+            let mut sandbox = intelekt_sandbox::SandboxManager::new(profile_from_env(), workspace);
             if let Err(e) = sandbox.apply(workspace) {
                 eprintln!("sandbox apply failed: {e}");
                 std::process::exit(3);
@@ -299,7 +299,7 @@ fn run_deny_case(
     // CI lane can guarantee the deny enforcement is actually exercised.
     let require = std::env::var("SANDBOX_E2E_REQUIRE_ENFORCEMENT").is_ok();
 
-    let support = xai_grok_sandbox::SandboxManager::support_info();
+    let support = intelekt_sandbox::SandboxManager::support_info();
     if !support.is_supported {
         if require {
             panic!(
@@ -340,9 +340,9 @@ fn run_deny_case(
         .map(|p| format!("\"{p}\""))
         .collect::<Vec<_>>()
         .join(", ");
-    fs::create_dir_all(tmp.join(".grok")).expect("mkdir .grok");
+    fs::create_dir_all(tmp.join(".intelekt")).expect("mkdir .grok");
     fs::write(
-        tmp.join(".grok").join("sandbox.toml"),
+        tmp.join(".intelekt").join("sandbox.toml"),
         format!("[profiles.{profile}]\nextends = \"workspace\"\ndeny = [{deny_list}]\n"),
     )
     .expect("write sandbox.toml");

@@ -1,9 +1,9 @@
 [package]
 license = "Apache-2.0"
-name = "xai-grok-sandbox"
+name = "intelekt-sandbox"
 version = "0.1.0"
 edition.workspace = true
-description = "OS-level sandboxing for Grok Build using kernel primitives (Landlock/Seatbelt) via nono"
+description = "OS-level sandboxing for Intelekt CLI using kernel primitives (Landlock/Seatbelt) via nono"
 
 [dependencies]
 anyhow = { workspace = true }
@@ -14,7 +14,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 toml = { workspace = true }
 tracing = { workspace = true }
-xai-grok-config = { workspace = true }
+intelekt-config = { workspace = true }
 
 [target.'cfg(unix)'.dependencies]
 libc = { workspace = true }

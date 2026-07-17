@@ -2,7 +2,7 @@
 //! [`log_event`]. `session_id` and `turn_number` are injected from the
 //! task-local [`TelemetryCtx`] active for the duration of a session.
 //!
-//! Extracted from `xai-grok-shell::agent::telemetry`.
+//! Extracted from `intelekt-shell::agent::telemetry`.
 
 use std::sync::Arc;
 
@@ -96,9 +96,9 @@ pub async fn with_session_ctx<F: std::future::Future>(ctx: TelemetryCtx, fut: F)
 /// [`crate::client`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, strum::EnumCount)]
 pub enum EmitterOrigin {
-    /// `xai-grok-shell` (and the pager/TUI that emit through it).
+    /// `intelekt-shell` (and the pager/TUI that emit through it).
     Shell,
-    /// `xai-grok-workspace` (remote sampler / workspace server).
+    /// `intelekt-workspace` (remote sampler / workspace server).
     Workspace,
 }
 

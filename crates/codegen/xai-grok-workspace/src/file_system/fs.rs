@@ -1,7 +1,7 @@
 use std::io;
 use std::path::Path;
 use std::sync::Arc;
-use xai_grok_paths::ToAbsPath;
+use intelekt_paths::ToAbsPath;
 
 #[derive(Debug, thiserror::Error)]
 pub enum FsError {

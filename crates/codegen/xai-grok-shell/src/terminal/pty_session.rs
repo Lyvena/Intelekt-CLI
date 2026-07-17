@@ -476,7 +476,7 @@ fn resolve_pty_shell(shell: Option<&str>) -> (String, Vec<String>) {
 
     #[cfg(not(unix))]
     {
-        use xai_grok_config::shell::{WindowsShell, detect_windows_shell};
+        use intelekt_config::shell::{WindowsShell, detect_windows_shell};
         match detect_windows_shell() {
             WindowsShell::GitBash(path) => (path.clone(), vec!["-l".to_string()]),
             WindowsShell::Pwsh => ("pwsh".to_string(), vec!["-NoLogo".to_string()]),

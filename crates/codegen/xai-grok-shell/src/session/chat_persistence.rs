@@ -5,7 +5,7 @@
 
 use tokio::sync::mpsc;
 use xai_chat_state::ChatPersistence;
-use xai_grok_sampling_types::ConversationItem;
+use intelekt_sampling_types::ConversationItem;
 
 use super::persistence::PersistenceMsg;
 

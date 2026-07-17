@@ -5,7 +5,7 @@
 pub(crate) use serde_json::json;
 pub(crate) use std::path::Path;
 pub(crate) use std::time::{Duration, Instant};
-pub(crate) use xai_grok_pager_pty_harness::{
+pub(crate) use intelekt_pager_pty_harness::{
     ContentController, MockModel, PtyHarness, ScriptedResponse, SseEvent, keys,
     oauth_env_for_pager, pager_binary, seed_fake_oauth, sse, wait_for_labels_absent,
     wait_for_model_via_new_sessions,
@@ -133,7 +133,7 @@ pub(crate) fn tall_response(sentinel: &str, rows: usize) -> String {
 
 // ── Fake session-auth (OAuth) seeding ───────────────────────────────────
 // `seed_fake_oauth` / `oauth_env_for_pager` live in
-// `xai_grok_pager_pty_harness::flows` (re-exported above).
+// `intelekt_pager_pty_harness::flows` (re-exported above).
 
 /// Spawn a pager with fake session (OAuth) auth and a 1s announcements poll,
 /// then drive it into a live session (welcome → prompt → mock response).
@@ -188,7 +188,7 @@ pub(crate) fn spawn_polling_session_with_env(
 /// Start the mock server with two models that have different agent types,
 /// and return a `ContentController` configured for agent-type-mismatch
 /// testing. The default model is `"default-model"` (no agent type → uses
-/// `grok-build` harness).
+/// `intelekt-cli` harness).
 pub(crate) async fn start_dual_agent_type_content() -> ContentController {
     ContentController::start_with_models(vec![
         MockModel::new("default-model"),
@@ -215,7 +215,7 @@ pub(crate) fn git_repo_with_mcp_json() -> tempfile::TempDir {
 
 /// Env for a folder-trust run: the mock-server env plus a simulated release stamp
 /// (`GROK_TEST_VERSION`) and an explicit `GROK_FOLDER_TRUST` — `1` when `feature_on`,
-/// else `0` (an explicit opt-out that overrides the now-on default). HOME/GROK_HOME
+/// else `0` (an explicit opt-out that overrides the now-on default). HOME/INTELEKT_HOME
 /// point at the isolated temp home, so the trust store starts empty.
 pub(crate) fn trust_env(content: &ContentController, feature_on: bool) -> Vec<(String, String)> {
     let mut env = content.env_for_pager();
@@ -235,10 +235,10 @@ pub(crate) fn trust_env(content: &ContentController, feature_on: bool) -> Vec<(S
 pub(crate) fn folder_is_trusted(content: &ContentController, repo: &std::path::Path) -> bool {
     let store_path = content
         .home()
-        .join(".grok")
-        .join(xai_grok_workspace::trust::TRUST_FILE_NAME);
-    let store = xai_grok_workspace::trust::TrustStore::load_from(store_path);
-    store.is_trusted(&xai_grok_workspace::trust::workspace_key(repo))
+        .join(".intelekt")
+        .join(intelekt_workspace::trust::TRUST_FILE_NAME);
+    let store = intelekt_workspace::trust::TrustStore::load_from(store_path);
+    store.is_trusted(&intelekt_workspace::trust::workspace_key(repo))
 }
 
 // ── Leader mode e2e ─────────────────────────────────────────────────────
@@ -253,7 +253,7 @@ pub(crate) fn turn_sentinel(n: u8) -> String {
     format!("{MOCK_RESPONSE_SENTINEL}_T{n}")
 }
 
-// `wait_for_labels_absent` lives in `xai_grok_pager_pty_harness::flows`
+// `wait_for_labels_absent` lives in `intelekt_pager_pty_harness::flows`
 // (re-exported above).
 
 // ── MCP menu loading e2e tests ──────────────────────────────────────────
@@ -271,8 +271,8 @@ pub(crate) fn seed_mcp_server_config(content: &ContentController) {
     #[cfg(windows)]
     let command = "cmd.exe";
 
-    let grok_home = content.home().join(".grok");
-    std::fs::create_dir_all(&grok_home).expect("create fake GROK_HOME");
+    let grok_home = content.home().join(".intelekt");
+    std::fs::create_dir_all(&grok_home).expect("create fake INTELEKT_HOME");
     let config = format!(
         "[mcp_servers.{MCP_TEST_SERVER}]\ncommand = \"{command}\"\nargs = []\nstartup_timeout_sec = 2\n"
     );
@@ -392,9 +392,9 @@ pub(crate) const SEND_NOW_TIP_SENTINEL: &str = "to send now";
 
 // NOTE: The SessionStart hook exactly-once e2e test is deferred.
 // The core fix (deduplication in load_hooks_from_sources) is verified by
-// unit tests in xai-grok-hooks::discovery::tests. The PTY E2E test requires
+// unit tests in intelekt-hooks::discovery::tests. The PTY E2E test requires
 // careful environment variable setup to avoid static caching issues with
-// GROK_HOME.
+// INTELEKT_HOME.
 
 // ── Mouse reporting toggle (opt-in scrollback Ctrl+R) ───────────────────
 
@@ -406,20 +406,20 @@ pub(crate) const MOUSE_OFF_STICKY: &str =
 pub(crate) const MOUSE_OFF_HINT_PROMPT: &str =
     "/toggle-mouse-reporting to enable mouse reporting and restore TUI features";
 
-/// Seed `~/.grok/config.toml` with a `[ui]` section body (e.g.
-/// `"vim_mode = true"`). Same `{GROK_HOME|HOME}/.grok/config.toml` location
+/// Seed `~/.intelekt/config.toml` with a `[ui]` section body (e.g.
+/// `"vim_mode = true"`). Same `{INTELEKT_HOME|HOME}/.intelekt/config.toml` location
 /// `seed_mouse_reporting_toggle_config` uses; call before spawning the pager.
 pub(crate) fn seed_ui_config(content: &ContentController, ui_body: &str) {
-    let grok_home = content.home().join(".grok");
-    std::fs::create_dir_all(&grok_home).expect("create .grok");
+    let grok_home = content.home().join(".intelekt");
+    std::fs::create_dir_all(&grok_home).expect("create .intelekt");
     let config = format!("[ui]\n{ui_body}\n");
     std::fs::write(grok_home.join("config.toml"), config).expect("write config.toml");
 }
 
 pub(crate) fn seed_mouse_reporting_toggle_config(content: &ContentController, enabled: bool) {
-    let grok_home = content.home().join(".grok");
-    std::fs::create_dir_all(&grok_home).expect("create .grok");
-    // Minimal opt-in only — matches load_config's `{GROK_HOME|HOME}/.grok/config.toml`.
+    let grok_home = content.home().join(".intelekt");
+    std::fs::create_dir_all(&grok_home).expect("create .intelekt");
+    // Minimal opt-in only — matches load_config's `{INTELEKT_HOME|HOME}/.intelekt/config.toml`.
     let config = if enabled {
         "[ui]\nmouse_reporting_toggle = true\n"
     } else {
@@ -431,8 +431,8 @@ pub(crate) fn seed_mouse_reporting_toggle_config(content: &ContentController, en
 
 /// Seed `[ui] keep_text_selection = "hold"` under the content controller's home.
 pub(crate) fn seed_keep_text_selection_config(content: &ContentController) {
-    let grok_home = content.home().join(".grok");
-    std::fs::create_dir_all(&grok_home).expect("create .grok");
+    let grok_home = content.home().join(".intelekt");
+    std::fs::create_dir_all(&grok_home).expect("create .intelekt");
     std::fs::write(
         grok_home.join("config.toml"),
         "[ui]\nkeep_text_selection = \"hold\"\n",
@@ -479,7 +479,7 @@ pub(crate) fn spawn_esc_double_press_pager(content: &ContentController) -> PtyHa
     let mut env = content.env_for_pager();
     env.push((
         ESC_DOUBLE_PRESS_ENV.to_string(),
-        xai_grok_pager::app::app_view::ESC_DOUBLE_PRESS_TEST_MS.to_string(),
+        intelekt_pager::app::app_view::ESC_DOUBLE_PRESS_TEST_MS.to_string(),
     ));
     let env_refs: Vec<(&str, &str)> = env.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
     PtyHarness::new(&binary, DEFAULT_ROWS, DEFAULT_COLS, &[], &env_refs).expect("spawn pager")
@@ -1110,7 +1110,7 @@ pub(crate) const WRAP_TIMEOUT: Duration = Duration::from_secs(120);
 const WRAP_DRAIN_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Run `grok wrap <wrap_args...>` to completion inside a PTY with an isolated
-/// `GROK_HOME`, returning the exit code (`None` if it never exited within
+/// `INTELEKT_HOME`, returning the exit code (`None` if it never exited within
 /// [`WRAP_TIMEOUT`]) and everything the wrap PTY emitted. `extra_env` is where
 /// tests pin `SHELL`; wrap needs no mock content — it dispatches in `main`
 /// before auth/network/sandbox.
@@ -1122,7 +1122,7 @@ pub(crate) fn run_wrap(wrap_args: &[&str], extra_env: &[(&str, &str)]) -> (Optio
 
     let mut args = vec!["wrap"];
     args.extend_from_slice(wrap_args);
-    let mut env: Vec<(&str, &str)> = vec![("GROK_HOME", &home_str), ("NO_COLOR", "1")];
+    let mut env: Vec<(&str, &str)> = vec![("INTELEKT_HOME", &home_str), ("NO_COLOR", "1")];
     env.extend_from_slice(extra_env);
 
     let mut harness =
@@ -1273,10 +1273,10 @@ pub(crate) fn all_user_message_blobs(content: &ContentController) -> Vec<String>
 // machine-global clipboard; they hold `#[serial_test::serial(host_clipboard)]`
 // so two clipboard tests never interleave within one test process.
 #[cfg(any(target_os = "macos", target_os = "windows"))]
-pub(crate) use xai_grok_pager_pty_harness::host_clipboard::{
+pub(crate) use intelekt_pager_pty_harness::host_clipboard::{
     HostClipboardTextGuard, pbcopy, set_clipboard_png, write_fixture_png,
 };
 // Windows CI sessions may lack a usable clipboard; the windows twins gate on
 // this and SKIP instead of failing on environment.
 #[cfg(target_os = "windows")]
-pub(crate) use xai_grok_pager_pty_harness::host_clipboard::clipboard_roundtrip_works;
+pub(crate) use intelekt_pager_pty_harness::host_clipboard::clipboard_roundtrip_works;

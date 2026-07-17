@@ -966,7 +966,7 @@ mod tests {
         let pid = process::id();
         // Derive the fragment from this process's real argv0 basename rather
         // than hardcoding a name: different test runners name the binary
-        // differently (e.g. Cargo uses `xai_grok_workspace-<hash>`), so a
+        // differently (e.g. Cargo uses `intelekt_workspace-<hash>`), so a
         // hardcoded fragment matches under one runner but not another.
         let cmdline = fs::read(format!("/proc/{pid}/cmdline")).expect("read own cmdline");
         let argv0 = cmdline.split(|&b| b == 0).next().expect("argv0 present");

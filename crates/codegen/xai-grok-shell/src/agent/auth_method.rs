@@ -169,7 +169,7 @@ pub fn build_auth_methods(inputs: AuthMethodsBuildInputs<'_>) -> BuiltAuthMethod
 
 fn build_pinned_api_key(has_external_api_key: bool) -> BuiltAuthMethods {
     if !has_external_api_key {
-        xai_grok_telemetry::unified_log::warn(
+        intelekt_telemetry::unified_log::warn(
             "auth: preferred_method=api_key but no API key credentials available",
             None,
             None,
@@ -237,7 +237,7 @@ fn build_unpinned(
         let overrode_api_key = default_auth_method_id.is_some();
         default_auth_method_id = Some(acp::AuthMethodId::new(CACHED_TOKEN_AUTH_METHOD_ID));
         if overrode_api_key {
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "auth method priority: cached_token overrides xai.api_key for default_auth_method_id",
                 None,
                 Some(serde_json::json!({
@@ -390,7 +390,7 @@ pub fn session_token_auth_gate(
 pub const AUTH_ERROR_SESSION_EXPIRED: &str =
     "Session expired. Run `grok login` to re-authenticate.";
 
-pub const AUTH_ERROR_API_KEY: &str = "Authentication failed. Run `grok login`, set XAI_API_KEY, or add api_key to ~/.grok/config.toml.";
+pub const AUTH_ERROR_API_KEY: &str = "Authentication failed. Run `grok login`, set XAI_API_KEY, or add api_key to ~/.intelekt/config.toml.";
 
 /// Next ACP method id when `cached_token` cannot proceed (missing / expired /
 /// legacy WebLogin), or `None` when fallthrough is forbidden.
@@ -442,7 +442,7 @@ pub fn cached_token_auth_method() -> acp::AuthMethod {
             acp::AuthMethodId::new(CACHED_TOKEN_AUTH_METHOD_ID),
             "cached_token".to_string(),
         )
-        .description(Some("Cached token from ~/.grok/auth.json".to_string())),
+        .description(Some("Cached token from ~/.intelekt/auth.json".to_string())),
     )
 }
 
@@ -552,7 +552,7 @@ mod tests {
         )));
     }
 
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
 
     // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -752,7 +752,7 @@ mod tests {
     // ── End-to-end: enterprise TOML -> resolved models -> build_auth_methods ─
 
     /// END-TO-END REGRESSION TEST: parses the literal enterprise-style
-    /// `~/.grok/config.toml` skeleton from the bug report, walks it through
+    /// `~/.intelekt/config.toml` skeleton from the bug report, walks it through
     /// the same predicate (`should_advertise_xai_api_key`) and the same
     /// list-builder (`build_auth_methods`) that `MvpAgent::initialize()` uses
     /// in production, and asserts that `auth_methods.first()` is `xai.api_key`

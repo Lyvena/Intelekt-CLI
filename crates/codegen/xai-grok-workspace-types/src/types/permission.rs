@@ -5,7 +5,7 @@
 //! These feed the bidirectional tool-stream flow that consumes these types.
 //!
 //! TODO(workspace): align with the canonical permission types in
-//! `xai-grok-shell` once the wire surface is firm.
+//! `intelekt-shell` once the wire surface is firm.
 
 use serde::{Deserialize, Serialize};
 

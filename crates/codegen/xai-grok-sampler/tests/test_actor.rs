@@ -3,7 +3,7 @@
 //! Tests are integration-style (in `tests/`) rather than unit tests
 //! because they require a real `tokio::runtime` and a mock HTTP
 //! server (axum) to talk to the `SamplingClient`. Happy-path SSE
-//! payloads come from `xai_grok_test_support::sse`.
+//! payloads come from `intelekt_test_support::sse`.
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -20,14 +20,14 @@ use serde_json::json;
 use tokio::net::TcpListener;
 use tokio::sync::{mpsc, oneshot};
 
-use xai_grok_sampler::{
+use intelekt_sampler::{
     ApiBackend, RequestId, RetryPolicy, SamplerActor, SamplerConfig, SamplingChannel,
     SamplingErrorKind, SamplingEvent,
 };
-use xai_grok_sampling_types::{
+use intelekt_sampling_types::{
     ConversationItem, ConversationRequest, DoomLoopRecoveryPolicy, UserItem,
 };
-use xai_grok_test_support::{SseEvent, sse};
+use intelekt_test_support::{SseEvent, sse};
 
 // ---------------------------------------------------------------------------
 // Mock server harness
@@ -104,7 +104,7 @@ fn test_config(base_url: String, model: &str) -> SamplerConfig {
 fn user_request(text: &str) -> ConversationRequest {
     ConversationRequest {
         items: vec![ConversationItem::User(UserItem {
-            content: vec![xai_grok_sampling_types::ContentPart::Text {
+            content: vec![intelekt_sampling_types::ContentPart::Text {
                 text: std::sync::Arc::<str>::from(text),
             }],
             synthetic_reason: None,
@@ -645,7 +645,7 @@ async fn messages_empty_refusal_completes_without_retry() {
         SamplingEvent::Completed { response, .. } => {
             assert_eq!(
                 response.stop_reason,
-                Some(xai_grok_sampling_types::StopReason::ContentFilter)
+                Some(intelekt_sampling_types::StopReason::ContentFilter)
             );
         }
         other => panic!("expected Completed, got {other:?}"),

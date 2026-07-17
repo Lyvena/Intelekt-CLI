@@ -1665,12 +1665,12 @@ mod tests {
     fn append_roster_rows_uses_model_id_as_secondary_line() {
         let empty = std::collections::BTreeSet::new();
         let entry = RosterEntry {
-            model_id: Some("grok-4.5".to_string()),
+            model_id: Some("intelekt-4.5".to_string()),
             ..roster_entry_with("m", Some("Fix the bug"), RosterActivity::Dormant)
         };
         let rows = collect_roster(&[entry], &empty);
         assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].secondary_line.as_deref(), Some("grok-4.5"));
+        assert_eq!(rows[0].secondary_line.as_deref(), Some("intelekt-4.5"));
     }
     /// Without a model id there's genuinely nothing to show, so the
     /// second line stays empty rather than rendering a placeholder.
@@ -1744,7 +1744,7 @@ mod tests {
     /// the list uncluttered).
     #[test]
     fn idle_local_agent_without_message_has_blank_secondary() {
-        let agent = make_idle_agent_with_model(Some("grok-4.5"));
+        let agent = make_idle_agent_with_model(Some("intelekt-4.5"));
         assert_eq!(classify_top_level(&agent), RowState::Idle);
         let row = top_level_row(AgentId(0), &agent, false, false, None);
         assert_eq!(
@@ -1765,7 +1765,7 @@ mod tests {
     #[test]
     fn subtitle_worktree_shows_label_branch_and_marker() {
         let mut agent = make_idle_agent_with_model(None);
-        agent.session.cwd = PathBuf::from("/home/me/.grok/worktrees/x/location-picker");
+        agent.session.cwd = PathBuf::from("/home/me/.intelekt/worktrees/x/location-picker");
         agent.is_worktree = true;
         agent.worktree_label = Some("location-picker".to_string());
         agent.current_branch = Some("kevin/feature".to_string());

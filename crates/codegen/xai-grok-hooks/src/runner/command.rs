@@ -120,7 +120,7 @@ pub async fn run_command_hook(
         }
         #[cfg(not(unix))]
         {
-            let inv = xai_grok_config::shell::shell_command_argv(&command_str);
+            let inv = intelekt_config::shell::shell_command_argv(&command_str);
             let mut c = tokio::process::Command::new(&inv.program);
             c.args(&inv.args).envs(inv.env);
             c
@@ -144,10 +144,10 @@ pub async fn run_command_hook(
 
     // Detach from controlling terminal so child processes (e.g. GPG pinentry)
     // cannot open /dev/tty and corrupt the TUI display. Delegates to
-    // `xai_grok_tools::util::detach_command`: Unix uses the same setsid /
+    // `intelekt_tools::util::detach_command`: Unix uses the same setsid /
     // EPERM→setpgid pre_exec path as before; Windows sets CREATE_NO_WINDOW only
     // (DETACHED_PROCESS is intentionally omitted — it breaks stdio inheritance).
-    xai_grok_tools::util::detach_command(&mut cmd);
+    intelekt_tools::util::detach_command(&mut cmd);
 
     // Spawn the child process.
     //
@@ -689,13 +689,13 @@ mod tests {
             url: None,
             url_raw: None,
             timeout_ms: 5000,
-            source_dir: std::path::PathBuf::from("/project/.grok/hooks"),
+            source_dir: std::path::PathBuf::from("/project/.intelekt/hooks"),
             extra_env: std::collections::HashMap::new(),
         };
         assert_eq!(
             resolve_command_path(&spec),
             Some(std::path::PathBuf::from(
-                "/project/.grok/hooks/bin/check.sh"
+                "/project/.intelekt/hooks/bin/check.sh"
             ))
         );
     }
@@ -1171,7 +1171,7 @@ mod tests {
             std::fs::set_permissions(&script, perms).unwrap();
         }
 
-        // Inject HOME via extra_env so `sh -c "~/.grok-test-hooks-gb856/..."`
+        // Inject HOME via extra_env so `sh -c "~/.intelekt-test-hooks-gb856/..."`
         // expands `~` to the temp dir. This avoids depending on the system
         // HOME, which is absent in hermetic sandboxed test runners.
         let mut extra_env = std::collections::HashMap::new();
@@ -1188,9 +1188,9 @@ mod tests {
             matcher: None,
             enabled: true,
             command: Some(std::path::PathBuf::from(
-                "~/.grok-test-hooks-gb856/tilde-test.sh",
+                "~/.intelekt-test-hooks-gb856/tilde-test.sh",
             )),
-            command_raw: Some("~/.grok-test-hooks-gb856/tilde-test.sh".to_string()),
+            command_raw: Some("~/.intelekt-test-hooks-gb856/tilde-test.sh".to_string()),
             url: None,
             url_raw: None,
             timeout_ms: 5000,

@@ -357,7 +357,7 @@ fn is_table_line(line: &Line<'_>) -> bool {
 /// e.g. `│ ` for a single-level quote or `│ │ ` for a nested quote.
 /// Returns 0 if the text does not start with a blockquote prefix.
 ///
-/// The selection layer's stricter, style-aware twin lives in xai-grok-pager
+/// The selection layer's stricter, style-aware twin lives in intelekt-pager
 /// scrollback/blocks/quote_bar.rs (`rendered_quote_prefix_len`); it relies on
 /// this wrap layer re-injecting the prefix spans (with their styles) on
 /// continuation rows, so keep the two shapes in agreement.
@@ -803,7 +803,7 @@ mod tests {
         // Use the real theme's markdown style to produce spans.
         let md_style = crate::theme::md_style::style();
         let md = "uses [Buildkite](https://buildkite.com/) here\n";
-        let (out, _) = xai_grok_markdown::render_markdown_ratatui_full(md, md_style, true, None);
+        let (out, _) = intelekt_markdown::render_markdown_ratatui_full(md, md_style, true, None);
         assert!(!out.lines.is_empty());
 
         // Wrap at narrow width.
@@ -849,7 +849,7 @@ mod tests {
             [Kubernetes](https://kubernetes.io/) clusters. Source code is hosted on \
             [GitHub](https://github.com/) and CI/CD runs via \
             [Buildkite](https://buildkite.com/).\n";
-        let (out, _) = xai_grok_markdown::render_markdown_ratatui_full(md, md_style, true, None);
+        let (out, _) = intelekt_markdown::render_markdown_ratatui_full(md, md_style, true, None);
         let labels = [
             "Bazel",
             "uv",

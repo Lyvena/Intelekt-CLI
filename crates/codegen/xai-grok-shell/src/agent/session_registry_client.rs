@@ -177,7 +177,7 @@ impl SessionRegistryClient {
     /// Attach an `AuthManager` so the request signing and 401
     /// recovery go through the consolidated auth path.
     pub fn with_auth(mut self, auth_manager: std::sync::Arc<crate::auth::AuthManager>) -> Self {
-        let provider: std::sync::Arc<dyn xai_grok_auth::AuthCredentialProvider> =
+        let provider: std::sync::Arc<dyn intelekt_auth::AuthCredentialProvider> =
             std::sync::Arc::new(
                 crate::auth::credential_provider::ShellAuthCredentialProvider::new(
                     auth_manager.clone(),

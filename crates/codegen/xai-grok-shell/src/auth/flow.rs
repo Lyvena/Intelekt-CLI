@@ -234,8 +234,8 @@ async fn run_external_auth_provider(
         cmd.env("GROK_AUTH_EXPIRED", "1");
     }
 
-    xai_grok_tools::util::detach_command(&mut cmd);
-    cmd.envs(xai_grok_tools::util::pager_env());
+    intelekt_tools::util::detach_command(&mut cmd);
+    cmd.envs(intelekt_tools::util::pager_env());
 
     let mut child = cmd
         .spawn()
@@ -473,7 +473,7 @@ async fn run_auth_flow_inner(
     if !force_interactive && let Some(auth) = auth_manager.current() {
         if is_cached_credential_compatible(&auth, grok_com_config) {
             tracing::info!(auth_mode = ?auth.auth_mode, "auth: using cached credentials");
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "auth: using cached credentials",
                 None,
                 Some(serde_json::json!({ "auth_mode": format!("{:?}", auth.auth_mode) })),
@@ -505,7 +505,7 @@ async fn run_auth_flow_inner(
         // Read disk first — another process may have already refreshed.
         let disk_auth = auth_manager.read_disk_auth();
         let disk_expired = disk_auth.as_ref().is_some_and(crate::auth::is_expired);
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "auth run_auth_flow expired path",
             None,
             Some(serde_json::json!({
@@ -517,7 +517,7 @@ async fn run_auth_flow_inner(
         if disk_auth.as_ref().is_some_and(|d| {
             !crate::auth::is_expired(d) && is_cached_credential_compatible(d, grok_com_config)
         }) {
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "auth run_auth_flow using valid disk token",
                 None,
                 None,
@@ -543,7 +543,7 @@ async fn run_auth_flow_inner(
                         )
                     ) && d.refresh_token.is_some()
                 }) {
-                    xai_grok_telemetry::unified_log::warn(
+                    intelekt_telemetry::unified_log::warn(
                         "auth run_auth_flow refresh failed, deferring to consumer refresh",
                         None,
                         Some(serde_json::json!({
@@ -554,7 +554,7 @@ async fn run_auth_flow_inner(
                     auth_manager.hot_swap(d);
                     return Ok((ret, false));
                 }
-                xai_grok_telemetry::unified_log::warn(
+                intelekt_telemetry::unified_log::warn(
                     "auth run_auth_flow refresh failed, falling through to interactive",
                     None,
                     Some(serde_json::json!({
@@ -592,7 +592,7 @@ async fn run_auth_flow_inner(
             Ok(new_auth) => match auth_manager.save_without_enrichment(new_auth).await {
                 Ok(auth) => {
                     let _ = auth_manager.remove_scope(LEGACY_AUTH_SCOPE);
-                    xai_grok_telemetry::unified_log::info(
+                    intelekt_telemetry::unified_log::info(
                         "auth: devbox migration in auth flow succeeded",
                         None,
                         Some(serde_json::json!({
@@ -967,7 +967,7 @@ pub fn perform_logout(
     // Intentional credential removal must be attributable in
     // unified.jsonl, so a later "auth.json entry gone" can be
     // distinguished from accidental loss (deleted/corrupt file).
-    xai_grok_telemetry::unified_log::info(
+    intelekt_telemetry::unified_log::info(
         "auth: logout",
         None,
         Some(serde_json::json!({
@@ -985,10 +985,10 @@ pub fn perform_logout(
         // Clearing identity before the flush closes the window in which a
         // concurrent emission between flush and identity-reset would still
         // stamp the prior user's ids onto a customer-collector record.
-        xai_grok_telemetry::external::set_identity(
-            xai_grok_telemetry::external::IdentityAttrs::default(),
+        intelekt_telemetry::external::set_identity(
+            intelekt_telemetry::external::IdentityAttrs::default(),
         );
-        xai_grok_telemetry::external::flush();
+        intelekt_telemetry::external::flush();
         if let Some(scope) = scope {
             auth_manager.remove_scope(scope)?;
         } else {

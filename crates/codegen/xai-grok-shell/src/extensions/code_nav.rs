@@ -175,10 +175,10 @@ pub struct StatusResponse {
 /// they depend on agent-level config (client type, feature flags).
 pub async fn handle(
     agent: &MvpAgent,
-    ops: &xai_grok_workspace::WorkspaceOps,
+    ops: &intelekt_workspace::WorkspaceOps,
     args: &acp::ExtRequest,
 ) -> ExtResult {
-    use xai_grok_workspace::workspace_ops::*;
+    use intelekt_workspace::workspace_ops::*;
 
     match args.method.as_ref() {
         "x.ai/code/goto-definition" => {
@@ -353,7 +353,7 @@ pub async fn handle(
 
 /// Convert workspace CodeNavResponse to the shell's CodeNavResponse format
 /// and wrap in the `ExtMethodResult` envelope that clients expect.
-fn to_code_nav_ext_response(resp: xai_grok_workspace::workspace_ops::CodeNavResponse) -> ExtResult {
+fn to_code_nav_ext_response(resp: intelekt_workspace::workspace_ops::CodeNavResponse) -> ExtResult {
     let symbol = resp
         .locations
         .first()

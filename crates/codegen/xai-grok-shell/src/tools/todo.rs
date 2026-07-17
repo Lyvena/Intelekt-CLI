@@ -1,13 +1,13 @@
-//! Todo types — re-exported from `xai-grok-tools` with ACP conversion helpers.
+//! Todo types — re-exported from `intelekt-tools` with ACP conversion helpers.
 //!
-//! Types are canonical in `xai-grok-tools`. This module adds ACP ↔ TodoItem
-//! conversions since `xai-grok-tools` is protocol-agnostic.
+//! Types are canonical in `intelekt-tools`. This module adds ACP ↔ TodoItem
+//! conversions since `intelekt-tools` is protocol-agnostic.
 
-pub use xai_grok_tools::implementations::grok_build::todo::TodoId;
-pub use xai_grok_tools::implementations::grok_build::todo::TodoItem;
-pub use xai_grok_tools::implementations::grok_build::todo::TodoPriority;
-pub use xai_grok_tools::implementations::grok_build::todo::TodoState;
-pub use xai_grok_tools::implementations::grok_build::todo::TodoStatus;
+pub use intelekt_tools::implementations::grok_build::todo::TodoId;
+pub use intelekt_tools::implementations::grok_build::todo::TodoItem;
+pub use intelekt_tools::implementations::grok_build::todo::TodoPriority;
+pub use intelekt_tools::implementations::grok_build::todo::TodoState;
+pub use intelekt_tools::implementations::grok_build::todo::TodoStatus;
 
 use agent_client_protocol as acp;
 

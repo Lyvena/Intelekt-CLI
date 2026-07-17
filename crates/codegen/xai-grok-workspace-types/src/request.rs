@@ -7,7 +7,7 @@
 //! **runtime concerns**, not wire concerns:
 //!
 //! - `tokio_util::sync::CancellationToken` is a tokio type. Adding it
-//!   here would force every consumer of `xai-grok-workspace-types`
+//!   here would force every consumer of `intelekt-workspace-types`
 //!   (including the eventual WASM browser SDK) to pull in tokio, which
 //!   defeats the whole point of having a separate wire-types crate.
 //!   Cancellation is a transport mechanism: in-process, the receiver
@@ -22,10 +22,10 @@
 //! to survive a network hop ([`message`](RequestMessage::message),
 //! [`metadata`](RequestMessage::metadata), and an optional
 //! [`deadline`](RequestMessage::deadline)). The runtime crate
-//! (`xai-grok-workspace`) wraps this in its own `Request<T>` that
+//! (`intelekt-workspace`) wraps this in its own `Request<T>` that
 //! adds the cancellation token and extensions map.
 //!
-//! Splitting the envelope this way keeps `xai-grok-workspace-types`
+//! Splitting the envelope this way keeps `intelekt-workspace-types`
 //! tokio-free while preserving a clean lift from wire to runtime types.
 
 use chrono::{DateTime, Utc};

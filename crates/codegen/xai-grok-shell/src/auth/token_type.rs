@@ -39,8 +39,8 @@ impl TokenType {
     }
 
     /// Stable telemetry mirror for the `manual_auth` KPI.
-    pub(crate) fn telemetry_kind(self) -> xai_grok_telemetry::events::AuthTokenKind {
-        use xai_grok_telemetry::events::AuthTokenKind as K;
+    pub(crate) fn telemetry_kind(self) -> intelekt_telemetry::events::AuthTokenKind {
+        use intelekt_telemetry::events::AuthTokenKind as K;
         match self {
             Self::OidcSession => K::OidcSession,
             Self::ExternalBinary => K::ExternalBinary,

@@ -193,7 +193,7 @@ async fn attempt_auth_recovery(
                 timeout_secs = AUTH_RECOVERY_TIMEOUT_SECS,
                 "auth recovery: relay {context}, refresh timed out"
             );
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 "auth recovery: relay refresh timed out",
                 None,
                 Some(serde_json::json!(
@@ -207,7 +207,7 @@ async fn attempt_auth_recovery(
     match recovered {
         Ok(new_auth) if new_auth.key == config.auth.key => {
             info!("auth recovery: relay {context}, token unchanged, backing off");
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "auth recovery: relay token unchanged, backing off",
                 None,
                 Some(serde_json::json!(
@@ -219,7 +219,7 @@ async fn attempt_auth_recovery(
         }
         Ok(new_auth) => {
             info!("auth recovery: relay {context}, recovered, reconnecting");
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "auth recovery: relay recovered",
                 None,
                 Some(serde_json::json!(
@@ -232,7 +232,7 @@ async fn attempt_auth_recovery(
         }
         Err(e) if crate::auth::recovery::relay_should_cancel(&e) => {
             teprintln!("{e}");
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 "auth recovery: relay giving up (terminal)",
                 None,
                 Some(serde_json::json!({ "context" : context, "error" : format!("{e}") })),
@@ -242,7 +242,7 @@ async fn attempt_auth_recovery(
         }
         Err(e) => {
             warn!(error = % e, "auth recovery: relay {context}, refresh failed");
-            xai_grok_telemetry::unified_log::debug(
+            intelekt_telemetry::unified_log::debug(
                 "auth recovery: relay refresh failed",
                 None,
                 Some(serde_json::json!({ "context" : context, "error" : format!("{e}") })),
@@ -384,7 +384,7 @@ fn build_relay_request(config: &RelayConfig) -> anyhow::Result<axum::http::Reque
     );
     req.headers_mut().insert(
         "x-grok-client-version",
-        axum::http::header::HeaderValue::from_static(xai_grok_version::VERSION),
+        axum::http::header::HeaderValue::from_static(intelekt_version::VERSION),
     );
     req.headers_mut().insert(
         crate::http::CLIENT_MODE_HEADER,
@@ -465,7 +465,7 @@ where
                 msg_res else { tprintln!("ws_inbound::liveness_timeout");
                 warn!(timeout_secs = liveness.as_secs(),
                 "no WS traffic within liveness window, treating connection as dead");
-                xai_grok_telemetry::unified_log::warn("relay: read liveness timeout, reconnecting",
+                intelekt_telemetry::unified_log::warn("relay: read liveness timeout, reconnecting",
                 None, Some(serde_json::json!({ "timeout_secs" : liveness.as_secs(),
                 })),); break; }; let Some(msg) = msg_opt else { break }; match msg {
                 Ok(Message::Text(text)) => { let trimmed_end = text

@@ -1258,8 +1258,8 @@ pub(super) fn dispatch_dashboard_dispatch_slash(app: &mut AppView, text: String)
         let reg = dashboard.dispatch.slash_controller.registry();
 
         {
-            use xai_grok_telemetry::events::{PagerCommandSource, PagerSlashCommand};
-            use xai_grok_telemetry::session_ctx::log_event;
+            use intelekt_telemetry::events::{PagerCommandSource, PagerSlashCommand};
+            use intelekt_telemetry::session_ctx::log_event;
             let source = if reg.is_builtin(invocation.token) {
                 PagerCommandSource::Builtin
             } else {
@@ -1471,7 +1471,7 @@ pub(super) fn dispatch_dashboard_dispatch_slash(app: &mut AppView, text: String)
 fn stage_dashboard_model(
     app: &mut AppView,
     model_id: acp::ModelId,
-    effort: Option<xai_grok_shell::sampling::types::ReasoningEffort>,
+    effort: Option<intelekt_shell::sampling::types::ReasoningEffort>,
 ) {
     let display = app
         .models
@@ -1523,7 +1523,7 @@ pub(super) fn apply_pending_dispatch_config(
         }
         DashboardDispatchMode::Plan => {
             agent.session.yolo_mode = false;
-            agent.deferred_session_mode = Some(xai_grok_tools::types::SessionMode::Plan);
+            agent.deferred_session_mode = Some(intelekt_tools::types::SessionMode::Plan);
             // Optimistic so the agent view reflects plan mode immediately when
             // opened via Ctrl+S, before the ACP round-trip confirms it.
             agent.plan_mode_pending = Some(true);
@@ -2142,15 +2142,15 @@ pub(super) fn dispatch_dashboard_permission_select(
     {
         let selection = match scope.selected {
             crate::views::permission_view::McpScope::Tool => {
-                xai_grok_workspace::permission::McpScopeSelection::Tool {
+                intelekt_workspace::permission::McpScopeSelection::Tool {
                     tool_name: scope.tool_name.clone(),
                 }
             }
             crate::views::permission_view::McpScope::Server => match &scope.server_prefix {
-                Some(prefix) => xai_grok_workspace::permission::McpScopeSelection::Server {
+                Some(prefix) => intelekt_workspace::permission::McpScopeSelection::Server {
                     server: prefix.clone(),
                 },
-                None => xai_grok_workspace::permission::McpScopeSelection::Tool {
+                None => intelekt_workspace::permission::McpScopeSelection::Tool {
                     tool_name: scope.tool_name.clone(),
                 },
             },
@@ -2162,7 +2162,7 @@ pub(super) fn dispatch_dashboard_permission_select(
         && perm.bash_selection_count > 0
     {
         let parts: Vec<String> = h.highlighted_words[..perm.bash_selection_count].to_vec();
-        serde_json::to_value(xai_grok_workspace::permission::BashCommandSelectedTerms {
+        serde_json::to_value(intelekt_workspace::permission::BashCommandSelectedTerms {
             command_parts: parts,
         })
         .ok()

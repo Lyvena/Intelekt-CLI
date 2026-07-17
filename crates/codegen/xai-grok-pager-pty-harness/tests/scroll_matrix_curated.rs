@@ -13,8 +13,8 @@
 
 use std::path::PathBuf;
 
-use xai_grok_pager_pty_harness::pager_binary;
-use xai_grok_pager_pty_harness::scroll_matrix::{
+use intelekt_pager_pty_harness::pager_binary;
+use intelekt_pager_pty_harness::scroll_matrix::{
     CellReport, CellStatus, curated, run_cell, summary_table,
 };
 

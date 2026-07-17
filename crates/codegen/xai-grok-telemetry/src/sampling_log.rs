@@ -1,4 +1,4 @@
-//! Tracing layer for `target: "sampling_log"` → `~/.grok/logs/sampling.jsonl`.
+//! Tracing layer for `target: "sampling_log"` → `~/.intelekt/logs/sampling.jsonl`.
 //! Enable with `--log-sampling` or `GROK_LOG_SAMPLING=1`.
 
 use std::sync::Mutex;
@@ -8,7 +8,7 @@ use tracing_subscriber::fmt::writer::BoxMakeWriter;
 use tracing_subscriber::layer::Layer;
 use tracing_subscriber::registry::LookupSpan;
 
-use xai_grok_config::grok_home;
+use intelekt_config::grok_home;
 
 use crate::instrumentation::{NoOpLayer, TargetFilterLayer};
 

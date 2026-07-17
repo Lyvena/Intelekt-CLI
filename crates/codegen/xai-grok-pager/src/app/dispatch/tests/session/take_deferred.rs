@@ -2,7 +2,7 @@ use crate::acp::model_state::{EffortTokenError, ModelState};
 use crate::app::dispatch::session::lifecycle::{DeferredSwitchOutcome, take_deferred_model_switch};
 use agent_client_protocol as acp;
 use std::sync::Arc;
-use xai_grok_shell::sampling::types::ReasoningEffort;
+use intelekt_shell::sampling::types::ReasoningEffort;
 
 fn model_with_support(id: &str, supports: bool) -> (acp::ModelId, acp::ModelInfo) {
     let id = acp::ModelId::new(Arc::from(id));
@@ -24,7 +24,7 @@ fn model_with_support(id: &str, supports: bool) -> (acp::ModelId, acp::ModelInfo
 }
 
 fn models_with_current(supports: bool) -> ModelState {
-    let (id, info) = model_with_support("grok-build", supports);
+    let (id, info) = model_with_support("intelekt-cli", supports);
     let mut models = ModelState::default();
     models.available.insert(id.clone(), info);
     models.current = Some(id);

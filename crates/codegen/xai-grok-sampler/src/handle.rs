@@ -2,7 +2,7 @@
 
 use tokio::sync::{mpsc, oneshot};
 
-use xai_grok_sampling_types::{ConversationRequest, ConversationResponse, SamplingError};
+use intelekt_sampling_types::{ConversationRequest, ConversationResponse, SamplingError};
 
 use crate::commands::SamplerCommand;
 use crate::config::SamplerConfig;

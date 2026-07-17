@@ -188,22 +188,22 @@ pub enum ShellKind {
 impl ShellKind {
     /// Detect the user's shell from `$SHELL`, falling back to bash.
     pub fn detect() -> Self {
-        match xai_grok_config::shell::detect_unix_shell_kind() {
-            xai_grok_config::shell::UnixShellKind::Bash => Self::Bash,
-            xai_grok_config::shell::UnixShellKind::Zsh => Self::Zsh,
+        match intelekt_config::shell::detect_unix_shell_kind() {
+            intelekt_config::shell::UnixShellKind::Bash => Self::Bash,
+            intelekt_config::shell::UnixShellKind::Zsh => Self::Zsh,
         }
     }
 
     /// Resolved absolute path to the shell binary. Falls back from `$SHELL` →
     /// `which` → common dirs → `/bin/<name>`. Result is cached process-wide
-    /// in `xai_grok_config::shell::unix_shell_path`. See that function for
+    /// in `intelekt_config::shell::unix_shell_path`. See that function for
     /// the full cascade. Returns `&'static str`.
     pub fn binary_path(&self) -> &'static str {
         let kind = match self {
-            Self::Bash => xai_grok_config::shell::UnixShellKind::Bash,
-            Self::Zsh => xai_grok_config::shell::UnixShellKind::Zsh,
+            Self::Bash => intelekt_config::shell::UnixShellKind::Bash,
+            Self::Zsh => intelekt_config::shell::UnixShellKind::Zsh,
         };
-        xai_grok_config::shell::unix_shell_path(kind)
+        intelekt_config::shell::unix_shell_path(kind)
     }
 
     /// The user's primary rc file name (relative to `$HOME`).

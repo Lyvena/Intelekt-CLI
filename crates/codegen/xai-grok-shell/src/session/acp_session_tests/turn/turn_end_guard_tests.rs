@@ -4,8 +4,8 @@ use super::{
 };
 use crate::tools::todo::TodoStatus;
 use std::collections::HashMap;
-use xai_grok_tools::types::template_renderer::TemplateRenderer;
-use xai_grok_tools::types::tool::ToolKind;
+use intelekt_tools::types::template_renderer::TemplateRenderer;
+use intelekt_tools::types::tool::ToolKind;
 
 // ── TodoGate pure-function tests ──────────────────────────────────
 //
@@ -104,7 +104,7 @@ fn todo_gate_has_its_own_vocabulary() {
         "gate reminder must use its own signature phrase, got:\n{gate}"
     );
     // The periodic-nudge text from
-    // `xai_grok_tools::reminders::todo_nudge::try_fire` is "The {}
+    // `intelekt_tools::reminders::todo_nudge::try_fire` is "The {}
     // tool hasn't been used recently…" — leaking that phrase into
     // the gate's body would conflate the two reminders.
     assert!(

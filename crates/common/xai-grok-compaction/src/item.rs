@@ -3,7 +3,7 @@
 //! The shared compaction algorithms operate over a sequence of *items*
 //! (turns/messages) without knowing the concrete harness type. The chat
 //! harness implements [`CompactionItem`] for its `GrokTurn`;
-//! grok-build implements it for `xai_grok_sampling_types::ConversationItem`.
+//! intelekt-cli implements it for `intelekt_sampling_types::ConversationItem`.
 //!
 //! Keeping the contract minimal is deliberate: the algorithms only need
 //! enough structure to (a) classify roles, (b) read text, and (c) preserve
@@ -20,7 +20,7 @@
 /// Harness-agnostic role of a single conversation item.
 ///
 /// This is the common denominator of `GrokRole` (Grok chat) and the
-/// `ConversationItem` variants (grok-build).
+/// `ConversationItem` variants (intelekt-cli).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CompactionRole {
     /// System prompt.
@@ -52,7 +52,7 @@ pub struct CompactionFileRef {
 ///
 /// Implementors:
 /// - Grok chat: `GrokTurn`
-/// - grok-build: `ConversationItem`
+/// - intelekt-cli: `ConversationItem`
 pub trait CompactionItem {
     /// The harness-agnostic role of this item.
     fn role(&self) -> CompactionRole;
@@ -120,18 +120,18 @@ pub trait CompactionItemBuilder: CompactionItem + Clone {
 
 /// Write seam for the full-replace **assembler**
 /// ([`crate::code_compaction::assemble::assemble_compacted_history`]):
-/// constructs the typed harness items that make up grok-build's rebuilt
+/// constructs the typed harness items that make up intelekt-cli's rebuilt
 /// history.
 ///
 /// This is a sibling of [`CompactionItemBuilder`], not a part of it, on
 /// purpose. `CompactionItemBuilder` is already implemented by Grok chat's
 /// `GrokTurn`; adding these constructors to it as required methods would break
-/// that impl. They are also grok-build-specific (Grok chat's tail-keep path
+/// that impl. They are also intelekt-cli-specific (Grok chat's tail-keep path
 /// has no `user_meta` / `project_instructions` / `system_reminder` carrier
 /// concept), so they live in their own seam that only the full-replace
 /// assembler depends on.
 ///
-/// The grok-build implementor (`ConversationItem`) maps each constructor to the
+/// The intelekt-cli implementor (`ConversationItem`) maps each constructor to the
 /// matching factory so the `SyntheticReason` tags the replay / spawn-time
 /// idempotence guards rely on are preserved.
 pub trait CompactionItemFactory: Sized {

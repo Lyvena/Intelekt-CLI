@@ -152,8 +152,8 @@ fn pump_until(
 /// `GROK_LOCAL_AUTH=1` in the spawn env so the shell's scope-key lookup
 /// resolves this entry.
 fn seed_fake_oauth_local_issuer(content: &ContentController, user: &str) {
-    let grok_home = content.home().join(".grok");
-    std::fs::create_dir_all(&grok_home).expect("create temp .grok");
+    let grok_home = content.home().join(".intelekt");
+    std::fs::create_dir_all(&grok_home).expect("create temp .intelekt");
     std::fs::write(
         grok_home.join("auth.json"),
         format!(
@@ -233,7 +233,7 @@ async fn subscription_watch_polls_free_tier_then_goes_dormant_after_upgrade() {
     // Start free-targeted (no paid-only model); swap after upgrade.
     // OIDC mock is started only after free-phase polling so early refresh
     // still connection-refuses (keeps the free watch path hermetic).
-    let content = ContentController::start_with_models(vec![MockModel::new("grok-3")])
+    let content = ContentController::start_with_models(vec![MockModel::new("intelekt-3")])
         .await
         .expect("start content");
     content.set_response(format!("{MOCK_RESPONSE_SENTINEL} watch cadence."));
@@ -266,7 +266,7 @@ async fn subscription_watch_polls_free_tier_then_goes_dormant_after_upgrade() {
         "subscription_tier_display": PAID_TIER_DISPLAY,
     }));
     content.server().set_models(vec![
-        MockModel::new("grok-3"),
+        MockModel::new("intelekt-3"),
         MockModel::new(PAID_ONLY_MODEL),
     ]);
     let models_before = models_count(&content);
@@ -331,7 +331,7 @@ async fn startup_gate_shows_paywall_for_free_user_after_live_check() {
     // Gated settings (no allow_access), free user (no subscriptionTier).
     content.server().set_settings(json!({
         "gate_message": GATE_MSG,
-        "gate_url": "https://grok.com/supergrok?referrer=grok-build",
+        "gate_url": "https://grok.com/supergrok?referrer=intelekt-cli",
         "gate_label": "Subscribe",
     }));
 

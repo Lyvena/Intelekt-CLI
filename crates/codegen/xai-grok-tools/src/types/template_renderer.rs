@@ -49,7 +49,7 @@ struct ToolsContext {
 /// `${{ tools.by_kind.read }}` / `${{ params.edit.old_string }}`.
 ///
 /// Shell flags are computed once in [`TemplateRenderer::new`] from
-/// [`xai_grok_config::shell`].
+/// [`intelekt_config::shell`].
 #[derive(Debug, Clone, serde::Serialize)]
 struct TemplateContext {
     tools: ToolsContext,
@@ -156,8 +156,8 @@ impl TemplateRenderer {
                 is_windows: cfg!(not(unix)),
                 // `chain_separator()` returns `"&&"` on Unix, so the
                 // comparison is naturally false there — no cfg guard needed.
-                shell_uses_semicolon: xai_grok_config::shell::chain_separator() == ";",
-                has_unix_utilities: xai_grok_config::shell::has_unix_utilities(),
+                shell_uses_semicolon: intelekt_config::shell::chain_separator() == ";",
+                has_unix_utilities: intelekt_config::shell::has_unix_utilities(),
             },
         }
     }

@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use xai_grok_sampling_types::{
+use intelekt_sampling_types::{
     ConversationResponse, EmptyResponseContext, ResponseModelMetadata, SamplingError,
 };
 

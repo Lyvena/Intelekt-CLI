@@ -1,6 +1,6 @@
 //! Shared OpenTelemetry tracing layer for exporting spans to the cli-chat-proxy.
 //!
-//! `xai-grok-pager` uses this module to set up OTLP
+//! `intelekt-pager` uses this module to set up OTLP
 //! trace export so that session-level spans (with `session_id`, tool timings,
 //! inference latency, etc.) are available in the product observability backend.
 use crate::instrumentation;
@@ -12,7 +12,7 @@ use std::sync::{Arc, OnceLock};
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::Layer as _;
 use tracing_subscriber::registry::LookupSpan;
-use xai_grok_auth::AuthCredentialProvider;
+use intelekt_auth::AuthCredentialProvider;
 mod redact;
 static TRACER_PROVIDER: OnceLock<SdkTracerProvider> = OnceLock::new();
 const ENV_OTEL_FILTER: &str = "GROK_OTEL_FILTER";
@@ -21,14 +21,14 @@ const DEFAULT_OTEL_FILTER: &str = "info";
 /// the layer needs that used to be reach-ins into shell-internal types
 /// (`AuthManager`, `EndpointsConfig`, `GrokComConfig`).
 ///
-/// Built by the binaries (`xai-grok-pager`) from their own
+/// Built by the binaries (`intelekt-pager`) from their own
 /// configuration. The credentials provider is constructed by shell's
-/// `xai_grok_shell::auth::credential_provider::build_otel_credential_provider`.
+/// `intelekt_shell::auth::credential_provider::build_otel_credential_provider`.
 pub struct OtelLayerConfig {
     /// Live credential source. Read on every batch export to obtain a fresh
     /// bearer token for the OTLP `Authorization` header.
     pub credentials: Arc<dyn AuthCredentialProvider>,
-    /// Value for the `X-XAI-Token-Auth` header (typically `"xai-grok-cli"`).
+    /// Value for the `X-XAI-Token-Auth` header (typically `"intelekt-cli"`).
     pub token_header_value: String,
     /// Optional extra access key for traces. Injection is honored only when
     /// the crate's optional non-production feature is enabled and only for
@@ -148,7 +148,7 @@ fn build_export_headers(
     token: &str,
     token_auth_header: Option<&str>,
     extra_headers: &[(String, String)],
-    snapshot: &xai_grok_auth::CredentialSnapshot,
+    snapshot: &intelekt_auth::CredentialSnapshot,
 ) -> std::collections::HashMap<String, String> {
     let mut headers = static_headers.clone();
     for (name, value) in [
@@ -180,7 +180,7 @@ fn build_otlp_exporter(
     token_auth_header: Option<&str>,
     extra_headers: &[(String, String)],
     http_client: crate::otlp_http::BlockingOtlpClient,
-    snapshot: &xai_grok_auth::CredentialSnapshot,
+    snapshot: &intelekt_auth::CredentialSnapshot,
 ) -> Result<opentelemetry_otlp::SpanExporter, opentelemetry_otlp::ExporterBuildError> {
     let headers = build_export_headers(
         static_headers,
@@ -220,7 +220,7 @@ impl RefreshableSpanExporter {
 /// init would leave them blank for a session that authenticates mid-run).
 fn resource_with_tenant_id(
     base: opentelemetry_sdk::Resource,
-    snapshot: &xai_grok_auth::CredentialSnapshot,
+    snapshot: &intelekt_auth::CredentialSnapshot,
 ) -> opentelemetry_sdk::Resource {
     let tenant_attrs: Vec<opentelemetry::KeyValue> = [
         ("deployment.id", &snapshot.deployment_id),
@@ -485,7 +485,7 @@ mod tests {
     use super::*;
     use async_trait::async_trait;
     use std::sync::Mutex;
-    use xai_grok_auth::{AuthCredentialProvider, CredentialSnapshot, HttpAuth};
+    use intelekt_auth::{AuthCredentialProvider, CredentialSnapshot, HttpAuth};
     /// Test double for `AuthCredentialProvider`. When constructed with
     /// `with_refresh`, `refresh_after_unauthorized` rotates the token and
     /// returns `true`; otherwise it returns `false`.
@@ -562,7 +562,7 @@ mod tests {
             ))
             .expect("test OTLP HTTP client must build"),
             resource: parking_lot::Mutex::new(opentelemetry_sdk::Resource::builder().build()),
-            token_header_value: Arc::from("xai-grok-cli"),
+            token_header_value: Arc::from("intelekt-cli"),
             extra_headers: Arc::new(Vec::new()),
         }
     }

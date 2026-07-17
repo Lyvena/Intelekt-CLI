@@ -1,32 +1,32 @@
 [package]
-name = "xai-grok-pager-bin"
+name = "intelekt-pager-bin"
 version = "0.2.101"
 edition.workspace = true
 license = "Apache-2.0"
 authors = ["xAI"]
-default-run = "xai-grok-pager"
+default-run = "intelekt-pager"
 
-# Composition-root binary for the Grok Build TUI. The artifact is still named
-# `xai-grok-pager`. This package exists so the binary can link both the pager
-# library and the optional `xai-grok-pager-minimal` render mode: `minimal`
-# depends on `xai-grok-pager`, so the pager library cannot depend back on it
+# Composition-root binary for the Intelekt CLI TUI. The artifact is still named
+# `intelekt-pager`. This package exists so the binary can link both the pager
+# library and the optional `intelekt-pager-minimal` render mode: `minimal`
+# depends on `intelekt-pager`, so the pager library cannot depend back on it
 # (cargo cycle). The binary installs the minimal-mode IoC hooks at startup.
 [[bin]]
-name = "xai-grok-pager"
+name = "intelekt-pager"
 path = "src/main.rs"
 
 [dependencies]
 # The pager library (all application logic + the public API main.rs drives).
-xai-grok-pager = { path = "../xai-grok-pager" }
+intelekt-pager = { path = "../intelekt-pager" }
 # Optional scrollback-native render mode, wired in via the fn-pointer seam.
-xai-grok-pager-minimal = { path = "../xai-grok-pager-minimal" }
+intelekt-pager-minimal = { path = "../intelekt-pager-minimal" }
 
 # Agent runtime + leader/stdio/headless entry points.
-xai-grok-shell = { workspace = true }
-xai-grok-update = { path = "../xai-grok-update" }
-xai-grok-version = { workspace = true }
-xai-grok-telemetry = { workspace = true }
-xai-grok-workspace = { workspace = true }
+intelekt-shell = { workspace = true }
+intelekt-update = { path = "../intelekt-update" }
+intelekt-version = { workspace = true }
+intelekt-telemetry = { workspace = true }
+intelekt-workspace = { workspace = true }
 xai-crash-handler = { path = "../xai-crash-handler" }
 xai-acp-lib = { workspace = true }
 
@@ -48,8 +48,8 @@ serde_json = { workspace = true }
 dunce = { workspace = true }
 semver = { workspace = true }
 xai-tty-utils = { workspace = true }
-xai-grok-config = { workspace = true }
-xai-grok-sandbox = { path = "../xai-grok-sandbox", default-features = false }
+intelekt-config = { workspace = true }
+intelekt-sandbox = { path = "../intelekt-sandbox", default-features = false }
 rustls = { version = "0.23", default-features = false, features = [
     "ring",
     "logging",
@@ -92,5 +92,5 @@ default-bazel = [
     "sandbox-enforce",
     ]
 jemalloc = ["dep:tikv-jemallocator", "dep:tikv-jemalloc-sys", "dep:tikv-jemalloc-ctl"]
-sandbox-enforce = ["xai-grok-pager/sandbox-enforce"]
-release-dist = ["xai-grok-pager/release-dist"]
+sandbox-enforce = ["intelekt-pager/sandbox-enforce"]
+release-dist = ["intelekt-pager/release-dist"]

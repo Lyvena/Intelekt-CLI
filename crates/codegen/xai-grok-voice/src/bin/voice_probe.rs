@@ -2,12 +2,12 @@
 //!
 //! ```bash
 //! export XAI_API_KEY=...
-//! cargo run -p xai-grok-voice --bin voice-probe -- --seconds 5
+//! cargo run -p intelekt-voice --bin voice-probe -- --seconds 5
 //! ```
 
 use std::path::PathBuf;
 
-use xai_grok_voice::{
+use intelekt_voice::{
     StaticVoiceAuth, VoiceConfig, VoiceProbeOptions, format_probe_report, run_streaming_probe,
 };
 
@@ -21,7 +21,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info,xai_grok_voice=debug".into()),
+                .unwrap_or_else(|_| "info,intelekt_voice=debug".into()),
         )
         .init();
 
@@ -46,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
         #[cfg(feature = "audio")]
         {
             let (bytes, chunks) =
-                xai_grok_voice::run_mic_only_probe(config.sample_rate, args.seconds)?;
+                intelekt_voice::run_mic_only_probe(config.sample_rate, args.seconds)?;
             println!("Mic-only OK: {bytes} bytes in {chunks} chunks");
             if bytes == 0 {
                 println!("WARNING: no audio — grant mic access to the terminal");
@@ -125,7 +125,7 @@ fn load_config(path: Option<&std::path::Path>) -> VoiceConfig {
     {
         return VoiceConfig::from_config_table(&table, env_base.as_deref());
     }
-    if let Ok(home) = std::env::var("GROK_HOME")
+    if let Ok(home) = std::env::var("INTELEKT_HOME")
         && let Ok(raw) = std::fs::read_to_string(PathBuf::from(home).join("config.toml"))
         && let Ok(table) = toml::from_str::<toml::Table>(&raw)
     {
@@ -135,7 +135,7 @@ fn load_config(path: Option<&std::path::Path>) -> VoiceConfig {
         std::env::var("HOME")
             .map(PathBuf::from)
             .unwrap_or_default()
-            .join(".grok/config.toml"),
+            .join(".intelekt/config.toml"),
     ) && let Ok(table) = toml::from_str::<toml::Table>(&raw)
     {
         return VoiceConfig::from_config_table(&table, env_base.as_deref());
@@ -152,9 +152,9 @@ Usage:
 
 Environment:
   XAI_API_KEY     required
-  RUST_LOG        optional (default info,xai_grok_voice=debug)
+  RUST_LOG        optional (default info,intelekt_voice=debug)
 
-Reads [voice] from ~/.grok/config.toml unless --config PATH is set.
+Reads [voice] from ~/.intelekt/config.toml unless --config PATH is set.
 "#
     );
 }

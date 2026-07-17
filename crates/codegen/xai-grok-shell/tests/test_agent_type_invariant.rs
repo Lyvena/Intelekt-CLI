@@ -15,12 +15,12 @@
 //!
 //! Run locally:
 //! ```bash
-//! cargo test -p xai-grok-shell --test test_agent_type_invariant -- --ignored
+//! cargo test -p intelekt-shell --test test_agent_type_invariant -- --ignored
 //! ```
 use agent_client_protocol::Agent as _;
 use std::future::Future;
 use std::time::Duration;
-use xai_grok_test_support::*;
+use intelekt_test_support::*;
 async fn with_local_set<F, Fut>(f: F)
 where
     F: FnOnce() -> Fut,
@@ -33,13 +33,13 @@ where
 /// second spawn in a resume test reads the stale cache written by phase 1
 /// and never sees the updated model list.
 fn invalidate_models_cache(home: &std::path::Path) {
-    let cache = home.join(".grok").join("models_cache.json");
+    let cache = home.join(".intelekt").join("models_cache.json");
     if cache.exists() {
         std::fs::remove_file(&cache).expect("failed to delete models_cache.json");
     }
 }
 /// Start a mock server with two models:
-/// - `default-model`: no agent_type (→ defaults to "grok-build")
+/// - `default-model`: no agent_type (→ defaults to "intelekt-cli")
 async fn dual_model_server() -> MockInferenceServer {
     MockInferenceServer::start_with_models(vec![
         MockModelEntry::new("default-model"),
@@ -49,8 +49,8 @@ async fn dual_model_server() -> MockInferenceServer {
     .expect("start mock server")
 }
 /// Start a mock server with two models that share the same agent_type:
-/// - `model-a`: no agent_type (→ "grok-build")
-/// - `model-b`: no agent_type (→ "grok-build")
+/// - `model-a`: no agent_type (→ "intelekt-cli")
+/// - `model-b`: no agent_type (→ "intelekt-cli")
 async fn same_type_server() -> MockInferenceServer {
     MockInferenceServer::start_with_models(vec![
         MockModelEntry::new("model-a"),
@@ -60,8 +60,8 @@ async fn same_type_server() -> MockInferenceServer {
     .expect("start mock server")
 }
 /// Session created with a model that has no `agent_type` should use the
-/// `grok-build` harness. The system prompt sent to the LLM should contain
-/// the grok-build identity string.
+/// `intelekt-cli` harness. The system prompt sent to the LLM should contain
+/// the intelekt-cli identity string.
 #[tokio::test]
 #[ignore]
 async fn test_default_model_uses_grok_build_harness() {
@@ -79,8 +79,8 @@ async fn test_default_model_uses_grok_build_harness() {
             .last_system_prompt()
             .expect("should have at least one inference request");
         assert!(
-            sys_prompt.contains("Grok") || sys_prompt.contains("grok"),
-            "default model should use grok-build harness\nsystem prompt preview: {}",
+            sys_prompt.contains("Grok") || sys_prompt.contains("intelekt"),
+            "default model should use intelekt-cli harness\nsystem prompt preview: {}",
             &sys_prompt[..sys_prompt.len().min(500)]
         );
     })
@@ -154,9 +154,9 @@ async fn test_session_resume_preserves_harness() {
             .last_system_prompt()
             .expect("should have captured resumed system prompt");
         let original_has_grok =
-            original_sys_prompt.contains("Grok") || original_sys_prompt.contains("grok");
+            original_sys_prompt.contains("Grok") || original_sys_prompt.contains("intelekt");
         let resumed_has_grok =
-            resumed_sys_prompt.contains("Grok") || resumed_sys_prompt.contains("grok");
+            resumed_sys_prompt.contains("Grok") || resumed_sys_prompt.contains("intelekt");
         assert_eq!(
             original_has_grok,
             resumed_has_grok,
@@ -172,7 +172,7 @@ async fn test_session_resume_preserves_harness() {
     .await;
 }
 /// A model that doesn't declare `agent_type` in its metadata should
-/// default to `"grok-build"`. This exercises the serde default.
+/// default to `"intelekt-cli"`. This exercises the serde default.
 #[tokio::test]
 #[ignore]
 async fn test_model_without_agent_type_defaults_to_grok_build() {
@@ -194,16 +194,16 @@ async fn test_model_without_agent_type_defaults_to_grok_build() {
                 .last_system_prompt()
                 .expect("should have at least one inference request");
             assert!(
-                sys_prompt.contains("Grok") || sys_prompt.contains("grok"),
-                "model without agent_type should default to grok-build harness\nsystem prompt preview: {}",
+                sys_prompt.contains("Grok") || sys_prompt.contains("intelekt"),
+                "model without agent_type should default to intelekt-cli harness\nsystem prompt preview: {}",
                 & sys_prompt[..sys_prompt.len().min(500)]
             );
         })
         .await;
 }
 /// The `GROK_AGENT` escape hatch should override the model's agent_type.
-/// Setting `GROK_AGENT=grok-build` with an alternate-agent model should use
-/// grok-build harness.
+/// Setting `GROK_AGENT=intelekt-cli` with an alternate-agent model should use
+/// intelekt-cli harness.
 #[tokio::test]
 #[ignore]
 async fn test_grok_agent_env_overrides_model_agent_type() {
@@ -219,12 +219,12 @@ async fn test_grok_agent_env_overrides_model_agent_type() {
                 .stdout(std::process::Stdio::piped())
                 .stderr(std::process::Stdio::piped())
                 .kill_on_drop(true);
-            xai_grok_test_support::env::test_env_cmd_tokio(
+            intelekt_test_support::env::test_env_cmd_tokio(
                 &mut cmd,
                 &server.url(),
                 home.path(),
             );
-            cmd.env("GROK_AGENT", "grok-build");
+            cmd.env("GROK_AGENT", "intelekt-cli");
             let mut child = cmd.spawn().expect("spawn grok");
             let outgoing = child.stdin.take().unwrap();
             let incoming = child.stdout.take().unwrap();
@@ -334,8 +334,8 @@ async fn test_grok_agent_env_overrides_model_agent_type() {
                 .last_system_prompt()
                 .expect("should have inference request");
             assert!(
-                sys_prompt.contains("Grok") || sys_prompt.contains("grok"),
-                "GROK_AGENT=grok-build should override cursor model's agent_type\nsystem prompt preview: {}",
+                sys_prompt.contains("Grok") || sys_prompt.contains("intelekt"),
+                "GROK_AGENT=intelekt-cli should override cursor model's agent_type\nsystem prompt preview: {}",
                 & sys_prompt[..sys_prompt.len().min(500)]
             );
         })

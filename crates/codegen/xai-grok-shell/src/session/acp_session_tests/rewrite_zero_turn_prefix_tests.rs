@@ -1,6 +1,6 @@
 use super::SessionActor;
 use super::support::create_test_actor;
-use xai_grok_sampling_types::{ConversationItem, SyntheticReason};
+use intelekt_sampling_types::{ConversationItem, SyntheticReason};
 #[test]
 fn rewrites_prefix_at_index_one_without_dropping_reminder() {
     let mut conv = vec![
@@ -51,7 +51,7 @@ fn skips_synthetic_reminder_at_index_one() {
 /// Drives the real `handle_rebuild_agent_for_definition` path.
 #[tokio::test(flavor = "current_thread")]
 async fn rebuild_reinjects_goal_update_handle() {
-    use xai_grok_tools::implementations::grok_build::update_goal::{
+    use intelekt_tools::implementations::grok_build::update_goal::{
         GoalUpdateHandle, UpdateGoalInput, envelope_for_test,
     };
     let local = tokio::task::LocalSet::new();
@@ -62,7 +62,7 @@ async fn rebuild_reinjects_goal_update_handle() {
             let actor = create_test_actor(0, 256_000, 85, gw_tx, persist_tx).await;
             actor
                 .handle_rebuild_agent_for_definition(
-                    xai_grok_agent::AgentDefinition::default_grok_build(),
+                    intelekt_agent::AgentDefinition::default_grok_build(),
                 )
                 .await
                 .expect("zero-turn rebuild should succeed");
@@ -101,8 +101,8 @@ async fn rebuild_reinjects_goal_update_handle() {
 /// The seeded skill used by the rebuild skill-reminder tests. A non-plugin
 /// Local skill is always listable, so it renders into the grok markdown skill
 /// catalog when the pending baseline is drained for a different agent.
-fn regression_skill() -> xai_grok_tools::implementations::skills::types::SkillInfo {
-    xai_grok_tools::implementations::skills::types::SkillInfo {
+fn regression_skill() -> intelekt_tools::implementations::skills::types::SkillInfo {
+    intelekt_tools::implementations::skills::types::SkillInfo {
         name: "regression-baseline-skill".to_owned(),
         description: "Seeded skill for the rebuild reminder regression test.".to_owned(),
         path: "/tmp/skills/regression-baseline-skill/SKILL.md".to_owned(),
@@ -123,7 +123,7 @@ async fn seed_pending_baseline(actor: &SessionActor) {
             None,
             Some(256_000),
             None,
-            xai_grok_tools::types::compat::CompatConfig::default(),
+            intelekt_tools::types::compat::CompatConfig::default(),
         )
         .await;
 }

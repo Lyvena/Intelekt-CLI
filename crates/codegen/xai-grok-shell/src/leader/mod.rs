@@ -12,7 +12,7 @@
 //! │  ┌─────────────────────────────────────────────────────────┐│
 //! │  │                      Agent (MvpAgent)                    ││
 //! │  │   - Shared state across all clients                      ││
-//! │  │   - Persists to ~/.grok/                                 ││
+//! │  │   - Persists to ~/.intelekt/                                 ││
 //! │  └─────────────────────────────────────────────────────────┘│
 //! │                           ▲                                  │
 //! │                           │ ACP                              │
@@ -23,7 +23,7 @@
 //! │  │   - Tracks session ownership for routing                 ││
 //! │  └────────────────────────┬────────────────────────────────┘│
 //! └───────────────────────────┼──────────────────────────────────┘
-//!                             │ IPC (Unix socket at ~/.grok/leader.sock)
+//!                             │ IPC (Unix socket at ~/.intelekt/leader.sock)
 //!         ┌───────────────────┼───────────────────┐
 //!         ▼                   ▼                   ▼
 //! ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
@@ -35,12 +35,12 @@
 //! # Usage
 //!
 //! ```ignore
-//! use xai_grok_shell::leader::{connect_or_spawn, ClientCapabilities, ClientMode};
+//! use intelekt_shell::leader::{connect_or_spawn, ClientCapabilities, ClientMode};
 //!
 //! // Connect to existing leader or spawn a new one
 //! let caps = ClientCapabilities {
 //!     yolo_mode: true,
-//!     default_model: Some("grok-3-fast".to_string()),
+//!     default_model: Some("intelekt-3-fast".to_string()),
 //! };
 //! let conn = connect_or_spawn("my-client", ClientMode::Stdio, &env_urls, caps).await?;
 //!
@@ -84,7 +84,7 @@ pub use transport::listener_is_ready;
 const SPAWN_WAIT_TIMEOUT: Duration = Duration::from_secs(10);
 const SPAWN_POLL_INTERVAL: Duration = Duration::from_millis(100);
 /// Same source the leader reports, so adoption compares versions like-for-like.
-const CLIENT_LEADER_VERSION: &str = xai_grok_version::VERSION;
+const CLIENT_LEADER_VERSION: &str = intelekt_version::VERSION;
 /// Max wait for an evicted leader to exit before force-killing (relaunch drain ~5s).
 const EVICT_WAIT_TIMEOUT: Duration = Duration::from_secs(8);
 /// Whether `leader_version` is a strictly-older parseable semver than `baseline`.
@@ -549,7 +549,7 @@ pub async fn kill_stale_reachable_leaders(reason: &'static str) {
                         None,
                         Some(serde_json::json!(
                             { "pid" : * pid, "dead_leader_ver" : dead_leader_ver,
-                            "reason" : reason, "killer_ver" : xai_grok_version::VERSION,
+                            "reason" : reason, "killer_ver" : intelekt_version::VERSION,
                             }
                         )),
                     );
@@ -1137,7 +1137,7 @@ async fn request_leader_vacate(conn: &LeaderConnection, pid: Option<u32>) {
         };
         ("sigterm", outcome)
     };
-    xai_grok_telemetry::unified_log::warn(
+    intelekt_telemetry::unified_log::warn(
         "leader.evict.vacate_requested",
         None,
         Some(serde_json::json!(
@@ -1175,7 +1175,7 @@ async fn evict_leader(conn: LeaderConnection, lock: &LeaderLock) {
     } else {
         "exited"
     };
-    xai_grok_telemetry::unified_log::warn(
+    intelekt_telemetry::unified_log::warn(
         "leader.evict.completed",
         None,
         Some(serde_json::json!(
@@ -1263,7 +1263,7 @@ pub async fn connect_or_spawn(
                             elapsed_ms,
                             "Adopted sibling-spawned leader after eviction race"
                         );
-                        xai_grok_telemetry::unified_log::info(
+                        intelekt_telemetry::unified_log::info(
                             "leader.spawn.sibling_adopted",
                             None,
                             Some(serde_json::json!(
@@ -1291,7 +1291,7 @@ pub async fn connect_or_spawn(
                 let elapsed_ms = start.elapsed().as_millis() as u64;
                 info!(elapsed_ms, "Spawned and connected to leader");
                 if replacing_stale {
-                    xai_grok_telemetry::unified_log::info(
+                    intelekt_telemetry::unified_log::info(
                         "leader.spawn.replacement",
                         None,
                         Some(serde_json::json!(
@@ -1336,18 +1336,18 @@ pub async fn connect_or_spawn(
 /// Resolve the binary to spawn as the leader subprocess.
 ///
 /// For a **managed install** — the running binary lives under `grok_home`
-/// (e.g. `~/.grok/...`) — prefer the managed `~/.grok/bin/grok` symlink. After an
+/// (e.g. `~/.intelekt/...`) — prefer the managed `~/.intelekt/bin/grok` symlink. After an
 /// auto-update or `grok update` atomically swaps that symlink, `current_exe()`
 /// still resolves (via `/proc/self/exe` on Linux) to the *old* versioned target,
 /// so spawning it would relaunch the stale binary. The symlink always points to
 /// the freshly-installed version. This mirrors
-/// `xai_grok_update::auto_update::resolve_restart_exe`.
+/// `intelekt_update::auto_update::resolve_restart_exe`.
 ///
 /// For a **dev / out-of-tree binary** (`cargo run`, integration tests, installs
 /// not under `grok_home`), keep `current_exe()` so the spawned leader matches the
 /// calling binary.
 ///
-/// Falls back to `~/.grok/bin/grok` only when `current_exe()` is unavailable.
+/// Falls back to `~/.intelekt/bin/grok` only when `current_exe()` is unavailable.
 fn resolve_exe_for_spawn() -> Result<std::path::PathBuf, ConnectionError> {
     resolve_binary_with_home(&crate::util::grok_home::grok_home())
 }
@@ -1356,7 +1356,7 @@ fn resolve_binary_with_home(grok_home: &Path) -> Result<std::path::PathBuf, Conn
 }
 /// Binary file name for the managed grok install (`grok` / `grok.exe`).
 fn managed_grok_bin_name() -> &'static str {
-    if cfg!(windows) { "grok.exe" } else { "grok" }
+    if cfg!(windows) { "intelekt.exe" } else { "intelekt" }
 }
 /// Core leader-binary resolution with the current-exe path injected, for testability.
 fn resolve_binary_impl(
@@ -1400,7 +1400,7 @@ fn spawn_leader_subprocess(env_urls: &LeaderEnvUrls) -> Result<u32, ConnectionEr
     }
     for key in [
         "GROK_DEBUG_LOG",
-        "GROK_HOOKS_LOG",
+        "INTELEKT_HOOKS_LOG",
         "GROK_LOG_SAMPLING",
         "GROK_INSTRUMENTATION",
     ] {
@@ -1423,7 +1423,7 @@ fn spawn_leader_subprocess(env_urls: &LeaderEnvUrls) -> Result<u32, ConnectionEr
     }
     let leader_log = std::env::var("GROK_LEADER_LOG")
         .or_else(|_| std::env::var("RUST_LOG"))
-        .unwrap_or_else(|_| "xai_grok_shell=info,xai_acp_lib=warn,xai_grok_mcp=warn".into());
+        .unwrap_or_else(|_| "intelekt_shell=info,xai_acp_lib=warn,intelekt_mcp=warn".into());
     cmd.env("RUST_LOG", leader_log);
     #[cfg(unix)]
     {
@@ -2108,7 +2108,7 @@ mod tests {
         let temp = TempDir::new().unwrap();
         let bin_dir = temp.path().join("bin");
         std::fs::create_dir_all(&bin_dir).unwrap();
-        std::fs::write(bin_dir.join("grok"), "fake-binary").unwrap();
+        std::fs::write(bin_dir.join("intelekt"), "fake-binary").unwrap();
         let result = resolve_binary_with_home(temp.path()).unwrap();
         let current = std::env::current_exe().unwrap();
         assert_eq!(result, current);
@@ -2127,7 +2127,7 @@ mod tests {
         std::fs::create_dir_all(&bin_dir).unwrap();
         let target_v2 = bin_dir.join("grok-v2");
         std::fs::write(&target_v2, "new-binary").unwrap();
-        std::os::unix::fs::symlink(&target_v2, bin_dir.join("grok")).unwrap();
+        std::os::unix::fs::symlink(&target_v2, bin_dir.join("intelekt")).unwrap();
         let result = resolve_binary_with_home(temp.path()).unwrap();
         let current = std::env::current_exe().unwrap();
         assert_eq!(result, current);
@@ -2140,7 +2140,7 @@ mod tests {
         std::fs::create_dir_all(&bin_dir).unwrap();
         let new_target = bin_dir.join("grok-v2");
         std::fs::write(&new_target, "new-binary").unwrap();
-        let managed = bin_dir.join("grok");
+        let managed = bin_dir.join("intelekt");
         std::os::unix::fs::symlink(&new_target, &managed).unwrap();
         let stale_target = bin_dir.join("grok-v1");
         std::fs::write(&stale_target, "old-binary").unwrap();

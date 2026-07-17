@@ -51,14 +51,14 @@ impl crate::types::tool_metadata::ToolMetadata for TaskTool {
     }
 
     fn description_template(&self) -> &str {
-        // The Task tool description for Grok Build is *never* taken from here.
+        // The Task tool description for Intelekt CLI is *never* taken from here.
         // It is always supplied via `ToolConfig::with_description(...)` using
         // the dynamically built string from `build_task_description()` in
-        // xai-grok-agent/src/builder.rs (HEADER + per-subagent blocks + FOOTER).
+        // intelekt-agent/src/builder.rs (HEADER + per-subagent blocks + FOOTER).
         //
         // This path is only hit by low-level ToolsetBuilder registration or
         // direct calls to ToolMetadata::description_template in tests.
-        "<see build_task_description() in xai-grok-agent>"
+        "<see build_task_description() in intelekt-agent>"
     }
 
     fn requires_expr(&self) -> Expr<ToolRequirement> {

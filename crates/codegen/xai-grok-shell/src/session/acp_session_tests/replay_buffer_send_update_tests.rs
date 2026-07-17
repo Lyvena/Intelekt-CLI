@@ -3,9 +3,9 @@ use super::*;
 use crate::terminal::AsyncTerminalRunner;
 use crate::terminal::runner::{TerminalError, TerminalRunRequest, TerminalRunResult};
 use tokio::sync::mpsc;
-use xai_grok_paths::AbsPathBuf;
-use xai_grok_workspace::file_system::MockFs;
-use xai_grok_workspace::permission::PermissionHandle;
+use intelekt_paths::AbsPathBuf;
+use intelekt_workspace::file_system::MockFs;
+use intelekt_workspace::permission::PermissionHandle;
 #[derive(Debug)]
 struct DummyTerminal;
 #[async_trait::async_trait]
@@ -220,7 +220,7 @@ pub(super) async fn make_replay_send_update_fixture() -> ReplaySendUpdateFixture
         hook_registry: std::cell::RefCell::new(None),
         client_hooks: Default::default(),
         hook_resolved_workspace_root: String::new(),
-        vcs_kind: xai_grok_workspace::session::git::VcsKind::Git,
+        vcs_kind: intelekt_workspace::session::git::VcsKind::Git,
         hook_load_errors: std::cell::RefCell::new(Vec::new()),
         plugin_registry: std::cell::RefCell::new(None),
         plugin_registry_handle: None,
@@ -233,13 +233,13 @@ pub(super) async fn make_replay_send_update_fixture() -> ReplaySendUpdateFixture
         session_turn_active: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
         streaming_turn_capture: parking_lot::Mutex::new(StreamingTurnCapture::default()),
         turn_stream_drained: parking_lot::Mutex::new(None),
-        sampler_handle: xai_grok_sampler::SamplerHandle::noop(),
+        sampler_handle: intelekt_sampler::SamplerHandle::noop(),
         rebuild_spec: crate::session::agent_rebuild::test_rebuild_spec_default(),
         image_description_model: crate::test_support::TEST_MODEL.to_owned(),
         image_describe_cache: Arc::new(crate::session::image_describe::ImageDescribeCache::new()),
         subagent_spawn_info: parking_lot::Mutex::new(HashMap::new()),
         subagent_token_records: parking_lot::Mutex::new(HashMap::new()),
-        workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+        workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
         trace_config_template: std::cell::RefCell::new(None),
     };
     ReplaySendUpdateFixture {
@@ -466,7 +466,7 @@ async fn available_commands_update_is_forwarded_but_not_persisted() {
 /// `record_assistant_response` path is skipped (cancel / max tokens).
 #[tokio::test(flavor = "current_thread")]
 async fn channel_tokens_accumulate_into_streaming_capture() {
-    use xai_grok_sampler::{RequestId, SamplingChannel, SamplingEvent};
+    use intelekt_sampler::{RequestId, SamplingChannel, SamplingEvent};
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async {
@@ -540,7 +540,7 @@ async fn channel_tokens_accumulate_into_streaming_capture() {
 /// `StreamStarted` arm that the pure-struct tests bypass.
 #[tokio::test(flavor = "current_thread")]
 async fn same_prompt_restart_accumulates_segments_via_handler() {
-    use xai_grok_sampler::{RequestId, SamplingChannel, SamplingEvent};
+    use intelekt_sampler::{RequestId, SamplingChannel, SamplingEvent};
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async {
@@ -603,8 +603,8 @@ async fn same_prompt_restart_accumulates_segments_via_handler() {
 /// reasoning nor erases earlier uncommitted partials.
 #[tokio::test(flavor = "current_thread")]
 async fn completed_event_clears_slot_keeps_prior_uncommitted_segments() {
-    use xai_grok_sampler::{InferenceLatencyStats, RequestId, SamplingChannel, SamplingEvent};
-    use xai_grok_sampling_types::{ConversationItem, ConversationResponse};
+    use intelekt_sampler::{InferenceLatencyStats, RequestId, SamplingChannel, SamplingEvent};
+    use intelekt_sampling_types::{ConversationItem, ConversationResponse};
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async {
@@ -686,8 +686,8 @@ async fn completed_event_clears_slot_keeps_prior_uncommitted_segments() {
 /// client — the multi-pane "out of order" bug.
 #[tokio::test(flavor = "current_thread")]
 async fn completed_event_releases_stream_drain_barrier() {
-    use xai_grok_sampler::{InferenceLatencyStats, RequestId, SamplingChannel, SamplingEvent};
-    use xai_grok_sampling_types::{ConversationItem, ConversationResponse};
+    use intelekt_sampler::{InferenceLatencyStats, RequestId, SamplingChannel, SamplingEvent};
+    use intelekt_sampling_types::{ConversationItem, ConversationResponse};
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async {
@@ -751,7 +751,7 @@ async fn completed_event_releases_stream_drain_barrier() {
 /// upload as `streaming_partial.json`.
 #[tokio::test(flavor = "current_thread")]
 async fn failed_event_preserves_streaming_capture_for_takeout() {
-    use xai_grok_sampler::{
+    use intelekt_sampler::{
         RequestId, SamplingChannel, SamplingErrorInfo, SamplingErrorKind, SamplingEvent,
     };
     let local = tokio::task::LocalSet::new();
@@ -819,13 +819,13 @@ async fn failed_event_preserves_streaming_capture_for_takeout() {
 /// signals stay warn-only on the accepted response.
 #[tokio::test(flavor = "current_thread")]
 async fn observe_only_confident_completion_stays_warn_only() {
-    use xai_grok_sampler::{RequestId, SamplingChannel, SamplingEvent};
+    use intelekt_sampler::{RequestId, SamplingChannel, SamplingEvent};
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async {
             let mut fixture = make_replay_send_update_fixture().await;
             fixture.actor.doom_loop_recovery =
-                Some(xai_grok_sampling_types::DoomLoopRecoveryPolicy {
+                Some(intelekt_sampling_types::DoomLoopRecoveryPolicy {
                     max_threshold: 8,
                     max_retries: 0,
                 });
@@ -849,15 +849,15 @@ async fn observe_only_confident_completion_stays_warn_only() {
                     chunk_index: 0,
                 })
                 .await;
-            let response = xai_grok_sampling_types::ConversationResponse {
-                items: vec![xai_grok_sampling_types::ConversationItem::assistant(
+            let response = intelekt_sampling_types::ConversationResponse {
+                items: vec![intelekt_sampling_types::ConversationItem::assistant(
                     "answer kept as-is",
                 )],
                 stop_reason: None,
                 usage: None,
                 cost_usd_ticks: None,
                 message_chunks_emitted: 1,
-                doom_loop_signals: vec![xai_grok_sampling_types::doom_loop::DoomLoopSignal::parse(
+                doom_loop_signals: vec![intelekt_sampling_types::doom_loop::DoomLoopSignal::parse(
                     "tail_repetition:8@thinking",
                 )],
                 stop_message: None,
@@ -897,13 +897,13 @@ async fn observe_only_confident_completion_stays_warn_only() {
 /// on `Completed`. Session counters and the per-turn tally track along.
 #[tokio::test(flavor = "current_thread")]
 async fn doom_loop_recovery_stamps_capture_segments_and_counters() {
-    use xai_grok_sampler::{RequestId, SamplingChannel, SamplingErrorKind, SamplingEvent};
+    use intelekt_sampler::{RequestId, SamplingChannel, SamplingErrorKind, SamplingEvent};
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async {
             let mut fixture = make_replay_send_update_fixture().await;
             fixture.actor.doom_loop_recovery =
-                Some(xai_grok_sampling_types::DoomLoopRecoveryPolicy::default());
+                Some(intelekt_sampling_types::DoomLoopRecoveryPolicy::default());
             let actor = Arc::new(fixture.actor);
             *actor
                 .current_prompt_id
@@ -949,15 +949,15 @@ async fn doom_loop_recovery_stamps_capture_segments_and_counters() {
                     chunk_index: 0,
                 })
                 .await;
-            let response = xai_grok_sampling_types::ConversationResponse {
-                items: vec![xai_grok_sampling_types::ConversationItem::assistant(
+            let response = intelekt_sampling_types::ConversationResponse {
+                items: vec![intelekt_sampling_types::ConversationItem::assistant(
                     "still looping answer",
                 )],
                 stop_reason: None,
                 usage: None,
                 cost_usd_ticks: None,
                 message_chunks_emitted: 1,
-                doom_loop_signals: vec![xai_grok_sampling_types::doom_loop::DoomLoopSignal::parse(
+                doom_loop_signals: vec![intelekt_sampling_types::doom_loop::DoomLoopSignal::parse(
                     "tail_repetition:4@thinking",
                 )],
                 stop_message: None,
@@ -1016,7 +1016,7 @@ async fn doom_loop_recovery_stamps_capture_segments_and_counters() {
 /// taken at that point shows the model was cut off mid tool-call.
 #[tokio::test(flavor = "current_thread")]
 async fn tool_call_delta_marks_streaming_capture_phase() {
-    use xai_grok_sampler::{RequestId, SamplingChannel, SamplingEvent};
+    use intelekt_sampler::{RequestId, SamplingChannel, SamplingEvent};
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async {
@@ -1069,7 +1069,7 @@ async fn tool_call_delta_marks_streaming_capture_phase() {
 /// fabricate a phase — there is no partial to attribute it to.
 #[tokio::test(flavor = "current_thread")]
 async fn tool_call_delta_on_idle_slot_leaves_phase_pending() {
-    use xai_grok_sampler::{RequestId, SamplingEvent};
+    use intelekt_sampler::{RequestId, SamplingEvent};
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async {
@@ -1138,10 +1138,10 @@ fn streaming_capture_appender_respects_byte_cap() {
 /// the sampler classifier (the mock-HTTP test covers that).
 #[tokio::test(start_paused = true)]
 async fn reasoning_only_doomloop_turn_captures_every_generation_as_segments() {
-    use xai_grok_sampler::{
+    use intelekt_sampler::{
         RequestId, SamplingChannel, SamplingErrorInfo, SamplingErrorKind, SamplingEvent,
     };
-    use xai_grok_sampling_types::{EmptyReason, EmptyResponseContext};
+    use intelekt_sampling_types::{EmptyReason, EmptyResponseContext};
     let local = tokio::task::LocalSet::new();
     local
         .run_until(async {
@@ -1219,7 +1219,7 @@ async fn reasoning_only_doomloop_turn_captures_every_generation_as_segments() {
             let (cmd_tx, cmd_rx) = mpsc::unbounded_channel::<SessionCommand>();
             let (_chat_tx, chat_rx) = mpsc::unbounded_channel::<xai_chat_state::ChatStateEvent>();
             let codebase_indexes = Arc::new(parking_lot::Mutex::new(
-                xai_grok_workspace::file_system::CodebaseIndexManager::new(),
+                intelekt_workspace::file_system::CodebaseIndexManager::new(),
             ));
             tokio::task::spawn_local(super::run_session(
                 actor.clone(),

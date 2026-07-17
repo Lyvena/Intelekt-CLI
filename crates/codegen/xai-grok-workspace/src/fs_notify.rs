@@ -31,7 +31,7 @@ pub(crate) fn is_under_hidden_dir(path: &Path, cwd: &Path) -> bool {
 
 /// Forward an fs event to the hunk tracker. Hidden-directory paths
 /// (relative to `cwd`) are filtered out so the hunk tracker never
-/// sees `.git/`, `.grok/`, etc.
+/// sees `.git/`, `.intelekt/`, etc.
 pub(crate) fn forward_to_hunk_tracker(
     paths: &[PathBuf],
     kind: FsEventKind,
@@ -72,26 +72,26 @@ pub(crate) fn fs_event_to_codebase_graph_event(
 }
 
 /// Convert [`xai_fsnotify::FsEventKind`] to the wire-type
-/// [`xai_grok_workspace_types::FsEventKind`].
+/// [`intelekt_workspace_types::FsEventKind`].
 ///
 /// Identity mapping today; kept explicit so all known variants are
 /// consciously mapped. Unknown future variants fall back to
 /// `Modified` via the `#[non_exhaustive]` wildcard arm.
-pub(crate) fn to_workspace_event_kind(kind: FsEventKind) -> xai_grok_workspace_types::FsEventKind {
+pub(crate) fn to_workspace_event_kind(kind: FsEventKind) -> intelekt_workspace_types::FsEventKind {
     match kind {
-        FsEventKind::Created => xai_grok_workspace_types::FsEventKind::Created,
-        FsEventKind::Modified => xai_grok_workspace_types::FsEventKind::Modified,
-        FsEventKind::Removed => xai_grok_workspace_types::FsEventKind::Removed,
-        FsEventKind::Renamed => xai_grok_workspace_types::FsEventKind::Renamed,
+        FsEventKind::Created => intelekt_workspace_types::FsEventKind::Created,
+        FsEventKind::Modified => intelekt_workspace_types::FsEventKind::Modified,
+        FsEventKind::Removed => intelekt_workspace_types::FsEventKind::Removed,
+        FsEventKind::Renamed => intelekt_workspace_types::FsEventKind::Renamed,
         // `#[non_exhaustive]` fallback.
-        _ => xai_grok_workspace_types::FsEventKind::Modified,
+        _ => intelekt_workspace_types::FsEventKind::Modified,
     }
 }
 
 /// Spawn a background task that reads [`FsEvent`]s from a broadcast
 /// receiver, forwards `FilesChanged` to the hunk tracker, and
 /// re-broadcasts each affected path as
-/// [`WorkspaceEvent::FsChanged`](xai_grok_workspace_types::WorkspaceEvent::FsChanged)
+/// [`WorkspaceEvent::FsChanged`](intelekt_workspace_types::WorkspaceEvent::FsChanged)
 /// on the workspace event bus.
 ///
 /// The task exits when:
@@ -101,7 +101,7 @@ pub(crate) fn to_workspace_event_kind(kind: FsEventKind) -> xai_grok_workspace_t
 pub(crate) fn spawn_fs_event_forwarder(
     mut rx: tokio::sync::broadcast::Receiver<FsEvent>,
     hunk_tracker: HunkTrackerHandle,
-    events_tx: tokio::sync::broadcast::Sender<xai_grok_workspace_types::WorkspaceEvent>,
+    events_tx: tokio::sync::broadcast::Sender<intelekt_workspace_types::WorkspaceEvent>,
     cwd: PathBuf,
     cancel: tokio_util::sync::CancellationToken,
     codebase_index: Option<std::sync::Arc<xai_codebase_graph::IndexManagerHandle>>,
@@ -132,7 +132,7 @@ pub(crate) fn spawn_fs_event_forwarder(
                             let ws_kind = to_workspace_event_kind(kind);
                             for path in paths {
                                 let _ = events_tx.send(
-                                    xai_grok_workspace_types::WorkspaceEvent::FsChanged {
+                                    intelekt_workspace_types::WorkspaceEvent::FsChanged {
                                         path: path.clone(),
                                         kind: ws_kind,
                                     },
@@ -195,15 +195,15 @@ fn parse_diff_name_status_line(
 pub(crate) async fn refresh_codebase_graph_after_head_change(
     idx: &xai_codebase_graph::IndexManagerHandle,
     repo_root: &Path,
-    events_tx: &tokio::sync::broadcast::Sender<xai_grok_workspace_types::WorkspaceEvent>,
+    events_tx: &tokio::sync::broadcast::Sender<intelekt_workspace_types::WorkspaceEvent>,
 ) {
     let mut diff_cmd = tokio::process::Command::new("git");
     diff_cmd
         .args(["diff", "--name-status", "ORIG_HEAD", "HEAD"])
         .current_dir(repo_root)
         .stdin(std::process::Stdio::null());
-    xai_grok_tools::util::detach_command(&mut diff_cmd);
-    diff_cmd.envs(xai_grok_tools::util::pager_env());
+    intelekt_tools::util::detach_command(&mut diff_cmd);
+    diff_cmd.envs(intelekt_tools::util::pager_env());
     let diff_output = diff_cmd.output().await;
 
     // `None` means the update failed entirely (channel closed) --
@@ -252,7 +252,7 @@ pub(crate) async fn refresh_codebase_graph_after_head_change(
 
     if let Some(count) = files_updated {
         let _ = events_tx.send(
-            xai_grok_workspace_types::WorkspaceEvent::CodebaseIndexUpdated {
+            intelekt_workspace_types::WorkspaceEvent::CodebaseIndexUpdated {
                 files_indexed: count,
             },
         );
@@ -261,14 +261,14 @@ pub(crate) async fn refresh_codebase_graph_after_head_change(
 
 pub(crate) fn ws_event_to_codebase_graph_event(
     path: &std::path::Path,
-    kind: xai_grok_workspace_types::FsEventKind,
+    kind: intelekt_workspace_types::FsEventKind,
 ) -> xai_codebase_graph::FileEvent {
     use xai_codebase_graph::{FileEvent, FileEventKind};
     let graph_kind = match kind {
-        xai_grok_workspace_types::FsEventKind::Created => FileEventKind::Created,
-        xai_grok_workspace_types::FsEventKind::Modified => FileEventKind::Modified,
-        xai_grok_workspace_types::FsEventKind::Removed => FileEventKind::Removed,
-        xai_grok_workspace_types::FsEventKind::Renamed => FileEventKind::Renamed,
+        intelekt_workspace_types::FsEventKind::Created => FileEventKind::Created,
+        intelekt_workspace_types::FsEventKind::Modified => FileEventKind::Modified,
+        intelekt_workspace_types::FsEventKind::Removed => FileEventKind::Removed,
+        intelekt_workspace_types::FsEventKind::Renamed => FileEventKind::Renamed,
     };
     FileEvent::new(vec![path.to_path_buf()], graph_kind)
 }
@@ -281,7 +281,7 @@ mod tests {
     #[test]
     fn hidden_dir_positive() {
         assert!(is_under_hidden_dir(
-            &PathBuf::from("/workspace/.grok/worktrees/abc/src/main.rs"),
+            &PathBuf::from("/workspace/.intelekt/worktrees/abc/src/main.rs"),
             &PathBuf::from("/workspace"),
         ));
     }
@@ -305,7 +305,7 @@ mod tests {
 
     #[test]
     fn workspace_event_kind_round_trip() {
-        use xai_grok_workspace_types::FsEventKind as WsKind;
+        use intelekt_workspace_types::FsEventKind as WsKind;
         assert_eq!(
             to_workspace_event_kind(FsEventKind::Created),
             WsKind::Created

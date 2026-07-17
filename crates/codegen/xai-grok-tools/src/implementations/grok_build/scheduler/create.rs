@@ -7,7 +7,7 @@ use super::types::{ScheduledTask, SchedulerCommand, SchedulerHandle};
 
 // Canonical /loop wording lives in the light API crate so other consumers can
 // link it without the tools implementation crate; re-exported to keep paths stable.
-pub use xai_grok_tools_api::slash_commands::{
+pub use intelekt_tools_api::slash_commands::{
     SCHEDULER_CREATE_TOOL_NAME, loop_schedule_instruction, loop_usage_message,
 };
 

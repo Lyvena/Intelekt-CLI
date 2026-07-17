@@ -38,7 +38,7 @@
                 "token_baseline": 100,
                 "finished_subagent_tokens": 99,
                 "live_subagent_tokens": 4_321,
-                "live_tokens_by_model": [["grok-4", 6_000], ["grok-3", 4_000]],
+                "live_tokens_by_model": [["intelekt-4", 6_000], ["intelekt-3", 4_000]],
                 "live_context_pct": 42,
                 "live_turn_count": 7,
                 "live_tool_call_count": 11,
@@ -94,7 +94,7 @@
         assert_eq!(goal.live_subagent_tokens, Some(4_321));
         assert_eq!(
             goal.live_tokens_by_model,
-            vec![("grok-4".to_owned(), 6_000), ("grok-3".to_owned(), 4_000)],
+            vec![("intelekt-4".to_owned(), 6_000), ("intelekt-3".to_owned(), 4_000)],
             "populated per-model breakdown must round-trip wire->display"
         );
         assert_eq!(goal.live_context_pct, Some(42));

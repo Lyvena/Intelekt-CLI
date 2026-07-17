@@ -414,9 +414,9 @@ fn allocate_turn_number_advances_counter() {
 }
 /// Build a synthetic harness `task` call/result pair carrying the
 /// `<subagent_result>` footer, mirroring what the verifier/planner record.
-fn harness_pair(id: &str) -> Vec<xai_grok_sampling_types::conversation::ConversationItem> {
-    use xai_grok_sampling_types::ToolCall;
-    use xai_grok_sampling_types::conversation::ConversationItem;
+fn harness_pair(id: &str) -> Vec<intelekt_sampling_types::conversation::ConversationItem> {
+    use intelekt_sampling_types::ToolCall;
+    use intelekt_sampling_types::conversation::ConversationItem;
     vec![
         ConversationItem::assistant_tool_calls(vec![ToolCall {
             id: id.into(),
@@ -462,7 +462,7 @@ async fn upload_harness_trace_turns_numbers_siblings_and_persists_counter() {
     let queue = crate::upload::trace::spawn_upload_queue(
         queue_home.path(),
         &queue_cfg,
-        Some(xai_grok_version::VERSION),
+        Some(intelekt_version::VERSION),
         agent.auth_manager.clone(),
     );
     let _ = handle.upload_queue.set(queue);
@@ -583,7 +583,7 @@ async fn upload_harness_trace_turns_build_per_turn_manifest() {
     let queue = crate::upload::trace::spawn_upload_queue(
         queue_home.path(),
         &queue_cfg,
-        Some(xai_grok_version::VERSION),
+        Some(intelekt_version::VERSION),
         agent.auth_manager.clone(),
     );
     let _ = handle.upload_queue.set(queue);
@@ -671,7 +671,7 @@ fn resolve_agent_definition_defaults_to_grok_build() {
     }
 }
 /// When model_agent_type = Some("codex"), the codex agent is selected even
-/// though the default chain would return grok-build.
+/// though the default chain would return intelekt-cli.
 #[test]
 #[serial_test::serial]
 fn resolve_agent_definition_model_agent_type_overrides_default() {
@@ -726,7 +726,7 @@ fn resolve_agent_definition_acp_profile_wins_when_model_agent_type_is_default() 
         std::env::remove_var("GROK_AGENT");
     }
     let tmp = tempfile::tempdir().unwrap();
-    let acp_profile = xai_grok_agent::AgentDefinition::from_json(&serde_json::json!(
+    let acp_profile = intelekt_agent::AgentDefinition::from_json(&serde_json::json!(
         { "name" : "custom-devbox-profile", "description" :
         "Custom devbox profile", "systemPrompt" :
         "You are a custom-configured devbox agent.", }
@@ -748,9 +748,9 @@ fn resolve_agent_definition_acp_profile_wins_when_model_agent_type_is_default() 
     }
 }
 /// Regression: after `DEFAULT_AGENT_TYPE` flipped to
-/// `grok-build-plan`, models in the catalog that still declare
-/// `agent_type = "grok-build"` explicitly must NOT preempt an ACP
-/// profile. Any value in the `grok-build*` family is the stock harness
+/// `intelekt-cli-plan`, models in the catalog that still declare
+/// `agent_type = "intelekt-cli"` explicitly must NOT preempt an ACP
+/// profile. Any value in the `intelekt-cli*` family is the stock harness
 /// with no strict requirement.
 #[test]
 #[serial_test::serial]
@@ -760,12 +760,12 @@ fn resolve_agent_definition_acp_profile_wins_for_explicit_grok_build_family() {
         std::env::remove_var("GROK_AGENT");
     }
     let tmp = tempfile::tempdir().unwrap();
-    let acp_profile = xai_grok_agent::AgentDefinition::from_json(&serde_json::json!(
+    let acp_profile = intelekt_agent::AgentDefinition::from_json(&serde_json::json!(
         { "name" : "custom-devbox-profile", "description" :
         "Custom devbox profile", }
     ))
     .expect("agent definition must parse");
-    for family_variant in ["grok-build", "grok-build-plan", "grok-build-concise"] {
+    for family_variant in ["intelekt-cli", "intelekt-cli-plan", "intelekt-cli-concise"] {
         let def = MvpAgent::resolve_agent_definition(
             tmp.path(),
             None,
@@ -775,7 +775,7 @@ fn resolve_agent_definition_acp_profile_wins_for_explicit_grok_build_family() {
         );
         assert_eq!(
             def.name, "custom-devbox-profile",
-            "ACP profile must win for grok-build family variant `{family_variant}`"
+            "ACP profile must win for intelekt-cli family variant `{family_variant}`"
         );
     }
     if let Some(v) = prev {
@@ -786,7 +786,7 @@ fn resolve_agent_definition_acp_profile_wins_for_explicit_grok_build_family() {
 /// such models keep native image input.
 #[test]
 fn inherited_harness_template_skips_nonstrict_model() {
-    use xai_grok_agent::prompt::user_message::UserMessageTemplate;
+    use intelekt_agent::prompt::user_message::UserMessageTemplate;
     let tmp = tempfile::tempdir().unwrap();
     assert!(
         inherited_harness_template(
@@ -801,7 +801,7 @@ fn inherited_harness_template_skips_nonstrict_model() {
 /// fills in the default.
 #[test]
 fn inherited_harness_template_respects_explicit_template() {
-    use xai_grok_agent::prompt::user_message::UserMessageTemplate;
+    use intelekt_agent::prompt::user_message::UserMessageTemplate;
     let tmp = tempfile::tempdir().unwrap();
     let explicit = UserMessageTemplate::Custom("MY CUSTOM TEMPLATE".to_owned());
     assert!(inherited_harness_template(&explicit, Some("cursor"), tmp.path()).is_none());
@@ -843,7 +843,7 @@ fn resolve_agent_definition_agent_profile_with_model_override() {
         std::env::remove_var("GROK_AGENT");
     }
     let tmp = tempfile::tempdir().unwrap();
-    let agents_dir = tmp.path().join(".grok").join("agents");
+    let agents_dir = tmp.path().join(".intelekt").join("agents");
     std::fs::create_dir_all(&agents_dir).unwrap();
     std::fs::write(
             agents_dir.join("test-architect.md"),
@@ -859,7 +859,7 @@ fn resolve_agent_definition_agent_profile_with_model_override() {
     assert_eq!(def.name, "test-architect");
     assert_eq!(
         def.model,
-        xai_grok_agent::config::ModelOverride::Override("test-model-123".to_string()),
+        intelekt_agent::config::ModelOverride::Override("test-model-123".to_string()),
         "agent profile model override must be preserved through resolution"
     );
     match prev {
@@ -971,62 +971,62 @@ fn enqueue_replace_system_prompt_override_noop_when_absent_or_empty() {
     );
 }
 /// Regression for the web-client `_meta.agentProfile` -> `set_session_model`
-/// flow: a zero-turn switch from `grok-build` (a client profile name) to
-/// `grok-build-plan` (the default model agent_type) must be
+/// flow: a zero-turn switch from `intelekt-cli` (a client profile name) to
+/// `intelekt-cli-plan` (the default model agent_type) must be
 /// treated as compatible so the harness rebuild is skipped and the
 /// custom prompt body is preserved.
 #[test]
 fn harnesses_are_compatible_for_stock_family_pairs() {
-    assert!(harnesses_are_compatible("grok-build", "grok-build-plan"));
-    assert!(harnesses_are_compatible("grok-build-plan", "grok-build"));
-    assert!(harnesses_are_compatible("grok-build", "grok-build"));
+    assert!(harnesses_are_compatible("intelekt-cli", "intelekt-cli-plan"));
+    assert!(harnesses_are_compatible("intelekt-cli-plan", "intelekt-cli"));
+    assert!(harnesses_are_compatible("intelekt-cli", "intelekt-cli"));
     assert!(harnesses_are_compatible(
-        "grok-build-concise",
-        "grok-build-plan"
+        "intelekt-cli-concise",
+        "intelekt-cli-plan"
     ));
     assert!(harnesses_are_compatible(
         "remote-sidebar",
-        "grok-build-plan"
+        "intelekt-cli-plan"
     ));
 }
 #[test]
 fn harnesses_are_compatible_rejects_strict_mismatches() {
     assert!(harnesses_are_compatible("codex", "codex"));
-    assert!(!harnesses_are_compatible("grok-build-plan", "codex"));
+    assert!(!harnesses_are_compatible("intelekt-cli-plan", "codex"));
 }
 #[test]
 fn explicit_agent_type_wins_over_session_default() {
     assert_eq!(
-        resolve_required_agent_type(Some("cursor"), "grok-build-plan"),
+        resolve_required_agent_type(Some("cursor"), "intelekt-cli-plan"),
         "cursor"
     );
 }
 #[test]
 fn null_agent_type_falls_back_to_session_default_grok_build_plan() {
     assert_eq!(
-        resolve_required_agent_type(None, "grok-build-plan"),
-        "grok-build-plan"
+        resolve_required_agent_type(None, "intelekt-cli-plan"),
+        "intelekt-cli-plan"
     );
 }
 #[test]
 fn null_agent_type_falls_back_to_session_default_grok_build() {
     assert_eq!(
-        resolve_required_agent_type(None, "grok-build"),
-        "grok-build"
+        resolve_required_agent_type(None, "intelekt-cli"),
+        "intelekt-cli"
     );
 }
 #[test]
 fn null_agent_type_returns_to_session_default_after_cursor_switch() {
-    let session_default = "grok-build-plan";
+    let session_default = "intelekt-cli-plan";
     let required_after_null = resolve_required_agent_type(None, session_default);
-    assert_eq!(required_after_null, "grok-build-plan");
+    assert_eq!(required_after_null, "intelekt-cli-plan");
     assert_ne!(required_after_null, "cursor");
 }
 /// Compatible stock switches (no rebuild) must NOT mutate `agent_name`,
 /// preserving the session's original ACP `agentProfile`.
 #[test]
 fn agent_name_unchanged_without_harness_rebuild() {
-    let unchanged = agent_name_after_model_switch(false, "grok-build-plan", "remote-sidebar");
+    let unchanged = agent_name_after_model_switch(false, "intelekt-cli-plan", "remote-sidebar");
     assert_eq!(
         unchanged, "remote-sidebar",
         "a compatible stock switch must preserve the original agent profile name"
@@ -1040,9 +1040,9 @@ fn agent_name_unchanged_without_harness_rebuild() {
 #[tokio::test]
 async fn file_toolset_override_e2e_to_finalized_toolset() {
     use crate::tools::{FileToolset, ShellToolsetConfig};
-    use xai_grok_tools::computer::local::{LocalFs, LocalTerminalBackend};
-    use xai_grok_tools::notification::ToolNotificationHandle;
-    use xai_grok_tools::registry::types::SessionContext;
+    use intelekt_tools::computer::local::{LocalFs, LocalTerminalBackend};
+    use intelekt_tools::notification::ToolNotificationHandle;
+    use intelekt_tools::registry::types::SessionContext;
     let tmp = tempfile::tempdir().unwrap();
     let mut def = MvpAgent::resolve_agent_definition(
         tmp.path(),
@@ -1060,7 +1060,7 @@ async fn file_toolset_override_e2e_to_finalized_toolset() {
         .tool_configs(&toolset_config.hashline)
         .expect("default hashline config should validate");
     def.override_file_tools(file_tools);
-    let builder = xai_grok_tools::registry::types::ToolRegistryBuilder::new();
+    let builder = intelekt_tools::registry::types::ToolRegistryBuilder::new();
     let ctx = SessionContext {
         backend: std::sync::Arc::new(LocalTerminalBackend::new()),
         fs: std::sync::Arc::new(LocalFs),
@@ -1073,16 +1073,16 @@ async fn file_toolset_override_e2e_to_finalized_toolset() {
         skills: vec![],
         state_path: tmp.path().join("state.json"),
         memory_backend: None,
-        web_search_config: xai_grok_tools::implementations::web_search::WebSearchConfig::default(),
+        web_search_config: intelekt_tools::implementations::web_search::WebSearchConfig::default(),
         web_fetch_config: Default::default(),
         lsp: None,
-        image_gen_config: xai_grok_tools::implementations::grok_build::image_gen::ImageGenConfig::default(),
-        video_gen_config: xai_grok_tools::implementations::grok_build::video_gen::VideoGenConfig::default(),
-        app_builder_deployer_config: xai_grok_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig::default(),
+        image_gen_config: intelekt_tools::implementations::grok_build::image_gen::ImageGenConfig::default(),
+        video_gen_config: intelekt_tools::implementations::grok_build::video_gen::VideoGenConfig::default(),
+        app_builder_deployer_config: intelekt_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig::default(),
         api_key_provider: None,
         auth_provider: None,
         attribution_callback: None,
-        system_reminder_tag: xai_grok_tools::reminders::DEFAULT_REMINDER_TAG,
+        system_reminder_tag: intelekt_tools::reminders::DEFAULT_REMINDER_TAG,
     };
     let toolset = builder
         .finalize(def.tool_config, ctx)
@@ -1153,8 +1153,8 @@ fn make_test_handle(
         upload_queue: Arc::new(OnceLock::new()),
         upload_failures_since_success: Arc::new(std::sync::atomic::AtomicU64::new(0)),
         tool_context: crate::tools::ToolContext::new_local_context(
-            xai_grok_paths::AbsPathBuf::new(std::path::PathBuf::from("/tmp")).unwrap(),
-            std::sync::Arc::new(xai_grok_workspace::file_system::LocalFs::new(
+            intelekt_paths::AbsPathBuf::new(std::path::PathBuf::from("/tmp")).unwrap(),
+            std::sync::Arc::new(intelekt_workspace::file_system::LocalFs::new(
                 std::path::PathBuf::from("/tmp"),
             )),
             std::sync::Arc::new(crate::terminal::LocalTerminalRunner),
@@ -1172,14 +1172,14 @@ fn make_test_handle(
             crate::session::plan_mode::PlanModeTracker::new(std::path::PathBuf::from("/tmp")),
         )),
         force_compact: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        permission_handle: xai_grok_workspace::permission::PermissionHandle::allow_all(),
+        permission_handle: intelekt_workspace::permission::PermissionHandle::allow_all(),
         attribution_callback: None,
-        agent_name: "grok-build".to_string(),
+        agent_name: "intelekt-cli".to_string(),
         managed_mcp_proxy_base_url: String::new(),
         session_default_agent_profile: None,
         allowed_subagent_types: None,
         hook_registry: None,
-        workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+        workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
         terminal_backend: None,
         tools_notification_handle: None,
         scheduler_handle: None,
@@ -1192,7 +1192,7 @@ async fn lookup_session_model_returns_per_session_model() {
     let sid_b = acp::SessionId::new("sess-b");
     let default_model = acp::ModelId::new("default-model");
     let sessions: HashMap<acp::SessionId, crate::session::SessionHandle> = [
-        (sid_a.clone(), make_test_handle("grok-3-fast", false, None)),
+        (sid_a.clone(), make_test_handle("intelekt-3-fast", false, None)),
         (sid_b.clone(), make_test_handle("codex-mini", false, None)),
     ]
     .into();
@@ -1200,7 +1200,7 @@ async fn lookup_session_model_returns_per_session_model() {
         lookup_session_model(&sessions, Some(&sid_a), &default_model)
             .0
             .as_ref(),
-        "grok-3-fast"
+        "intelekt-3-fast"
     );
     assert_eq!(
         lookup_session_model(&sessions, Some(&sid_b), &default_model)
@@ -1212,13 +1212,13 @@ async fn lookup_session_model_returns_per_session_model() {
 /// lookup_session_model falls back to the default when session_id is None.
 #[tokio::test]
 async fn lookup_session_model_fallback_no_session() {
-    let default_model = acp::ModelId::new("grok-3");
+    let default_model = acp::ModelId::new("intelekt-3");
     let sessions: HashMap<acp::SessionId, crate::session::SessionHandle> = HashMap::new();
     assert_eq!(
         lookup_session_model(&sessions, None, &default_model)
             .0
             .as_ref(),
-        "grok-3"
+        "intelekt-3"
     );
 }
 /// Mutating session A's model_id via the handle does not affect session B.
@@ -1228,8 +1228,8 @@ async fn set_session_model_does_not_cross_contaminate() {
     let sid_b = acp::SessionId::new("sess-b");
     let default_model = acp::ModelId::new("default");
     let mut sessions: HashMap<acp::SessionId, crate::session::SessionHandle> = [
-        (sid_a.clone(), make_test_handle("grok-3", false, None)),
-        (sid_b.clone(), make_test_handle("grok-3", false, None)),
+        (sid_a.clone(), make_test_handle("intelekt-3", false, None)),
+        (sid_b.clone(), make_test_handle("intelekt-3", false, None)),
     ]
     .into();
     sessions.get_mut(&sid_a).unwrap().model_id = acp::ModelId::new("codex-mini");
@@ -1243,14 +1243,14 @@ async fn set_session_model_does_not_cross_contaminate() {
         lookup_session_model(&sessions, Some(&sid_b), &default_model)
             .0
             .as_ref(),
-        "grok-3",
+        "intelekt-3",
         "Session B's model must not be affected by session A's model change"
     );
 }
 #[tokio::test]
 async fn model_state_prefers_session_reasoning_effort_over_global() {
     use crate::agent::config::{EndpointsConfig, ModelEntry};
-    use xai_grok_sampling_types::{REASONING_EFFORT_META_KEY, ReasoningEffort};
+    use intelekt_sampling_types::{REASONING_EFFORT_META_KEY, ReasoningEffort};
     let agent = build_minimal_agent_for_tests();
     let mut entry = ModelEntry::fallback("effort-model", &EndpointsConfig::default());
     entry.info.supports_reasoning_effort = true;
@@ -1297,7 +1297,7 @@ async fn model_state_prefers_session_reasoning_effort_over_global() {
 #[tokio::test]
 async fn session_config_options_resolves_routing_slug_to_catalog_model() {
     use crate::agent::config::{EndpointsConfig, ModelEntry};
-    use xai_grok_sampling_types::ReasoningEffort;
+    use intelekt_sampling_types::ReasoningEffort;
     let agent = build_minimal_agent_for_tests();
     let mut entry = ModelEntry::fallback("catalog-key-model", &EndpointsConfig::default());
     entry.info.model = "routing-slug".to_string();
@@ -1337,11 +1337,11 @@ async fn yolo_toggle_scoped_by_client_identifier() {
     let mut sessions: HashMap<acp::SessionId, crate::session::SessionHandle> = [
         (
             sid_tui.clone(),
-            make_test_handle("grok-3", false, Some("grok-tui")),
+            make_test_handle("intelekt-3", false, Some("grok-tui")),
         ),
         (
             sid_vscode.clone(),
-            make_test_handle("grok-3", false, Some("grok-code-extension")),
+            make_test_handle("intelekt-3", false, Some("grok-code-extension")),
         ),
     ]
     .into();
@@ -1365,11 +1365,11 @@ async fn yolo_toggle_can_disable_session_started_with_yolo_enabled() {
     let mut sessions: HashMap<acp::SessionId, crate::session::SessionHandle> = [
         (
             sid_tui.clone(),
-            make_test_handle("grok-3", true, Some("grok-tui")),
+            make_test_handle("intelekt-3", true, Some("grok-tui")),
         ),
         (
             sid_other.clone(),
-            make_test_handle("grok-3", true, Some("grok-code-extension")),
+            make_test_handle("intelekt-3", true, Some("grok-code-extension")),
         ),
     ]
     .into();
@@ -1635,9 +1635,9 @@ fn build_agent_with_auth(auth: crate::auth::GrokAuth) -> MvpAgent {
 async fn ensure_plugin_registry_lazily_populates_snapshot() {
     use crate::agent::config::Config as AgentConfig;
     use crate::auth::{AuthManager, GrokComConfig};
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     let grok_home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", grok_home.path());
+    let _env = EnvGuard::set("INTELEKT_HOME", grok_home.path());
     let plugin_dir = tempfile::tempdir().unwrap();
     std::fs::write(
         plugin_dir.path().join("plugin.json"),
@@ -1788,7 +1788,7 @@ async fn resident_activity_reports_needs_input_when_pending() {
     use crate::agent::roster::RosterActivity;
     let agent = build_minimal_agent_for_tests();
     let sid = acp::SessionId::new("sess-pending");
-    let handle = make_test_handle("grok-3", false, None);
+    let handle = make_test_handle("intelekt-3", false, None);
     let pending = handle.pending_interactions.clone();
     let prompt_id = handle.current_prompt_id.clone();
     agent.sessions.borrow_mut().insert(sid.clone(), handle);
@@ -1850,7 +1850,7 @@ async fn push_roster_activity_delta_broadcasts_overridden_activity() {
     agent
         .sessions
         .borrow_mut()
-        .insert(sid.clone(), make_test_handle("grok-3", false, None));
+        .insert(sid.clone(), make_test_handle("intelekt-3", false, None));
     agent.push_roster_activity_delta(&sid, RosterActivity::Working);
     let changed = drain_roster_changed(&mut rx).expect("turn-start delta emitted");
     assert_eq!(changed.upserted.len(), 1);
@@ -2379,7 +2379,7 @@ fn build_agent_with_api_key_auth_disabled() -> MvpAgent {
 #[serial_test::serial]
 async fn cached_token_fallthrough_prefers_api_key_for_deployment_key() {
     use crate::agent::auth_method::{XAI_API_KEY_ENV_VAR, XAI_API_KEY_METHOD_ID};
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     let _lockdown = EnvGuard::unset("GROK_DISABLE_API_KEY_AUTH");
     let _key = EnvGuard::set(XAI_API_KEY_ENV_VAR, "test-deployment-key");
     let agent = build_minimal_agent_for_tests();
@@ -2400,7 +2400,7 @@ async fn cached_token_fallthrough_prefers_api_key_for_deployment_key() {
 #[serial_test::serial]
 async fn cached_token_fallthrough_respects_kill_switch() {
     use crate::agent::auth_method::{GROK_COM_METHOD_ID, XAI_API_KEY_ENV_VAR};
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     let _lockdown = EnvGuard::unset("GROK_DISABLE_API_KEY_AUTH");
     let _key = EnvGuard::set(XAI_API_KEY_ENV_VAR, "test-deployment-key");
     let agent = build_agent_with_api_key_auth_disabled();
@@ -2422,7 +2422,7 @@ async fn cached_token_fallthrough_falls_to_grok_com_without_credentials() {
     use crate::agent::auth_method::{
         GROK_COM_METHOD_ID, LEGACY_XAI_API_KEY_ENV_VAR, XAI_API_KEY_ENV_VAR,
     };
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     let _lockdown = EnvGuard::unset("GROK_DISABLE_API_KEY_AUTH");
     let _new = EnvGuard::unset(XAI_API_KEY_ENV_VAR);
     let _legacy = EnvGuard::unset(LEGACY_XAI_API_KEY_ENV_VAR);
@@ -2446,7 +2446,7 @@ async fn cached_token_fallthrough_falls_to_grok_com_without_credentials() {
 /// | true     | Some      | Enabled, S3 threaded (ZDR with upload path) |
 #[tokio::test(flavor = "current_thread")]
 async fn prepare_video_gen_config_disabled_when_zdr_flag_set() {
-    use xai_grok_tools::implementations::grok_build::video_gen::{
+    use intelekt_tools::implementations::grok_build::video_gen::{
         S3AccessCredentials, VideoGenConfig, ZdrVideoOutputS3Config,
     };
     fn zdr_s3() -> ZdrVideoOutputS3Config {
@@ -2503,7 +2503,7 @@ async fn prepare_video_gen_config_disabled_when_zdr_flag_set() {
 /// disabling a paid feature when tier info hasn't loaded.
 #[tokio::test(flavor = "current_thread")]
 async fn prepare_image_gen_config_fails_open_without_auth() {
-    use xai_grok_tools::implementations::grok_build::image_gen::ImageGenConfig;
+    use intelekt_tools::implementations::grok_build::image_gen::ImageGenConfig;
     let agent = build_minimal_agent_for_tests();
     agent.sampling_config.borrow_mut().api_key = Some("test-key".to_string());
     let ImageGenConfig::Enabled {
@@ -2802,9 +2802,9 @@ fn parse_session_kind_matrix() {
 #[test]
 fn chat_initial_model_matrix() {
     let cases: &[(&str, bool, Option<&str>, Option<&str>)] = &[
-        ("chat_with_model", true, Some("grok-4.5"), Some("grok-4.5")),
+        ("chat_with_model", true, Some("intelekt-4.5"), Some("intelekt-4.5")),
         ("chat_without_model", true, None, None),
-        ("build_with_model", false, Some("grok-4.5"), None),
+        ("build_with_model", false, Some("intelekt-4.5"), None),
         ("build_without_model", false, None, None),
     ];
     for (label, is_chat_kind, custom_model_id, expected) in cases {
@@ -2831,27 +2831,27 @@ fn chat_new_session_model_state_matrix() {
     let cases: &[(&str, acp::SessionModelState, Option<&str>, &str)] = &[
         (
             "requested_in_catalog",
-            state_with("auto", &["auto", "grok-4"]),
-            Some("grok-4"),
-            "grok-4",
+            state_with("auto", &["auto", "intelekt-4"]),
+            Some("intelekt-4"),
+            "intelekt-4",
         ),
         (
             "no_request_keeps_catalog_default",
-            state_with("auto", &["auto", "grok-4"]),
+            state_with("auto", &["auto", "intelekt-4"]),
             None,
             "auto",
         ),
         (
             "requested_not_in_catalog",
             state_with("auto", &["auto"]),
-            Some("grok-4.5"),
-            "grok-4.5",
+            Some("intelekt-4.5"),
+            "intelekt-4.5",
         ),
         (
             "requested_with_empty_catalog",
             state_with("", &[]),
-            Some("grok-4"),
-            "grok-4",
+            Some("intelekt-4"),
+            "intelekt-4",
         ),
     ];
     for (label, state, requested, expected) in cases {
@@ -2880,7 +2880,7 @@ where
 #[test]
 fn chat_session_spawn_options_matches_thin_profile() {
     let sid = acp::SessionId::new(std::sync::Arc::from("00000000-0000-0000-0000-000000000099"));
-    let cwd = xai_grok_paths::AbsPathBuf::new(std::env::temp_dir()).expect("temp cwd");
+    let cwd = intelekt_paths::AbsPathBuf::new(std::env::temp_dir()).expect("temp cwd");
     let opts = chat_session_spawn_options(
         SessionInfo {
             id: sid,
@@ -2913,9 +2913,9 @@ fn chat_session_spawn_options_matches_thin_profile() {
 async fn remove_session_releases_workspace_binding_and_side_maps() {
     let agent = build_minimal_agent_for_tests();
     let sid = acp::SessionId::new("test-session-workspace-release");
-    let ops = xai_grok_workspace::WorkspaceOps::for_test();
+    let ops = intelekt_workspace::WorkspaceOps::for_test();
     let toolset =
-        std::sync::Arc::new(xai_grok_tools::registry::types::FinalizedToolset::empty_for_test());
+        std::sync::Arc::new(intelekt_tools::registry::types::FinalizedToolset::empty_for_test());
     let toolset_weak = std::sync::Arc::downgrade(&toolset);
     ops.bind_local_session(
         sid.0.as_ref(),
@@ -2936,7 +2936,7 @@ async fn remove_session_releases_workspace_binding_and_side_maps() {
         .borrow_mut()
         .insert(sid.clone(), 3);
     let (_permission_tx, permission_rx) =
-        tokio::sync::mpsc::unbounded_channel::<xai_grok_workspace::permission::PermissionEvent>();
+        tokio::sync::mpsc::unbounded_channel::<intelekt_workspace::permission::PermissionEvent>();
     agent
         .permission_event_receivers
         .borrow_mut()
@@ -3620,11 +3620,11 @@ async fn answer_folder_trust_request(
 #[test]
 #[serial_test::serial]
 fn interactive_trust_prompt_grant_reloads_project_mcp() {
-    use xai_grok_test_support::EnvGuard;
-    use xai_grok_workspace::trust::{TrustStore, workspace_key};
+    use intelekt_test_support::EnvGuard;
+    use intelekt_workspace::trust::{TrustStore, workspace_key};
     let home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", home.path());
-    let _sim = EnvGuard::set(xai_grok_version::TEST_VERSION_ENV, "0.0-sim");
+    let _env = EnvGuard::set("INTELEKT_HOME", home.path());
+    let _sim = EnvGuard::set(intelekt_version::TEST_VERSION_ENV, "0.0-sim");
     let _flag = EnvGuard::unset("GROK_FOLDER_TRUST");
     let repo = repo_with_project_mcp_server();
     let repo_path = repo.path().to_path_buf();
@@ -3699,11 +3699,11 @@ fn interactive_trust_prompt_grant_reloads_project_mcp() {
 #[test]
 #[serial_test::serial]
 fn interactive_trust_prompt_reject_keeps_gated() {
-    use xai_grok_test_support::EnvGuard;
-    use xai_grok_workspace::trust::{TrustStore, workspace_key};
+    use intelekt_test_support::EnvGuard;
+    use intelekt_workspace::trust::{TrustStore, workspace_key};
     let home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", home.path());
-    let _sim = EnvGuard::set(xai_grok_version::TEST_VERSION_ENV, "0.0-sim");
+    let _env = EnvGuard::set("INTELEKT_HOME", home.path());
+    let _sim = EnvGuard::set(intelekt_version::TEST_VERSION_ENV, "0.0-sim");
     let _flag = EnvGuard::unset("GROK_FOLDER_TRUST");
     let repo = repo_with_project_mcp_server();
     let repo_path = repo.path().to_path_buf();
@@ -3737,10 +3737,10 @@ fn interactive_trust_prompt_reject_keeps_gated() {
 #[test]
 #[serial_test::serial]
 fn interactive_trust_prompt_dormant_when_feature_off() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     let home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", home.path());
-    let _sim = EnvGuard::set(xai_grok_version::TEST_VERSION_ENV, "0.0-sim");
+    let _env = EnvGuard::set("INTELEKT_HOME", home.path());
+    let _sim = EnvGuard::set(intelekt_version::TEST_VERSION_ENV, "0.0-sim");
     let _flag = EnvGuard::unset("GROK_FOLDER_TRUST");
     let repo = repo_with_project_mcp_server();
     let repo_path = repo.path().to_path_buf();
@@ -3767,10 +3767,10 @@ fn interactive_trust_prompt_dormant_when_feature_off() {
 #[test]
 #[serial_test::serial]
 fn interactive_trust_prompt_no_request_without_capability() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     let home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", home.path());
-    let _sim = EnvGuard::set(xai_grok_version::TEST_VERSION_ENV, "0.0-sim");
+    let _env = EnvGuard::set("INTELEKT_HOME", home.path());
+    let _sim = EnvGuard::set(intelekt_version::TEST_VERSION_ENV, "0.0-sim");
     let _flag = EnvGuard::unset("GROK_FOLDER_TRUST");
     let repo = repo_with_project_mcp_server();
     let repo_path = repo.path().to_path_buf();
@@ -3794,11 +3794,11 @@ fn interactive_trust_prompt_no_request_without_capability() {
 #[test]
 #[serial_test::serial]
 fn interactive_trust_prompt_client_error_fails_closed() {
-    use xai_grok_test_support::EnvGuard;
-    use xai_grok_workspace::trust::{TrustStore, workspace_key};
+    use intelekt_test_support::EnvGuard;
+    use intelekt_workspace::trust::{TrustStore, workspace_key};
     let home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", home.path());
-    let _sim = EnvGuard::set(xai_grok_version::TEST_VERSION_ENV, "0.0-sim");
+    let _env = EnvGuard::set("INTELEKT_HOME", home.path());
+    let _sim = EnvGuard::set(intelekt_version::TEST_VERSION_ENV, "0.0-sim");
     let _flag = EnvGuard::unset("GROK_FOLDER_TRUST");
     let repo = repo_with_project_mcp_server();
     let repo_path = repo.path().to_path_buf();
@@ -3836,10 +3836,10 @@ fn interactive_trust_prompt_client_error_fails_closed() {
 #[test]
 #[serial_test::serial]
 fn interactive_trust_prompt_dedups_same_workspace() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     let home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", home.path());
-    let _sim = EnvGuard::set(xai_grok_version::TEST_VERSION_ENV, "0.0-sim");
+    let _env = EnvGuard::set("INTELEKT_HOME", home.path());
+    let _sim = EnvGuard::set(intelekt_version::TEST_VERSION_ENV, "0.0-sim");
     let _flag = EnvGuard::unset("GROK_FOLDER_TRUST");
     let repo = repo_with_project_mcp_server();
     let repo_path = repo.path().to_path_buf();
@@ -3911,10 +3911,10 @@ async fn drain_reload_commands(
 #[test]
 #[serial_test::serial]
 fn interactive_trust_prompt_reloads_all_same_workspace_sessions() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     let home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", home.path());
-    let _sim = EnvGuard::set(xai_grok_version::TEST_VERSION_ENV, "0.0-sim");
+    let _env = EnvGuard::set("INTELEKT_HOME", home.path());
+    let _sim = EnvGuard::set(intelekt_version::TEST_VERSION_ENV, "0.0-sim");
     let _flag = EnvGuard::unset("GROK_FOLDER_TRUST");
     let repo = repo_with_project_mcp_server();
     let root = repo.path().to_path_buf();
@@ -3975,11 +3975,11 @@ fn interactive_trust_prompt_reloads_all_same_workspace_sessions() {
 #[test]
 #[serial_test::serial]
 fn interactive_trust_prompt_reprompts_after_untrust() {
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     use xai_hooks_plugins_types::HooksAction;
     let home = tempfile::tempdir().unwrap();
-    let _env = EnvGuard::set("GROK_HOME", home.path());
-    let _sim = EnvGuard::set(xai_grok_version::TEST_VERSION_ENV, "0.0-sim");
+    let _env = EnvGuard::set("INTELEKT_HOME", home.path());
+    let _sim = EnvGuard::set(intelekt_version::TEST_VERSION_ENV, "0.0-sim");
     let _flag = EnvGuard::unset("GROK_FOLDER_TRUST");
     let repo = repo_with_project_mcp_server();
     let repo_path = repo.path().to_path_buf();
@@ -4022,8 +4022,8 @@ fn interactive_trust_prompt_reprompts_after_untrust() {
         );
     });
 }
-fn ann(id: &str) -> xai_grok_announcements::RemoteAnnouncement {
-    xai_grok_announcements::RemoteAnnouncement {
+fn ann(id: &str) -> intelekt_announcements::RemoteAnnouncement {
+    intelekt_announcements::RemoteAnnouncement {
         id: Some(id.to_string()),
         message: Some(format!("{id}-msg")),
         severity: Some("critical".to_string()),
@@ -4033,7 +4033,7 @@ fn ann(id: &str) -> xai_grok_announcements::RemoteAnnouncement {
 /// `RemoteSettings` with only `announcements` set (callers add sentinel
 /// fields as needed).
 fn settings_with(
-    announcements: Option<Vec<xai_grok_announcements::RemoteAnnouncement>>,
+    announcements: Option<Vec<intelekt_announcements::RemoteAnnouncement>>,
 ) -> crate::util::config::RemoteSettings {
     crate::util::config::RemoteSettings {
         announcements,
@@ -4163,7 +4163,7 @@ fn announcements_push_gate_force_mode_pushes_unchanged_and_empty() {
 #[test]
 fn announcements_push_gate_ignores_expired_only_addition() {
     let now = test_now();
-    let expired = xai_grok_announcements::RemoteAnnouncement {
+    let expired = intelekt_announcements::RemoteAnnouncement {
         expires_at: Some("2000-01-01T00:00:00Z".to_string()),
         ..ann("expired")
     };
@@ -4185,7 +4185,7 @@ fn announcements_push_gate_ignores_expired_only_addition() {
 /// clear on time instead of outliving their own expiry.
 #[test]
 fn announcements_push_gate_emits_on_expiry_crossing() {
-    let expiring = xai_grok_announcements::RemoteAnnouncement {
+    let expiring = intelekt_announcements::RemoteAnnouncement {
         expires_at: Some("2026-06-01T00:00:00Z".to_string()),
         ..ann("soon")
     };

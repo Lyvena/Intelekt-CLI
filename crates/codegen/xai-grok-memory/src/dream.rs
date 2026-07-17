@@ -9,7 +9,7 @@ use std::path::Path;
 use std::time::SystemTime;
 
 use super::dream_lock::DreamLock;
-use xai_grok_config_types::MemoryDreamConfig;
+use intelekt_config_types::MemoryDreamConfig;
 
 /// Result of the dream gate check.
 #[derive(Debug, PartialEq, Eq)]

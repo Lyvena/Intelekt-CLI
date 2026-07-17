@@ -56,7 +56,7 @@ pub struct GhostSuggestionParsed {
 /// A single completion item from an ACP `x.ai/suggest` response.
 // `Default` (empty item) exists for downstream test fixtures — functional-
 // update construction (`..Default::default()`) keeps out-of-crate literals
-// (e.g. xai-grok-pager-minimal's) compiling when optional fields are added.
+// (e.g. intelekt-pager-minimal's) compiling when optional fields are added.
 #[derive(Debug, Clone, Default)]
 pub struct CompletionItemParsed {
     pub display: String,
@@ -338,9 +338,9 @@ impl SuggestionController {
             generation: 0,
             last_request_text: String::new(),
             tab_pending: None,
-            enabled: xai_grok_config::env_bool("GROK_SUGGESTIONS").unwrap_or(false),
+            enabled: intelekt_config::env_bool("GROK_SUGGESTIONS").unwrap_or(false),
             dropdown: CompletionDropdownState::default(),
-            ai_enabled: xai_grok_config::env_bool("GROK_SUGGESTIONS_AI").unwrap_or(false),
+            ai_enabled: intelekt_config::env_bool("GROK_SUGGESTIONS_AI").unwrap_or(false),
             ai_model: std::env::var("GROK_SUGGESTIONS_AI_MODEL")
                 .ok()
                 .filter(|s| !s.is_empty()),

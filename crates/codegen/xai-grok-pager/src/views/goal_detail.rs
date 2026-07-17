@@ -9,9 +9,9 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 
-use xai_grok_shell::tools::{TodoItem, TodoStatus};
+use intelekt_shell::tools::{TodoItem, TodoStatus};
 
-use xai_grok_shell::extensions::notification::GoalClassifierVerdict;
+use intelekt_shell::extensions::notification::GoalClassifierVerdict;
 
 use crate::app::agent::{GoalDisplayState, GoalDisplayStatus};
 use crate::render::SafeBuf;
@@ -1473,11 +1473,11 @@ mod tests {
     #[test]
     fn render_per_model_breakdown_shows_each_model() {
         let mut goal = make_goal();
-        goal.live_tokens_by_model = vec![("grok-4".into(), 12_300), ("grok-3-mini".into(), 8_000)];
+        goal.live_tokens_by_model = vec![("intelekt-4".into(), 12_300), ("intelekt-3-mini".into(), 8_000)];
         let text = render_to_text(&goal);
-        assert!(text.contains("grok-4"), "first model must render:\n{text}");
+        assert!(text.contains("intelekt-4"), "first model must render:\n{text}");
         assert!(
-            text.contains("grok-3-mini"),
+            text.contains("intelekt-3-mini"),
             "second model must render:\n{text}"
         );
         // Compact token formatting is reused.

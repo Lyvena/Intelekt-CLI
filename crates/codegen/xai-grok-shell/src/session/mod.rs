@@ -28,13 +28,13 @@ pub use xai_fsnotify::{FsConfig, FsEvent, FsEventKind, FsEventSource, FsNotifyEr
 /// template matches. Keeps ungated call sites compiling in both
 /// configurations.
 pub(crate) fn is_cursor_user_template(
-    _template: &xai_grok_agent::prompt::user_message::UserMessageTemplate,
+    _template: &intelekt_agent::prompt::user_message::UserMessageTemplate,
 ) -> bool {
     false
 }
 /// `false` twin of [`is_cursor_system_template`]; see [`is_cursor_user_template`].
 pub(crate) fn is_cursor_system_template(
-    _template: &xai_grok_agent::prompt::context::TemplateOverride,
+    _template: &intelekt_agent::prompt::context::TemplateOverride,
 ) -> bool {
     false
 }
@@ -317,7 +317,7 @@ pub mod helpers;
 pub(crate) mod image_describe;
 pub(crate) mod image_normalize;
 pub mod inference_metrics;
-pub use xai_grok_shared::session::info;
+pub use intelekt_shared::session::info;
 pub mod managed_mcp;
 pub(crate) mod mcp_descriptors;
 pub mod mcp_dispatcher;
@@ -328,7 +328,7 @@ pub mod mcp_servers;
 pub mod memory;
 pub(crate) mod normalize_cache;
 pub mod persistence;
-pub use xai_grok_shared::placeholder_images;
+pub use intelekt_shared::placeholder_images;
 pub mod plan_mode;
 pub mod prompt_history;
 pub mod prompt_parser;

@@ -20,8 +20,8 @@ use reqwest::header::{
 };
 use serde::Serialize;
 
-use xai_grok_sampling_types::error::{parse_error_bytes, try_parse_stream_error};
-use xai_grok_sampling_types::{
+use intelekt_sampling_types::error::{parse_error_bytes, try_parse_stream_error};
+use intelekt_sampling_types::{
     ChatCompletionChunk, ChatCompletionRequest, ChatCompletionResponse, ConversationRequest,
     ConversationResponse, CreateResponseWrapper, DOOM_LOOP_CHECK_HEADER, MessagesRequestWrapper,
     ResponseModelMetadata, Result, SamplingError, build_messages_request, is_check_event, messages,
@@ -31,7 +31,7 @@ use xai_grok_sampling_types::{
 use crate::config::{AuthScheme, OriginClientInfo, SamplerConfig};
 
 // Re-export ApiBackend from the shared types crate for downstream callers.
-pub use xai_grok_sampling_types::ApiBackend;
+pub use intelekt_sampling_types::ApiBackend;
 
 /// Process-level fallback for the `x-grok-client-identifier` header.
 const DEFAULT_CLIENT_IDENTIFIER: &str = "grok-shell";
@@ -161,7 +161,7 @@ fn apply_terminal_event_overrides(event: &mut rs::ResponseStreamEvent, data: &st
         return;
     };
     // Stash cost ticks in metadata for stream_responses.
-    if let Some(ticks) = xai_grok_sampling_types::reported_cost_ticks(
+    if let Some(ticks) = intelekt_sampling_types::reported_cost_ticks(
         value
             .pointer("/response/usage/cost_in_usd_ticks")
             .and_then(|v| v.as_i64()),
@@ -315,7 +315,7 @@ struct ClientDefaults {
     api_backend: ApiBackend,
     auth_scheme: AuthScheme,
     stream_tool_calls: bool,
-    doom_loop_recovery: Option<xai_grok_sampling_types::DoomLoopRecoveryPolicy>,
+    doom_loop_recovery: Option<intelekt_sampling_types::DoomLoopRecoveryPolicy>,
 }
 
 // =============================================================================
@@ -349,7 +349,7 @@ impl PlatformInfo {
 }
 
 fn agent_version() -> String {
-    xai_grok_version::VERSION.to_string()
+    intelekt_version::VERSION.to_string()
 }
 
 /// Render a User-Agent string for the given origin client.
@@ -1141,7 +1141,7 @@ impl SamplingClient {
         // discriminator that the Responses API requires on input. Patch
         // it in post-serialize. This is the last surviving piece of the
         // old raw_output machinery.
-        xai_grok_sampling_types::patch_reasoning_text_types(&mut request_body);
+        intelekt_sampling_types::patch_reasoning_text_types(&mut request_body);
         let http_request = grok_headers
             .apply(self.post(self.endpoint("responses")))
             .json(&request_body);
@@ -1286,7 +1286,7 @@ impl SamplingClient {
                 request_body["tools"] = serde_json::Value::Array(extra_raw_tools);
             }
         }
-        xai_grok_sampling_types::patch_reasoning_text_types(&mut request_body);
+        intelekt_sampling_types::patch_reasoning_text_types(&mut request_body);
         // Fresh per attempt so signals never leak across retries; `None`
         // (check disabled) sends no header and does no peek work per event.
         let doom_loop = self
@@ -1848,7 +1848,7 @@ impl SamplingClient {
 
         // Collect xAI-specific tools that can't be expressed via rs::Tool
         // (e.g., x_search). These are injected as raw JSON after serialization.
-        let extra_tools = xai_grok_sampling_types::extra_raw_tools(&request.hosted_tools);
+        let extra_tools = intelekt_sampling_types::extra_raw_tools(&request.hosted_tools);
 
         let responses_request: rs::CreateResponse = (&request).into();
 
@@ -2011,7 +2011,7 @@ impl SamplingClient {
 mod tests {
     use super::*;
     use indexmap::IndexMap;
-    use xai_grok_sampling_types::types::ChatRequestMessage;
+    use intelekt_sampling_types::types::ChatRequestMessage;
 
     fn minimal_config() -> SamplerConfig {
         SamplerConfig {
@@ -2192,7 +2192,7 @@ mod tests {
         cfg.extra_headers
             .insert("x-test-header".to_string(), "test-value".to_string());
         cfg.extra_headers
-            .insert("x-XAI-token-auth".to_string(), "xai-grok-cli".to_string());
+            .insert("x-XAI-token-auth".to_string(), "intelekt-cli".to_string());
         let _client = SamplingClient::new(cfg).expect("client with extra headers should construct");
     }
 
@@ -2290,7 +2290,7 @@ mod tests {
 
     #[test]
     fn user_agent_collapses_when_origin_matches_agent() {
-        let agent_version = xai_grok_version::VERSION.to_string();
+        let agent_version = intelekt_version::VERSION.to_string();
         let origin = OriginClientInfo {
             product: AGENT_PRODUCT.to_string(),
             version: Some(agent_version.clone()),
@@ -2580,7 +2580,7 @@ mod tests {
                 "id": "resp_1",
                 "object": "response",
                 "created_at": 0,
-                "model": "grok-build",
+                "model": "intelekt-cli",
                 "status": "completed",
                 "output": [],
                 "usage": {
@@ -2620,7 +2620,7 @@ mod tests {
                 "sequence_number": 0,
                 "response": {{
                     "id": "resp_1", "object": "response", "created_at": 0,
-                    "model": "grok-build", "status": "completed", "output": [],
+                    "model": "intelekt-cli", "status": "completed", "output": [],
                     "usage": {{
                         "input_tokens": 10,
                         "input_tokens_details": {{ "cached_tokens": 0 }},
@@ -2666,7 +2666,7 @@ mod tests {
                 "id": "resp_1",
                 "object": "response",
                 "created_at": 0,
-                "model": "grok-build",
+                "model": "intelekt-cli",
                 "status": "completed",
                 "output": [],
                 "usage": {
@@ -2700,7 +2700,7 @@ mod tests {
                 "id": "resp_1",
                 "object": "response",
                 "created_at": 0,
-                "model": "grok-build",
+                "model": "intelekt-cli",
                 "status": "completed",
                 "output": [],
                 "usage": {

@@ -21,7 +21,7 @@ async fn client_hooks_fire_without_file_registry() {
             );
             let mut client_hooks = crate::extensions::hooks::ClientHooks::new();
             client_hooks.insert(
-                xai_grok_hooks::event::HookEventName::Stop,
+                intelekt_hooks::event::HookEventName::Stop,
                 vec![crate::extensions::hooks::ClientHookGroup {
                     matcher: None,
                     callback_ids: vec!["cb_0".to_string()],
@@ -31,9 +31,9 @@ async fn client_hooks_fire_without_file_registry() {
             *actor.client_hooks.borrow_mut() = client_hooks;
 
             actor.fire_hook(
-                xai_grok_hooks::event::HookEventName::Stop,
+                intelekt_hooks::event::HookEventName::Stop,
                 None,
-                xai_grok_hooks::event::HookPayload::Stop {
+                intelekt_hooks::event::HookPayload::Stop {
                     reason: "end_turn".to_string(),
                 },
             );
@@ -70,7 +70,7 @@ async fn pre_tool_use_client_deny_blocks_the_tool() {
 
             let mut client_hooks = crate::extensions::hooks::ClientHooks::new();
             client_hooks.insert(
-                xai_grok_hooks::event::HookEventName::PreToolUse,
+                intelekt_hooks::event::HookEventName::PreToolUse,
                 vec![crate::extensions::hooks::ClientHookGroup {
                     matcher: None,
                     callback_ids: vec!["cb_0".to_string()],
@@ -112,9 +112,9 @@ async fn pre_tool_use_client_deny_blocks_the_tool() {
             };
             let tool_call_id = acp::ToolCallId::new("call_1");
             let envelope = actor.make_hook_envelope(
-                xai_grok_hooks::event::HookEventName::PreToolUse,
+                intelekt_hooks::event::HookEventName::PreToolUse,
                 None,
-                xai_grok_hooks::event::HookPayload::PreToolUse {
+                intelekt_hooks::event::HookPayload::PreToolUse {
                     tool_name: call.function.name.clone(),
                     tool_use_id: call.id.clone(),
                     tool_input: serde_json::json!({}),
@@ -156,18 +156,18 @@ async fn pre_tool_use_resolves_meta_dispatch_tool_name_end_to_end() {
             let actor = create_test_actor(0, 256_000, 85, gateway_tx, persistence_tx).await;
             // The toolset must know `use_tool` so it parses to `ToolInput::UseTool`.
             *actor.agent.borrow_mut() = test_agent_with_tools(vec![
-                xai_grok_tools::registry::types::ToolConfig::for_tool::<
-                    xai_grok_tools::implementations::use_tool::UseTool,
+                intelekt_tools::registry::types::ToolConfig::for_tool::<
+                    intelekt_tools::implementations::use_tool::UseTool,
                 >(),
             ])
             .await;
 
             let mut client_hooks = crate::extensions::hooks::ClientHooks::new();
             client_hooks.insert(
-                xai_grok_hooks::event::HookEventName::PreToolUse,
+                intelekt_hooks::event::HookEventName::PreToolUse,
                 vec![crate::extensions::hooks::ClientHookGroup {
                     matcher: Some(
-                        xai_grok_hooks::matcher::HookMatcher::new("linear__save_issue").unwrap(),
+                        intelekt_hooks::matcher::HookMatcher::new("linear__save_issue").unwrap(),
                     ),
                     callback_ids: vec!["cb_0".to_string()],
                     timeout: None,
@@ -244,7 +244,7 @@ async fn subagent_inherits_parent_pre_tool_use_client_hook() {
 
             let mut client_hooks = crate::extensions::hooks::ClientHooks::new();
             client_hooks.insert(
-                xai_grok_hooks::event::HookEventName::PreToolUse,
+                intelekt_hooks::event::HookEventName::PreToolUse,
                 vec![crate::extensions::hooks::ClientHookGroup {
                     matcher: None,
                     callback_ids: vec!["cb_0".to_string()],
@@ -306,9 +306,9 @@ async fn subagent_inherits_parent_pre_tool_use_client_hook() {
             let tool_call_id = acp::ToolCallId::new("call_1");
             // The subagent builds the envelope, tagging the call with its subagent type.
             let envelope = subagent.make_hook_envelope(
-                xai_grok_hooks::event::HookEventName::PreToolUse,
+                intelekt_hooks::event::HookEventName::PreToolUse,
                 None,
-                xai_grok_hooks::event::HookPayload::PreToolUse {
+                intelekt_hooks::event::HookPayload::PreToolUse {
                     tool_name: call.function.name.clone(),
                     tool_use_id: call.id.clone(),
                     tool_input: serde_json::json!({}),
@@ -355,7 +355,7 @@ async fn pre_tool_use_slow_callback_does_not_starve_a_deny() {
 
             let mut client_hooks = crate::extensions::hooks::ClientHooks::new();
             client_hooks.insert(
-                xai_grok_hooks::event::HookEventName::PreToolUse,
+                intelekt_hooks::event::HookEventName::PreToolUse,
                 vec![crate::extensions::hooks::ClientHookGroup {
                     matcher: None,
                     // "slow_cb" is registered first and never replies; "deny_cb" denies.
@@ -402,9 +402,9 @@ async fn pre_tool_use_slow_callback_does_not_starve_a_deny() {
             };
             let tool_call_id = acp::ToolCallId::new("call_1");
             let envelope = actor.make_hook_envelope(
-                xai_grok_hooks::event::HookEventName::PreToolUse,
+                intelekt_hooks::event::HookEventName::PreToolUse,
                 None,
-                xai_grok_hooks::event::HookPayload::PreToolUse {
+                intelekt_hooks::event::HookPayload::PreToolUse {
                     tool_name: call.function.name.clone(),
                     tool_use_id: call.id.clone(),
                     tool_input: serde_json::json!({}),
@@ -448,8 +448,8 @@ async fn post_tool_use_and_failure_never_double_fire() {
 
             let mut client_hooks = crate::extensions::hooks::ClientHooks::new();
             for event in [
-                xai_grok_hooks::event::HookEventName::PostToolUse,
-                xai_grok_hooks::event::HookEventName::PostToolUseFailure,
+                intelekt_hooks::event::HookEventName::PostToolUse,
+                intelekt_hooks::event::HookEventName::PostToolUseFailure,
             ] {
                 client_hooks.insert(
                     event,
@@ -549,7 +549,7 @@ async fn pre_tool_use_deny_feeds_reason_back_and_continues_turn() {
 
             let mut client_hooks = crate::extensions::hooks::ClientHooks::new();
             client_hooks.insert(
-                xai_grok_hooks::event::HookEventName::PreToolUse,
+                intelekt_hooks::event::HookEventName::PreToolUse,
                 vec![crate::extensions::hooks::ClientHookGroup {
                     matcher: None,
                     callback_ids: vec!["cb_0".to_string()],

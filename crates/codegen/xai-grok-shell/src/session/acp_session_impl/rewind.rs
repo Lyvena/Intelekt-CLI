@@ -41,7 +41,7 @@ impl SessionActor {
         // Build a lookup of which prompt indices have file snapshots.
         let file_meta_map: std::collections::HashMap<
             usize,
-            &xai_grok_workspace::session::file_state::RewindPointMeta,
+            &intelekt_workspace::session::file_state::RewindPointMeta,
         > = file_metas.iter().map(|m| (m.prompt_index, m)).collect();
 
         // Generate a rewind point for every prompt 0..current_prompt_index.
@@ -205,7 +205,7 @@ impl SessionActor {
         // Collect files that would be reverted and detect conflicts.
         // This is read-only — no mutations happen here.
         let mut files_to_revert: std::collections::HashMap<
-            xai_grok_workspace::session::file_state::FlexiblePath,
+            intelekt_workspace::session::file_state::FlexiblePath,
             Option<String>,
         > = std::collections::HashMap::new();
 

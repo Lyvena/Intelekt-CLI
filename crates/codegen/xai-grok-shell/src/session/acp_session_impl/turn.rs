@@ -61,7 +61,7 @@ impl UsageDrainOutcome {
     /// sticky and background → report only.
     pub(super) fn from_outstanding_reply(
         reply: Option<
-            &xai_grok_tools::implementations::grok_build::task::types::SubagentOutstandingReply,
+            &intelekt_tools::implementations::grok_build::task::types::SubagentOutstandingReply,
         >,
     ) -> Self {
         match reply {
@@ -231,7 +231,7 @@ impl SessionActor {
             .sum();
         tracing::Span::current().record("prompt_length", prompt_length as i64);
         *self.active_skill.lock() = None;
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "shell.handle_prompt.start",
             Some(self.session_info.id.0.as_ref()),
             Some(serde_json::json!(
@@ -300,7 +300,7 @@ impl SessionActor {
             Err(SlashCommandOutcome::Builtin(action)) => {
                 let text_block =
                     |text: String| acp::ContentBlock::Text(acp::TextContent::new(text));
-                let slash_used = xai_grok_telemetry::events::SlashCommandUsed {
+                let slash_used = intelekt_telemetry::events::SlashCommandUsed {
                     command: action.command_name().to_string(),
                     args_provided: action.args_provided(),
                 };
@@ -314,12 +314,12 @@ impl SessionActor {
                         objective,
                         token_budget,
                     } => {
-                        xai_grok_telemetry::session_ctx::log_event(slash_used);
+                        intelekt_telemetry::session_ctx::log_event(slash_used);
                         let reminder = self.setup_goal(&objective, token_budget).await;
                         vec![text_block(reminder), text_block(objective)]
                     }
                     BuiltinAction::GoalResume => {
-                        xai_grok_telemetry::session_ctx::log_event(slash_used);
+                        intelekt_telemetry::session_ctx::log_event(slash_used);
                         match self.resume_goal().await {
                             GoalResumeOutcome::Inference { reminder, user_msg } => {
                                 self.send_slash_command_output(&user_msg).await;
@@ -352,14 +352,14 @@ impl SessionActor {
                     );
                 }
                 for sk in &parsed_skills {
-                    xai_grok_telemetry::session_ctx::log_event(
-                        xai_grok_telemetry::events::SlashCommandUsed {
+                    intelekt_telemetry::session_ctx::log_event(
+                        intelekt_telemetry::events::SlashCommandUsed {
                             command: sk.name.clone(),
                             args_provided: !sk.args.is_empty(),
                         },
                     );
-                    xai_grok_telemetry::session_ctx::log_event(
-                        xai_grok_telemetry::events::SkillDispatched {
+                    intelekt_telemetry::session_ctx::log_event(
+                        intelekt_telemetry::events::SkillDispatched {
                             skill_name: sk.name.clone(),
                             plugin_source: sk.plugin_name.clone(),
                         },
@@ -378,8 +378,8 @@ impl SessionActor {
                     )
                     .in_scope(|| {});
                     if let Some(ref pname) = sk.plugin_name {
-                        xai_grok_telemetry::session_ctx::log_event(
-                            xai_grok_telemetry::events::PluginUsed {
+                        intelekt_telemetry::session_ctx::log_event(
+                            intelekt_telemetry::events::PluginUsed {
                                 plugin_id: pname.clone(),
                                 plugin_name: pname.clone(),
                                 skill_name: Some(sk.name.clone()),
@@ -446,12 +446,12 @@ impl SessionActor {
         })
         .await;
         let turn_idx = self.chat_state_handle.get_prompt_index().await as u64;
-        xai_grok_telemetry::session_ctx::log_session_event(crate::agent::session_metrics::Turn {
+        intelekt_telemetry::session_ctx::log_session_event(crate::agent::session_metrics::Turn {
             session_id: self.session_info.id.0.to_string(),
             turn_number: turn_idx,
         });
         let current_prompt_index = self.chat_state_handle.get_prompt_index().await;
-        xai_grok_telemetry::session_ctx::begin_prompt_id();
+        intelekt_telemetry::session_ctx::begin_prompt_id();
         let origin = super::super::PromptOrigin::from_prompt_id(prompt_id);
         let mut chunk_meta = serde_json::Map::new();
         chunk_meta.insert("modelId".into(), serde_json::json!(model_id));
@@ -535,7 +535,7 @@ impl SessionActor {
             .normalize_images_with_notices(&mut context, raw_images, is_cursor)
             .await;
         let (query, extra_images) = if !self.is_cursor_harness() {
-            let extraction = xai_grok_tools::util::base64_images::extract_base64_images(query);
+            let extraction = intelekt_tools::util::base64_images::extract_base64_images(query);
             if extraction.images.is_empty() {
                 (extraction.text, Vec::new())
             } else {
@@ -606,17 +606,17 @@ impl SessionActor {
             .await
             .map(|c| c.model)
             .unwrap_or_default();
-        if self.telemetry_enabled || xai_grok_telemetry::external::is_active() {
+        if self.telemetry_enabled || intelekt_telemetry::external::is_active() {
             let effective_client_identifier =
                 prompt_client_identifier.or_else(|| self.client_identifier.clone());
-            let ev = xai_grok_telemetry::events::PromptSubmitted {
+            let ev = intelekt_telemetry::events::PromptSubmitted {
                 prompt_length: user_message.len(),
                 model_id,
                 client_identifier: effective_client_identifier,
                 screen_mode: prompt_screen_mode,
                 prompt_text: None,
             };
-            xai_grok_telemetry::session_ctx::log_event_dual(self.telemetry_enabled, ev);
+            intelekt_telemetry::session_ctx::log_event_dual(self.telemetry_enabled, ev);
         }
         self.maybe_inject_mcp_reminder().await;
         self.maybe_inject_mcp_connecting_reminder().await;
@@ -651,7 +651,7 @@ impl SessionActor {
             crate::session::placeholder_images::attached_image_references(&user_images)
         };
         self.tool_bridge_handle()
-            .update_resource(xai_grok_tools::types::resources::AttachedImages(
+            .update_resource(intelekt_tools::types::resources::AttachedImages(
                 attached_image_refs,
             ))
             .await;
@@ -740,8 +740,8 @@ impl SessionActor {
             }
         }
         self.dispatch_hook(
-            xai_grok_hooks::event::HookEventName::UserPromptSubmit,
-            xai_grok_hooks::event::HookPayload::UserPromptSubmit {
+            intelekt_hooks::event::HookEventName::UserPromptSubmit,
+            intelekt_hooks::event::HookPayload::UserPromptSubmit {
                 prompt: Some(prompt_text_for_hook),
             },
             Some(prompt_id),
@@ -793,7 +793,7 @@ impl SessionActor {
         };
         let turn_duration_ms = turn_timer.elapsed().as_millis() as u64;
         let handle_prompt_elapsed_ms = handle_prompt_start.elapsed().as_millis() as u64;
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "shell.handle_prompt.done",
             Some(self.session_info.id.0.as_ref()),
             Some(serde_json::json!(
@@ -832,9 +832,9 @@ impl SessionActor {
                     cancellation_context: None,
                 })
                 .await;
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::events::TurnCompleted {
-                        outcome: xai_grok_telemetry::events::Outcome::Completed,
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::events::TurnCompleted {
+                        outcome: intelekt_telemetry::events::Outcome::Completed,
                         duration_ms: turn_duration_ms,
                         tool_call_count: turn_tool_count,
                         model_id: turn_model_id,
@@ -863,9 +863,9 @@ impl SessionActor {
                     cancellation_context: context.clone(),
                 })
                 .await;
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::events::TurnCompleted {
-                        outcome: xai_grok_telemetry::events::Outcome::Cancelled,
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::events::TurnCompleted {
+                        outcome: intelekt_telemetry::events::Outcome::Cancelled,
                         duration_ms: turn_duration_ms,
                         tool_call_count: turn_tool_count,
                         model_id: turn_model_id,
@@ -896,9 +896,9 @@ impl SessionActor {
                     )),
                 })
                 .await;
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::events::TurnCompleted {
-                        outcome: xai_grok_telemetry::events::Outcome::Cancelled,
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::events::TurnCompleted {
+                        outcome: intelekt_telemetry::events::Outcome::Cancelled,
                         duration_ms: turn_duration_ms,
                         tool_call_count: turn_tool_count,
                         model_id: turn_model_id,
@@ -921,17 +921,17 @@ impl SessionActor {
                 })
                 .await;
                 let error_category = Self::classify_turn_error(err);
-                xai_grok_telemetry::session_ctx::log_session_event(
-                    xai_grok_telemetry::events::ApiError {
+                intelekt_telemetry::session_ctx::log_session_event(
+                    intelekt_telemetry::events::ApiError {
                         error_category: error_category.clone(),
                         model_id: turn_model_id.clone(),
                         status_code: None,
                         duration_ms: Some(turn_duration_ms),
                     },
                 );
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::events::TurnCompleted {
-                        outcome: xai_grok_telemetry::events::Outcome::Error,
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::events::TurnCompleted {
+                        outcome: intelekt_telemetry::events::Outcome::Error,
                         duration_ms: turn_duration_ms,
                         tool_call_count: turn_tool_count,
                         model_id: turn_model_id,
@@ -940,8 +940,8 @@ impl SessionActor {
                     },
                 );
                 self.dispatch_hook(
-                    xai_grok_hooks::event::HookEventName::StopFailure,
-                    xai_grok_hooks::event::HookPayload::StopFailure {
+                    intelekt_hooks::event::HookEventName::StopFailure,
+                    intelekt_hooks::event::HookPayload::StopFailure {
                         error: format!("{err}"),
                     },
                     Some(prompt_id),
@@ -950,7 +950,7 @@ impl SessionActor {
                 .await;
             }
         }
-        xai_grok_telemetry::session_ctx::log_session_event(
+        intelekt_telemetry::session_ctx::log_session_event(
             crate::agent::session_metrics::TurnCompletedLifecycle {
                 session_id: self.session_info.id.0.to_string(),
                 turn_number: current_prompt_index as u64,
@@ -958,7 +958,7 @@ impl SessionActor {
         );
         let doom_tally = std::mem::take(&mut *self.doom_loop_turn_tally.lock());
         if doom_tally.fired() {
-            xai_grok_telemetry::session_ctx::log_session_event(
+            intelekt_telemetry::session_ctx::log_session_event(
                 crate::agent::session_metrics::DoomLoopRecovery {
                     session_id: self.session_info.id.0.to_string(),
                     turn_number: current_prompt_index as u64,
@@ -977,8 +977,8 @@ impl SessionActor {
             Err(_) => "error",
         };
         self.dispatch_hook(
-            xai_grok_hooks::event::HookEventName::Stop,
-            xai_grok_hooks::event::HookPayload::Stop {
+            intelekt_hooks::event::HookEventName::Stop,
+            intelekt_hooks::event::HookPayload::Stop {
                 reason: stop_reason_str.to_string(),
             },
             Some(prompt_id),
@@ -1215,7 +1215,7 @@ impl SessionActor {
         let Some(tx) = &self.tool_context.subagent_event_tx else {
             return false;
         };
-        use xai_grok_tools::implementations::grok_build::task::types::{
+        use intelekt_tools::implementations::grok_build::task::types::{
             SubagentEvent, SubagentMarkUsageNotAppliedRequest,
         };
         let (respond_to, ack) = tokio::sync::oneshot::channel();
@@ -1244,20 +1244,20 @@ impl SessionActor {
         let Some(buffer) = &self.tool_context.monitor_event_buffer else {
             return;
         };
-        let mine = xai_grok_tools::implementations::grok_build::task::types::drain_owned(
+        let mine = intelekt_tools::implementations::grok_build::task::types::drain_owned(
             buffer,
             Some(self.session_info.id.0.as_ref()),
         );
         if mine.is_empty() {
             return;
         }
-        let Some(body) = xai_grok_tools::reminders::task_completion::format_monitor_events(
+        let Some(body) = intelekt_tools::reminders::task_completion::format_monitor_events(
             &mine,
             Some(&self.tool_context.task_output_tool_name),
         ) else {
             return;
         };
-        let wrapped = xai_grok_tools::reminders::wrap_reminder(&body);
+        let wrapped = intelekt_tools::reminders::wrap_reminder(&body);
         self.chat_state_handle
             .push_user_message(ConversationItem::system_reminder(wrapped));
         tracing::info!(
@@ -1496,7 +1496,7 @@ impl SessionActor {
             .store(true, std::sync::atomic::Ordering::Relaxed);
         if !self.memory.initial_injection_config.enabled {
             tracing::info!(
-                target : xai_grok_telemetry::memory_log::TARGET,
+                target : intelekt_telemetry::memory_log::TARGET,
                 "MEMORY_INJECT: first-turn injection disabled by config"
             );
             return None;
@@ -1509,12 +1509,12 @@ impl SessionActor {
         let conversation = self.chat_state_handle.get_conversation().await;
         if crate::session::helpers::memory_context::conversation_has_memory_context(&conversation) {
             tracing::info!(
-                target : xai_grok_telemetry::memory_log::TARGET,
+                target : intelekt_telemetry::memory_log::TARGET,
                 "MEMORY_INJECT: existing memory-context block present in system message -- skipping re-injection to preserve prompt cache"
             );
             return None;
         }
-        use xai_grok_tools::types::memory_backend::MemoryBackend as _;
+        use intelekt_tools::types::memory_backend::MemoryBackend as _;
         let (injection_params, configured_min_score) =
             build_initial_injection_backend_params(params, &self.memory.initial_injection_config);
         let backend = crate::session::memory::MemoryBackendImpl::from_session_params(
@@ -1543,11 +1543,11 @@ impl SessionActor {
             .as_ref()
             .map_or(0, |r| r.iter().map(|s| s.snippet.len()).sum());
         tracing::info!(
-            target : xai_grok_telemetry::memory_log::TARGET, configured_min_score,
+            target : intelekt_telemetry::memory_log::TARGET, configured_min_score,
             "MEMORY_INJECT_SEARCH: results={result_count}"
         );
-        xai_grok_telemetry::session_ctx::log_event(
-            xai_grok_telemetry::memory_telemetry::MemoryInjection {
+        intelekt_telemetry::session_ctx::log_event(
+            intelekt_telemetry::memory_telemetry::MemoryInjection {
                 session_id: self.session_info.id.to_string(),
                 was_greeting_fallback: was_greeting,
                 result_count,
@@ -1567,7 +1567,7 @@ impl SessionActor {
     /// bumps `retries` on a non-conforming retry.
     async fn handle_structured_output_tool_call(
         &self,
-        tool_calls: &mut Vec<xai_grok_sampling_types::conversation::ToolCall>,
+        tool_calls: &mut Vec<intelekt_sampling_types::conversation::ToolCall>,
         validator: &Result<jsonschema::Validator, String>,
         retries: &mut u32,
     ) -> StructuredOutputStep {
@@ -1634,7 +1634,7 @@ impl SessionActor {
             snap.turn_output_tokens = turn_span_totals.output_tokens.max(0) as u64;
             snap.turn_cached_input_tokens = turn_span_totals.cache_read_tokens.max(0) as u64;
             for pr in &snap.delta.prs_created_this_turn {
-                xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::PrCreated {
+                intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::PrCreated {
                     source: pr.source,
                     had_commit_in_session: pr.had_commit_in_session,
                 });
@@ -1736,7 +1736,7 @@ impl SessionActor {
         if let Some(ref mut pt) = prompt_timing {
             pt.record_tool_prep(mcp_wait_ms, total_prep_ms);
         }
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "shell.turn.tool_prep_done",
             Some(self.session_info.id.0.as_ref()),
             Some(serde_json::json!(
@@ -1808,7 +1808,7 @@ impl SessionActor {
                     .injection_count
                     .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 tracing::info!(
-                    target : xai_grok_telemetry::memory_log::TARGET,
+                    target : intelekt_telemetry::memory_log::TARGET,
                     "MEMORY_INJECT: first-turn memory context injected"
                 );
             }
@@ -1869,7 +1869,7 @@ impl SessionActor {
                 )
                 .await
                 .expect("chat state actor should be alive");
-            xai_grok_telemetry::unified_log::debug(
+            intelekt_telemetry::unified_log::debug(
                 "shell.turn.build_request_done",
                 Some(self.session_info.id.0.as_ref()),
                 Some(serde_json::json!(
@@ -1881,7 +1881,7 @@ impl SessionActor {
             request.x_grok_session_id = Some(self.session_info.id.to_string());
             request.x_grok_turn_idx =
                 Some(self.chat_state_handle.get_prompt_index().await.to_string());
-            request.x_grok_agent_id = Some(xai_grok_telemetry::id::agent_id());
+            request.x_grok_agent_id = Some(intelekt_telemetry::id::agent_id());
             if request.x_grok_deployment_id.is_none() {
                 request.x_grok_deployment_id = crate::managed_config::resolve_deployment_id(
                     crate::managed_config::resolve_deployment_key().as_deref(),
@@ -1903,7 +1903,7 @@ impl SessionActor {
                     },
                 )
                 .await;
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "shell.turn.inference_start",
                 Some(self.session_info.id.0.as_ref()),
                 Some(serde_json::json!(
@@ -1926,7 +1926,7 @@ impl SessionActor {
                             delay_ms,
                             "auth 401 retry: backing off before resubmit"
                         );
-                        xai_grok_telemetry::unified_log::warn(
+                        intelekt_telemetry::unified_log::warn(
                             "shell.turn.auth_retry_backoff",
                             Some(self.session_info.id.0.as_ref()),
                             Some(serde_json::json!(
@@ -1978,7 +1978,7 @@ impl SessionActor {
                 }
                 _ => None,
             };
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "shell.turn.inference_done",
                 Some(self.session_info.id.0.as_ref()),
                 Some(serde_json::json!(
@@ -2007,8 +2007,8 @@ impl SessionActor {
             let model_duration_ms = model_timer.elapsed().as_millis() as u64;
             {
                 let model_id = self.current_model_id().await;
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::events::ModelResponseReceived {
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::events::ModelResponseReceived {
                         model_id,
                         duration_ms: model_duration_ms,
                         stop_reason: response
@@ -2063,12 +2063,12 @@ impl SessionActor {
             let stop_reason = response.stop_reason;
             let response_is_empty = response.is_empty();
             let turn_refused =
-                stop_reason == Some(xai_grok_sampling_types::StopReason::ContentFilter);
+                stop_reason == Some(intelekt_sampling_types::StopReason::ContentFilter);
             let refusal_explanation = response.stop_message.clone();
             let final_answer_text = json_schema.is_some().then(|| response.assistant_text());
             for item in response.items {
                 match item {
-                    xai_grok_sampling_types::ConversationItem::Assistant(_) => {
+                    intelekt_sampling_types::ConversationItem::Assistant(_) => {
                         self.record_assistant_response(item).await;
                     }
                     _ => {

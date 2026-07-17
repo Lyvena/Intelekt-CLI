@@ -8,15 +8,15 @@ use std::path::Path;
 use std::sync::RwLock;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use xai_grok_config::campaigns::{
+use intelekt_config::campaigns::{
     CampaignEntry, filter_active_campaigns, ids_touching_paths, merge_campaign_entries,
 };
-use xai_grok_config::config_override::{PatchPath, patch_touches_any};
-use xai_grok_config::{
+use intelekt_config::config_override::{PatchPath, patch_touches_any};
+use intelekt_config::{
     CampaignsState, ConfigLayers, campaigns_state_path, load_dismissed_ids_from_home,
     user_grok_home,
 };
-use xai_grok_config_types::{CampaignOverride, RemoteSettings};
+use intelekt_config_types::{CampaignOverride, RemoteSettings};
 
 /// FIFO cap on persisted dismissed ids; evicting the oldest can re-nudge for a
 /// still-live campaign after a user dismisses more than this over the CLI's life.
@@ -74,7 +74,7 @@ fn dismiss_campaign_ids_at(
     let _guard = DISMISS_LOCK.lock().unwrap_or_else(|p| p.into_inner());
     let path = campaigns_state_path(home);
     // Cross-process advisory lock over the read-modify-write: in leader mode
-    // several grok processes share `$GROK_HOME`; the in-process mutex alone would
+    // several grok processes share `$INTELEKT_HOME`; the in-process mutex alone would
     // let them lose-update the set. Best-effort; a lock failure still proceeds.
     let lock = std::fs::OpenOptions::new()
         .create(true)
@@ -392,7 +392,7 @@ pub async fn persist_user_choice(
 /// `models.default`. `None` clears the field.
 pub async fn persist_models_default(
     value: Option<String>,
-    reasoning_effort: Option<xai_grok_sampling_types::ReasoningEffort>,
+    reasoning_effort: Option<intelekt_sampling_types::ReasoningEffort>,
 ) -> anyhow::Result<()> {
     let s = value.unwrap_or_default();
     if s.len() > super::settings_writes::MAX_DEFAULT_MODEL_LEN {
@@ -416,8 +416,8 @@ mod tests {
     use super::*;
     use serial_test::serial;
     use tempfile::tempdir;
-    use xai_grok_config::ConfigLayers;
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_config::ConfigLayers;
+    use intelekt_test_support::EnvGuard;
 
     fn models_default_patch(default: &str) -> toml::Table {
         let mut models = toml::map::Map::new();

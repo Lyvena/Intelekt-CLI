@@ -12,7 +12,7 @@ pub(super) fn push_server_status_enabled() -> bool {
     use std::sync::OnceLock;
     static ENABLED: OnceLock<bool> = OnceLock::new();
     *ENABLED.get_or_init(|| {
-        xai_grok_shell::util::config::resolve_mcp_push_server_status(
+        intelekt_shell::util::config::resolve_mcp_push_server_status(
             /* requirements */ None, /* user */ None, /* managed */ None,
         )
     })
@@ -49,13 +49,13 @@ pub(super) fn handle_mcp_init_progress(notif: &acp::ExtNotification, app: &mut A
 /// Handle `x.ai/mcp/tools_changed` and `x.ai/mcp_initialized`.
 ///
 /// Routing rules (verified against the four shell emit sites in
-/// `xai-grok-shell/src/session/acp_session.rs` — toggle-tool ~L6661,
+/// `intelekt-shell/src/session/acp_session.rs` — toggle-tool ~L6661,
 /// `emit_mcp_tools_changed_notifications` ~L8997 and post-handshake
 /// ~L10156, plus `mcp_initialized` ~L10157):
 ///
 /// 1. Try `notif.params.sessionId`. All `tools_changed` emit
 ///    sites carry `sessionId` (the typed
-///    [`xai_grok_shell::extensions::mcp::McpToolsChanged`] struct), and
+///    [`intelekt_shell::extensions::mcp::McpToolsChanged`] struct), and
 ///    `mcp_initialized` already carried it. So the sessionId branch
 ///    is the primary path for current builds.
 ///
@@ -182,8 +182,8 @@ pub(super) fn agent_has_pending_mcps_fetch(app: &AppView, agent_id: AgentId) -> 
 ///   ([`patch_server_row`] silently returns).
 ///
 /// Re-uses the shell's canonical wire types
-/// ([`xai_grok_shell::extensions::mcp::McpServerStatusPayload`] +
-/// [`xai_grok_shell::extensions::mcp::McpServerStatus`]) instead of
+/// ([`intelekt_shell::extensions::mcp::McpServerStatusPayload`] +
+/// [`intelekt_shell::extensions::mcp::McpServerStatus`]) instead of
 /// re-declaring a parallel pager enum. Later variants (e.g.
 /// `RestartSucceeded` / `RestartFailed`) ride through automatically
 /// without a pager code change.
@@ -202,7 +202,7 @@ pub(super) fn agent_has_pending_mcps_fetch(app: &AppView, agent_id: AgentId) -> 
 pub(super) fn handle_mcp_server_status(notif: &acp::ExtNotification, app: &mut AppView) -> bool {
     use crate::views::extensions_modal::TabDataState;
     use crate::views::mcps_modal::{McpServerDisplayStatus, McpToolDetail, patch_server_row};
-    use xai_grok_shell::extensions::mcp::{McpServerStatus, McpServerStatusPayload, McpToolEntry};
+    use intelekt_shell::extensions::mcp::{McpServerStatus, McpServerStatusPayload, McpToolEntry};
 
     let Ok(payload) = serde_json::from_str::<McpServerStatusPayload>(notif.params.get()) else {
         tracing::warn!(
@@ -276,7 +276,7 @@ pub(super) fn handle_mcp_server_status(notif: &acp::ExtNotification, app: &mut A
 /// Handle `x.ai/mcp/servers_updated`.
 ///
 /// Emitted by the shell from `MvpAgent` on managed-config resolve and
-/// on config reload (`crates/codegen/xai-grok-shell/src/agent/mvp_agent.rs`
+/// on config reload (`crates/codegen/intelekt-shell/src/agent/mvp_agent.rs`
 /// → `notify_servers_updated`). The shell's
 /// `McpServersUpdated` wire shape (`{ mcpServers: [...] }`) is
 /// intentionally session-agnostic by design

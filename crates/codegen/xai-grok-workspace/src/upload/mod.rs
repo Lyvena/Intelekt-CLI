@@ -9,7 +9,7 @@ use xai_file_utils::gcs::StorageConfig;
 use xai_file_utils::queue::{EnqueueOutcome, TraceExportSource, UploadQueue};
 use xai_file_utils::storage_client::Auth401AttributionCallback;
 use xai_file_utils::{TraceExportConfig, UploadMethod};
-use xai_grok_auth::{AuthCredentialProvider, CredentialSnapshot};
+use intelekt_auth::{AuthCredentialProvider, CredentialSnapshot};
 /// `…_pending_bytes` is the series the mandatory queue-memory alert fires on.
 static UPLOAD_QUEUE_PENDING_BYTES: LazyLock<IntGauge> = LazyLock::new(|| {
     register_int_gauge!(
@@ -139,7 +139,7 @@ struct HubAuthCredentialProvider {
     /// to the real `user_id`/`team_id`.
     identity: WorkspaceIdentity,
 }
-impl xai_grok_auth::visibility::HttpAuth for HubAuthCredentialProvider {
+impl intelekt_auth::visibility::HttpAuth for HubAuthCredentialProvider {
     fn apply(&self, builder: reqwest::RequestBuilder, _base_url: &str) -> reqwest::RequestBuilder {
         let cred = self.auth.current();
         match &cred {

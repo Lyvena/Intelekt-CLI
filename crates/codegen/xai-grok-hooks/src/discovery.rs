@@ -114,7 +114,7 @@ pub enum HookSource<'a> {
     /// A single JSON settings file (e.g. `~/.claude/settings.json`).
     /// The `hooks` key is extracted; other keys are ignored.
     SettingsFile(&'a Path),
-    /// A directory of `*.json` hook files (e.g. `~/.grok/hooks/`).
+    /// A directory of `*.json` hook files (e.g. `~/.intelekt/hooks/`).
     Directory(&'a Path),
 }
 
@@ -171,7 +171,7 @@ pub fn load_hooks_from_sources(
 
     // Index by event type, deduplicating by hook content (command/url) +
     // matcher across all sources. This prevents the same hook from executing
-    // multiple times when it's defined in multiple sources (e.g., ~/.grok/hooks/ +
+    // multiple times when it's defined in multiple sources (e.g., ~/.intelekt/hooks/ +
     // ~/.claude/settings.json + ~/.cursor/hooks.json), while still allowing
     // hooks that share a command/URL but have different matchers (e.g. tool-scoped
     // hooks) to all run.
@@ -650,7 +650,7 @@ mod tests {
     fn load_from_settings_file_no_hooks_key() {
         let dir = tempfile::tempdir().unwrap();
         let settings = dir.path().join("settings.json");
-        std::fs::write(&settings, r#"{"theme": "dark", "model": "grok-3"}"#).unwrap();
+        std::fs::write(&settings, r#"{"theme": "dark", "model": "intelekt-3"}"#).unwrap();
 
         let (registry, errors) =
             load_hooks_from_sources(&[HookSource::SettingsFile(&settings)], &[]);

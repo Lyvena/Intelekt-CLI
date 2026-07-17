@@ -1,4 +1,4 @@
-//! xai-grok-pager — Grok Build TUI.
+//! intelekt-pager — Intelekt CLI TUI.
 //!
 //! A clean-room implementation built on the v3 pager rendering engine.
 
@@ -26,7 +26,7 @@ pub mod memory_trace;
 // The *only* minimal-specific surface in this (the "full pager") crate. Both
 // modules are grouped under `src/minimal/` so a full-pager contributor sees one
 // folder to ignore, not files scattered through the module list. All the actual
-// minimal rendering lives in the sibling `xai-grok-pager-minimal` crate; these
+// minimal rendering lives in the sibling `intelekt-pager-minimal` crate; these
 // are just the two narrow seams it connects through:
 //   - `minimal_hook` — pager → minimal dispatch (fn-pointer IoC seam).
 //   - `minimal_api`  — minimal → pager read surface (facade over `pub(crate)`s).
@@ -57,9 +57,9 @@ pub mod wrap_cmd;
 pub mod tool_usage;
 
 // Presentation-primitives layer extracted into the sibling crate
-// `xai-grok-pager-render`. Re-exported at the crate root so existing
+// `intelekt-pager-render`. Re-exported at the crate root so existing
 // `crate::<module>::...` references throughout the pager keep resolving.
-pub use xai_grok_pager_render::{
+pub use intelekt_pager_render::{
     appearance, clipboard, gboom, glyphs, host, link_opener, modal_window_state, prompt_images,
     render, syntax, terminal, theme, util,
 };

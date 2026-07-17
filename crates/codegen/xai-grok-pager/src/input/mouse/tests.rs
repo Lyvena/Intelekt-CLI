@@ -1572,7 +1572,7 @@ fn scroll_log_records_flood_flushes_and_capped_finalize_drop() {
 
 /// Producer-side wire-format tripwire, twin of the harness's
 /// `scroll_matrix::log::ScrollLogLine` parser
-/// (`xai-grok-pager-pty-harness/src/scroll_matrix/log.rs`). The harness
+/// (`intelekt-pager-pty-harness/src/scroll_matrix/log.rs`). The harness
 /// declares every always-emitted field REQUIRED, so its deserializer fails
 /// loudly on a pager-side rename; this test pins the same contract from the
 /// producer side as raw JSON key sets. The key lists are hardcoded string

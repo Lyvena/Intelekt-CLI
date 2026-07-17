@@ -139,15 +139,15 @@
         // Expected values come from the same chain the handler resolves, so the
         // test holds regardless of host config/env (a local `[ui]` or env
         // override legitimately beats the remote tier on both legs).
-        let requirements = xai_grok_shell::config::load_merged_requirements();
-        let user_config = xai_grok_shell::config::load_from_disk().ok();
-        let managed_config = xai_grok_shell::config::load_managed_config().ok();
+        let requirements = intelekt_shell::config::load_merged_requirements();
+        let user_config = intelekt_shell::config::load_from_disk().ok();
+        let managed_config = intelekt_shell::config::load_managed_config().ok();
         let resolve = |remote_val: Option<bool>| {
-            let remote = xai_grok_shell::util::config::RemoteSettings {
+            let remote = intelekt_shell::util::config::RemoteSettings {
                 group_tool_verbs: remote_val,
                 ..Default::default()
             };
-            xai_grok_shell::util::config::resolve_group_tool_verbs(
+            intelekt_shell::util::config::resolve_group_tool_verbs(
                 requirements.as_ref(),
                 user_config.as_ref(),
                 managed_config.as_ref(),
@@ -194,15 +194,15 @@
         // Expected values come from the same chain the handler resolves, so the
         // test holds regardless of host config/env (a local `[ui]` or env
         // override legitimately beats the remote tier on both legs).
-        let requirements = xai_grok_shell::config::load_merged_requirements();
-        let user_config = xai_grok_shell::config::load_from_disk().ok();
-        let managed_config = xai_grok_shell::config::load_managed_config().ok();
+        let requirements = intelekt_shell::config::load_merged_requirements();
+        let user_config = intelekt_shell::config::load_from_disk().ok();
+        let managed_config = intelekt_shell::config::load_managed_config().ok();
         let resolve = |remote_val: Option<bool>| {
-            let remote = xai_grok_shell::util::config::RemoteSettings {
+            let remote = intelekt_shell::util::config::RemoteSettings {
                 collapsed_edit_blocks: remote_val,
                 ..Default::default()
             };
-            xai_grok_shell::util::config::resolve_collapsed_edit_blocks(
+            intelekt_shell::util::config::resolve_collapsed_edit_blocks(
                 requirements.as_ref(),
                 user_config.as_ref(),
                 managed_config.as_ref(),

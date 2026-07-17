@@ -7,9 +7,9 @@
 
 use agent_client_protocol as acp;
 use tempfile::TempDir;
-use xai_grok_shell::sampling::ConversationItem;
-use xai_grok_shell::session::info::Info;
-use xai_grok_shell::session::storage::{JsonlStorageAdapter, StorageAdapter};
+use intelekt_shell::sampling::ConversationItem;
+use intelekt_shell::session::info::Info;
+use intelekt_shell::session::storage::{JsonlStorageAdapter, StorageAdapter};
 
 /// Helper to create a test session in a temp directory
 async fn create_test_session(storage: &JsonlStorageAdapter, session_id: &str, cwd: &str) -> Info {
@@ -35,7 +35,7 @@ async fn create_test_session(storage: &JsonlStorageAdapter, session_id: &str, cw
     storage
         .append_update(
             &info,
-            &xai_grok_shell::session::storage::SessionUpdate::Acp(Box::new(notification)),
+            &intelekt_shell::session::storage::SessionUpdate::Acp(Box::new(notification)),
         )
         .await
         .unwrap();
@@ -56,9 +56,9 @@ async fn test_fork_session_creates_new_session_with_parent_tracking() {
         cwd: "/new/path".to_string(),
     };
 
-    let options = xai_grok_shell::session::storage::CopySessionOptions {
+    let options = intelekt_shell::session::storage::CopySessionOptions {
         parent_session_id: Some("source-session-123".to_string()),
-        new_model_id: Some("grok-3".to_string()),
+        new_model_id: Some("intelekt-3".to_string()),
         target_prompt_index: None,
         ..Default::default()
     };
@@ -77,7 +77,7 @@ async fn test_fork_session_creates_new_session_with_parent_tracking() {
 
     assert_eq!(loaded.summary.info.id.to_string(), "fork-session-456");
     assert_eq!(loaded.summary.info.cwd, "/new/path");
-    assert_eq!(loaded.summary.current_model_id, acp::ModelId::new("grok-3"));
+    assert_eq!(loaded.summary.current_model_id, acp::ModelId::new("intelekt-3"));
     assert_eq!(
         loaded.summary.parent_session_id,
         Some("source-session-123".to_string())
@@ -90,7 +90,7 @@ async fn test_fork_session_creates_new_session_with_parent_tracking() {
     // Verify updates were copied with transformed session ID
     assert_eq!(loaded.updates.len(), 1);
     match &loaded.updates[0] {
-        xai_grok_shell::session::storage::SessionUpdate::Acp(notification) => {
+        intelekt_shell::session::storage::SessionUpdate::Acp(notification) => {
             assert_eq!(notification.session_id.to_string(), "fork-session-456");
         }
         _ => panic!("Expected ACP update"),
@@ -117,7 +117,7 @@ async fn test_fork_preserves_session_title() {
         cwd: "/new".to_string(),
     };
 
-    let options = xai_grok_shell::session::storage::CopySessionOptions {
+    let options = intelekt_shell::session::storage::CopySessionOptions {
         parent_session_id: Some("titled-session".to_string()),
         new_model_id: None,
         target_prompt_index: None,

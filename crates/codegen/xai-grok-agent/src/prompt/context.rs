@@ -5,7 +5,7 @@
 //! individual sections.
 //!
 //! Rendering is done by `ToolBridge::render_prompt()` which delegates to
-//! `TemplateRenderer` in `xai-grok-tools`. This struct does NOT own a
+//! `TemplateRenderer` in `intelekt-tools`. This struct does NOT own a
 //! render engine — it provides placeholders and discovered sections.
 use crate::config::PromptMode;
 use crate::prompt::agents_md::{self, AgentConfigFile};
@@ -75,7 +75,7 @@ pub enum PromptAudience {
     /// Child/subagent session. Compact base template, no persona/subagent catalogs.
     Subagent,
 }
-use xai_grok_tools::bridge::ToolBridge;
+use intelekt_tools::bridge::ToolBridge;
 /// Agent-specific inputs for system prompt rendering.
 ///
 /// Serializable (JSON/YAML) so users can dump it and inspect fields.
@@ -144,7 +144,7 @@ pub struct PromptContext {
     /// stdio / generic-ACP).
     #[serde(default)]
     pub is_non_interactive: bool,
-    /// Identity in the primary grok-build system prompt (`You are <label>…`).
+    /// Identity in the primary intelekt-cli system prompt (`You are <label>…`).
     /// Not the UI picker name. Defaults to [`DEFAULT_SYSTEM_PROMPT_LABEL`].
     #[serde(default = "default_system_prompt_label")]
     pub system_prompt_label: String,
@@ -1061,7 +1061,7 @@ mod tests {
     #[test]
     fn test_agents_md_paths_use_display_cwd_in_rendered_section() {
         let display_path = "/home/user/my-project";
-        let overlay_path = "/root/.grok/worktrees/my-project/ab-123-a-overlay";
+        let overlay_path = "/root/.intelekt/worktrees/my-project/ab-123-a-overlay";
         let ctx = PromptContext {
             agents_md_files: vec![AgentConfigFile {
                 file_name: "AGENTS.md".to_string(),
@@ -1229,7 +1229,7 @@ mod tests {
             ("plan", plan),
         ] {
             assert!(
-                !prompt.contains("You are a Grok Build agent"),
+                !prompt.contains("You are a Intelekt CLI agent"),
                 "{name} prompt should not duplicate base template identity"
             );
         }

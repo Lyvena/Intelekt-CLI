@@ -12,7 +12,7 @@ use crate::version::{
     UpdateConfig, fetch_latest_version, get_installed_grok_version, write_version_cache,
 };
 use tracing::{info, warn};
-use xai_grok_shell::util::config;
+use intelekt_shell::util::config;
 
 /// Result of comparing the running binary against a configured floor.
 #[derive(Debug, Clone, PartialEq, Eq)]

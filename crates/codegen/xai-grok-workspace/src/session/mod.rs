@@ -15,9 +15,9 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use xai_computer_hub_mcp_adapter::McpBridgeHandle;
-use xai_grok_mcp::servers::McpState;
-use xai_grok_tools::notification::types::{ToolNotification, ToolNotificationHandle};
-use xai_grok_tools::registry::types::{FinalizedToolset, ToolConfig, ToolServerConfig};
+use intelekt_mcp::servers::McpState;
+use intelekt_tools::notification::types::{ToolNotification, ToolNotificationHandle};
+use intelekt_tools::registry::types::{FinalizedToolset, ToolConfig, ToolServerConfig};
 use xai_hunk_tracker::HunkTrackerHandle;
 use xai_tool_protocol::ToolId;
 use xai_tool_runtime::WorkspaceViewerContext;
@@ -289,7 +289,7 @@ impl WorkspaceSession {
     /// re-resolve so background tasks and shell state survive swaps.
     pub(crate) fn terminal_backend(
         &self,
-    ) -> &Arc<dyn xai_grok_tools::computer::types::TerminalBackend> {
+    ) -> &Arc<dyn intelekt_tools::computer::types::TerminalBackend> {
         self.terminal_backend.backend()
     }
     /// Explicitly shut the session's terminal backend down (kills all of its
@@ -314,7 +314,7 @@ impl WorkspaceSession {
     pub(crate) async fn toolset_terminal_is_session_owned(&self) -> bool {
         let toolset = self.toolset();
         let res = toolset.resources.lock().await;
-        match res.get::<xai_grok_tools::types::resources::Terminal>() {
+        match res.get::<intelekt_tools::types::resources::Terminal>() {
             Some(t) => Arc::ptr_eq(&t.0, self.terminal_backend()),
             None => true,
         }
@@ -415,7 +415,7 @@ impl WorkspaceSession {
         let old_toolset = self.toolset();
         let old_terminal = {
             let res = old_toolset.resources.lock().await;
-            res.get::<xai_grok_tools::types::resources::Terminal>()
+            res.get::<intelekt_tools::types::resources::Terminal>()
                 .map(|t| t.0.clone())
         };
         if let Some(old_terminal) = old_terminal
@@ -452,11 +452,11 @@ pub struct WorkspaceShared {
     pub(crate) sessions: RwLock<HashMap<String, Arc<WorkspaceSession>>>,
     pub(crate) session_factory: Arc<dyn SessionContextFactory>,
     pub(crate) mcp_tools_snapshot: arc_swap::ArcSwap<Vec<ToolConfig>>,
-    pub(crate) events: tokio::sync::broadcast::Sender<xai_grok_workspace_types::WorkspaceEvent>,
+    pub(crate) events: tokio::sync::broadcast::Sender<intelekt_workspace_types::WorkspaceEvent>,
     pub(crate) respect_gitignore: bool,
     pub(crate) memory_config: Option<MemoryConfig>,
-    pub(crate) hook_registry: Arc<parking_lot::RwLock<xai_grok_hooks::discovery::HookRegistry>>,
-    pub(crate) hook_load_errors: Vec<xai_grok_hooks::error::HookError>,
+    pub(crate) hook_registry: Arc<parking_lot::RwLock<intelekt_hooks::discovery::HookRegistry>>,
+    pub(crate) hook_load_errors: Vec<intelekt_hooks::error::HookError>,
     /// Skill discovery configuration (extra paths, ignore prefixes).
     /// Used by `discover_skills` via the `discovery` module.
     pub(crate) skills_config: crate::discovery::SkillsConfig,
@@ -481,7 +481,7 @@ pub struct WorkspaceShared {
     /// Connection-level sink feeding the `ActivityTracker` (drained by
     /// `run_activity_feed`); not a network egress. `None` until `connect_hub()` sets it.
     pub(crate) activity_notify_handle:
-        arc_swap::ArcSwap<Option<xai_grok_tools::notification::types::ToolNotificationHandle>>,
+        arc_swap::ArcSwap<Option<intelekt_tools::notification::types::ToolNotificationHandle>>,
     /// Sink for workspace-originated ext-notifications to the client (e.g.
     /// `x.ai/search/fuzzy/status`). Mode-agnostic: the shell wires it to the
     /// agent gateway in local mode, and to the server in proxy mode. `None` until
@@ -505,7 +505,7 @@ pub struct WorkspaceShared {
     /// clients.
     pub(crate) fuzzy_searches:
         std::sync::Arc<tokio::sync::Mutex<crate::file_system::FuzzySearchManager>>,
-    pub(crate) lsp: Option<std::sync::Arc<dyn xai_grok_tools::implementations::lsp::LspBackend>>,
+    pub(crate) lsp: Option<std::sync::Arc<dyn intelekt_tools::implementations::lsp::LspBackend>>,
     pub(crate) codebase_indexes:
         std::sync::Arc<parking_lot::Mutex<crate::file_system::CodebaseIndexManager>>,
     /// Finalize the FS rewind checkpoint on non-`Completed` turn-end outcomes
@@ -712,7 +712,7 @@ impl WorkspaceShared {
     }
     pub fn subscribe_events(
         &self,
-    ) -> tokio::sync::broadcast::Receiver<xai_grok_workspace_types::WorkspaceEvent> {
+    ) -> tokio::sync::broadcast::Receiver<intelekt_workspace_types::WorkspaceEvent> {
         self.events.subscribe()
     }
     pub fn codebase_indexes(
@@ -838,7 +838,7 @@ impl WorkspaceShared {
                     );
                     let _ =
                         self.events
-                            .send(xai_grok_workspace_types::WorkspaceEvent::ToolsChanged {
+                            .send(intelekt_workspace_types::WorkspaceEvent::ToolsChanged {
                                 session_id: sid,
                             });
                     rebuilt += 1;

@@ -8,7 +8,7 @@
 use crate::types::requirements::{Expr, ToolRequirement};
 use crate::types::tool::{ToolKind, ToolNamespace};
 
-pub use xai_grok_tools_api::slash_commands::UPDATE_GOAL_TOOL_NAME;
+pub use intelekt_tools_api::slash_commands::UPDATE_GOAL_TOOL_NAME;
 
 // ---------------------------------------------------------------------------
 // Input schema
@@ -161,7 +161,7 @@ pub type UpdateGoalEnvelope = (UpdateGoalInput, tokio::sync::oneshot::Sender<Upd
 
 /// Wrap an `UpdateGoalInput` in an envelope whose ack receiver is
 /// discarded. Test-only helper; `pub` is needed for cross-crate test
-/// access from `xai-grok-shell`.
+/// access from `intelekt-shell`.
 #[doc(hidden)]
 pub fn envelope_for_test(input: UpdateGoalInput) -> UpdateGoalEnvelope {
     let (ack_tx, _ack_rx) = tokio::sync::oneshot::channel();

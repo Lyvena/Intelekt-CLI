@@ -165,7 +165,7 @@ pub fn accounts_app_cors_layer(method: axum::http::Method) -> tower_http::cors::
 }
 /// Local-dev OAuth2 issuer (accounts-app running on localhost).
 const XAI_OAUTH2_LOCAL_ISSUER: &str = "http://localhost:22255";
-const DEFAULT_OAUTH2_REFERRER: &str = "grok-build";
+const DEFAULT_OAUTH2_REFERRER: &str = "intelekt-cli";
 /// Returns `true` when `GROK_LOCAL_AUTH=1` is set,
 /// indicating the local accounts-app should be used as the OAuth2 issuer.
 pub fn use_local_auth() -> bool {
@@ -289,7 +289,7 @@ impl Default for GrokComConfig {
                 .unwrap_or_else(|_| PROD_WS_ORIGIN.to_owned()),
             grok_ws_url: std::env::var("GROK_WS_URL")
                 .unwrap_or_else(|_| PROD_RELAY_WS_URL.to_owned()),
-            token_header: "xai-grok-cli".to_owned(),
+            token_header: "intelekt-cli".to_owned(),
             oidc,
             oauth2,
             auth_provider_command: std::env::var("GROK_AUTH_PROVIDER_COMMAND").ok(),
@@ -349,7 +349,7 @@ mod tests {
             scopes: default_team_oauth2_scopes(),
             principal_type: Some("Team".into()),
             principal_id: Some("team-abc".into()),
-            referrer: Some("grok-build".into()),
+            referrer: Some("intelekt-cli".into()),
         };
         assert_eq!(cfg.auth_scope(), "https://auth.x.ai::client-123");
     }
@@ -370,7 +370,7 @@ mod tests {
             scopes: default_oauth2_scopes(),
             principal_type: None,
             principal_id: None,
-            referrer: Some("grok-build".into()),
+            referrer: Some("intelekt-cli".into()),
         };
         assert_eq!(cfg.auth_scope(), "https://auth.x.ai::client-123");
     }

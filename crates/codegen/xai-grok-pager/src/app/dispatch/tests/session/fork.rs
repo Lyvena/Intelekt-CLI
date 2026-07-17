@@ -88,7 +88,7 @@ fn worktree_forked_with_restore_shows_summary_in_scrollback() {
             restore_summary: Some(
                 "checked out abc12345, staged: true, unstaged: false, untracked: 3".into(),
             ),
-            restore_degree: Some(xai_grok_workspace::session::git::RestoreDegree::Full),
+            restore_degree: Some(intelekt_workspace::session::git::RestoreDegree::Full),
         }),
         &mut app,
     );
@@ -108,7 +108,7 @@ fn worktree_forked_with_restore_shows_summary_in_scrollback() {
     assert!(has_restore_msg, "expected restore summary in scrollback");
     assert_eq!(
         app.agents[&id].session.restore_degree,
-        Some(xai_grok_workspace::session::git::RestoreDegree::Full),
+        Some(intelekt_workspace::session::git::RestoreDegree::Full),
         "restore_degree must be stored on the session"
     );
 }
@@ -472,7 +472,7 @@ fn open_fork_question_refuses_when_existing_question_is_open() {
     let mut app = fork_test_app();
     // Plant an existing question (e.g. an ACP-driven one).
     use crate::views::question_view::QuestionViewState;
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         Question, QuestionOption,
     };
     let q = Question {
@@ -1070,7 +1070,7 @@ fn fork_session_failed_pushes_turn_failed_block() {
 #[test]
 fn translate_local_submit_yes_returns_worktree_true_action() {
     use crate::views::question_view::{LocalQuestionKind, QuestionViewState};
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         Question, QuestionOption,
     };
     let q = Question {
@@ -1115,7 +1115,7 @@ fn translate_local_submit_yes_returns_worktree_true_action() {
 #[test]
 fn translate_local_submit_no_returns_worktree_false_action() {
     use crate::views::question_view::{LocalQuestionKind, QuestionViewState};
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         Question, QuestionOption,
     };
     let q = Question {
@@ -1158,7 +1158,7 @@ fn translate_local_submit_no_returns_worktree_false_action() {
 #[test]
 fn translate_local_submit_always_returns_persist_always_for_fork() {
     use crate::views::question_view::{LocalQuestionKind, QuestionViewState};
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         Question, QuestionOption,
     };
     let q = Question {
@@ -1202,7 +1202,7 @@ fn translate_local_submit_always_returns_persist_always_for_fork() {
 #[test]
 fn translate_local_submit_never_returns_persist_never_for_fork() {
     use crate::views::question_view::{LocalQuestionKind, QuestionViewState};
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         Question, QuestionOption,
     };
     let q = Question {
@@ -1247,7 +1247,7 @@ fn translate_local_submit_never_returns_persist_never_for_fork() {
 fn handle_ask_user_question_pushes_system_block_when_displaced_local_fork_modal() {
     use crate::scrollback::block::RenderBlock;
     use crate::views::question_view::{LocalQuestionKind, QuestionViewState};
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         Question, QuestionOption,
     };
 

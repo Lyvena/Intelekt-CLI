@@ -11,8 +11,8 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use support::{send_one, test_config};
-use xai_grok_sampler::SamplingClient;
-use xai_grok_test_support::spawn_counting_server;
+use intelekt_sampler::SamplingClient;
+use intelekt_test_support::spawn_counting_server;
 
 /// Pin the env these assertions depend on before any client is built, so
 /// ambient shell exports (`GROK_SAMPLER_SHARED_CLIENT=0`,

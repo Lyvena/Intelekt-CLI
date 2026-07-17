@@ -655,7 +655,7 @@ async fn e2e_multi_server_routing() {
 }
 
 /// Requires `npx typescript-language-server` on PATH. Run with:
-/// `cargo test -p xai-grok-shell e2e_real_typescript_language_server -- --ignored`
+/// `cargo test -p intelekt-shell e2e_real_typescript_language_server -- --ignored`
 #[ignore]
 #[tokio::test(flavor = "current_thread")]
 async fn e2e_real_typescript_language_server() {

@@ -12,8 +12,8 @@ const T2: &str = "CLUSTER_SENTINEL_T2";
 /// driver/viewer roles flip for the next turn. In-process port of the
 /// `leader_two_clients_shared_session` PTY case.
 #[test]
-#[ignore = "leader-cluster: needs single-process isolation (process-global env + grok_home OnceLock in the shared lib test binary); run: cargo test -p xai-grok-pager --lib -- app::leader_cluster --ignored --test-threads=1"]
-#[serial_test::serial(GROK_HOME)]
+#[ignore = "leader-cluster: needs single-process isolation (process-global env + grok_home OnceLock in the shared lib test binary); run: cargo test -p intelekt-pager --lib -- app::leader_cluster --ignored --test-threads=1"]
+#[serial_test::serial(INTELEKT_HOME)]
 fn two_clients_share_session_and_stream_both_ways() {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -74,8 +74,8 @@ fn two_clients_share_session_and_stream_both_ways() {
 /// every subscriber exactly once; each viewer's attach replay is unicast
 /// (it never duplicates into the already-attached clients).
 #[test]
-#[ignore = "leader-cluster: needs single-process isolation (process-global env + grok_home OnceLock in the shared lib test binary); run: cargo test -p xai-grok-pager --lib -- app::leader_cluster --ignored --test-threads=1"]
-#[serial_test::serial(GROK_HOME)]
+#[ignore = "leader-cluster: needs single-process isolation (process-global env + grok_home OnceLock in the shared lib test binary); run: cargo test -p intelekt-pager --lib -- app::leader_cluster --ignored --test-threads=1"]
+#[serial_test::serial(INTELEKT_HOME)]
 fn n_client_fan_out_without_replay_duplication() {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -154,8 +154,8 @@ fn n_client_fan_out_without_replay_duplication() {
 /// lands Idle, and no inference request is re-driven. In-process port of
 /// `leader_reattach_completion_roundtrips_durable_log`.
 #[test]
-#[ignore = "leader-cluster: needs single-process isolation (process-global env + grok_home OnceLock in the shared lib test binary); run: cargo test -p xai-grok-pager --lib -- app::leader_cluster --ignored --test-threads=1"]
-#[serial_test::serial(GROK_HOME)]
+#[ignore = "leader-cluster: needs single-process isolation (process-global env + grok_home OnceLock in the shared lib test binary); run: cargo test -p intelekt-pager --lib -- app::leader_cluster --ignored --test-threads=1"]
+#[serial_test::serial(INTELEKT_HOME)]
 fn reattach_completion_roundtrips_durable_log() {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -234,8 +234,8 @@ fn reattach_completion_roundtrips_durable_log() {
 /// (its `plan_reconnect_load` is event_loop-private; the cwd/meta
 /// derivation is replicated inline).
 #[test]
-#[ignore = "leader-cluster: needs single-process isolation (process-global env + grok_home OnceLock in the shared lib test binary); run: cargo test -p xai-grok-pager --lib -- app::leader_cluster --ignored --test-threads=1"]
-#[serial_test::serial(GROK_HOME)]
+#[ignore = "leader-cluster: needs single-process isolation (process-global env + grok_home OnceLock in the shared lib test binary); run: cargo test -p intelekt-pager --lib -- app::leader_cluster --ignored --test-threads=1"]
+#[serial_test::serial(INTELEKT_HOME)]
 fn leader_kill_reconnect_reloads_without_duplicating_history() {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()

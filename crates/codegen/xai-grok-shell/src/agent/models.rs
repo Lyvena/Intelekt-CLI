@@ -14,7 +14,7 @@ use crate::auth::{AuthManager, GrokAuth, GrokComConfig};
 use crate::remote::{FetchModelsResult, fetch_models_blocking};
 use crate::sampling::SamplerConfig as SamplingConfig;
 use globset::{Glob, GlobSet, GlobSetBuilder};
-use xai_grok_sampling_types::{ReasoningEffort, ReasoningEffortOption};
+use intelekt_sampling_types::{ReasoningEffort, ReasoningEffortOption};
 
 // ── Auth method for model fetching ──────────────────────────────────────────
 
@@ -491,7 +491,7 @@ impl ModelsManager {
     pub fn model_compactions_remaining(
         &self,
         model_id: &str,
-    ) -> Option<xai_grok_sampling_types::CompactionsRemaining> {
+    ) -> Option<intelekt_sampling_types::CompactionsRemaining> {
         self.inner
             .models
             .read()
@@ -502,7 +502,7 @@ impl ModelsManager {
     pub fn model_compaction_at_tokens(
         &self,
         model_id: &str,
-    ) -> Option<xai_grok_sampling_types::CompactionAtTokens> {
+    ) -> Option<intelekt_sampling_types::CompactionAtTokens> {
         self.inner
             .models
             .read()
@@ -514,7 +514,7 @@ impl ModelsManager {
     ///
     /// `model_id` may be a routing slug (`config.model`, e.g. `grok-4.5`)
     /// OR a catalog key; the catalog map is keyed by the config key, which can
-    /// differ from the slug for custom/enterprise ids (e.g. key `enterprise-grok-build`
+    /// differ from the slug for custom/enterprise ids (e.g. key `enterprise-intelekt-cli`
     /// → slug `grok-4.5`). Resolve to the catalog key first so a slug
     /// caller still finds the opted-in entry.
     pub fn model_show_model_fingerprint(&self, model_id: &str) -> bool {
@@ -611,7 +611,7 @@ impl ModelsManager {
 
         if !*self.inner.has_fetched_real_catalog.read() && self.inner.prefetched.read().is_none() {
             if remote_fetch_enabled {
-                xai_grok_telemetry::unified_log::warn(
+                intelekt_telemetry::unified_log::warn(
                     "model catalog: falling back to bundled defaults only",
                     None,
                     Some(serde_json::json!({
@@ -643,7 +643,7 @@ impl ModelsManager {
         let available = self.available();
         let current = self.current_model_id();
         let count = available.len();
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "model catalog: notifying clients",
             None,
             Some(serde_json::json!({
@@ -663,12 +663,12 @@ impl ModelsManager {
         }
     }
 
-    /// Hot-reload the catalog from `~/.grok/models_cache.json` after an
+    /// Hot-reload the catalog from `~/.intelekt/models_cache.json` after an
     /// external write (detected by the config file watcher).
     ///
     /// A long-running leader otherwise only refreshes its catalog from its
     /// *own* fetch paths (startup prefetch, auth change, response-header etag).
-    /// When another grok process sharing `~/.grok` (a `--no-leader` run, a
+    /// When another grok process sharing `~/.intelekt` (a `--no-leader` run, a
     /// newer client, grok-desktop) fetches a fresher `/v1/models` catalog and
     /// persists it, this picks it up without a network round-trip.
     ///
@@ -755,7 +755,7 @@ impl ModelsManager {
         }
 
         tracing::info!(count, "model catalog hot-reloaded from disk cache");
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "model catalog: reloaded from external disk-cache write",
             None,
             Some(serde_json::json!({ "model_count": count })),
@@ -810,7 +810,7 @@ impl ModelsManager {
                     }
                 },
                 |attempt, max_retries, delay| async move {
-                    xai_grok_telemetry::unified_log::warn(
+                    intelekt_telemetry::unified_log::warn(
                         "model catalog: retry scheduled",
                         None,
                         Some(serde_json::json!({
@@ -826,7 +826,7 @@ impl ModelsManager {
             match result {
                 Ok(()) => {
                     let count = mgr.available().len();
-                    xai_grok_telemetry::unified_log::info(
+                    intelekt_telemetry::unified_log::info(
                         "model catalog: retry succeeded",
                         None,
                         Some(serde_json::json!({ "model_count": count })),
@@ -834,7 +834,7 @@ impl ModelsManager {
                     mgr.notify_models_updated();
                 }
                 Err(e) => {
-                    xai_grok_telemetry::unified_log::warn(
+                    intelekt_telemetry::unified_log::warn(
                         "model catalog: all retries exhausted",
                         None,
                         Some(serde_json::json!({ "error": e })),
@@ -857,7 +857,7 @@ impl ModelsManager {
     pub fn start_auth_refresh_watcher(&self, notify: Arc<tokio::sync::Notify>) {
         let mgr = self.clone();
         let had_catalog_at_start = *self.inner.has_fetched_real_catalog.read();
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "model catalog: auth refresh watcher started",
             None,
             Some(serde_json::json!({
@@ -878,7 +878,7 @@ impl ModelsManager {
                 }
                 let had_catalog = *mgr.inner.has_fetched_real_catalog.read();
                 let old_count = mgr.available().len();
-                xai_grok_telemetry::unified_log::info(
+                intelekt_telemetry::unified_log::info(
                     "model catalog: auth refresh watcher triggered",
                     None,
                     Some(serde_json::json!({
@@ -891,7 +891,7 @@ impl ModelsManager {
                 let new_count = mgr.available().len();
                 if has_catalog {
                     if !had_catalog || new_count != old_count {
-                        xai_grok_telemetry::unified_log::info(
+                        intelekt_telemetry::unified_log::info(
                             "model catalog: auth refresh watcher updated catalog",
                             None,
                             Some(serde_json::json!({
@@ -903,7 +903,7 @@ impl ModelsManager {
                     }
                     mgr.notify_models_updated();
                 } else {
-                    xai_grok_telemetry::unified_log::warn(
+                    intelekt_telemetry::unified_log::warn(
                         "model catalog: auth refresh watcher fetch failed",
                         None,
                         Some(serde_json::json!({
@@ -1066,7 +1066,7 @@ impl ModelsManager {
         let has_auth = auth.is_some();
         let fetch_auth = *self.inner.fetch_auth.read();
         let cfg = self.inner.cfg.read().clone();
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "model catalog: fetching",
             None,
             Some(serde_json::json!({
@@ -1077,7 +1077,7 @@ impl ModelsManager {
         let new_prefetched = fetch_models_async(cfg.endpoints.clone(), auth, fetch_auth).await;
         let success = self.apply_refresh_result(&cfg, new_prefetched, None);
         if success {
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "model catalog: fetch succeeded",
                 None,
                 Some(serde_json::json!({
@@ -1095,7 +1095,7 @@ impl ModelsManager {
     ) -> bool {
         let Some(new_prefetched) = new_prefetched else {
             tracing::warn!("model refresh failed, leaving existing models unchanged");
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 "model catalog refresh failed",
                 None,
                 Some(serde_json::json!({
@@ -1261,7 +1261,7 @@ impl ModelsCacheManager {
     ) -> Option<CacheResult> {
         let data = std::fs::read(&self.path).ok()?;
         let cache: ModelsCache = serde_json::from_slice(&data).ok()?;
-        if cache.grok_version.as_deref() != Some(xai_grok_version::VERSION) {
+        if cache.grok_version.as_deref() != Some(intelekt_version::VERSION) {
             tracing::debug!("models cache version mismatch");
             return None;
         }
@@ -1298,7 +1298,7 @@ impl ModelsCacheManager {
     ) {
         let cache = ModelsCache {
             fetched_at: Utc::now(),
-            grok_version: Some(xai_grok_version::VERSION.to_string()),
+            grok_version: Some(intelekt_version::VERSION.to_string()),
             auth_method: Some(auth_method),
             origin: Some(origin.to_string()),
             etag: etag.map(|s| s.to_string()),
@@ -1374,7 +1374,7 @@ impl ModelsCacheManager {
 ///
 /// Each entry is keyed by its `id` field (falling back to the `model` slug
 /// when `id` is absent). This lets A/B experiments that share the same
-/// routing slug (e.g. "Auto" and "Grok Build" both route to `grok-build`)
+/// routing slug (e.g. "Auto" and "Intelekt CLI" both route to `intelekt-cli`)
 /// coexist in the catalog without collision.
 fn build_prefetched_map(
     models: Vec<config::ModelEntryConfig>,
@@ -1611,7 +1611,7 @@ fn spawn_prefetch_thread(env: PrefetchEnv) -> EarlyPrefetchHandle {
 /// Map a model id (catalog key or routing slug) to its catalog key.
 ///
 /// Sessions persist the routing slug (`[model.X].model`, e.g. `grok-4.5`);
-/// the catalog and `/model` picker use config keys (e.g. `enterprise-grok-build`).
+/// the catalog and `/model` picker use config keys (e.g. `enterprise-intelekt-cli`).
 /// Last slug match wins so user overrides beat defaults (matches `MvpAgent::resolve_model_id`).
 pub(crate) fn resolve_catalog_key(
     models: &IndexMap<String, ModelEntry>,
@@ -2089,14 +2089,14 @@ mod tests {
         let excluded = config_from_toml(
             r#"
             [models]
-            default = "grok-3"
-            allowed_models = ["grok-4*"]
+            default = "intelekt-3"
+            allowed_models = ["intelekt-4*"]
             [model.grok-3]
-            model = "grok-3"
+            model = "intelekt-3"
             base_url = "https://api.x.ai/v1"
             context_window = 256000
             [model.grok-4]
-            model = "grok-4"
+            model = "intelekt-4"
             base_url = "https://api.x.ai/v1"
             context_window = 256000
             "#,
@@ -2105,7 +2105,7 @@ mod tests {
         assert!(
             validate_selectable(&excluded, &catalog)
                 .unwrap_err()
-                .contains("grok-3")
+                .contains("intelekt-3")
         );
 
         // Matches nothing → error.
@@ -2114,7 +2114,7 @@ mod tests {
             [models]
             allowed_models = ["nomatch-*"]
             [model.grok-4]
-            model = "grok-4"
+            model = "intelekt-4"
             base_url = "https://api.x.ai/v1"
             context_window = 256000
             "#,
@@ -2165,7 +2165,7 @@ mod tests {
         );
 
         // Real switch: both subscribers see the change.
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
         tokio::time::timeout(std::time::Duration::from_millis(100), rx_a.changed())
             .await
             .expect("rx_a saw the switch")
@@ -2183,13 +2183,13 @@ mod tests {
     async fn model_switch_generation_snapshot_reflects_current_state() {
         let mgr = test_manager();
         let start = mgr.model_switch_generation();
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
         assert_eq!(mgr.model_switch_generation(), start + 1);
         // Idempotent: same id → no bump.
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
         assert_eq!(mgr.model_switch_generation(), start + 1);
         // Another real change: another bump.
-        mgr.set_current_model_id(acp::ModelId::new("grok-3"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-3"));
         assert_eq!(mgr.model_switch_generation(), start + 2);
     }
 
@@ -2297,7 +2297,7 @@ mod tests {
     #[test]
     fn reasoning_effort_override_skips_models_that_do_not_offer_level() {
         use indexmap::IndexMap;
-        use xai_grok_sampling_types::ReasoningEffortOption;
+        use intelekt_sampling_types::ReasoningEffortOption;
 
         let cfg = config::Config {
             reasoning_effort_override: Some(ReasoningEffort::None),
@@ -2307,7 +2307,7 @@ mod tests {
         let mut prefetched = IndexMap::new();
         // 4.5-style: supports effort, menu is high only (no none).
         let mut no_none = ModelEntry {
-            info: config::ModelInfo::fallback("grok-4.5"),
+            info: config::ModelInfo::fallback("intelekt-4.5"),
             api_key: None,
             env_key: None,
             api_base_url: None,
@@ -2321,7 +2321,7 @@ mod tests {
             default: true,
         }];
         no_none.info.reasoning_effort = Some(ReasoningEffort::High);
-        prefetched.insert("grok-4.5".to_string(), no_none);
+        prefetched.insert("intelekt-4.5".to_string(), no_none);
 
         // Model that explicitly offers none.
         let mut with_none = ModelEntry {
@@ -2342,7 +2342,7 @@ mod tests {
 
         let catalog = resolve_model_catalog(&cfg, Some(prefetched));
         assert_eq!(
-            catalog["grok-4.5"].info.reasoning_effort,
+            catalog["intelekt-4.5"].info.reasoning_effort,
             Some(ReasoningEffort::High),
             "--effort none must not stamp onto models that do not offer none"
         );
@@ -2501,37 +2501,37 @@ mod tests {
     fn first_apply_refresh_reselects_default_model() {
         let mgr = test_manager();
         let mut cfg = config::Config::default();
-        cfg.models.default = Some("grok-3".to_string());
+        cfg.models.default = Some("intelekt-3".to_string());
 
         assert!(!mgr.has_fetched_real_catalog());
 
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
 
         assert!(mgr.has_fetched_real_catalog());
-        assert_eq!(mgr.current_model_id().0.as_ref(), "grok-3");
+        assert_eq!(mgr.current_model_id().0.as_ref(), "intelekt-3");
     }
 
     #[test]
     fn subsequent_apply_refresh_preserves_user_model() {
         let mgr = test_manager();
         let mut cfg = config::Config::default();
-        cfg.models.default = Some("grok-3".to_string());
+        cfg.models.default = Some("intelekt-3".to_string());
 
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
 
         // Simulate on_auth_changed clearing prefetched + etag.
         *mgr.inner.prefetched.write() = None;
         *mgr.inner.etag.write() = None;
 
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
 
         assert_eq!(
             mgr.current_model_id().0.as_ref(),
-            "grok-4",
+            "intelekt-4",
             "user's model selection must survive auth-change refresh"
         );
     }
@@ -2540,19 +2540,19 @@ mod tests {
     fn subsequent_refresh_reselects_when_model_removed() {
         let mgr = test_manager();
         let mut cfg = config::Config::default();
-        cfg.models.default = Some("grok-3".to_string());
+        cfg.models.default = Some("intelekt-3".to_string());
 
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
 
         // Second refresh with grok-4 removed.
-        let prefetched = make_prefetched(&["grok-3", "grok-4.5"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4.5"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
 
         assert_eq!(
             mgr.current_model_id().0.as_ref(),
-            "grok-3",
+            "intelekt-3",
             "should fall back to config default when current is removed"
         );
     }
@@ -2576,11 +2576,11 @@ mod tests {
     fn apply_config_honors_new_preferred_model() {
         let mgr = test_manager();
         let mut cfg = config::Config::default();
-        cfg.models.default = Some("grok-3".to_string());
+        cfg.models.default = Some("intelekt-3".to_string());
 
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
 
         // Simulate stale inner cfg (no default) from a racing auth refresh.
         let mut stale_cfg = config::Config::default();
@@ -2588,12 +2588,12 @@ mod tests {
         *mgr.inner.cfg.write() = stale_cfg;
 
         let mut new_cfg = config::Config::default();
-        new_cfg.models.default = Some("grok-3".to_string());
+        new_cfg.models.default = Some("intelekt-3".to_string());
         mgr.apply_config(new_cfg);
 
         assert_eq!(
             mgr.current_model_id().0.as_ref(),
-            "grok-3",
+            "intelekt-3",
             "apply_config must honor updated preferred model from config"
         );
     }
@@ -2603,10 +2603,10 @@ mod tests {
         let mgr = test_manager();
         let cfg = config::Config::default();
 
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
 
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
 
         // Unrelated config change — preferred model unchanged.
         let new_cfg = config::Config::default();
@@ -2614,7 +2614,7 @@ mod tests {
 
         assert_eq!(
             mgr.current_model_id().0.as_ref(),
-            "grok-4",
+            "intelekt-4",
             "apply_config must not reset model when preferred hasn't changed"
         );
     }
@@ -2623,12 +2623,12 @@ mod tests {
     fn apply_config_falls_back_when_preferred_not_in_catalog() {
         let mgr = test_manager();
         let mut cfg = config::Config::default();
-        cfg.models.default = Some("grok-3".to_string());
+        cfg.models.default = Some("intelekt-3".to_string());
 
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
 
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
 
         // Preferred model not in catalog — falls back to first entry.
         let mut new_cfg = config::Config::default();
@@ -2648,15 +2648,15 @@ mod tests {
     fn apply_config_both_none_preferred_preserves_current() {
         let mgr = test_manager();
         let cfg = config::Config::default();
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
         let new_cfg = config::Config::default();
         mgr.apply_config(new_cfg);
 
         assert_eq!(
             mgr.current_model_id().0.as_ref(),
-            "grok-4",
+            "intelekt-4",
             "both-None preferred must preserve user's runtime model"
         );
     }
@@ -2665,13 +2665,13 @@ mod tests {
     fn apply_config_old_some_new_none_preserves_current() {
         let mgr = test_manager();
         let mut cfg = config::Config::default();
-        cfg.models.default = Some("grok-3".to_string());
+        cfg.models.default = Some("intelekt-3".to_string());
 
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
-        assert_eq!(mgr.current_model_id().0.as_ref(), "grok-3");
+        assert_eq!(mgr.current_model_id().0.as_ref(), "intelekt-3");
 
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
 
         // [models] default removed — is_some() guard prevents reset.
         let new_cfg = config::Config::default();
@@ -2679,7 +2679,7 @@ mod tests {
 
         assert_eq!(
             mgr.current_model_id().0.as_ref(),
-            "grok-4",
+            "intelekt-4",
             "old=Some new=None must not reset model (is_some guard)"
         );
     }
@@ -2690,29 +2690,29 @@ mod tests {
     fn auth_refresh_then_config_reload_preserves_user_model() {
         let mgr = test_manager();
         let mut cfg = config::Config::default();
-        cfg.models.default = Some("grok-3".to_string());
+        cfg.models.default = Some("intelekt-3".to_string());
 
         // Initial fetch.
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
 
         // User runs /model grok-4.
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
 
         // Auth refresh races — clears prefetched/etag.
         *mgr.inner.prefetched.write() = None;
         *mgr.inner.etag.write() = None;
 
         // Second fetch must preserve user's model.
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
-        assert_eq!(mgr.current_model_id().0.as_ref(), "grok-4");
+        assert_eq!(mgr.current_model_id().0.as_ref(), "intelekt-4");
 
         // Config reload with persisted preference.
         let mut new_cfg = config::Config::default();
-        new_cfg.models.default = Some("grok-4".to_string());
+        new_cfg.models.default = Some("intelekt-4".to_string());
         mgr.apply_config(new_cfg);
-        assert_eq!(mgr.current_model_id().0.as_ref(), "grok-4");
+        assert_eq!(mgr.current_model_id().0.as_ref(), "intelekt-4");
     }
 
     // ── disk-cache hot-reload (external models_cache.json writes) ────
@@ -2734,7 +2734,7 @@ mod tests {
 
         let auth_method = mgr.inner.fetch_auth.read().cache_auth_method();
         cache.persist(
-            &make_prefetched(&["grok-4.5", "grok-4.3"]),
+            &make_prefetched(&["intelekt-4.5", "intelekt-4.3"]),
             Some("etag-ext"),
             auth_method,
             &mgr.cache_origin(),
@@ -2743,8 +2743,8 @@ mod tests {
         mgr.reload_from_cache_manager(&cache);
 
         assert!(mgr.has_fetched_real_catalog());
-        assert!(mgr.models().contains_key("grok-4.5"));
-        assert!(mgr.models().contains_key("grok-4.3"));
+        assert!(mgr.models().contains_key("intelekt-4.5"));
+        assert!(mgr.models().contains_key("intelekt-4.3"));
         assert_eq!(mgr.inner.etag.read().as_deref(), Some("etag-ext"));
     }
 
@@ -2828,9 +2828,9 @@ mod tests {
     fn reload_from_disk_cache_skips_identical_catalog_and_adopts_etag() {
         let mgr = test_manager();
         let cfg = config::Config::default();
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched.clone()), Some("etag-a".into()));
-        mgr.set_current_model_id(acp::ModelId::new("grok-4"));
+        mgr.set_current_model_id(acp::ModelId::new("intelekt-4"));
 
         let tmp = tempfile::TempDir::new().unwrap();
         let cache = test_cache_manager(tmp.path());
@@ -2846,7 +2846,7 @@ mod tests {
 
         assert_eq!(
             mgr.current_model_id().0.as_ref(),
-            "grok-4",
+            "intelekt-4",
             "identical catalog must not disturb the user's model"
         );
         assert_eq!(
@@ -2867,7 +2867,7 @@ mod tests {
         let auth_method = mgr.inner.fetch_auth.read().cache_auth_method();
         let stale = ModelsCache {
             fetched_at: Utc::now() - ChronoDuration::seconds(3600),
-            grok_version: Some(xai_grok_version::VERSION.to_string()),
+            grok_version: Some(intelekt_version::VERSION.to_string()),
             auth_method: Some(auth_method),
             origin: Some(mgr.cache_origin()),
             etag: Some("etag-stale".into()),
@@ -2943,7 +2943,7 @@ mod tests {
         let auth_method = mgr.inner.fetch_auth.read().cache_auth_method();
         let legacy = ModelsCache {
             fetched_at: Utc::now(),
-            grok_version: Some(xai_grok_version::VERSION.to_string()),
+            grok_version: Some(intelekt_version::VERSION.to_string()),
             auth_method: Some(auth_method),
             origin: None,
             etag: Some("etag-legacy".into()),
@@ -2962,9 +2962,9 @@ mod tests {
     fn clear_resets_has_fetched_real_catalog() {
         let mgr = test_manager();
         let mut cfg = config::Config::default();
-        cfg.models.default = Some("grok-3".to_string());
+        cfg.models.default = Some("intelekt-3".to_string());
 
-        let prefetched = make_prefetched(&["grok-3", "grok-4"]);
+        let prefetched = make_prefetched(&["intelekt-3", "intelekt-4"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
         assert!(mgr.has_fetched_real_catalog());
 
@@ -2972,7 +2972,7 @@ mod tests {
         assert!(!mgr.has_fetched_real_catalog());
 
         // New identity fetch — resolves default via reselect_default_model.
-        let prefetched = make_prefetched(&["grok-4.5", "grok-4.3"]);
+        let prefetched = make_prefetched(&["intelekt-4.5", "intelekt-4.3"]);
         mgr.apply_refresh_result(&cfg, Some(prefetched), None);
         let first_available = mgr.available().keys().next().unwrap().clone();
         assert_eq!(
@@ -3114,7 +3114,7 @@ mod tests {
     // ── ModelFetchAuth::resolve priority tests ──────────────────────
 
     use serial_test::serial;
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
 
     #[test]
     #[serial]
@@ -3396,8 +3396,8 @@ mod tests {
     #[test]
     fn build_prefetched_map_distinct_ids_same_slug() {
         let entries = vec![
-            make_entry_config_with_id(Some("auto"), "grok-build", Some("Auto")),
-            make_entry_config_with_id(Some("grok-build"), "grok-build", Some("Grok Build")),
+            make_entry_config_with_id(Some("auto"), "intelekt-cli", Some("Auto")),
+            make_entry_config_with_id(Some("intelekt-cli"), "intelekt-cli", Some("Intelekt CLI")),
             make_entry_config_with_id(
                 Some("grok-composer-2.5-fast"),
                 "grok-composer-2.5-fast",
@@ -3408,13 +3408,13 @@ mod tests {
 
         assert_eq!(map.len(), 3, "all three entries should survive");
         assert!(map.contains_key("auto"));
-        assert!(map.contains_key("grok-build"));
+        assert!(map.contains_key("intelekt-cli"));
         assert!(map.contains_key("grok-composer-2.5-fast"));
         assert_eq!(
-            map["auto"].info.model, "grok-build",
-            "auto entry should still route to grok-build"
+            map["auto"].info.model, "intelekt-cli",
+            "auto entry should still route to intelekt-cli"
         );
-        assert_eq!(map["grok-build"].info.model, "grok-build");
+        assert_eq!(map["intelekt-cli"].info.model, "intelekt-cli");
     }
 
     /// No id field — falls back to model slug as key.
@@ -3435,13 +3435,13 @@ mod tests {
     #[test]
     fn build_prefetched_map_duplicate_id_overwrites() {
         let entries = vec![
-            make_entry_config_with_id(Some("grok-build"), "grok-build", Some("First")),
-            make_entry_config_with_id(Some("grok-build"), "grok-build", Some("Second")),
+            make_entry_config_with_id(Some("intelekt-cli"), "intelekt-cli", Some("First")),
+            make_entry_config_with_id(Some("intelekt-cli"), "intelekt-cli", Some("Second")),
         ];
         let map = build_prefetched_map(entries, None);
 
         assert_eq!(map.len(), 1, "duplicate id: second overwrites first");
-        assert_eq!(map["grok-build"].info.name.as_deref(), Some("Second"));
+        assert_eq!(map["intelekt-cli"].info.name.as_deref(), Some("Second"));
     }
 
     /// Regression: resolve_default_model must match by id before scanning
@@ -3451,16 +3451,16 @@ mod tests {
     fn resolve_default_model_prefers_id_over_model_slug() {
         let mut catalog: IndexMap<String, ModelEntry> = IndexMap::new();
         catalog.insert(
-            "auto-grok-build".to_string(),
-            make_model_entry("grok-build"),
+            "auto-intelekt-cli".to_string(),
+            make_model_entry("intelekt-cli"),
         );
-        catalog.insert("grok-build".to_string(), make_model_entry("grok-build"));
+        catalog.insert("intelekt-cli".to_string(), make_model_entry("intelekt-cli"));
 
         let mut cfg = config::Config::default();
-        cfg.models.default = Some("grok-build".to_string());
+        cfg.models.default = Some("intelekt-cli".to_string());
 
         let (key, _, _) = resolve_default_model(&cfg, &catalog, true);
-        assert_eq!(key, "grok-build", "must match id, not first slug hit");
+        assert_eq!(key, "intelekt-cli", "must match id, not first slug hit");
     }
 
     /// No id field — falls back to slug as key.
@@ -3468,13 +3468,13 @@ mod tests {
     fn build_prefetched_map_none_id_falls_back_to_slug() {
         let entries = vec![make_entry_config_with_id(
             None,
-            "grok-build",
-            Some("Grok Build"),
+            "intelekt-cli",
+            Some("Intelekt CLI"),
         )];
         let map = build_prefetched_map(entries, None);
 
         assert_eq!(map.len(), 1);
-        assert!(map.contains_key("grok-build"));
+        assert!(map.contains_key("intelekt-cli"));
     }
 
     // ── persisted model id → catalog key (session resume) ─────────────
@@ -3483,93 +3483,93 @@ mod tests {
     fn resolve_catalog_key_maps_routing_slug_to_config_key() {
         let mut models = IndexMap::new();
         models.insert(
-            "enterprise-grok-build".to_string(),
-            make_model_entry("grok-4.5"),
+            "enterprise-intelekt-cli".to_string(),
+            make_model_entry("intelekt-4.5"),
         );
-        models.insert("grok-4.3".to_string(), make_model_entry("grok-4.3"));
+        models.insert("intelekt-4.3".to_string(), make_model_entry("intelekt-4.3"));
 
-        let persisted = acp::ModelId::new("grok-4.5");
+        let persisted = acp::ModelId::new("intelekt-4.5");
         let key = resolve_catalog_key(&models, &persisted).expect("slug must resolve");
-        assert_eq!(key.0.as_ref(), "enterprise-grok-build");
+        assert_eq!(key.0.as_ref(), "enterprise-intelekt-cli");
     }
 
     #[test]
     fn resolve_catalog_key_prefers_exact_key_match() {
         let mut models = IndexMap::new();
-        models.insert("grok-4.5".to_string(), make_model_entry("grok-4.5"));
+        models.insert("intelekt-4.5".to_string(), make_model_entry("intelekt-4.5"));
 
-        let persisted = acp::ModelId::new("grok-4.5");
+        let persisted = acp::ModelId::new("intelekt-4.5");
         let key = resolve_catalog_key(&models, &persisted).expect("exact key must resolve");
-        assert_eq!(key.0.as_ref(), "grok-4.5");
+        assert_eq!(key.0.as_ref(), "intelekt-4.5");
     }
 
     #[test]
     fn resolve_catalog_key_last_slug_match_wins() {
         let mut models = IndexMap::new();
         models.insert(
-            "default-grok-build".to_string(),
-            make_model_entry("grok-4.5"),
+            "default-intelekt-cli".to_string(),
+            make_model_entry("intelekt-4.5"),
         );
-        models.insert("user-grok-build".to_string(), make_model_entry("grok-4.5"));
+        models.insert("user-intelekt-cli".to_string(), make_model_entry("intelekt-4.5"));
 
-        let persisted = acp::ModelId::new("grok-4.5");
+        let persisted = acp::ModelId::new("intelekt-4.5");
         let key = resolve_catalog_key(&models, &persisted).expect("slug must resolve");
-        assert_eq!(key.0.as_ref(), "user-grok-build");
+        assert_eq!(key.0.as_ref(), "user-intelekt-cli");
     }
 
     #[test]
     fn selectable_catalog_key_for_persisted_none_when_resolved_not_available() {
         let mut models = IndexMap::new();
         models.insert(
-            "enterprise-grok-build".to_string(),
-            make_model_entry("grok-4.5"),
+            "enterprise-intelekt-cli".to_string(),
+            make_model_entry("intelekt-4.5"),
         );
 
         let available: IndexMap<_, _> = IndexMap::new();
-        let persisted = acp::ModelId::new("grok-4.5");
+        let persisted = acp::ModelId::new("intelekt-4.5");
         assert!(selectable_catalog_key_for_persisted(&models, &available, &persisted).is_none());
     }
 
     #[test]
     fn selectable_prefers_available_identity_over_non_selectable_exact_key() {
         let mut models = IndexMap::new();
-        models.insert("grok-build".to_string(), make_model_entry("grok-build"));
+        models.insert("intelekt-cli".to_string(), make_model_entry("intelekt-cli"));
         models.insert(
-            "enterprise-grok-build".to_string(),
-            make_model_entry("grok-build"),
+            "enterprise-intelekt-cli".to_string(),
+            make_model_entry("intelekt-cli"),
         );
-        models.insert("grok-4.3".to_string(), make_model_entry("grok-4.3"));
+        models.insert("intelekt-4.3".to_string(), make_model_entry("intelekt-4.3"));
 
-        let available = test_available_keys(&["enterprise-grok-build", "grok-4.3"]);
+        let available = test_available_keys(&["enterprise-intelekt-cli", "intelekt-4.3"]);
 
-        let persisted = acp::ModelId::new("grok-build");
+        let persisted = acp::ModelId::new("intelekt-cli");
         assert_eq!(
             resolve_catalog_key(&models, &persisted)
                 .expect("exact key exists")
                 .0
                 .as_ref(),
-            "grok-build"
+            "intelekt-cli"
         );
         let key = selectable_catalog_key_for_persisted(&models, &available, &persisted)
             .expect("must resolve to selectable section");
-        assert_eq!(key.0.as_ref(), "enterprise-grok-build");
+        assert_eq!(key.0.as_ref(), "enterprise-intelekt-cli");
     }
 
     #[test]
     fn selectable_matches_routing_slug_when_no_exact_key() {
         let mut models = IndexMap::new();
         models.insert(
-            "enterprise-grok-build".to_string(),
-            make_model_entry("grok-build"),
+            "enterprise-intelekt-cli".to_string(),
+            make_model_entry("intelekt-cli"),
         );
-        models.insert("grok-4.3".to_string(), make_model_entry("grok-4.3"));
+        models.insert("intelekt-4.3".to_string(), make_model_entry("intelekt-4.3"));
 
-        let available = test_available_keys(&["enterprise-grok-build", "grok-4.3"]);
+        let available = test_available_keys(&["enterprise-intelekt-cli", "intelekt-4.3"]);
 
-        let persisted = acp::ModelId::new("grok-build");
+        let persisted = acp::ModelId::new("intelekt-cli");
         let key = selectable_catalog_key_for_persisted(&models, &available, &persisted)
             .expect("slug must resolve to selectable key");
-        assert_eq!(key.0.as_ref(), "enterprise-grok-build");
+        assert_eq!(key.0.as_ref(), "enterprise-intelekt-cli");
     }
 
     /// A persisted *selectable* catalog key binds to itself even when a later
@@ -3577,15 +3577,15 @@ mod tests {
     #[test]
     fn selectable_prefers_exact_key_over_later_slug_match() {
         let mut models = IndexMap::new();
-        models.insert("grok-build".to_string(), make_model_entry("grok-4.5"));
-        models.insert("other".to_string(), make_model_entry("grok-build"));
+        models.insert("intelekt-cli".to_string(), make_model_entry("intelekt-4.5"));
+        models.insert("other".to_string(), make_model_entry("intelekt-cli"));
 
-        let available = test_available_keys(&["grok-build", "other"]);
+        let available = test_available_keys(&["intelekt-cli", "other"]);
 
-        let persisted = acp::ModelId::new("grok-build");
+        let persisted = acp::ModelId::new("intelekt-cli");
         let key = selectable_catalog_key_for_persisted(&models, &available, &persisted)
             .expect("exact selectable key must win");
-        assert_eq!(key.0.as_ref(), "grok-build");
+        assert_eq!(key.0.as_ref(), "intelekt-cli");
     }
 
     fn test_available_keys(keys: &[&str]) -> IndexMap<acp::ModelId, acp::ModelInfo> {

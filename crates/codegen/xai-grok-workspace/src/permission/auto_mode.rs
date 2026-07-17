@@ -1020,7 +1020,7 @@ pub fn mcp_access_detail(name: &str, input: &serde_json::Value) -> String {
         return name.to_string();
     }
     let compact = serde_json::to_string(input).unwrap_or_default();
-    xai_grok_tools::util::truncate_line(&format!("{name} {compact}"), MCP_ACCESS_DETAIL_MAX_LEN)
+    intelekt_tools::util::truncate_line(&format!("{name} {compact}"), MCP_ACCESS_DETAIL_MAX_LEN)
         .into_owned()
 }
 
@@ -1031,7 +1031,7 @@ pub fn permission_decision_args(access: &AccessKind, access_detail: Option<&str>
         AccessKind::Bash(cmd) => serde_json::json!({ "command": cmd }).to_string(),
         _ => access_detail.unwrap_or("(none)").to_owned(),
     };
-    xai_grok_tools::util::truncate_str_with_marker(&raw, CLASSIFIER_TURN_MAX_LEN).into_owned()
+    intelekt_tools::util::truncate_str_with_marker(&raw, CLASSIFIER_TURN_MAX_LEN).into_owned()
 }
 
 /// Trailing JSON-shape instruction (omitted for `JustCommand`, where the

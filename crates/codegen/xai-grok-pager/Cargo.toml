@@ -1,5 +1,5 @@
 [package]
-name = "xai-grok-pager"
+name = "intelekt-pager"
 version = "0.2.101"
 edition.workspace = true
 license = "Apache-2.0"
@@ -9,17 +9,17 @@ authors = ["xAI"]
 # TTY safety — detach subprocesses from the controlling terminal
 dunce = { workspace = true }
 xai-tty-utils = { workspace = true }
-xai-grok-version = { workspace = true }
+intelekt-version = { workspace = true }
 
 # Shared prompt-queue wire types
 xai-prompt-queue = { workspace = true }
 
 # Presentation-primitives layer (extracted)
-xai-grok-pager-render = { path = "../xai-grok-pager-render" }
+intelekt-pager-render = { path = "../intelekt-pager-render" }
 
 # Rendering
 ratatui = { workspace = true, features = ["crossterm", "unstable-widget-ref"] }
-xai-grok-announcements = { workspace = true }
+intelekt-announcements = { workspace = true }
 crossterm = { workspace = true, features = ["event-stream", "bracketed-paste"] }
 textwrap = { workspace = true }
 regex = { workspace = true }
@@ -29,11 +29,11 @@ strip-ansi-escapes = { workspace = true }
 enum_delegate = { workspace = true }
 
 # Markdown / syntax highlighting
-xai-grok-markdown = { workspace = true }
+intelekt-markdown = { workspace = true }
 # Inline Mermaid rendering engine. Always compiled (no feature gate): the
 # dagre-based vendored engine renders detected ```mermaid fences out of process,
 # gated only at runtime by the `appearance.render_mermaid` setting.
-xai-grok-mermaid = { workspace = true }
+intelekt-mermaid = { workspace = true }
 syntect = { workspace = true }
 
 # Data
@@ -72,7 +72,7 @@ tracing-subscriber = { workspace = true }
 
 # Binary hardening: compile-time string obfuscation.
 # (cryptify / rustls / semver / tikv-jemallocator moved to the composition-root
-# binary `xai-grok-pager-bin` with `main.rs`; this lib no longer references them.)
+# binary `intelekt-pager-bin` with `main.rs`; this lib no longer references them.)
 obfstr = { workspace = true }
 
 # Fuzzy matching (history search daemon)
@@ -83,33 +83,33 @@ xai-ratatui-textarea = { workspace = true }
 xai-ratatui-inline = { workspace = true }
 
 # Update
-xai-grok-update = { path = "../xai-grok-update" }
+intelekt-update = { path = "../intelekt-update" }
 
 # ACP
 agent-client-protocol = { workspace = true }
 xai-acp-lib = { workspace = true }
 xai-file-utils = { path = "../xai-file-utils" }
-xai-grok-config = { workspace = true }
+intelekt-config = { workspace = true }
 # Voice dictation. `audio` (mic capture) is enabled on every target. On
 # macOS/Windows it links cpal; on Linux it compiles a subprocess-recorder
 # backend instead, so cpal -> alsa-sys never reaches the static musl binary
-# (cpal is target-gated to non-Linux inside xai-grok-voice).
-xai-grok-voice = { path = "../xai-grok-voice", default-features = false, features = ["audio"] }
-xai-grok-shell = { workspace = true }
-xai-grok-workspace = { workspace = true }
+# (cpal is target-gated to non-Linux inside intelekt-voice).
+intelekt-voice = { path = "../intelekt-voice", default-features = false, features = ["audio"] }
+intelekt-shell = { workspace = true }
+intelekt-workspace = { workspace = true }
 xai-token-estimation = { workspace = true }
-xai-grok-telemetry = { workspace = true }
+intelekt-telemetry = { workspace = true }
 xai-fast-worktree = { path = "../xai-fast-worktree", features = ["metadata"] }
 backon = { workspace = true }
 chrono = { workspace = true }
 flate2 = { workspace = true }
 tar = { workspace = true }
-xai-grok-tools = { workspace = true }
-xai-grok-agent = { workspace = true }
-xai-grok-plugin-marketplace = { path = "../xai-grok-plugin-marketplace" }
+intelekt-tools = { workspace = true }
+intelekt-agent = { workspace = true }
+intelekt-plugin-marketplace = { path = "../intelekt-plugin-marketplace" }
 xai-hooks-plugins-types = { path = "../xai-hooks-plugins-types" }
 wait-timeout = { workspace = true }
-xai-grok-sandbox = { path = "../xai-grok-sandbox", default-features = false }
+intelekt-sandbox = { path = "../intelekt-sandbox", default-features = false }
 
 # Base64 encoding for image data
 base64 = { workspace = true }
@@ -161,21 +161,21 @@ windows-sys = { version = "0.59", features = ["Win32_System_Console"] }
 
 [dev-dependencies]
 # Enable the render crate's test-only helpers for the pager's test build.
-xai-grok-pager-render = { path = "../xai-grok-pager-render", features = ["test-support"] }
+intelekt-pager-render = { path = "../intelekt-pager-render", features = ["test-support"] }
 pretty_assertions = { workspace = true }
 insta = { workspace = true }
 criterion = { workspace = true }
 tempfile = { workspace = true }
 serial_test = { workspace = true }
-xai-grok-agent = { workspace = true }
-xai-grok-pager-pty-harness = { path = "../xai-grok-pager-pty-harness" }
+intelekt-agent = { workspace = true }
+intelekt-pager-pty-harness = { path = "../intelekt-pager-pty-harness" }
 # In-process leader-cluster harness (mock inference server; no cycle:
-# xai-grok-test-support depends on neither the pager nor the shell).
-xai-grok-test-support = { workspace = true, features = [] }
+# intelekt-test-support depends on neither the pager nor the shell).
+intelekt-test-support = { workspace = true, features = [] }
 # Ring CryptoProvider install for the in-process leader-cluster tests. Explicit
 # spec mirroring the shell's, NOT `workspace = true`: the workspace pin enables
 # aws-lc-rs, under which `rustls::crypto::ring` does not exist. Dev-only — the
-# production lib deliberately dropped rustls (moved to xai-grok-pager-bin).
+# production lib deliberately dropped rustls (moved to intelekt-pager-bin).
 rustls = { version = "0.23", default-features = false, features = [
     "ring",
     "logging",
@@ -277,13 +277,13 @@ default-bazel = [
     ]
 # No-op on this crate: the actual `#[global_allocator]` (and the
 # `tikv-jemallocator` dep) live on the composition-root binary
-# `xai-grok-pager-bin`, which owns `main.rs`. Kept as an empty feature so the
+# `intelekt-pager-bin`, which owns `main.rs`. Kept as an empty feature so the
 # workspace-uniform `[jemalloc, sandbox-enforce]` default set resolves
 # here too and the generated `crate_features` stay valid.
 jemalloc = []
-sandbox-enforce = ["xai-grok-sandbox/enforce"]
+sandbox-enforce = ["intelekt-sandbox/enforce"]
 release-dist = []
 # Exposes test-only view-model constructors/setters (e.g. `test_agent_view`,
 # `AgentSession::set_yolo_mode_for_test`) to sibling crates' test builds — used
-# by `xai-grok-pager-minimal`'s unit tests. Never enabled in production builds.
-test-support = ["xai-grok-pager-render/test-support"]
+# by `intelekt-pager-minimal`'s unit tests. Never enabled in production builds.
+test-support = ["intelekt-pager-render/test-support"]

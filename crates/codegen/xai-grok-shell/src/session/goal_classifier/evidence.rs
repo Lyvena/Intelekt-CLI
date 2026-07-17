@@ -42,7 +42,7 @@ use std::path::Path;
 use std::sync::OnceLock;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::process::Command;
-use xai_grok_sampling_types::ConversationItem;
+use intelekt_sampling_types::ConversationItem;
 
 /// Max wall-clock for git commands during evidence capture.
 const DIFF_COMMAND_TIMEOUT: Duration = Duration::from_secs(5 * 60);
@@ -1145,7 +1145,7 @@ pub(crate) fn sanitize_final_response(text: &str) -> Cow<'_, str> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_sampling_types::{AssistantItem, UserItem};
+    use intelekt_sampling_types::{AssistantItem, UserItem};
 
     fn assistant(text: &str) -> ConversationItem {
         ConversationItem::Assistant(AssistantItem {
@@ -1163,7 +1163,7 @@ mod tests {
     fn assistant_tool_call_only() -> ConversationItem {
         ConversationItem::Assistant(AssistantItem {
             content: "".into(),
-            tool_calls: vec![xai_grok_sampling_types::ToolCall {
+            tool_calls: vec![intelekt_sampling_types::ToolCall {
                 id: "call_1".into(),
                 name: "update_goal".to_string(),
                 arguments: "{\"completed\":true}".into(),
@@ -1176,7 +1176,7 @@ mod tests {
 
     fn user(text: &str) -> ConversationItem {
         ConversationItem::User(UserItem {
-            content: vec![xai_grok_sampling_types::ContentPart::Text { text: text.into() }],
+            content: vec![intelekt_sampling_types::ContentPart::Text { text: text.into() }],
             synthetic_reason: None,
             ..Default::default()
         })
@@ -1188,7 +1188,7 @@ mod tests {
             "do X",
             ChangesRef::File("/tmp/goal-classifier-abc-1.patch"),
             &["js/main.js".to_string()],
-            Some(Path::new("/home/u/.grok/sessions/s1/goal/plan.md")),
+            Some(Path::new("/home/u/.intelekt/sessions/s1/goal/plan.md")),
             None,
             "I did it.",
         );
@@ -1197,7 +1197,7 @@ mod tests {
             "OBJECTIVE:\ndo X\n\n\
              CHANGES_FILE: /tmp/goal-classifier-abc-1.patch\n\n\
              CHANGED_FILES:\n- js/main.js\n\n\
-             PLAN_FILE: /home/u/.grok/sessions/s1/goal/plan.md\n\n\
+             PLAN_FILE: /home/u/.intelekt/sessions/s1/goal/plan.md\n\n\
              PLAN_CHANGES: (none)\n\n\
              FINAL_RESPONSE:\nI did it.\n",
         );

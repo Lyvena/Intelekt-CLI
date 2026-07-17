@@ -1,6 +1,6 @@
 //! MCP server re-exports + shell-side wrappers for timeout override resolution.
 
-pub use xai_grok_mcp::servers::{
+pub use intelekt_mcp::servers::{
     AcpServerEntry, HttpConfig, MCP_TOOL_NAME_DELIMITER, McpClient, McpClientTimeoutOverrides,
     McpConfigDiff, McpError, McpInitStrategy, McpMetaConfigMap, McpServerMetaConfig, McpServerName,
     McpService, McpState, McpTool, McpToolRegistration, OauthInteractivity, SharedMcpPool,
@@ -12,8 +12,8 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use agent_client_protocol as acp;
-use xai_grok_mcp::oauth_config::{McpOAuthConfig, McpOAuthConfigMap};
-use xai_grok_mcp::servers as inner;
+use intelekt_mcp::oauth_config::{McpOAuthConfig, McpOAuthConfigMap};
+use intelekt_mcp::servers as inner;
 
 fn resolve_overrides(
     server_name: &str,

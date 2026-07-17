@@ -331,7 +331,7 @@ impl JsonTypeName for serde_json::Value {
 // TODO(follow-up): The discovery logic here (find_claude_settings_paths,
 // collect_project_claude_paths, find_repo_root) is local to this module.
 // If the Claude settings compatibility surface grows (more consumers beyond
-// permissions), consider extracting to a shared helper (e.g., in xai-grok-hooks
+// permissions), consider extracting to a shared helper (e.g., in intelekt-hooks
 // or a new claude-discovery crate).
 
 /// Discover `.claude/settings.json` and `.claude/settings.local.json` paths
@@ -502,7 +502,7 @@ pub fn load_claude_env_with_project(cwd: &Path, project_trusted: bool) -> HashMa
 // Phase 2 cutoff marker
 // =============================================================================
 //
-// `xai-grok-shell::claude_import` writes the marker. We re-implement a small
+// `intelekt-shell::claude_import` writes the marker. We re-implement a small
 // reader here because the gate consumers live in this crate and can't depend
 // on shell (it would create a cycle). Caching is intentionally omitted; if
 // this becomes a hotspot we can lift it into a shared crate.
@@ -511,13 +511,13 @@ pub fn load_claude_env_with_project(cwd: &Path, project_trusted: bool) -> HashMa
 /// in config.toml, or the test override). Public so gate-mirroring callers stay consistent.
 pub fn is_claude_import_marked() -> bool {
     // Test escape hatch: shell tests call `refresh_marker_cache(true)` which
-    // lives in xai-grok-shell (inaccessible from here at runtime). They also
+    // lives in intelekt-shell (inaccessible from here at runtime). They also
     // set this env var so the workspace-resident gate honours the override
     // without a cross-crate dependency.
     if std::env::var("_GROK_CLAUDE_MARKER_OVERRIDE").as_deref() == Ok("1") {
         return true;
     }
-    let Some(config_path) = xai_grok_config::user_grok_home().map(|g| g.join("config.toml")) else {
+    let Some(config_path) = intelekt_config::user_grok_home().map(|g| g.join("config.toml")) else {
         return false;
     };
     let Ok(contents) = std::fs::read_to_string(&config_path) else {

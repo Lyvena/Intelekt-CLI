@@ -64,8 +64,8 @@ pub(super) fn handle_settings_update(notif: &acp::ExtNotification, app: &mut App
         // its own copy). Refresh the startup snapshot so the Shift+Tab cycle and
         // the settings modal both reflect a remote-only enablement/kill-switch
         // without a restart.
-        xai_grok_shell::util::config::cache_remote_auto_permission_mode_enabled(Some(v));
-        app.auto_mode_gate = xai_grok_shell::util::config::auto_permission_mode_enabled_from_disk();
+        intelekt_shell::util::config::cache_remote_auto_permission_mode_enabled(Some(v));
+        app.auto_mode_gate = intelekt_shell::util::config::auto_permission_mode_enabled_from_disk();
         // Mid-session kill switch: when the gate just went off, drop displayed
         // Auto to Ask + clear every agent's per-session flag (shared with the
         // startup reconcile), AND tell live sessions to leave Auto. Clearing only
@@ -96,7 +96,7 @@ pub(super) fn handle_settings_update(notif: &acp::ExtNotification, app: &mut App
         && app.permission_mode_from_soft_default
     {
         // One config read at the I/O boundary; the applier is deterministic.
-        let root = xai_grok_shell::config::load_effective_config().ok();
+        let root = intelekt_shell::config::load_effective_config().ok();
         apply_soft_default_permission_mode(
             app,
             root.as_ref().and_then(|r| r.get("ui")),
@@ -133,7 +133,7 @@ pub(super) fn handle_settings_update(notif: &acp::ExtNotification, app: &mut App
             && app
                 .subscription_tier
                 .as_deref()
-                .is_some_and(xai_grok_shell::tier::is_restricted_tier_name)
+                .is_some_and(intelekt_shell::tier::is_restricted_tier_name)
         {
             app.voice_reset();
             app.voice_ui_active = false;
@@ -161,7 +161,7 @@ pub(super) fn handle_settings_update(notif: &acp::ExtNotification, app: &mut App
                 _ => None,
             })
             .or_else(|| {
-                xai_grok_shell::config::load_effective_config()
+                intelekt_shell::config::load_effective_config()
                     .ok()
                     .and_then(|cfg| cfg.get("cli")?.get("session_picker_grouped")?.as_bool())
             })
@@ -187,7 +187,7 @@ pub(super) fn handle_settings_update(notif: &acp::ExtNotification, app: &mut App
     {
         // (An empty gate_message would only clear the gate message text, NOT
         // access, so it intentionally does not touch the gate here.)
-        let effs = app.impose_gate(xai_grok_shell::auth::GateInfo {
+        let effs = app.impose_gate(intelekt_shell::auth::GateInfo {
             message: msg.clone(),
             url: update.gate_url.clone(),
             label: update.gate_label.clone(),
@@ -200,9 +200,9 @@ pub(super) fn handle_settings_update(notif: &acp::ExtNotification, app: &mut App
     // re-resolve on every update (see below), and updates are rare (post-auth
     // refresh, `/new`), so three small TOML reads are fine.
     let (requirements, user_config, managed_config) = (
-        xai_grok_shell::config::load_merged_requirements(),
-        xai_grok_shell::config::load_from_disk().ok(),
-        xai_grok_shell::config::load_managed_config().ok(),
+        intelekt_shell::config::load_merged_requirements(),
+        intelekt_shell::config::load_from_disk().ok(),
+        intelekt_shell::config::load_managed_config().ok(),
     );
 
     // Local layers may beat remote — re-resolve the full chain into the render
@@ -213,11 +213,11 @@ pub(super) fn handle_settings_update(notif: &acp::ExtNotification, app: &mut App
     // correct, and it reverts a previously cached remote enable back to the
     // local/default (off) resolution instead of leaving Some(true) stuck
     // until restart.
-    let remote = xai_grok_shell::util::config::RemoteSettings {
+    let remote = intelekt_shell::util::config::RemoteSettings {
         group_tool_verbs: update.group_tool_verbs,
         ..Default::default()
     };
-    let resolved = xai_grok_shell::util::config::resolve_group_tool_verbs(
+    let resolved = intelekt_shell::util::config::resolve_group_tool_verbs(
         requirements.as_ref(),
         user_config.as_ref(),
         managed_config.as_ref(),
@@ -244,11 +244,11 @@ pub(super) fn handle_settings_update(notif: &acp::ExtNotification, app: &mut App
     // Same None-reverts contract as group_tool_verbs above: re-resolve the
     // full local chain with the pushed remote tier so a cleared remote settings
     // field falls back to local/default instead of staying latched.
-    let remote = xai_grok_shell::util::config::RemoteSettings {
+    let remote = intelekt_shell::util::config::RemoteSettings {
         collapsed_edit_blocks: update.collapsed_edit_blocks,
         ..Default::default()
     };
-    let resolved = xai_grok_shell::util::config::resolve_collapsed_edit_blocks(
+    let resolved = intelekt_shell::util::config::resolve_collapsed_edit_blocks(
         requirements.as_ref(),
         user_config.as_ref(),
         managed_config.as_ref(),
@@ -275,7 +275,7 @@ pub(super) fn handle_settings_update(notif: &acp::ExtNotification, app: &mut App
 
     // Re-resolve tips from config layers + the updated remote tips.
     if let Some(remote_tips) = update.tips {
-        use xai_grok_shell::util::config::resolve_tips;
+        use intelekt_shell::util::config::resolve_tips;
 
         app.tips = resolve_tips(
             requirements.as_ref(),
@@ -284,8 +284,8 @@ pub(super) fn handle_settings_update(notif: &acp::ExtNotification, app: &mut App
             Some(&remote_tips),
         );
         if !app.tips.is_empty() {
-            let grok_home = xai_grok_tools::util::grok_home::grok_home();
-            app.tip = xai_grok_shell::util::tips::pick_and_advance(&app.tips, &grok_home);
+            let grok_home = intelekt_tools::util::grok_home::grok_home();
+            app.tip = intelekt_shell::util::tips::pick_and_advance(&app.tips, &grok_home);
         } else {
             app.tip = None;
         }
@@ -306,7 +306,7 @@ pub(super) fn apply_soft_default_permission_mode(
     effective_ui: Option<&toml::Value>,
     remote: Option<&str>,
 ) {
-    let mode = xai_grok_shell::util::config::resolve_permission_mode(effective_ui, remote);
+    let mode = intelekt_shell::util::config::resolve_permission_mode(effective_ui, remote);
     app.default_yolo = mode.is_always_approve() && app.yolo_policy_block.is_none();
     let auto = mode.is_auto() && app.auto_mode_gate && !app.default_yolo;
     app.current_ui.permission_mode = Some(if auto {
@@ -314,7 +314,7 @@ pub(super) fn apply_soft_default_permission_mode(
     } else if app.default_yolo {
         "always-approve".to_string()
     } else {
-        xai_grok_shell::util::config::resolved_display_permission_mode(effective_ui, remote)
+        intelekt_shell::util::config::resolved_display_permission_mode(effective_ui, remote)
             .to_string()
     });
 }
@@ -370,7 +370,7 @@ pub(super) fn handle_sessions_changed(notif: &acp::ExtNotification, app: &mut Ap
 
 pub(super) fn handle_announcements_update(notif: &acp::ExtNotification, app: &mut AppView) -> bool {
     let Ok(parsed) =
-        serde_json::from_str::<xai_grok_announcements::AnnouncementsRefreshed>(notif.params.get())
+        serde_json::from_str::<intelekt_announcements::AnnouncementsRefreshed>(notif.params.get())
     else {
         return false;
     };
@@ -384,9 +384,9 @@ pub(super) fn handle_announcements_update(notif: &acp::ExtNotification, app: &mu
     // replace would drop requirements/user/managed announcements and let the
     // prune erase their persisted hide keys. Same disk reads the settings
     // branch performed; pushes are rare.
-    let requirements = xai_grok_shell::config::load_merged_requirements();
-    let user_config = xai_grok_shell::config::load_from_disk().ok();
-    let managed_config = xai_grok_shell::config::load_managed_config().ok();
+    let requirements = intelekt_shell::config::load_merged_requirements();
+    let user_config = intelekt_shell::config::load_from_disk().ok();
+    let managed_config = intelekt_shell::config::load_managed_config().ok();
     apply_announcements_update(
         app,
         parsed.r#gen,
@@ -405,18 +405,18 @@ pub(super) fn handle_announcements_update(notif: &acp::ExtNotification, app: &mu
 pub(super) fn apply_announcements_update(
     app: &mut AppView,
     next_gen: u64,
-    remote: &[xai_grok_announcements::RemoteAnnouncement],
+    remote: &[intelekt_announcements::RemoteAnnouncement],
     requirements: Option<&toml::Value>,
     user_config: Option<&toml::Value>,
     managed_config: Option<&toml::Value>,
 ) {
-    let merged = xai_grok_shell::util::config::resolve_announcements(
+    let merged = intelekt_shell::util::config::resolve_announcements(
         requirements,
         user_config,
         managed_config,
         Some(remote),
     );
-    let announcements = xai_grok_announcements::filter_expired(merged);
+    let announcements = intelekt_announcements::filter_expired(merged);
 
     app.announcement = match app.announcement.as_ref() {
         Some(current) => announcements
@@ -429,7 +429,7 @@ pub(super) fn apply_announcements_update(
     app.active_announcements = announcements;
     app.announcements_last_gen = next_gen;
     // Opportunistic per-ID prune on a real update (never per frame) so the hidden set cannot grow unboundedly.
-    if xai_grok_announcements::prune_hidden_announcement_ids(
+    if intelekt_announcements::prune_hidden_announcement_ids(
         &mut app.hidden_announcement_ids,
         &app.active_announcements,
     ) {
@@ -442,8 +442,8 @@ pub(super) fn apply_announcements_update(
 }
 
 pub(super) fn pick_random_announcement(
-    announcements: &[xai_grok_announcements::RemoteAnnouncement],
-) -> Option<xai_grok_announcements::RemoteAnnouncement> {
+    announcements: &[intelekt_announcements::RemoteAnnouncement],
+) -> Option<intelekt_announcements::RemoteAnnouncement> {
     if announcements.is_empty() {
         return None;
     }
@@ -455,7 +455,7 @@ pub(super) fn pick_random_announcement(
 /// Deserialization type for the `x.ai/settings/update` notification payload.
 ///
 /// This is intentionally a separate struct from `SettingsUpdateNotification` in
-/// `xai-grok-shell/src/agent/mvp_agent.rs`. The shell side derives `Serialize`
+/// `intelekt-shell/src/agent/mvp_agent.rs`. The shell side derives `Serialize`
 /// and owns the canonical field set from `RemoteSettings`; this pager side
 /// derives `Deserialize` and selectively consumes only the fields relevant to
 /// the TUI. Keeping them separate avoids coupling the pager to shell internals
@@ -465,7 +465,7 @@ pub(super) fn pick_random_announcement(
 /// are handled gracefully.
 ///
 /// **Keep in sync** with field names/types in `SettingsUpdateNotification` at
-/// `xai-grok-shell/src/agent/mvp_agent.rs` when adding fields that both sides
+/// `intelekt-shell/src/agent/mvp_agent.rs` when adding fields that both sides
 /// need.
 #[derive(serde::Deserialize)]
 pub(super) struct PagerSettingsUpdate {

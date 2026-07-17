@@ -294,7 +294,7 @@ fn compute_filtered(entries: &[MemoryFileEntry], query: &str) -> Vec<usize> {
 }
 
 pub fn build_entries(
-    files: Vec<xai_grok_shell::extensions::notification::MemoryFileInfo>,
+    files: Vec<intelekt_shell::extensions::notification::MemoryFileInfo>,
 ) -> Vec<MemoryFileEntry> {
     let now_secs = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -1122,7 +1122,7 @@ fn format_modified(epoch_secs: Option<u64>, now_secs: u64) -> String {
 }
 
 fn load_fullscreen_pref() -> bool {
-    let path = xai_grok_tools::util::grok_home::grok_home().join("config.toml");
+    let path = intelekt_tools::util::grok_home::grok_home().join("config.toml");
     let Some(doc) = crate::config_toml_edit::read_config_document_for_edit(&path) else {
         return false;
     };
@@ -1158,16 +1158,16 @@ mod tests {
 
     #[test]
     fn file_label_extracts_filename() {
-        assert_eq!(file_label("/home/user/.grok/memory/MEMORY.md"), "MEMORY.md");
+        assert_eq!(file_label("/home/user/.intelekt/memory/MEMORY.md"), "MEMORY.md");
         assert_eq!(
-            file_label("/workspace/.grok/memory/sessions/2026-01-15-fix-bug.md"),
+            file_label("/workspace/.intelekt/memory/sessions/2026-01-15-fix-bug.md"),
             "2026-01-15-fix-bug.md"
         );
     }
 
     #[test]
     fn build_entries_groups_by_source() {
-        use xai_grok_shell::extensions::notification::MemoryFileInfo;
+        use intelekt_shell::extensions::notification::MemoryFileInfo;
 
         let files = vec![
             MemoryFileInfo {

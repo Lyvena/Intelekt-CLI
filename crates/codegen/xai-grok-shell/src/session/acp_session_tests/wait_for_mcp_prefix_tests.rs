@@ -1,6 +1,6 @@
 use super::support::*;
 use super::*;
-use xai_grok_agent::prompt::user_message::UserMessageTemplate;
+use intelekt_agent::prompt::user_message::UserMessageTemplate;
 /// Helper: build an actor with `mcp_state` pre-loaded with the given
 /// configs and a translated init-progress state. Reuses
 /// `create_test_actor` then drives the typed transitions to match

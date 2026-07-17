@@ -16,7 +16,7 @@ impl MvpAgent {
         };
         let agent_ref = LocalRef::new(self);
         use crate::agent::subagent::{BlockWaitSlot, is_running, resolve_snapshot};
-        use xai_grok_tools::implementations::grok_build::task::types::{
+        use intelekt_tools::implementations::grok_build::task::types::{
             SubagentCancelOutcome, SubagentCancelTarget, SubagentEvent,
         };
         tokio::task::spawn_local({
@@ -208,7 +208,7 @@ impl MvpAgent {
                         SubagentEvent::DescribeType(request) => {
                             let agent_ref = agent_ref.clone();
                             tokio::task::spawn_local(async move {
-                                use xai_grok_tools::implementations::grok_build::task::types::SubagentDescribeOutcome;
+                                use intelekt_tools::implementations::grok_build::task::types::SubagentDescribeOutcome;
                                 let this = agent_ref.get();
                                 let outcome = match this
                                     .try_build_subagent_spawn_context(&request.parent_session_id)
@@ -345,7 +345,7 @@ impl MvpAgent {
                         let cwd = ps
                             .map(|h| std::path::PathBuf::from(&h.info.cwd))
                             .unwrap_or_default();
-                        std::sync::Arc::new(xai_grok_workspace::file_system::LocalFs::new(cwd))
+                        std::sync::Arc::new(intelekt_workspace::file_system::LocalFs::new(cwd))
                     }),
                 ps.map(|h| h.tool_context.terminal.clone())
                     .unwrap_or_else(|| {
@@ -570,7 +570,7 @@ impl MvpAgent {
                     .get(&parent_sid)
                     .map(|h| h.tool_context.task_output_tool_name.clone())
                     .unwrap_or_else(|| {
-                        xai_grok_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL
+                        intelekt_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL
                             .to_string()
                     })
             },

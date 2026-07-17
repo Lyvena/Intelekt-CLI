@@ -164,7 +164,7 @@ struct WelcomeLayoutInput<'a> {
     compact: bool,
     /// Horizontal-inset compaction (appearance setting) for the stacked slot.
     prompt_compact: bool,
-    announcement: Option<&'a xai_grok_announcements::RemoteAnnouncement>,
+    announcement: Option<&'a intelekt_announcements::RemoteAnnouncement>,
     /// Whether a long announcement is expanded inline (vs. collapsed to 2 lines).
     expanded: bool,
     /// Whether the info slot reserves a promo upgrade CTA (spacer + button).
@@ -376,11 +376,11 @@ impl WelcomeLayout {
 
 /// Controls what the version badge renders.
 pub(super) enum VersionBadgeMode<'a> {
-    /// Full badge: team | tier | api_key | **Grok Build** VERSION+channel **Beta** (right-aligned).
+    /// Full badge: team | tier | api_key | **Intelekt CLI** VERSION+channel **Beta** (right-aligned).
     Full { subscription_tier: Option<&'a str> },
-    /// Hero footer: team | api_key | Grok Build Beta [channel] (right-aligned, gray).
+    /// Hero footer: team | api_key | Intelekt CLI Beta [channel] (right-aligned, gray).
     HeroFooter,
-    /// Hero inline: **Grok Build Beta**  VERSION (left-aligned).
+    /// Hero inline: **Intelekt CLI Beta**  VERSION (left-aligned).
     HeroInline,
 }
 
@@ -432,17 +432,17 @@ pub(super) fn render_version_badge(
         spans.push(sep);
     }
 
-    let channel = xai_grok_update::channel_label();
+    let channel = intelekt_update::channel_label();
     match &mode {
         VersionBadgeMode::Full { .. } => {
             spans.push(Span::styled(
-                "Grok Build  ",
+                "Intelekt CLI  ",
                 Style::default()
                     .fg(theme.text_primary)
                     .add_modifier(Modifier::BOLD),
             ));
             spans.push(Span::styled(
-                format!("{}{}", xai_grok_version::VERSION, channel),
+                format!("{}{}", intelekt_version::VERSION, channel),
                 Style::default().fg(theme.gray),
             ));
             spans.push(Span::styled(
@@ -465,13 +465,13 @@ pub(super) fn render_version_badge(
         }
         VersionBadgeMode::HeroInline => {
             spans.push(Span::styled(
-                "Grok Build Beta  ",
+                "Intelekt CLI Beta  ",
                 Style::default()
                     .fg(theme.text_primary)
                     .add_modifier(Modifier::BOLD),
             ));
             spans.push(Span::styled(
-                xai_grok_version::VERSION,
+                intelekt_version::VERSION,
                 Style::default().fg(theme.gray),
             ));
         }
@@ -591,7 +591,7 @@ pub struct WelcomeRenderParams<'a> {
     pub auth_code_input: &'a str,
     pub clipboard_copied: bool,
     pub show_raw_url: bool,
-    pub announcement: Option<&'a xai_grok_announcements::RemoteAnnouncement>,
+    pub announcement: Option<&'a intelekt_announcements::RemoteAnnouncement>,
     pub tip: Option<&'a str>,
     pub model_name: &'a str,
     pub flags: &'a [PromptFlag<'a>],
@@ -608,16 +608,16 @@ pub struct WelcomeRenderParams<'a> {
     pub startup_warnings: &'a [StartupWarning],
     pub pending_update_version: Option<&'a str>,
     /// Recent foreign session offered on ctrl+u, suppressed by a pending update.
-    pub foreign_resume_hint: Option<&'a xai_grok_workspace::foreign_sessions::RecentForeignSession>,
+    pub foreign_resume_hint: Option<&'a intelekt_workspace::foreign_sessions::RecentForeignSession>,
     pub is_api_key_auth: bool,
     pub session_picker_content_results:
-        Option<&'a [xai_grok_shell::extensions::session_search::SearchSessionHit]>,
+        Option<&'a [intelekt_shell::extensions::session_search::SearchSessionHit]>,
     pub session_picker_content_loading: bool,
     /// The query the picker entries were server-fetched with (see
     /// [`crate::views::session_picker::effective_filter_query`]).
     pub session_picker_entries_query: Option<&'a str>,
     pub welcome_tick: u64,
-    pub gate: Option<&'a xai_grok_shell::auth::GateInfo>,
+    pub gate: Option<&'a intelekt_shell::auth::GateInfo>,
     pub subscription_tier: Option<&'a str>,
     pub session_picker_grouped: bool,
     /// Source filter (local/remote/all) for the session picker.
@@ -760,7 +760,7 @@ pub fn render_welcome(
                 content_area,
                 buf,
                 Some((
-                    "Grok Build is not yet available for this account.",
+                    "Intelekt CLI is not yet available for this account.",
                     theme.gray_bright,
                 )),
                 &menu,
@@ -918,7 +918,7 @@ fn render_welcome_blocked(
 
 /// Render the folder-trust question. Mirrors [`render_welcome_blocked`]'s
 /// stacked layout (logo + message + menu + version badge), but the message is a
-/// multi-line block showing the workspace path and the warning that Grok Build
+/// multi-line block showing the workspace path and the warning that Intelekt CLI
 /// may run or modify contents in this directory (a security risk). The y/N
 /// answer is handled by the welcome input interceptor, so this only paints;
 /// `menu_rects` are returned for parity with the other welcome arms.
@@ -947,7 +947,7 @@ fn render_welcome_trust(
         // Two lines so the warning never clips at narrow / compact widths
         // (a single ~78-char line would truncate "...posing security risks").
         Line::from(Span::styled(
-            "Grok Build may run or modify contents in this directory,",
+            "Intelekt CLI may run or modify contents in this directory,",
             Style::default().fg(theme.gray),
         ))
         .alignment(Alignment::Center),
@@ -1609,7 +1609,7 @@ fn render_announcement_section(
     area: Rect,
     buf: &mut Buffer,
     theme: &Theme,
-    announcement: &xai_grok_announcements::RemoteAnnouncement,
+    announcement: &intelekt_announcements::RemoteAnnouncement,
     min_width_hint: u16,
     content_height: u16,
     expanded: bool,
@@ -1962,7 +1962,7 @@ fn render_welcome_done(
             let gate_link = p
                 .gate
                 .and_then(|g| g.url.as_deref())
-                .unwrap_or("https://grok.com/supergrok?referrer=grok-build");
+                .unwrap_or("https://grok.com/supergrok?referrer=intelekt-cli");
             let url = Line::from(Span::styled(
                 gate_link,
                 Style::default()
@@ -2147,7 +2147,7 @@ pub(crate) struct SessionPickerRenderCtx<'a> {
     pub(crate) pending_hint: Option<crate::views::shortcuts_bar::PendingHint>,
     pub(crate) shortcuts_area: Option<Rect>,
     pub(crate) content_results:
-        Option<&'a [xai_grok_shell::extensions::session_search::SearchSessionHit]>,
+        Option<&'a [intelekt_shell::extensions::session_search::SearchSessionHit]>,
     pub(crate) content_loading: bool,
     /// The query `sessions` were server-fetched with (see
     /// [`crate::views::session_picker::effective_filter_query`]).
@@ -2587,7 +2587,7 @@ mod tests {
 
     #[test]
     fn foreign_resume_tip_names_each_tool_and_age() {
-        use xai_grok_workspace::foreign_sessions::ForeignSessionTool;
+        use intelekt_workspace::foreign_sessions::ForeignSessionTool;
 
         let auth = AuthState::Done;
         let trust = TrustState::Done;
@@ -2596,7 +2596,7 @@ mod tests {
             (ForeignSessionTool::Codex, "Codex"),
             (ForeignSessionTool::Cursor, "Cursor"),
         ] {
-            let hint = xai_grok_workspace::foreign_sessions::RecentForeignSession {
+            let hint = intelekt_workspace::foreign_sessions::RecentForeignSession {
                 tool,
                 native_id: "native-id".into(),
                 age: std::time::Duration::from_secs(125),
@@ -2614,8 +2614,8 @@ mod tests {
     fn pending_update_suppresses_foreign_resume_tip() {
         let auth = AuthState::Done;
         let trust = TrustState::Done;
-        let hint = xai_grok_workspace::foreign_sessions::RecentForeignSession {
-            tool: xai_grok_workspace::foreign_sessions::ForeignSessionTool::Cursor,
+        let hint = intelekt_workspace::foreign_sessions::RecentForeignSession {
+            tool: intelekt_workspace::foreign_sessions::ForeignSessionTool::Cursor,
             native_id: "native-id".into(),
             age: std::time::Duration::from_secs(30),
         };
@@ -3655,8 +3655,8 @@ mod tests {
         );
     }
 
-    fn long_ann() -> xai_grok_announcements::RemoteAnnouncement {
-        xai_grok_announcements::RemoteAnnouncement {
+    fn long_ann() -> intelekt_announcements::RemoteAnnouncement {
+        intelekt_announcements::RemoteAnnouncement {
             title: Some("Security policy".into()),
             message: Some(
                 "Report security incidents to the security team promptly through \
@@ -3699,7 +3699,7 @@ the usual channels. "
     #[test]
     fn announcement_equal_for_short_message() {
         let area = Rect::new(0, 0, 120, 60);
-        let a = xai_grok_announcements::RemoteAnnouncement {
+        let a = intelekt_announcements::RemoteAnnouncement {
             title: Some("FYI".into()),
             message: Some("All good.".into()),
             ..Default::default()

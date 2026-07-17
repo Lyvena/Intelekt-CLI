@@ -8,8 +8,8 @@
 //! Typed client for hub-proxied `workspace.*` RPC methods — the single
 //! transport for the `workspace_rpc` channel, shared by `WorkspaceOps`
 //! proxy mode and by consumers that cannot depend on
-//! `xai-grok-workspace`. Wire types live in
-//! `xai_grok_workspace_types::rpc`; this crate adds the connected-state
+//! `intelekt-workspace`. Wire types live in
+//! `intelekt_workspace_types::rpc`; this crate adds the connected-state
 //! latch, the generic [`WorkspaceClient::rpc`] core, and error mapping.
 //!
 //! No deadline is imposed by default ([`WorkspaceClient::with_deadline`]
@@ -20,16 +20,16 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use xai_computer_hub_sdk::harness::ToolHarness;
-use xai_grok_workspace_types::rpc::agents_md::{AgentConfigFile, DiscoverAgentsMdReq};
-use xai_grok_workspace_types::rpc::code_nav::{
+use intelekt_workspace_types::rpc::agents_md::{AgentConfigFile, DiscoverAgentsMdReq};
+use intelekt_workspace_types::rpc::code_nav::{
     CodeFindDefinitionsReq, CodeFindReferencesReq, CodeGotoDefinitionReq, CodeGotoReferencesReq,
     CodeIndexStatusReq, CodeIndexStatusResponse, CodeNavResponse,
 };
-use xai_grok_workspace_types::rpc::fs::{
+use intelekt_workspace_types::rpc::fs::{
     FsDeleteFileReq, FsExistsData, FsExistsReq, FsListData, FsListReq, FsReadFileData,
     FsReadFileReq, FsWriteFileReq, GetFilesReq, GetFilesRes, PutFilesReq, PutFilesRes,
 };
-use xai_grok_workspace_types::rpc::git::{
+use intelekt_workspace_types::rpc::git::{
     CheckoutCommitResponse, CommitResult, DetectVcsKindReq, GitBranchInfoReq, GitBranchListData,
     GitBranchesReq, GitCheckoutCommitReq, GitCheckoutReq, GitCollectChangesReq,
     GitCollectChangesResponse, GitCommitReq, GitCurrentCommitReq, GitDiffReq, GitDiffsData,
@@ -37,29 +37,29 @@ use xai_grok_workspace_types::rpc::git::{
     GitResolveRootReq, GitStageContentReq, GitStageReq, GitStashReq, GitStatusExtReq,
     GitStatusExtResponse, GitStatusReq, GitUnstageReq, StageData, VcsKind,
 };
-use xai_grok_workspace_types::rpc::hunks::{
+use intelekt_workspace_types::rpc::hunks::{
     BulkHunkActionResponse, FileSummary, HunkActionResponse, HunkAllActionReq, HunkFileActionReq,
     HunkGetFileSummariesReq, HunkGetStagedFilesReq, HunkSingleActionReq, HunkTurnActionReq,
 };
-use xai_grok_workspace_types::rpc::search::{
+use intelekt_workspace_types::rpc::search::{
     ContentSearchData, ContentSearchRequest, FuzzyChangeReq, FuzzyCloseReq, FuzzyOpenReq,
     FuzzyStatusReq,
 };
-use xai_grok_workspace_types::rpc::session::{
+use intelekt_workspace_types::rpc::session::{
     BeginPromptReq, EndPromptReq, FileRewindResponse, RewindToReq,
 };
-use xai_grok_workspace_types::rpc::skills::{DiscoverPluginsReq, DiscoverSkillsReq, SkillInfo};
-use xai_grok_workspace_types::rpc::workspace::{
+use intelekt_workspace_types::rpc::skills::{DiscoverPluginsReq, DiscoverSkillsReq, SkillInfo};
+use intelekt_workspace_types::rpc::workspace::{
     ConfigureMcpReq, DropSessionReq, InstallPluginReq, LoadEnvrcReq, LoadPermissionsReq,
     LoadProjectConfigReq, RefreshPluginsReq, ResolveFileReferencesReq, ToolDefinitionsReq,
     UpdateToolConfigReq, WorkspaceInfo, WorkspaceInfoReq,
 };
-use xai_grok_workspace_types::rpc::worktree::{
+use intelekt_workspace_types::rpc::worktree::{
     ApplyWorktreeRequest, CreateWorktreeRequest, RemoveWorktreeRequest, WorktreeCreateSyncReq,
     WorktreeDbPathReq, WorktreeDbPathResponse, WorktreeDbRebuildReq, WorktreeDbStatsReq,
     WorktreeGcReq, WorktreeListReq, WorktreeShowReq,
 };
-use xai_grok_workspace_types::rpc::{RpcEnvelope, RpcError, WORKSPACE_RPC_TOOL_ID, WorkspaceRpc};
+use intelekt_workspace_types::rpc::{RpcEnvelope, RpcError, WORKSPACE_RPC_TOOL_ID, WorkspaceRpc};
 use xai_tool_runtime::{ToolCallContext, ToolStreamItem, TypedToolOutput};
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceClientError {
@@ -557,7 +557,7 @@ mod tests {
     use schemars::JsonSchema;
     use serde::Deserialize;
     use xai_computer_hub_sdk::harness::LocalRegistry;
-    use xai_grok_workspace_types::rpc::skills::SkillScope;
+    use intelekt_workspace_types::rpc::skills::SkillScope;
     use xai_tool_protocol::{SessionId, ToolId};
     use xai_tool_runtime::{Tool, ToolError};
     use xai_tool_types::ToolDescription;
@@ -590,7 +590,7 @@ mod tests {
                 "workspace.git_status" => ok(serde_json::json!("On branch main")),
                 "workspace.discover_skills" => ok(serde_json::json!(
                     [{ "name" : "my-skill", "description" : "A test skill",
-                    "path" : "/workspace/.grok/skills/my-skill/SKILL.md", "scope"
+                    "path" : "/workspace/.intelekt/skills/my-skill/SKILL.md", "scope"
                     : "local", }]
                 )),
                 "workspace.discover_agents_md" => ok(serde_json::json!(

@@ -9,8 +9,8 @@ use crate::scrollback::state::ScrollbackState;
 use crate::views::permission_view::SubagentInfo;
 use std::path::PathBuf;
 use std::time::Instant;
-use xai_grok_shell::extensions::notification::RetryState;
-use xai_grok_shell::extensions::notification::SessionUpdate as XaiSessionUpdate;
+use intelekt_shell::extensions::notification::RetryState;
+use intelekt_shell::extensions::notification::SessionUpdate as XaiSessionUpdate;
 pub(super) fn make_session(session_id: Option<&str>) -> AgentSession {
     let (tx, _rx) = tokio::sync::mpsc::unbounded_channel();
     AgentSession {
@@ -113,8 +113,8 @@ pub(super) fn make_subagent_info(child_sid: &str) -> SubagentInfo {
 }
 pub(super) fn compressed_entry(
     index: usize,
-) -> xai_grok_shell::extensions::notification::ImageCompressedEntry {
-    xai_grok_shell::extensions::notification::ImageCompressedEntry {
+) -> intelekt_shell::extensions::notification::ImageCompressedEntry {
+    intelekt_shell::extensions::notification::ImageCompressedEntry {
         index,
         original_bytes: 4_200_000,
         compressed_bytes: 780_000,
@@ -539,8 +539,8 @@ pub(super) fn make_app_two_agents() -> AppView {
 }
 pub(super) fn critical_announcement(
     id: &str,
-) -> xai_grok_announcements::RemoteAnnouncement {
-    xai_grok_announcements::RemoteAnnouncement {
+) -> intelekt_announcements::RemoteAnnouncement {
+    intelekt_announcements::RemoteAnnouncement {
         id: Some(id.into()),
         title: Some(format!("{id} title")),
         message: Some(format!("{id} message")),
@@ -550,7 +550,7 @@ pub(super) fn critical_announcement(
 }
 pub(super) fn announcements_update_notif(
     r#gen: u64,
-    announcements: &[xai_grok_announcements::RemoteAnnouncement],
+    announcements: &[intelekt_announcements::RemoteAnnouncement],
 ) -> acp::ExtNotification {
     acp::ExtNotification::new(
         "x.ai/announcements/update",
@@ -952,7 +952,7 @@ pub(super) fn xai_hook_execution_notif_for_prompt(
     prompt_id: Option<&str>,
     is_replay: bool,
 ) -> acp::ExtNotification {
-    use xai_grok_shell::extensions::notification::{HookRunEntryDto, HookRunStatusDto};
+    use intelekt_shell::extensions::notification::{HookRunEntryDto, HookRunStatusDto};
     let payload = SessionNotification {
         session_id: acp::SessionId::new(session_id),
         update: XaiSessionUpdate::HookExecution {
@@ -1323,8 +1323,8 @@ pub(super) fn run_subagent_lifecycle_via_method(
     let finish = snapshot_after_subagent_finish(&app, child_sid);
     (spawn, finish)
 }
-/// Shared temp `GROK_HOME` for disk-replay tests. `grok_home()` uses a
-/// process-wide `OnceLock`, so parallel tests must not each set `GROK_HOME`
+/// Shared temp `INTELEKT_HOME` for disk-replay tests. `grok_home()` uses a
+/// process-wide `OnceLock`, so parallel tests must not each set `INTELEKT_HOME`
 /// to a different tempdir.
 pub(super) fn replay_disk_test_home() -> &'static std::path::Path {
     use std::sync::OnceLock;
@@ -1332,7 +1332,7 @@ pub(super) fn replay_disk_test_home() -> &'static std::path::Path {
     HOME.get_or_init(|| {
             let tmp = tempfile::tempdir().expect("tempdir creation");
             unsafe {
-                std::env::set_var("GROK_HOME", tmp.path());
+                std::env::set_var("INTELEKT_HOME", tmp.path());
             }
             tmp
         })
@@ -1546,7 +1546,7 @@ pub(super) fn make_git_head_changed_notif(
     is_worktree: bool,
     main_repo: Option<&str>,
 ) -> acp::ExtNotification {
-    let payload = xai_grok_workspace::session::git::GitHeadChanged {
+    let payload = intelekt_workspace::session::git::GitHeadChanged {
         session_id: session_id.into(),
         branch: branch.map(str::to_string),
         is_worktree,
@@ -1630,7 +1630,7 @@ pub(super) fn setup_pending_execute_tool(app: &mut AppView, tc_id: &str) {
 /// Send a late InProgress update with is_background=true to trigger late bg detection.
 pub(super) fn send_late_bg_detection(app: &mut AppView, tc_id: &str) {
     use serde_json::json;
-    use xai_grok_tools::types::output::{BashOutput, ToolOutput};
+    use intelekt_tools::types::output::{BashOutput, ToolOutput};
     let agent = app.agents.get_mut(&AgentId(0)).unwrap();
     let meta = crate::acp::meta::NotificationMeta::default();
     let bash = BashOutput {
@@ -1702,7 +1702,7 @@ pub(super) fn task_completed_notif(
     signal: Option<&str>,
     will_wake: bool,
 ) -> acp::ExtNotification {
-    use xai_grok_tools::types::TaskSnapshot;
+    use intelekt_tools::types::TaskSnapshot;
     let notif = SessionNotification {
         session_id: acp::SessionId::new(session_id),
         update: XaiSessionUpdate::TaskCompleted {
@@ -1898,10 +1898,10 @@ pub(super) fn seed_owner_agent_with_open_modal(app: &mut AppView) {
 pub(super) fn make_server_status_notif(
     session_id: &str,
     name: &str,
-    status: xai_grok_shell::extensions::mcp::McpServerStatus,
+    status: intelekt_shell::extensions::mcp::McpServerStatus,
     tools: Option<serde_json::Value>,
 ) -> acp::ExtNotification {
-    use xai_grok_shell::extensions::mcp::{
+    use intelekt_shell::extensions::mcp::{
         McpServerSource, McpServerStatusPayload, McpServerStatusReason,
     };
     let payload = McpServerStatusPayload {
@@ -1930,7 +1930,7 @@ pub(super) fn make_servers_updated_notif() -> acp::ExtNotification {
 pub(super) fn make_tools_changed_notif_post_h2(
     session_id: &str,
 ) -> acp::ExtNotification {
-    let payload = xai_grok_shell::extensions::mcp::McpToolsChanged {
+    let payload = intelekt_shell::extensions::mcp::McpToolsChanged {
         session_id: session_id.to_string(),
         server_name: "grok_com_linear".to_string(),
         tools: Vec::new(),

@@ -1,31 +1,31 @@
 use crate::util::config::RemoteSettings;
 use toml::Value as TomlValue;
-use xai_grok_tools::implementations::grok_build::ask_user_question;
+use intelekt_tools::implementations::grok_build::ask_user_question;
 
 /// Resolve whether the bash-harness `find`→`bfs` / `grep`→`ugrep` shadows are
 /// enabled. Precedence (highest first): `requirements.toml` (org policy, wins
 /// outright) > a truthy `DISABLE_EMBEDDED_SEARCH_TOOLS` master (forces off) > env
 /// > `config.toml` `[toolset.bash]` > `managed_config.toml` > default-on. Env uses the shared
-/// [`xai_grok_config::env_bool`] parser (`GROK_TOOLS_FIND_BFS` /
+/// [`intelekt_config::env_bool`] parser (`GROK_TOOLS_FIND_BFS` /
 /// `GROK_TOOLS_GREP_UGREP`, plus the `GROK_FIND_BFS` / `GROK_GREP_UGREP` aliases).
 ///
 /// Pass the **merged** requirements ([`crate::config::load_merged_requirements`])
 /// so an org policy in any requirements layer — not only
-/// `~/.grok/requirements.toml` — is honored. Returns `(find_bfs, grep_ugrep)`,
+/// `~/.intelekt/requirements.toml` — is honored. Returns `(find_bfs, grep_ugrep)`,
 /// which the caller bakes into a
-/// [`xai_grok_tools::computer::local::SearchShadowConfig`] on the local terminal
+/// [`intelekt_tools::computer::local::SearchShadowConfig`] on the local terminal
 /// backend.
 pub fn resolve_search_tools_enabled(
     requirements: Option<&TomlValue>,
     user: Option<&TomlValue>,
     managed: Option<&TomlValue>,
 ) -> (bool, bool) {
-    let disable = xai_grok_config::env_bool("DISABLE_EMBEDDED_SEARCH_TOOLS");
+    let disable = intelekt_config::env_bool("DISABLE_EMBEDDED_SEARCH_TOOLS");
     fn from_toml(v: Option<&TomlValue>, key: &str) -> Option<bool> {
         v?.get("toolset")?.get("bash")?.get(key)?.as_bool()
     }
     let resolve = |primary: &str, alias: &str, key: &str| -> bool {
-        let env = xai_grok_config::env_bool(primary).or_else(|| xai_grok_config::env_bool(alias));
+        let env = intelekt_config::env_bool(primary).or_else(|| intelekt_config::env_bool(alias));
         resolve_search_tool_enabled(
             disable,
             from_toml(requirements, key),
@@ -212,7 +212,7 @@ mod persistent_local_shell_tests {
 }
 
 /// Env override for `[toolset.ask_user_question] timeout_enabled` (parsed by
-/// the shared [`xai_grok_config::env_bool`] via `BoolFlag`). The secs env var
+/// the shared [`intelekt_config::env_bool`] via `BoolFlag`). The secs env var
 /// lives in the tools crate (`RESPONSE_TIMEOUT_ENV`), parsed once there.
 const ENV_ASK_USER_QUESTION_TIMEOUT_ENABLED: &str = "GROK_ASK_USER_QUESTION_TIMEOUT_ENABLED";
 
@@ -288,7 +288,7 @@ fn resolve_ask_user_question_timeout_secs_from_tiers(
         .or(managed)
         .or(remote)
         .unwrap_or(
-            xai_grok_tools::implementations::grok_build::ask_user_question::RESPONSE_TIMEOUT
+            intelekt_tools::implementations::grok_build::ask_user_question::RESPONSE_TIMEOUT
                 .as_secs(),
         )
 }
@@ -308,7 +308,7 @@ fn resolve_ask_user_question_timeout_secs(
 ) -> u64 {
     resolve_ask_user_question_timeout_secs_from_tiers(
         ask_user_question_timeout_secs_from_toml(requirements),
-        xai_grok_tools::implementations::grok_build::ask_user_question::response_timeout_env_secs(),
+        intelekt_tools::implementations::grok_build::ask_user_question::response_timeout_env_secs(),
         ask_user_question_timeout_secs_from_toml(user),
         ask_user_question_timeout_secs_from_toml(managed)
             .or_else(|| ask_user_question_timeout_secs_from_toml(system_managed)),
@@ -327,7 +327,7 @@ fn resolve_ask_user_question_timeout_secs(
 /// runs for consumers that skip this resolver.
 pub(crate) fn resolve_ask_user_question_params_from_disk(
     remote: Option<&RemoteSettings>,
-) -> xai_grok_tools::implementations::grok_build::ask_user_question::AskUserQuestionParams {
+) -> intelekt_tools::implementations::grok_build::ask_user_question::AskUserQuestionParams {
     let requirements = crate::config::load_merged_requirements();
     let layers = match crate::config::ConfigLayers::load() {
         Ok(l) => Some(l),
@@ -339,7 +339,7 @@ pub(crate) fn resolve_ask_user_question_params_from_disk(
     let user = layers.as_ref().map(|l| &l.user);
     let managed = layers.as_ref().map(|l| &l.managed);
     let system_managed = layers.as_ref().map(|l| &l.system_managed);
-    xai_grok_tools::implementations::grok_build::ask_user_question::AskUserQuestionParams {
+    intelekt_tools::implementations::grok_build::ask_user_question::AskUserQuestionParams {
         timeout_enabled: Some(
             resolve_ask_user_question_timeout_enabled(
                 requirements.as_ref(),
@@ -364,7 +364,7 @@ pub(crate) fn resolve_ask_user_question_params_from_disk(
 mod ask_user_question_timeout_tests {
     use super::*;
     use crate::agent::config::ConfigSource;
-    use xai_grok_tools::implementations::grok_build::ask_user_question::RESPONSE_TIMEOUT_ENV;
+    use intelekt_tools::implementations::grok_build::ask_user_question::RESPONSE_TIMEOUT_ENV;
 
     // Both env vars are process-global (a dev exports the secs var for TUI
     // repro); serialize and force them unset so these tests can't go flaky.
@@ -440,7 +440,7 @@ mod ask_user_question_timeout_tests {
 
     #[test]
     fn timeout_secs_tier_precedence() {
-        let d = xai_grok_tools::implementations::grok_build::ask_user_question::RESPONSE_TIMEOUT
+        let d = intelekt_tools::implementations::grok_build::ask_user_question::RESPONSE_TIMEOUT
             .as_secs();
         let r = resolve_ask_user_question_timeout_secs_from_tiers;
         assert_eq!(r(None, None, None, None, None), d);
@@ -454,7 +454,7 @@ mod ask_user_question_timeout_tests {
     #[test]
     fn timeout_secs_rejects_non_positive_layers() {
         let _g = guard();
-        let d = xai_grok_tools::implementations::grok_build::ask_user_question::RESPONSE_TIMEOUT
+        let d = intelekt_tools::implementations::grok_build::ask_user_question::RESPONSE_TIMEOUT
             .as_secs();
         // user 0 and managed negative are dropped; remote fills the gap.
         let zero = toml_ask("timeout_secs = 0");

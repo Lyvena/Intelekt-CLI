@@ -66,7 +66,7 @@ pub(crate) fn new_submission(
     content: FeedbackContent,
 ) -> FeedbackSubmission {
     let mut s = FeedbackSubmission::with_content(session_id, client_type, content);
-    s.shell_version = Some(xai_grok_version::VERSION.to_string());
+    s.shell_version = Some(intelekt_version::VERSION.to_string());
     s
 }
 
@@ -153,7 +153,7 @@ pub(crate) async fn submit_feedback_workflow(
             feedback_span.record("rating", rating);
         }
         feedback_span.in_scope(|| {});
-        xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::UserFeedback {
+        intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::UserFeedback {
             session_id: telemetry_session_id,
             has_feedback_text,
             model_id: telemetry_model_id,
@@ -823,7 +823,7 @@ impl FeedbackManager {
                                 error = %e,
                                 "Signals sync loop stopped: 403 forbidden (session ownership mismatch)"
                             );
-                            xai_grok_telemetry::unified_log::warn(
+                            intelekt_telemetry::unified_log::warn(
                                 "signals sync loop stopped: 403 forbidden",
                                 Some(&self.session_id),
                                 None,
@@ -951,7 +951,7 @@ fn handle_auth_outcome(
                 max = MAX_CONSECUTIVE_AUTH_FAILURES,
                 "Signals sync transient auth failure"
             );
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 LOG_TITLE_TRANSIENT,
                 Some(session_id),
                 Some(serde_json::json!({
@@ -965,7 +965,7 @@ fn handle_auth_outcome(
                     consecutive_failures = *consecutive_auth_failures,
                     "Signals sync loop stopped: consecutive transient auth failures"
                 );
-                xai_grok_telemetry::unified_log::warn(
+                intelekt_telemetry::unified_log::warn(
                     "signals sync loop stopped: consecutive transient auth failures",
                     Some(session_id),
                     Some(serde_json::json!({
@@ -984,7 +984,7 @@ fn handle_auth_outcome(
                 reason = REASON_AUTH_PERMANENT_FAILURE,
                 "Signals sync loop stopped: IdP confirmed permanent auth failure"
             );
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 LOG_TITLE_STOPPED_PERMANENTLY,
                 Some(session_id),
                 Some(serde_json::json!({ "reason": REASON_AUTH_PERMANENT_FAILURE })),
@@ -997,7 +997,7 @@ fn handle_auth_outcome(
                 reason = REASON_NO_CLIENT_OR_REFRESHER,
                 "Signals sync loop stopped: no client or no refresher configured"
             );
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 LOG_TITLE_STOPPED_PERMANENTLY,
                 Some(session_id),
                 Some(serde_json::json!({ "reason": REASON_NO_CLIENT_OR_REFRESHER })),

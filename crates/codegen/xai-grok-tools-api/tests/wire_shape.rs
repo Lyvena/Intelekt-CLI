@@ -5,7 +5,7 @@
 //! field rename/retype in `grok-tools.proto` cannot silently break those
 //! wire contracts (the producer and consumer live in separate services).
 
-use xai_grok_tools_api::ToolConfigEntry;
+use intelekt_tools_api::ToolConfigEntry;
 
 fn full_entry() -> ToolConfigEntry {
     ToolConfigEntry {

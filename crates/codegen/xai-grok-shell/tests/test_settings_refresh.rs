@@ -7,13 +7,13 @@
 //!
 //! Run locally:
 //! ```bash
-//! cargo test -p xai-grok-shell --test test_settings_refresh
+//! cargo test -p intelekt-shell --test test_settings_refresh
 //! ```
 
 use std::future::Future;
 
-use xai_grok_shell::util::config::RemoteSettings;
-use xai_grok_test_support::*;
+use intelekt_shell::util::config::RemoteSettings;
+use intelekt_test_support::*;
 
 async fn with_local_set<F, Fut>(f: F)
 where
@@ -122,14 +122,14 @@ async fn test_fetch_settings_blocking_round_trip() {
             .expect("start mock server");
 
         // Without settings configured: returns None (404 from mock)
-        let auth = xai_grok_shell::auth::GrokAuth {
+        let auth = intelekt_shell::auth::GrokAuth {
             key: "test-key".into(),
             ..Default::default()
         };
         let result = tokio::task::spawn_blocking({
             let url = server.url().to_string();
             let auth = auth.clone();
-            move || xai_grok_shell::remote::fetch_settings_blocking(&url, &auth, None)
+            move || intelekt_shell::remote::fetch_settings_blocking(&url, &auth, None)
         })
         .await
         .unwrap();
@@ -146,7 +146,7 @@ async fn test_fetch_settings_blocking_round_trip() {
         let result = tokio::task::spawn_blocking({
             let url = server.url().to_string();
             let auth = auth.clone();
-            move || xai_grok_shell::remote::fetch_settings_blocking(&url, &auth, None)
+            move || intelekt_shell::remote::fetch_settings_blocking(&url, &auth, None)
         })
         .await
         .unwrap();
@@ -161,7 +161,7 @@ async fn test_fetch_settings_blocking_round_trip() {
 /// servers), and that a partial object keeps its unset fields `None`.
 #[tokio::test]
 async fn test_doom_loop_recovery_settings_round_trip() {
-    use xai_grok_shell::util::config::DoomLoopRecoverySettings;
+    use intelekt_shell::util::config::DoomLoopRecoverySettings;
 
     with_local_set(|| async {
         let server = MockInferenceServer::start()

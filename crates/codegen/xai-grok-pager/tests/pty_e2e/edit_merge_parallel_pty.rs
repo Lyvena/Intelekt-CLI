@@ -11,7 +11,7 @@ const FIXTURE: &str = "parallel_fix.py";
 /// single Edit row with the summed diffstat, regardless of the order their
 /// completions land in.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[ignore = "PTY e2e; run with cargo test -p xai-grok-pager --test pty_e2e -- --ignored"]
+#[ignore = "PTY e2e; run with cargo test -p intelekt-pager --test pty_e2e -- --ignored"]
 async fn edit_merge_parallel_pty() {
     let content = ContentController::start().await.expect("start content");
     seed_ui_config(&content, "collapsed_edit_blocks = true");

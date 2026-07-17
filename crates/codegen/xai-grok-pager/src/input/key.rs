@@ -4,7 +4,7 @@
 //! ergonomic key matching and test construction.
 //!
 //! ```
-//! use xai_grok_pager::input::key::key;
+//! use intelekt_pager::input::key::key;
 //!
 //! // Simple key
 //! let q = key!('q');

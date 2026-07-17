@@ -2,7 +2,7 @@
 
 use agent_client_protocol as acp;
 use indexmap::IndexMap;
-use xai_grok_shell::sampling::types::{
+use intelekt_shell::sampling::types::{
     ReasoningEffort, ReasoningEffortOption, parse_reasoning_effort_meta,
     parse_reasoning_efforts_meta, supports_reasoning_effort_meta,
 };
@@ -74,7 +74,7 @@ impl ModelState {
         }
     }
 
-    /// Machine-readable model ID string for the current model (e.g. "grok-4.5").
+    /// Machine-readable model ID string for the current model (e.g. "intelekt-4.5").
     pub fn current_model_id_str(&self) -> Option<&str> {
         Some(self.current.as_ref()?.0.as_ref())
     }
@@ -394,11 +394,11 @@ mod tests {
 
     #[test]
     fn update_catalog_preserves_user_effort_when_model_unchanged() {
-        let id = acp::ModelId::new(Arc::from("grok-build"));
+        let id = acp::ModelId::new(Arc::from("intelekt-cli"));
         let mut state = ModelState::default();
         state.available.insert(
             id.clone(),
-            model_with_effort("grok-build", "Grok Build", "high"),
+            model_with_effort("intelekt-cli", "Intelekt CLI", "high"),
         );
         state.set_current(id.clone(), Some(ReasoningEffort::Xhigh));
         assert_eq!(state.reasoning_effort, Some(ReasoningEffort::Xhigh));
@@ -407,7 +407,7 @@ mod tests {
         let mut refreshed = IndexMap::new();
         refreshed.insert(
             id.clone(),
-            model_with_effort("grok-build", "Grok Build", "high"),
+            model_with_effort("intelekt-cli", "Intelekt CLI", "high"),
         );
         state.update_catalog(refreshed, Some(id.clone()));
 

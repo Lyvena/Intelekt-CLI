@@ -1,7 +1,7 @@
 // Per-test-case module for the `pty_e2e` integration test crate.
 #[allow(unused_imports)]
 use super::common::*;
-use xai_grok_workspace::trust::{TRUST_FILE_NAME, TrustStore};
+use intelekt_workspace::trust::{TRUST_FILE_NAME, TrustStore};
 
 /// Folder-trust home-is-a-git-repo (dotfiles-in-home), Case 1 — the reported bug.
 /// `$HOME` is itself a git repo; the session is launched in a SUBDIR
@@ -40,7 +40,7 @@ async fn folder_trust_home_git_repo_subdir_keys_on_subdir() {
     // `content.home()`, so its home guard wouldn't fire and it would resolve the
     // wrong key). `TrustStore::is_trusted` canonicalizes + ancestor-prefix matches
     // internally, so passing the raw path is HOME-independent.
-    let store_path = content.home().join(".grok").join(TRUST_FILE_NAME);
+    let store_path = content.home().join(".intelekt").join(TRUST_FILE_NAME);
 
     // The question renders (keyed on the subdir), and the store is empty first.
     harness

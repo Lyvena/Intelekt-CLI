@@ -159,7 +159,7 @@ pub enum SessionCommand {
         responds_to: oneshot::Sender<()>,
     },
     SetSessionModel {
-        sampling_config: xai_grok_sampler::SamplerConfig,
+        sampling_config: intelekt_sampler::SamplerConfig,
         use_concise: bool,
         /// When `false`, skip the system prompt rewrite (concise/default swap).
         /// Set to `false` for forked sessions so mid-session model switches
@@ -191,7 +191,7 @@ pub enum SessionCommand {
     /// `agent_type` differs from the session's current one and no user
     /// message has been sent yet (`turn_count == 0`).
     RebuildAgentForDefinition {
-        definition: xai_grok_agent::AgentDefinition,
+        definition: intelekt_agent::AgentDefinition,
         responds_to: oneshot::Sender<Result<(), acp::Error>>,
     },
     /// Override the model name and optionally inject extra HTTP headers
@@ -239,9 +239,9 @@ pub enum SessionCommand {
     },
     /// Reload plugin hooks and registry mid-session.
     ReloadPlugins {
-        registry: Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>>,
+        registry: Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>>,
     },
-    /// Re-discover the session's own project hooks (`.grok/hooks`,
+    /// Re-discover the session's own project hooks (`.intelekt/hooks`,
     /// `.cursor/hooks.json`, …) mid-session, re-evaluating folder trust. Used by
     /// the interactive folder-trust grant so a granted folder's repo-local hooks
     /// start without a session restart (plugin-contributed hooks are handled by
@@ -395,7 +395,7 @@ pub enum SessionCommand {
     /// Snapshot the session's resolved tool schema (same list the parent's own turn
     /// sends) so a verbatim-fork child can present a byte-identical tool prefix.
     SnapshotToolDefinitions {
-        respond_to: oneshot::Sender<Vec<xai_grok_sampling_types::ToolSpec>>,
+        respond_to: oneshot::Sender<Vec<intelekt_sampling_types::ToolSpec>>,
     },
     /// Replace the session's client-registered hooks. Sent on `load_session` reconnect to a
     /// live actor so a client can re-register (or clear) its hooks without a fresh session.
@@ -437,7 +437,7 @@ pub enum SessionCommand {
     /// Routes through the ToolBridge's TerminalBackend (lock-free, Arc-shared).
     KillBackgroundTask {
         task_id: String,
-        respond_to: oneshot::Sender<Result<xai_grok_tools::types::KillOutcome, String>>,
+        respond_to: oneshot::Sender<Result<intelekt_tools::types::KillOutcome, String>>,
     },
     DeleteScheduledTask {
         task_id: String,
@@ -446,7 +446,7 @@ pub enum SessionCommand {
     /// List all background tasks.
     /// Routes through the ToolBridge's TerminalBackend.
     ListTasks {
-        respond_to: oneshot::Sender<Option<Vec<xai_grok_tools::types::TaskSnapshot>>>,
+        respond_to: oneshot::Sender<Option<Vec<intelekt_tools::types::TaskSnapshot>>>,
     },
     /// Query whether the session has work in flight: a running turn
     /// (`running_task.is_some()`) **or** queued inputs
@@ -476,7 +476,7 @@ pub enum SessionCommand {
     /// This session's plugin registry, as served by `x.ai/plugins/list`.
     PluginsList {
         respond_to:
-            oneshot::Sender<Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>>>,
+            oneshot::Sender<Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>>>,
     },
     /// Inject a notification (monitor event or bash task completion) into
     /// the session's notification queue. Notifications are idle-gated and
@@ -651,7 +651,7 @@ pub enum SessionCommand {
     ///
     /// Fired by the client after a turn completes. The session builds a
     /// compact text-only transcript of the recent conversation, makes one
-    /// tool-free model call (default `grok-build-0.1` when available via
+    /// tool-free model call (default `intelekt-cli-0.1` when available via
     /// `model_override`, else the session model), sanitizes the output, and
     /// returns the predicted prompt via `respond_to`. Best-effort: any
     /// failure returns `None`.
@@ -661,7 +661,7 @@ pub enum SessionCommand {
     },
     /// Rewrite a raw memory note into well-structured markdown via a one-shot
     /// LLM call. The session uses `prepare_chat_completion()` with
-    /// `grok-build` model, low temperature, and capped output tokens.
+    /// `intelekt-cli` model, low temperature, and capped output tokens.
     RewriteMemoryNote {
         raw_text: String,
         context_summary: String,
@@ -701,7 +701,7 @@ pub enum SessionCommand {
     /// synthetic `task` pairs, uploaded as its own sibling `turn_{N}` artifact.
     TakeHarnessTraceTurns {
         respond_to:
-            oneshot::Sender<Vec<Vec<xai_grok_sampling_types::conversation::ConversationItem>>>,
+            oneshot::Sender<Vec<Vec<intelekt_sampling_types::conversation::ConversationItem>>>,
     },
     /// Take and clear the session actor's out-of-band streaming-turn capture.
     ///

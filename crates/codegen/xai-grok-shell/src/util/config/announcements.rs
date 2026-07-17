@@ -1,8 +1,8 @@
 use toml::Value as TomlValue;
 
 /// Announcement entry received from cli-chat-proxy `/v1/settings`.
-/// Re-exported from `xai-grok-announcements` for backward compatibility.
-pub use xai_grok_announcements::RemoteAnnouncement;
+/// Re-exported from `intelekt-announcements` for backward compatibility.
+pub use intelekt_announcements::RemoteAnnouncement;
 
 // ---------------------------------------------------------------------------
 // Announcements & tips from TOML

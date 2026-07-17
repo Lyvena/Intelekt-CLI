@@ -21,8 +21,8 @@
 //! `GROK_PERF_SESSION_SRC=/path/to/<session-dir>`.
 //!
 //! Run:
-//!   cargo test -p xai-grok-shell --test session_load_perf -- --nocapture
-//!   cargo test -p xai-grok-shell --test session_load_perf full_session_load_e2e -- --ignored --nocapture
+//!   cargo test -p intelekt-shell --test session_load_perf -- --nocapture
+//!   cargo test -p intelekt-shell --test session_load_perf full_session_load_e2e -- --ignored --nocapture
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -31,11 +31,11 @@ use std::time::{Duration, Instant};
 use agent_client_protocol::{self as acp};
 use tempfile::TempDir;
 
-use xai_grok_shell::session::info::Info;
-use xai_grok_shell::session::storage::{
+use intelekt_shell::session::info::Info;
+use intelekt_shell::session::storage::{
     JsonlStorageAdapter, StorageAdapter, load_updates_for_replay_at,
 };
-use xai_grok_workspace::session::file_state::{FileSnapshot, FlexiblePath, RewindPoint};
+use intelekt_workspace::session::file_state::{FileSnapshot, FlexiblePath, RewindPoint};
 
 // ───────────────────────── size knobs ─────────────────────────
 
@@ -413,7 +413,7 @@ async fn phase_breakdown_real_functions() {
     // Lazy rewind path (T2): the deferred cost moved here. The picker only needs
     // a cheap metadata scan; an actual rewind triggers the full content load.
     // Both read the same file that `load_light` no longer touches.
-    use xai_grok_workspace::session::file_state::FileStateTracker;
+    use intelekt_workspace::session::file_state::FileStateTracker;
     let t = Instant::now();
     let lazy_metas = FileStateTracker::with_lazy_source(rewind_path.clone())
         .get_rewind_point_metas()
@@ -515,8 +515,8 @@ use xai_acp_lib::{
     AcpAgentGatewayReceiver as GatewayReceiver, AcpAgentGatewaySender as GatewaySender,
     LineBufferedRead,
 };
-use xai_grok_shell::agent::config::Config as AgentConfig;
-use xai_grok_shell::agent::mvp_agent::MvpAgent;
+use intelekt_shell::agent::config::Config as AgentConfig;
+use intelekt_shell::agent::mvp_agent::MvpAgent;
 
 const DUPLEX_BUFFER_BYTES: usize = 16 * 1024 * 1024;
 
@@ -610,7 +610,7 @@ fn parse_instrumentation_log(path: &Path) -> Vec<(String, f64)> {
 async fn full_session_load_e2e() {
     let _ = rustls::crypto::ring::default_provider().install_default();
 
-    let server = xai_grok_test_support::MockInferenceServer::start()
+    let server = intelekt_test_support::MockInferenceServer::start()
         .await
         .unwrap();
 
@@ -622,7 +622,7 @@ async fn full_session_load_e2e() {
     // SAFETY: single-threaded current-thread runtime; set before any agent code
     // reads these process-globals (grok_home()/instrumentation mode are OnceLock).
     unsafe {
-        std::env::set_var("GROK_HOME", grok_home.path());
+        std::env::set_var("INTELEKT_HOME", grok_home.path());
         std::env::set_var("GROK_INSTRUMENTATION", "log");
         std::env::set_var("GROK_INSTRUMENTATION_LOG", &instr_log);
         std::env::set_var("GROK_CLI_CHAT_PROXY_BASE_URL", server.url());
@@ -638,7 +638,7 @@ async fn full_session_load_e2e() {
     use tracing_subscriber::Registry;
     use tracing_subscriber::prelude::*;
     let _ = tracing_subscriber::registry()
-        .with(xai_grok_shell::instrumentation::layer::<Registry>())
+        .with(intelekt_shell::instrumentation::layer::<Registry>())
         .try_init();
 
     let (info, dir) = prepare_session(grok_home.path(), cwd.path(), &opts).await;
@@ -758,7 +758,7 @@ async fn full_session_load_e2e() {
             .is_ok();
 
             // Flush the instrumentation writer and read the per-phase log.
-            let _ = xai_grok_shell::instrumentation::finalize();
+            let _ = intelekt_shell::instrumentation::finalize();
             std::thread::sleep(Duration::from_millis(150));
             let mut phases = parse_instrumentation_log(&instr_log);
             phases.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));

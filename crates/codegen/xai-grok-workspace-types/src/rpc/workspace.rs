@@ -147,7 +147,7 @@ impl WorkspaceRpc for RefreshPluginsReq {
 }
 
 /// One still-running background terminal command (a slim, dependency-free DTO
-/// over `xai_grok_tools`'s `TaskSnapshot`). `tool_name`, when set, is the
+/// over `intelekt_tools`'s `TaskSnapshot`). `tool_name`, when set, is the
 /// model-facing name of the tool that created the task.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BackgroundTaskSummaryWire {
@@ -180,7 +180,7 @@ impl WorkspaceRpc for ListBackgroundTasksReq {
 }
 
 /// One outstanding background terminal task, with the fields client task UI
-/// needs (a slim DTO over `xai_grok_tools`'s `TaskSnapshot`).
+/// needs (a slim DTO over `intelekt_tools`'s `TaskSnapshot`).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BackgroundTaskSnapshotWire {
     /// Background task registry id (pairs with the `task.*` push events).
@@ -229,7 +229,7 @@ impl WorkspaceRpc for TasksSnapshotReq {
     type Response = TasksSnapshotResponse;
 }
 
-/// One TODO list item (slim DTO over `xai_grok_tools`'s `TodoState`). `status`
+/// One TODO list item (slim DTO over `intelekt_tools`'s `TodoState`). `status`
 /// is the snake_case tag: `pending` | `in_progress` | `completed` | `cancelled`.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TodoSummaryWire {
@@ -259,7 +259,7 @@ impl WorkspaceRpc for ListTodosReq {
 /// Typed response of `workspace.info`.
 ///
 /// SYNC: matches the object built by the `workspace.info` dispatch arm
-/// in `xai-grok-workspace/src/hub_server.rs`.
+/// in `intelekt-workspace/src/hub_server.rs`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WorkspaceInfo {
     /// `std::env::consts::OS` on the server (e.g. `"linux"`).

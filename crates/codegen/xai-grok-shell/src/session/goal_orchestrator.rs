@@ -432,7 +432,7 @@ mod tests {
         // — the wire field stays empty so the doc contract holds and we
         // don't ship a 1-element vec the pager would collapse anyway.
         let mut o = make_base_orchestration();
-        o.live_tokens_by_model = vec![("grok-4".into(), 5_000)];
+        o.live_tokens_by_model = vec![("intelekt-4".into(), 5_000)];
         match build_goal_updated(&o, 0, 0) {
             XaiSessionUpdate::GoalUpdated {
                 live_tokens_by_model,
@@ -445,14 +445,14 @@ mod tests {
         }
 
         // ≥2 distinct models are transmitted verbatim.
-        o.live_tokens_by_model = vec![("grok-4".into(), 5_000), ("grok-3".into(), 3_000)];
+        o.live_tokens_by_model = vec![("intelekt-4".into(), 5_000), ("intelekt-3".into(), 3_000)];
         match build_goal_updated(&o, 0, 0) {
             XaiSessionUpdate::GoalUpdated {
                 live_tokens_by_model,
                 ..
             } => assert_eq!(
                 live_tokens_by_model,
-                vec![("grok-4".to_owned(), 5_000), ("grok-3".to_owned(), 3_000)]
+                vec![("intelekt-4".to_owned(), 5_000), ("intelekt-3".to_owned(), 3_000)]
             ),
             _ => panic!("expected GoalUpdated"),
         }

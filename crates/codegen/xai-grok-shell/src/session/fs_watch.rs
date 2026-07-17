@@ -15,7 +15,7 @@ use tokio::sync::mpsc;
 use tokio::time::sleep_until;
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
 use xai_fsnotify::{FsEvent, FsEventKind};
-use xai_grok_workspace::file_system::{CodebaseIndexManager, FileIndex, WalkOptions};
+use intelekt_workspace::file_system::{CodebaseIndexManager, FileIndex, WalkOptions};
 use xai_hunk_tracker::HunkTrackerHandle;
 
 use crate::session::acp_session::SessionActor;
@@ -108,8 +108,8 @@ fn fs_event_to_delta(
     paths: &[PathBuf],
     kind: FsEventKind,
     root: &Path,
-) -> xai_grok_workspace::file_system::FileIndexDelta {
-    use xai_grok_workspace::file_system::FileIndexDelta;
+) -> intelekt_workspace::file_system::FileIndexDelta {
+    use intelekt_workspace::file_system::FileIndexDelta;
     let stripped: Vec<String> = paths
         .iter()
         .filter_map(|p| {
@@ -186,8 +186,8 @@ async fn refresh_codebase_graph_after_head_change(
     cmd.args(["diff", "--name-status", "ORIG_HEAD", "HEAD"])
         .current_dir(repo_root)
         .stdin(std::process::Stdio::null());
-    xai_grok_tools::util::detach_command(&mut cmd);
-    cmd.envs(xai_grok_tools::util::pager_env());
+    intelekt_tools::util::detach_command(&mut cmd);
+    cmd.envs(intelekt_tools::util::pager_env());
     let diff_output = cmd.output().await;
 
     match diff_output {
@@ -497,9 +497,9 @@ struct GitHead {
 impl GitHead {
     /// Notify the client on branch/worktree/repo change; also persist commit/branch.
     async fn emit(&self) {
-        let branch = xai_grok_workspace::session::git::get_branch(&self.cwd).await;
-        let commit = xai_grok_workspace::session::git::get_current_commit(&self.cwd).await;
-        let worktree = xai_grok_workspace::session::git::get_worktree_info(&self.cwd).await;
+        let branch = intelekt_workspace::session::git::get_branch(&self.cwd).await;
+        let commit = intelekt_workspace::session::git::get_current_commit(&self.cwd).await;
+        let worktree = intelekt_workspace::session::git::get_worktree_info(&self.cwd).await;
         let (is_worktree, main_repo) = worktree.unwrap_or((false, None));
 
         let dedup_key = git_head_dedup_key(branch.as_deref(), is_worktree, main_repo.as_deref());
@@ -513,7 +513,7 @@ impl GitHead {
             }
         };
         if changed {
-            let params = xai_grok_workspace::session::git::GitHeadChanged {
+            let params = intelekt_workspace::session::git::GitHeadChanged {
                 session_id: self.session_id.clone(),
                 branch: branch.clone(),
                 is_worktree,
@@ -561,7 +561,7 @@ impl FsWatchPlan {
 
         let hunk = (caps.hunk_tracking && deps.hunk_tracking_enabled).then(|| {
             let git_root =
-                xai_grok_workspace::session::git::find_git_root_from_path(&deps.cwd).ok();
+                intelekt_workspace::session::git::find_git_root_from_path(&deps.cwd).ok();
             HunkTracking {
                 handle: deps.hunk_tracker,
                 cwd: deps.cwd.clone(),
@@ -985,7 +985,7 @@ pub(crate) fn spawn(plan: FsWatchPlan) -> FsWatchHandle {
 mod tests {
     use super::*;
     use std::path::PathBuf;
-    use xai_grok_workspace::file_system::FileIndexDelta;
+    use intelekt_workspace::file_system::FileIndexDelta;
 
     #[test]
     fn fs_event_to_delta_create() {

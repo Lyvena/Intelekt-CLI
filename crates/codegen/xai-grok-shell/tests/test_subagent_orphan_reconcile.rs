@@ -12,13 +12,13 @@
 //!
 //! Run locally (needs a pre-built binary):
 //! ```bash
-//! cargo test -p xai-grok-shell --test test_subagent_orphan_reconcile -- --ignored
+//! cargo test -p intelekt-shell --test test_subagent_orphan_reconcile -- --ignored
 //! ```
 
 use std::future::Future;
 use std::path::{Path, PathBuf};
 
-use xai_grok_test_support::*;
+use intelekt_test_support::*;
 
 async fn with_local_set<F, Fut>(f: F)
 where
@@ -66,8 +66,8 @@ async fn resume_reconciles_orphaned_running_subagent() {
         // Simulate a crash: inject a subagent meta left `running` on disk (no
         // terminal write, no SubagentFinished) — exactly what a dead process
         // leaves behind.
-        // GrokStdioClient sets HOME=<temp>; the binary uses <HOME>/.grok as GROK_HOME.
-        let grok_home = shared_home.path().join(".grok");
+        // GrokStdioClient sets HOME=<temp>; the binary uses <HOME>/.grok as INTELEKT_HOME.
+        let grok_home = shared_home.path().join(".intelekt");
         let session_dir = locate_session_dir(&grok_home, session_id.0.as_ref());
         let sub_id = "sa-orphan";
         let meta_path = session_dir.join("subagents").join(sub_id).join("meta.json");

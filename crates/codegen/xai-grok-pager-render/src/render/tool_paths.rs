@@ -90,10 +90,10 @@ fn resolve_tool_path_with_home(
     let target = resolve_tool_path_target_with_home(Path::new(path), cwd, home);
     let display_path = target
         .as_deref()
-        .map(xai_grok_paths::normalize_lexically)
+        .map(intelekt_paths::normalize_lexically)
         .unwrap_or_else(|| PathBuf::from(path));
     let relative_to_cwd = target.as_ref().and_then(|_| {
-        let cwd = xai_grok_paths::normalize_lexically(cwd?);
+        let cwd = intelekt_paths::normalize_lexically(cwd?);
         display_path.strip_prefix(cwd).ok().and_then(non_empty_rel)
     });
     ResolvedToolPath {
@@ -220,7 +220,7 @@ mod tests {
 
     #[test]
     fn shorten_path_fish_style() {
-        let result = shorten_path("crates/codegen/xai-grok-pager/src/views/foo.rs", 25);
+        let result = shorten_path("crates/codegen/intelekt-pager/src/views/foo.rs", 25);
         assert!(result.width() <= 25, "got: {result}");
         assert!(result.ends_with("foo.rs"), "got: {result}");
     }
@@ -228,7 +228,7 @@ mod tests {
     #[test]
     fn shorten_path_front_truncate() {
         let result = shorten_path(
-            "crates/codegen/xai-grok-pager/src/views/very_long_filename.rs",
+            "crates/codegen/intelekt-pager/src/views/very_long_filename.rs",
             20,
         );
         assert!(result.width() <= 20, "got: {result}");
@@ -360,8 +360,8 @@ mod tests {
 
     #[test]
     fn expanded_surface_uses_worktree_cwd() {
-        let cwd = Path::new("/Users/me/.grok/worktrees/foo");
-        let path = "/Users/me/.grok/worktrees/foo/crates/x/a.rs";
+        let cwd = Path::new("/Users/me/.intelekt/worktrees/foo");
+        let path = "/Users/me/.intelekt/worktrees/foo/crates/x/a.rs";
         assert_eq!(
             path_for_tool_surface(path, ToolPathSurface::Expanded, Some(cwd), None, 0),
             "crates/x/a.rs"
@@ -398,7 +398,7 @@ mod tests {
         );
         assert_eq!(
             resolve_tool_path("~/project/../notes.md", None).display_path,
-            xai_grok_paths::normalize_lexically(&home.join("notes.md"))
+            intelekt_paths::normalize_lexically(&home.join("notes.md"))
         );
     }
 

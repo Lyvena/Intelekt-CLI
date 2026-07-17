@@ -1,4 +1,4 @@
-//! Wire types for the `xai-grok-workspace` API.
+//! Wire types for the `intelekt-workspace` API.
 //!
 //! This crate is intentionally pure-data and depends on nothing more than
 //! `base64`, `serde`, `serde_json`, `thiserror`, and `chrono`. There is
@@ -71,7 +71,7 @@
 //! A planned `build.rs` will walk the request / chunk /
 //! event enums via reflection and emit a `.proto`. That codegen step is
 //! **not** implemented yet; it will land alongside the
-//! `xai-grok-workspace-grpc` crate. The Rust types defined here are
+//! `intelekt-workspace-grpc` crate. The Rust types defined here are
 //! the source of truth.
 
 pub mod chunks;
@@ -86,10 +86,10 @@ pub mod types;
 
 /// MCP tool name delimiter: server names are qualified as `"server__tool"`.
 ///
-/// Lives in `xai-grok-workspace-types` (instead of `xai-grok-workspace` or
-/// `xai-grok-mcp`) so both the permission-validation layer and the MCP
+/// Lives in `intelekt-workspace-types` (instead of `intelekt-workspace` or
+/// `intelekt-mcp`) so both the permission-validation layer and the MCP
 /// transport layer can depend on it without dragging the full workspace or
-/// rmcp into each other. Re-exported by `xai_grok_workspace::permission`
+/// rmcp into each other. Re-exported by `intelekt_workspace::permission`
 /// for callers that historically imported it from there.
 pub const MCP_TOOL_NAME_DELIMITER: &str = "__";
 

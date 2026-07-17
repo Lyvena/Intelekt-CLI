@@ -1,9 +1,9 @@
 [package]
 license = "Apache-2.0"
-name = "xai-grok-compaction"
+name = "intelekt-compaction"
 version = "0.1.0"
 edition.workspace = true
-description = "Shared, transport-agnostic compaction engine for Grok chat and Grok Build."
+description = "Shared, transport-agnostic compaction engine for Grok chat and Intelekt CLI."
 
 [dependencies]
 anyhow = { workspace = true }

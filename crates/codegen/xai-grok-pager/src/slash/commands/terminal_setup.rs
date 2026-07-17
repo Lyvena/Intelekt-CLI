@@ -60,7 +60,7 @@ impl SlashCommand for TerminalSetupCommand {
             &ctx.tmux_config_path(),
         ));
         let route = crate::clipboard::clipboard_route();
-        let is_ssh = xai_grok_shell::util::clipboard::is_remote_session();
+        let is_ssh = intelekt_shell::util::clipboard::is_remote_session();
 
         let mut out = String::new();
 
@@ -127,7 +127,7 @@ impl SlashCommand for TerminalSetupCommand {
         out.push_str(&format!(
             "  native       {}  (tool: {})\n",
             if route.native { "active" } else { "off" },
-            xai_grok_shell::util::clipboard::native_tool_name(),
+            intelekt_shell::util::clipboard::native_tool_name(),
         ));
         out.push_str(&format!(
             "  tmux buffer  {}\n",

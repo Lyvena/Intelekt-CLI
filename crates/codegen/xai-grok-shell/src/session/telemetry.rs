@@ -1,5 +1,5 @@
-use xai_grok_telemetry::events::SessionHarness;
-use xai_grok_workspace::permission::Decision;
+use intelekt_telemetry::events::SessionHarness;
+use intelekt_workspace::permission::Decision;
 
 /// Permission-mode label for the `session.permission_mode_changed` span.
 pub(crate) fn permission_mode_label(is_yolo: bool) -> &'static str {
@@ -80,7 +80,7 @@ pub(crate) fn skill_source_label(skill_path: &str, cwd: &str) -> &'static str {
     }
 }
 
-pub(crate) fn format_hook_name(spec: &xai_grok_hooks::config::HookSpec) -> String {
+pub(crate) fn format_hook_name(spec: &intelekt_hooks::config::HookSpec) -> String {
     let scope = spec.name.split(':').next().unwrap_or("unknown");
     match spec.configured_matcher.as_deref() {
         Some(m) if !m.is_empty() => format!("{scope}:{}:{}", spec.event, m.to_lowercase()),
@@ -91,8 +91,8 @@ pub(crate) fn format_hook_name(spec: &xai_grok_hooks::config::HookSpec) -> Strin
 /// Provenance from the namespace prefix each loader stamps on the spec name:
 /// `global/` → user, `project/` → project, `plugin/` → plugin, `agent:` →
 /// agent, else unknown. (Source-dir classification was wrong — both global and
-/// project dirs contain `/.grok/`.)
-fn format_hook_source(spec: &xai_grok_hooks::config::HookSpec) -> &'static str {
+/// project dirs contain `/.intelekt/`.)
+fn format_hook_source(spec: &intelekt_hooks::config::HookSpec) -> &'static str {
     let name = spec.name.as_str();
     if name.starts_with("global/") {
         "userSettings"
@@ -116,7 +116,7 @@ pub(crate) struct HookRegInfo {
 }
 
 impl HookRegInfo {
-    pub(crate) fn from_spec(spec: &xai_grok_hooks::config::HookSpec) -> Self {
+    pub(crate) fn from_spec(spec: &intelekt_hooks::config::HookSpec) -> Self {
         Self {
             name: format_hook_name(spec),
             event: spec.event.to_string(),
@@ -132,17 +132,17 @@ pub(crate) struct SessionHarnessMetrics {
     pub client_identifier: Option<String>,
     pub model_id: String,
     pub agent_name: String,
-    pub permission_mode: xai_grok_telemetry::enums::PermissionMode,
+    pub permission_mode: intelekt_telemetry::enums::PermissionMode,
     pub mcp_server_names: Vec<String>,
     pub lsp_server_names: Vec<String>,
     pub memory_enabled: bool,
     pub auto_update: Option<bool>,
     pub cwd: String,
-    pub skills_config: xai_grok_agent::prompt::skills::SkillsConfig,
+    pub skills_config: intelekt_agent::prompt::skills::SkillsConfig,
     /// Resolved vendor-compat config, so recorded skill / AGENTS.md names match
     /// what the session actually discovers.
-    pub compat: xai_grok_tools::types::compat::CompatConfig,
-    pub plugin_registry: Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>>,
+    pub compat: intelekt_tools::types::compat::CompatConfig,
+    pub plugin_registry: Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>>,
     pub plugin_names: Vec<String>,
 }
 
@@ -179,7 +179,7 @@ impl SessionHarnessMetrics {
         }
         let hook_names: Vec<String> = hooks.into_iter().map(|h| h.name).collect();
 
-        let agents_md_dir_names = xai_grok_agent::prompt::agents_md::read_agents_config_with_paths(
+        let agents_md_dir_names = intelekt_agent::prompt::agents_md::read_agents_config_with_paths(
             &self.cwd,
             self.compat,
         )
@@ -192,7 +192,7 @@ impl SessionHarnessMetrics {
                 .map(|n| n.to_string_lossy().into_owned())
         })
         .collect();
-        let skill_names = xai_grok_agent::prompt::skills::list_skills_with_plugins(
+        let skill_names = intelekt_agent::prompt::skills::list_skills_with_plugins(
             Some(&self.cwd),
             &self.skills_config,
             self.plugin_registry.as_deref(),
@@ -217,7 +217,7 @@ impl SessionHarnessMetrics {
             memory_enabled: self.memory_enabled,
             // Same signal `SessionNew` carries; recomputed here because this
             // event is built off-thread, after spawn (cheap: repo discovery).
-            is_git_repo: xai_grok_telemetry::context::collect_git_context(&self.cwd).is_git_repo,
+            is_git_repo: intelekt_telemetry::context::collect_git_context(&self.cwd).is_git_repo,
             auto_update: self.auto_update,
         }
     }

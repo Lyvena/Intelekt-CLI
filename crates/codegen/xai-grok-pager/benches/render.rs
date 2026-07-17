@@ -1,4 +1,4 @@
-//! Criterion benchmarks for the xai-grok-pager rendering pipeline.
+//! Criterion benchmarks for the intelekt-pager rendering pipeline.
 //!
 //! Measures the per-frame cost of rendering a rich markdown document
 //! into a ratatui `Buffer`.  This isolates the render hot path (entry
@@ -11,15 +11,15 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 
-use xai_grok_pager::appearance::AppearanceConfig;
-use xai_grok_pager::render::Renderable;
-use xai_grok_pager::scrollback::entry::ScrollbackEntry;
-use xai_grok_pager::scrollback::render::render_scrolled_entries_with_scratch;
-use xai_grok_pager::scrollback::wrappers::EntryRenderer;
-use xai_grok_pager::scrollback::{
+use intelekt_pager::appearance::AppearanceConfig;
+use intelekt_pager::render::Renderable;
+use intelekt_pager::scrollback::entry::ScrollbackEntry;
+use intelekt_pager::scrollback::render::render_scrolled_entries_with_scratch;
+use intelekt_pager::scrollback::wrappers::EntryRenderer;
+use intelekt_pager::scrollback::{
     EntryId, EntryLayoutInfo, HorizontalLayout, RenderBlock, ScrollbackState,
 };
-use xai_grok_pager::theme::Theme;
+use intelekt_pager::theme::Theme;
 
 static BENCH_MD: &str = include_str!("bench.md");
 

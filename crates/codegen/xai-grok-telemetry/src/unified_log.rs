@@ -12,7 +12,7 @@ use std::sync::{LazyLock, Mutex, OnceLock};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
-use xai_grok_config::grok_home;
+use intelekt_config::grok_home;
 
 /// Binary version stamped into every log entry. Set once at startup via
 /// [`set_version()`]; entries emitted before that get `None`.

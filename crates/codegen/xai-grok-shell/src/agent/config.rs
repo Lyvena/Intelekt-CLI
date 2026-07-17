@@ -8,14 +8,14 @@ use serde::{Deserialize, Serialize};
 use std::num::NonZeroU64;
 use std::path::PathBuf;
 use std::sync::Arc;
-use xai_grok_agent::prompt::skills::SkillsConfig;
-use xai_grok_sampler::{AuthScheme, SamplerConfig};
-use xai_grok_sampling_types::{
+use intelekt_agent::prompt::skills::SkillsConfig;
+use intelekt_sampler::{AuthScheme, SamplerConfig};
+use intelekt_sampling_types::{
     CompactionAtTokens, CompactionsRemaining, REASONING_EFFORT_META_KEY,
     REASONING_EFFORTS_META_KEY, ReasoningEffort, ReasoningEffortOption,
     reasoning_effort_meta_value, reasoning_efforts_meta_value,
 };
-use xai_grok_tools::types::compat::{
+use intelekt_tools::types::compat::{
     COMPAT_CELLS, CompatConfig, CompatConfigToml, CompatRemoteKey, CompatSurface, CompatVendor,
 };
 /// The mode in which the agent is running.
@@ -37,7 +37,7 @@ pub enum AgentMode {
     Generic,
 }
 /// Default agent type when the server or user config doesn't specify one.
-pub const DEFAULT_AGENT_TYPE: &str = "grok-build-plan";
+pub const DEFAULT_AGENT_TYPE: &str = "intelekt-cli-plan";
 /// Serde default for `ModelInfo.agent_type` and `ModelEntryConfig.agent_type`.
 pub fn default_agent_type() -> String {
     DEFAULT_AGENT_TYPE.to_owned()
@@ -180,7 +180,7 @@ pub struct EndpointsConfig {
     /// Env: `GROK_TRACE_UPLOAD_ENDPOINT_URL`. Custom S3-compatible endpoint.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub trace_upload_endpoint_url: Option<String>,
-    /// Env: `GROK_DEPLOYMENT_KEY`. Management API key for enterprise deployments.
+    /// Env: `INTELEKT_DEPLOYMENT_KEY`. Management API key for enterprise deployments.
     /// Sent on telemetry and service requests for deployment-level attribution.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deployment_key: Option<String>,
@@ -554,7 +554,7 @@ impl Default for EndpointsConfig {
             trace_upload_credentials_file: env_string("GROK_TRACE_UPLOAD_CREDENTIALS_FILE"),
             trace_upload_credentials: None,
             trace_upload_endpoint_url: env_string("GROK_TRACE_UPLOAD_ENDPOINT_URL"),
-            deployment_key: env_string("GROK_DEPLOYMENT_KEY"),
+            deployment_key: env_string("INTELEKT_DEPLOYMENT_KEY"),
             managed_config_url: env_string("GROK_MANAGED_CONFIG_URL"),
             otel_exporter_otlp_endpoint: env_string("OTEL_EXPORTER_OTLP_ENDPOINT"),
             otel_exporter_otlp_traces_endpoint: env_string("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"),
@@ -574,7 +574,7 @@ impl Default for EndpointsConfig {
         }
     }
 }
-pub use xai_grok_config_types::{BoolFlag, ConfigSource, LazinessDetectorPerModelConfig, Resolved};
+pub use intelekt_config_types::{BoolFlag, ConfigSource, LazinessDetectorPerModelConfig, Resolved};
 /// Resolution result for a `/goal` role's model selection.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) enum GoalRoleModelChoice {
@@ -662,7 +662,7 @@ pub(crate) fn env_string(name: &str) -> Option<String> {
         Some(trimmed.to_string())
     }
 }
-pub use xai_grok_config::env_bool;
+pub use intelekt_config::env_bool;
 /// Compaction-mode precedence (env > config > remote settings > default, with
 /// unrecognized values at each source falling through). `remote` sits just
 /// above the default, mirroring `feature_flag` in `resolve_bool_flag`. Pure so
@@ -699,7 +699,7 @@ fn resolve_compat_cell(
     remote: Option<bool>,
     default: bool,
 ) -> Resolved<bool> {
-    resolve_compat_cell_with_env(xai_grok_config::env_bool(env), cfg, remote, default)
+    resolve_compat_cell_with_env(intelekt_config::env_bool(env), cfg, remote, default)
 }
 pub(crate) fn resolve_compat_cell_with_env(
     env: Option<bool>,
@@ -766,7 +766,7 @@ pub(crate) enum CompatConfigCellError {
 }
 pub(crate) fn compat_config_cell(
     raw_config: Result<&toml::Value, ()>,
-    cell: xai_grok_tools::types::compat::CompatCell,
+    cell: intelekt_tools::types::compat::CompatCell,
 ) -> Result<Option<bool>, CompatConfigCellError> {
     let raw = raw_config.map_err(|()| CompatConfigCellError::Unavailable)?;
     let Some(compat) = raw.get("compat") else {
@@ -857,8 +857,8 @@ pub(crate) fn resolve_enabled(
         .default(default)
         .resolve()
 }
-pub(crate) use xai_grok_telemetry::config::env_telemetry_mode;
-pub use xai_grok_telemetry::config::{TelemetryConfig, TelemetryMode};
+pub(crate) use intelekt_telemetry::config::env_telemetry_mode;
+pub use intelekt_telemetry::config::{TelemetryConfig, TelemetryMode};
 /// Plugin system configuration from `[plugins]` section in config.toml.
 ///
 /// ```toml
@@ -891,7 +891,7 @@ impl PluginsConfig {
     /// read here: a malicious repo could pre-populate `enabledPlugins` to
     /// bypass the project-plugin auto-disable logic in `populate_plugin_lists`,
     /// enabling attacker-controlled hooks (e.g. SessionStart → RCE).
-    /// Native `.grok/config.toml` entries already present take precedence:
+    /// Native `.intelekt/config.toml` entries already present take precedence:
     /// a name is only added if it isn't already in the opposite list.
     pub fn merge_claude_enabled_plugins(&mut self, _cwd: Option<&std::path::Path>) {
         if crate::claude_import::is_claude_import_marked_with_log("merge_claude_enabled_plugins") {
@@ -903,7 +903,7 @@ impl PluginsConfig {
         }
         for path in &paths {
             let (claude_enabled, claude_disabled) =
-                xai_grok_agent::plugins::marketplace::load_enabled_disabled_plugins(path);
+                intelekt_agent::plugins::marketplace::load_enabled_disabled_plugins(path);
             for name in claude_enabled {
                 if !self.disabled.contains(&name) && !self.enabled.contains(&name) {
                     self.enabled.push(name);
@@ -917,8 +917,8 @@ impl PluginsConfig {
         }
     }
     /// Build a `DiscoveryConfig` from this plugins config.
-    pub fn to_discovery_config(&self) -> xai_grok_agent::plugins::discovery::DiscoveryConfig {
-        xai_grok_agent::plugins::discovery::DiscoveryConfig {
+    pub fn to_discovery_config(&self) -> intelekt_agent::plugins::discovery::DiscoveryConfig {
+        intelekt_agent::plugins::discovery::DiscoveryConfig {
             cli_plugin_dirs: self.cli_plugin_dirs.clone(),
             config_paths: self.paths.iter().map(std::path::PathBuf::from).collect(),
             disabled: self.disabled.clone(),
@@ -999,7 +999,7 @@ pub struct ModelsConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image_description: Option<String>,
     /// Model pin for next-prompt suggestions (tab-autocomplete ghost text).
-    /// Unset = remote pin, then the client hint / built-in `grok-build-0.1`
+    /// Unset = remote pin, then the client hint / built-in `intelekt-cli-0.1`
     /// default with the catalog guard; see `ModelOverrideConfig::resolve`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prompt_suggestion: Option<String>,
@@ -1171,7 +1171,7 @@ pub struct MarketplaceSourceEntry {
 /// [suggestions]
 /// enabled = true
 /// ai_enabled = true
-/// ai_model = "grok-build"
+/// ai_model = "intelekt-cli"
 /// debounce_ms = 50
 /// ```
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -1215,7 +1215,7 @@ impl SuggestionsConfig {
             None,
         )
         .map(|r| r.value)
-        .unwrap_or_else(|| "grok-build".to_owned())
+        .unwrap_or_else(|| "intelekt-cli".to_owned())
     }
 }
 /// `[storage]` section from config.toml.
@@ -1230,8 +1230,8 @@ pub struct StorageConfig {
 }
 /// `[paths]` configuration: extra directories to scan for skills, rules, etc.
 ///
-/// These supplement the built-in scan locations (`.grok/skills/`,
-/// `.agents/skills/`, `~/.grok/skills/`). They're written by `/import-claude`
+/// These supplement the built-in scan locations (`.intelekt/skills/`,
+/// `.agents/skills/`, `~/.intelekt/skills/`). They're written by `/import-claude`
 /// to preserve previously-discovered Claude directories after the runtime
 /// `.claude/` cutoff (see `[claude_compat] imported`).
 ///
@@ -1363,7 +1363,7 @@ pub struct Config {
     pub desktop: Option<toml::Value>,
     /// Top-level `announcements` array — consumed by `resolve_announcements`.
     #[serde(default, skip_serializing)]
-    pub announcements: Vec<xai_grok_announcements::RemoteAnnouncement>,
+    pub announcements: Vec<intelekt_announcements::RemoteAnnouncement>,
     /// `[tips]` section — consumed by `merge_tips`.
     #[serde(default, skip_serializing)]
     pub tips: Option<crate::util::config::TipsOverride>,
@@ -1379,7 +1379,7 @@ pub struct Config {
     /// `[suggestions]` — shell command suggestion pipeline settings.
     #[serde(default, skip_serializing)]
     pub suggestions: SuggestionsConfig,
-    /// `[marketplace]` — also read by `xai_grok_plugin_marketplace::load_sources()`.
+    /// `[marketplace]` — also read by `intelekt_plugin_marketplace::load_sources()`.
     #[serde(default, skip_serializing)]
     pub marketplace: MarketplaceConfig,
     /// `[diagnostics]` — crash handler toggle (`load_crash_handler_enabled_sync`).
@@ -1438,7 +1438,7 @@ pub struct Config {
     #[serde(skip)]
     pub remote_settings: Option<crate::util::config::RemoteSettings>,
     #[serde(skip)]
-    pub cli_agents: Vec<xai_grok_agent::config::AgentDefinition>,
+    pub cli_agents: Vec<intelekt_agent::config::AgentDefinition>,
     #[serde(skip)]
     pub cli_agent_overrides: CliAgentOverrides,
     /// Whether subagent (task tool) support is enabled. Enabled by default;
@@ -1456,13 +1456,13 @@ pub struct Config {
     #[serde(skip)]
     pub subagent_toggle: std::collections::HashMap<String, bool>,
     /// Per-subagent role definitions from `[subagents.roles]` in config.toml
-    /// and `.grok/roles/*.toml` file discovery.
+    /// and `.intelekt/roles/*.toml` file discovery.
     #[serde(skip)]
     pub subagent_roles:
-        std::collections::HashMap<String, xai_grok_subagent_resolution::config::SubagentRole>,
+        std::collections::HashMap<String, intelekt_subagent_resolution::config::SubagentRole>,
     #[serde(skip)]
     pub subagent_personas:
-        std::collections::HashMap<String, xai_grok_subagent_resolution::config::SubagentPersona>,
+        std::collections::HashMap<String, intelekt_subagent_resolution::config::SubagentPersona>,
     /// Whether web search is force-disabled via `--disable-web-search` CLI flag.
     /// When true, the web search tool is never added to the agent toolset
     /// regardless of available credentials.
@@ -1503,7 +1503,7 @@ pub struct Config {
     /// config is valid. Resolved by [`crate::config::ToolsConfig::resolve`].
     #[serde(skip)]
     pub zdr_video_output_s3:
-        Option<xai_grok_tools::implementations::grok_build::video_gen::ZdrVideoOutputS3Config>,
+        Option<intelekt_tools::implementations::grok_build::video_gen::ZdrVideoOutputS3Config>,
     /// Whether to enrich path-not-found errors with CWD reminders,
     /// "dropped repo folder" correction, and similar-name suggestions.
     /// Default `false`. Enabled via remote settings.
@@ -1539,7 +1539,7 @@ pub struct Config {
     /// (`default_session_summary_model`) when unset; see `ModelOverrideConfig::resolve`.
     #[serde(skip)]
     pub session_summary_model: Option<String>,
-    /// Image describe model (`grok-build` default via `ModelOverrideConfig::resolve`).
+    /// Image describe model (`intelekt-cli` default via `ModelOverrideConfig::resolve`).
     #[serde(skip)]
     pub image_description_model: Option<String>,
     /// Next-prompt suggestion model pin (`env > [models] prompt_suggestion >
@@ -1552,16 +1552,16 @@ pub struct Config {
 pub struct CliAgentOverrides {
     pub tools: Option<Vec<String>>,
     pub disallowed_tools: Option<Vec<String>>,
-    pub permission_rules: Vec<xai_grok_workspace::permission::types::PermissionRule>,
+    pub permission_rules: Vec<intelekt_workspace::permission::types::PermissionRule>,
     pub max_turns: Option<u32>,
-    pub permission_mode: Option<xai_grok_agent::config::PermissionMode>,
+    pub permission_mode: Option<intelekt_agent::config::PermissionMode>,
 }
 impl CliAgentOverrides {
     /// Apply to the *main-session* agent, which the operator defines directly:
     /// the flags are authoritative, so they replace the agent's own fields.
     /// Spawned subagents instead layer these on top of an author's definition —
     /// see [`Self::apply_to_subagent_definition`].
-    pub fn apply_to_definition(&self, def: &mut xai_grok_agent::config::AgentDefinition) {
+    pub fn apply_to_definition(&self, def: &mut intelekt_agent::config::AgentDefinition) {
         if let Some(ref tools) = self.tools {
             def.tools = tools.clone();
         }
@@ -1575,7 +1575,7 @@ impl CliAgentOverrides {
     /// Subagent variant of [`Self::apply_to_definition`]: records the flags as
     /// session-clamp state (see [`AgentDefinition::session_tools_allowlist`])
     /// instead of overwriting the agent author's own fields.
-    pub fn apply_to_subagent_definition(&self, def: &mut xai_grok_agent::config::AgentDefinition) {
+    pub fn apply_to_subagent_definition(&self, def: &mut intelekt_agent::config::AgentDefinition) {
         def.session_tools_allowlist = self.tools.clone();
         def.session_tools_denylist = self.disallowed_tools.clone();
         if let Some(ref parent_mode) = self.permission_mode
@@ -1602,17 +1602,17 @@ fn resolve_subagent_permission_mode(
         _ => own,
     }
 }
-pub use xai_grok_agent::config::AgentDefinition;
-pub use xai_grok_agent::config::Effort;
-pub use xai_grok_agent::config::PermissionMode;
-pub use xai_grok_shared::ui_config::{ContextualHints, UiConfig};
+pub use intelekt_agent::config::AgentDefinition;
+pub use intelekt_agent::config::Effort;
+pub use intelekt_agent::config::PermissionMode;
+pub use intelekt_shared::ui_config::{ContextualHints, UiConfig};
 /// Configuration for selecting the agent definition.
 ///
 /// Set in `config.toml` under `[agent]`:
 ///
 /// ```toml
 /// [agent]
-/// # Use a named agent (looked up via discovery: .grok/agents/, ~/.grok/agents/, built-ins)
+/// # Use a named agent (looked up via discovery: .intelekt/agents/, ~/.intelekt/agents/, built-ins)
 /// name = "my-custom-agent"
 ///
 /// # OR: path to an agent definition file (.md with YAML frontmatter)
@@ -1624,18 +1624,18 @@ pub use xai_grok_shared::ui_config::{ContextualHints, UiConfig};
 /// 2. CLI `--agent-profile` flag
 /// 3. `[agent]` config.toml section (this config)
 /// 4. `GROK_AGENT` env var
-/// 5. Default `grok-build` agent
+/// 5. Default `intelekt-cli` agent
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AgentSelectionConfig {
     /// Name of a built-in or discovered agent definition.
-    /// Looked up via `xai_grok_agent::discovery::by_name_in_cwd()`.
-    /// Examples: "grok-build", "browser-use", or a custom agent name.
+    /// Looked up via `intelekt_agent::discovery::by_name_in_cwd()`.
+    /// Examples: "intelekt-cli", "browser-use", or a custom agent name.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     /// Path to an agent definition file (.md with YAML frontmatter).
     /// When set, the agent is loaded from this file.
-    /// Supports environment variable expansion (e.g., `$HOME/.grok/agents/my-agent.md`).
+    /// Supports environment variable expansion (e.g., `$HOME/.intelekt/agents/my-agent.md`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub definition: Option<PathBuf>,
     /// Global system-prompt identity label. Per-model override wins.
@@ -1755,7 +1755,7 @@ impl Default for Config {
             default_yolo_mode: false,
             default_auto_mode: false,
             agent_profile_path: None,
-            client_version: Some(xai_grok_version::VERSION.to_string()),
+            client_version: Some(intelekt_version::VERSION.to_string()),
             mode: AgentMode::default(),
             remote_settings: None,
             cli_agents: Vec::new(),
@@ -2182,8 +2182,8 @@ impl Config {
     /// source (the `resolve_reminder_policy` pattern).
     pub(crate) fn resolve_doom_loop_recovery(
         &self,
-    ) -> Option<xai_grok_sampling_types::DoomLoopRecoveryPolicy> {
-        use xai_grok_sampling_types::DoomLoopRecoveryPolicy as Policy;
+    ) -> Option<intelekt_sampling_types::DoomLoopRecoveryPolicy> {
+        use intelekt_sampling_types::DoomLoopRecoveryPolicy as Policy;
         let remote = self
             .remote_settings
             .as_ref()
@@ -2303,7 +2303,7 @@ impl Config {
     /// it; otherwise the tool defaults on and is overridable via
     /// `GROK_IMAGE_EDIT`.
     pub(crate) fn resolve_image_edit(&self) -> Resolved<bool> {
-        use xai_grok_tools::implementations::grok_build::IMAGE_EDIT_TOOL_NAME;
+        use intelekt_tools::implementations::grok_build::IMAGE_EDIT_TOOL_NAME;
         if let Some(pinned) = self.requirements.image_edit.pinned() {
             return Resolved::new(pinned, ConfigSource::Requirement);
         }
@@ -2678,7 +2678,7 @@ impl Config {
         resolve_mcp_push_server_status(None, None, self.features.mcp_push_server_status, None, None)
     }
     /// Resolve whether the leader's `ConfigFileWatcher` adds the two
-    /// narrow non-recursive watches for `<cwd>/` and `<cwd>/.grok/`.
+    /// narrow non-recursive watches for `<cwd>/` and `<cwd>/.intelekt/`.
     ///
     /// Thin delegate to the canonical
     /// [`resolve_mcp_recursive_config_watch`] free function — mirrors
@@ -2960,7 +2960,7 @@ fn error_reporting_enabled_from_toml(root: &toml::Value) -> Option<bool> {
 fn grok_telemetry_env_enabled() -> Option<bool> {
     env_telemetry_mode("GROK_TELEMETRY_ENABLED").map(|m| !m.is_disabled())
 }
-/// Load `~/.grok/requirements.toml` standalone so the admin pin can beat
+/// Load `~/.intelekt/requirements.toml` standalone so the admin pin can beat
 /// env vars. The merged config layer can't express that — last-merge-wins
 /// loses provenance.
 pub(crate) fn read_requirements_toml() -> Option<toml::Value> {
@@ -2981,7 +2981,7 @@ pub(crate) fn read_requirements_toml() -> Option<toml::Value> {
 /// stream — exactly the split this design forbids.
 pub(crate) fn external_otel_master_switch_resolved() -> bool {
     external_otel_master_switch_from(
-        xai_grok_config::load_merged_requirements().as_ref(),
+        intelekt_config::load_merged_requirements().as_ref(),
         env_bool("GROK_EXTERNAL_OTEL"),
         crate::config::load_effective_config().ok().as_ref(),
     )
@@ -3014,11 +3014,11 @@ pub(crate) fn external_otel_master_switch_from(
 /// top, and the remote layer is restrictive-only + asynchronous
 /// ([`apply_external_otel_remote_policy`]).
 pub fn resolve_external_otel_config(
-    client: xai_grok_telemetry::external::config::ExternalClientInfo,
-) -> Option<xai_grok_telemetry::external::ExternalOtelConfig> {
+    client: intelekt_telemetry::external::config::ExternalClientInfo,
+) -> Option<intelekt_telemetry::external::ExternalOtelConfig> {
     resolve_external_otel_config_with(
         crate::config::load_effective_config().ok().as_ref(),
-        xai_grok_config::load_merged_requirements().as_ref(),
+        intelekt_config::load_merged_requirements().as_ref(),
         |name| std::env::var(name).ok(),
         client,
         EndpointsConfig::default().internal_otlp_consumed_standard_vars(),
@@ -3030,12 +3030,12 @@ pub(crate) fn resolve_external_otel_config_with(
     effective_config: Option<&toml::Value>,
     requirements: Option<&toml::Value>,
     getenv: impl Fn(&str) -> Option<String>,
-    client: xai_grok_telemetry::external::config::ExternalClientInfo,
+    client: intelekt_telemetry::external::config::ExternalClientInfo,
     internal_pipeline_consumed_otel_vars: bool,
-) -> Option<xai_grok_telemetry::external::ExternalOtelConfig> {
-    let file_cfg: Option<xai_grok_telemetry::external::ExternalOtelFileConfig> = effective_config
+) -> Option<intelekt_telemetry::external::ExternalOtelConfig> {
+    let file_cfg: Option<intelekt_telemetry::external::ExternalOtelFileConfig> = effective_config
         .and_then(|cfg| cfg.get("telemetry"))
-        .map(|t| xai_grok_telemetry::external::ExternalOtelFileConfig {
+        .map(|t| intelekt_telemetry::external::ExternalOtelFileConfig {
             enabled: t.get("otel_enabled").and_then(toml::Value::as_bool),
             metrics_exporter: t
                 .get("otel_metrics_exporter")
@@ -3068,7 +3068,7 @@ pub(crate) fn resolve_external_otel_config_with(
     let req_details = req_get("otel_log_tool_details");
     let getenv_pinned = |name: &str| -> Option<String> {
         let pin = match name {
-            xai_grok_telemetry::external::config::ENV_MASTER_SWITCH => req_enabled,
+            intelekt_telemetry::external::config::ENV_MASTER_SWITCH => req_enabled,
             "OTEL_LOG_USER_PROMPTS" => req_prompts,
             "OTEL_LOG_TOOL_DETAILS" => req_details,
             _ => None,
@@ -3078,7 +3078,7 @@ pub(crate) fn resolve_external_otel_config_with(
         }
         getenv(name)
     };
-    let mut resolved = xai_grok_telemetry::external::ExternalOtelConfig::resolve_with(
+    let mut resolved = intelekt_telemetry::external::ExternalOtelConfig::resolve_with(
         getenv_pinned,
         file_cfg.as_ref(),
     )?;
@@ -3092,12 +3092,12 @@ pub(crate) fn resolve_external_otel_config_with(
 /// call on every settings refresh.
 pub fn apply_external_otel_remote_policy(settings: Option<&crate::util::config::RemoteSettings>) {
     let Some(settings) = settings else { return };
-    let policy = xai_grok_telemetry::external::ExternalOtelRemotePolicy {
+    let policy = intelekt_telemetry::external::ExternalOtelRemotePolicy {
         force_disable: settings.external_otel_disabled.unwrap_or(false),
         lock_content_gates: settings.external_otel_content_gates_locked.unwrap_or(false),
     };
     if policy.force_disable || policy.lock_content_gates {
-        xai_grok_telemetry::external::apply_remote_policy(policy);
+        intelekt_telemetry::external::apply_remote_policy(policy);
     }
 }
 /// Seed free-function remote caches after writing `Config.remote_settings`.
@@ -3120,10 +3120,10 @@ pub fn apply_remote_settings_side_effects(settings: Option<&crate::util::config:
 /// Read `env.<key>` from Claude-compat `managed_settings.json`. `Some(true)`
 /// indicates a force-off signal from a Mac-MDM-style admin policy.
 fn managed_settings_env_flag(key: &str) -> Option<bool> {
-    let path = xai_grok_config::claude_managed_settings_path()?;
+    let path = intelekt_config::claude_managed_settings_path()?;
     let content = std::fs::read_to_string(&path).ok()?;
     let json: serde_json::Value = serde_json::from_str(&content).ok()?;
-    xai_grok_workspace::permission::resolution::json_env_flag(json.get("env"), key)
+    intelekt_workspace::permission::resolution::json_env_flag(json.get("env"), key)
 }
 /// Assemble the final model map. Priority (highest wins):
 /// config.toml `[model.*]` > prefetched (remote) > hardcoded defaults.
@@ -3506,7 +3506,7 @@ pub struct ModelEntryConfig {
     #[serde(default, skip_serializing_if = "is_false")]
     pub use_concise: bool,
     /// The type of system prompt to use for this model.
-    /// e.g. "grok-build", "codex".
+    /// e.g. "intelekt-cli", "codex".
     #[serde(default = "default_agent_type")]
     pub agent_type: String,
     /// Maximum seconds to wait between SSE chunks during inference streaming.
@@ -3744,7 +3744,7 @@ pub struct ModelInfo {
     /// concise tool output, concise user message prefix, reduced toolset).
     pub use_concise: bool,
     /// The type of agent configuration to use for this model.
-    /// Always has a value; defaults to `"grok-build-plan"` when the server
+    /// Always has a value; defaults to `"intelekt-cli-plan"` when the server
     /// or user config doesn't specify one.
     #[serde(default = "default_agent_type")]
     pub agent_type: String,
@@ -4096,7 +4096,7 @@ pub struct AutoModeConfig {
     /// How much context the classifier prompt includes. `None` ⇒ the wire fn's
     /// built-in default (`just_command`).
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub prompt_type: Option<xai_grok_workspace::permission::ClassifierPromptType>,
+    pub prompt_type: Option<intelekt_workspace::permission::ClassifierPromptType>,
     /// Routing slug for a dedicated classifier model. `None` ⇒ inherit the
     /// session model. Resolved via `resolve_aux_model_sampling_config`.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -4246,17 +4246,17 @@ pub struct Features {
     ///
     /// Practical consequence: setting
     /// `[features] mcp_push_server_status = false` in
-    /// `~/.grok/config.toml` will NOT disable the pager's
+    /// `~/.intelekt/config.toml` will NOT disable the pager's
     /// subscription on a freshly-launched process. To disable the
     /// pager subscription, set `GROK_MCP_PUSH_SERVER_STATUS=0` in
     /// the env before launch.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mcp_push_server_status: Option<bool>,
     /// Whether the leader's `ConfigFileWatcher` adds the two narrow
-    /// non-recursive watches for `<cwd>/` and `<cwd>/.grok/`.
+    /// non-recursive watches for `<cwd>/` and `<cwd>/.intelekt/`.
     ///
     /// When `true` (default), edits to `<cwd>/.mcp.json`,
-    /// `<cwd>/.grok/config.toml`, or `<cwd>/.claude.json` flow
+    /// `<cwd>/.intelekt/config.toml`, or `<cwd>/.claude.json` flow
     /// through the watcher → reloader → `ConfigUpdate::
     /// ProjectMcpServersChanged { cwd }` → `app.rs` ACP-injection
     /// pipeline and the affected sessions reload their MCP servers
@@ -4364,7 +4364,7 @@ pub fn enforce_disable_api_key_auth(
     {
         creds.auth_type = xai_chat_state::AuthType::SessionToken;
         creds.api_key = session_key.map(str::to_owned);
-        xai_grok_telemetry::unified_log::debug(
+        intelekt_telemetry::unified_log::debug(
             "auth: kill switch blocked a first-party API key at the credential seam",
             None,
             Some(serde_json::json!(
@@ -4386,7 +4386,7 @@ fn resolve_credentials_enforced(
     enforce_disable_api_key_auth(&mut credentials, disable_api_key_auth, session_key);
     credentials
 }
-pub use xai_grok_telemetry::config::deployment_id_from_key;
+pub use intelekt_telemetry::config::deployment_id_from_key;
 /// Try to resolve credentials for a model by loading the effective config.
 /// Returns `None` (with a warning) if config loading, parsing, or model
 /// lookup fails. `session_key` should only be passed when `auth_type` is
@@ -4564,7 +4564,7 @@ pub fn resolve_aux_model_sampling_config(
 /// On aux resolve `Some`, stamp session-local fields (client id, attribution, bearer,
 /// retries) onto the helper config. On `None`, fall back to the active session model and
 /// full config (not forcing `image_description_model` onto the agent endpoint, which 404s
-/// on BYOK / non-proxy routes for internal slugs like `grok-build`).
+/// on BYOK / non-proxy routes for internal slugs like `intelekt-cli`).
 /// Stamp the session-local fields (client id, attribution, bearer resolver,
 /// retries) from the active session onto a routed aux `SamplerConfig` so a
 /// helper model keeps the session's auth/attribution. Shared by image-describe
@@ -4687,7 +4687,7 @@ pub fn inject_url_derived_headers(
     if crate::util::is_cli_chat_proxy_url(base_url) {
         headers
             .entry("X-XAI-Token-Auth".to_string())
-            .or_insert_with(|| "xai-grok-cli".to_string());
+            .or_insert_with(|| "intelekt-cli".to_string());
         headers
             .entry("x-authenticateresponse".to_string())
             .or_insert_with(|| "authenticate-response".to_string());
@@ -4920,7 +4920,7 @@ impl ModelSwitchIncompatibleAgentError {
 mod tests {
     use super::*;
     use serial_test::serial;
-    use xai_grok_test_support::EnvGuard;
+    use intelekt_test_support::EnvGuard;
     #[test]
     fn main_cli_tools_override_preserves_profile_injection_policy() {
         let overrides = CliAgentOverrides {
@@ -4939,17 +4939,17 @@ mod tests {
     /// lean shape is all scalars/enums, so no custom tolerant deser is needed.
     #[test]
     fn auto_mode_config_parses_from_toml_and_json_equivalently() {
-        use xai_grok_workspace::permission::ClassifierPromptType;
+        use intelekt_workspace::permission::ClassifierPromptType;
         let toml_src = r#"
 enabled = true
 prompt_type = "no_user_tool_prefix"
-classifier_model = "grok-4.5"
+classifier_model = "intelekt-4.5"
 reasoning_effort = "low"
 "#;
         let from_toml: AutoModeConfig = toml::from_str(toml_src).unwrap();
         let json = serde_json::json!(
             { "enabled" : true, "prompt_type" : "no_user_tool_prefix", "classifier_model"
-            : "grok-4.5", "reasoning_effort" : "low" }
+            : "intelekt-4.5", "reasoning_effort" : "low" }
         );
         let from_json: AutoModeConfig = serde_json::from_value(json).unwrap();
         for cfg in [&from_toml, &from_json] {
@@ -4958,7 +4958,7 @@ reasoning_effort = "low"
                 cfg.prompt_type,
                 Some(ClassifierPromptType::NoUserToolPrefix)
             );
-            assert_eq!(cfg.classifier_model.as_deref(), Some("grok-4.5"));
+            assert_eq!(cfg.classifier_model.as_deref(), Some("intelekt-4.5"));
             assert_eq!(cfg.reasoning_effort, Some(ReasoningEffort::Low));
         }
         let empty: AutoModeConfig = toml::from_str("").unwrap();
@@ -4968,7 +4968,7 @@ reasoning_effort = "low"
     /// `prompt_type` wire values are the snake_case `ClassifierPromptType` names.
     #[test]
     fn auto_mode_prompt_type_parses_snake_case() {
-        use xai_grok_workspace::permission::ClassifierPromptType;
+        use intelekt_workspace::permission::ClassifierPromptType;
         for (s, variant) in [
             ("full", ClassifierPromptType::Full),
             (
@@ -5080,7 +5080,7 @@ reasoning_effort = "low"
         inject_url_derived_headers(&mut headers, None, crate::env::PROD_CLI_CHAT_PROXY_BASE_URL);
         assert_eq!(
             headers.get("X-XAI-Token-Auth").map(String::as_str),
-            Some("xai-grok-cli")
+            Some("intelekt-cli")
         );
         assert_eq!(
             headers.get("x-authenticateresponse").map(String::as_str),
@@ -5105,7 +5105,7 @@ reasoning_effort = "low"
         );
         assert_eq!(
             headers.get("X-XAI-Token-Auth").map(String::as_str),
-            Some("xai-grok-cli")
+            Some("intelekt-cli")
         );
     }
     #[test]
@@ -5278,7 +5278,7 @@ reasoning_effort = "low"
         let (model, cfg) = finalize_image_describe_sampler_config(None, &active, None, Some(3));
         assert_eq!(model, "composer-session-model");
         assert_eq!(cfg.model, "composer-session-model");
-        assert_ne!(cfg.model, "grok-build");
+        assert_ne!(cfg.model, "intelekt-cli");
     }
     #[test]
     fn finalize_image_describe_sampler_some_stamps_session_fields() {
@@ -5287,13 +5287,13 @@ reasoning_effort = "low"
             ..Default::default()
         };
         let aux = SamplerConfig {
-            model: "grok-build".into(),
+            model: "intelekt-cli".into(),
             ..Default::default()
         };
         let (model, cfg) =
             finalize_image_describe_sampler_config(Some(aux), &active, Some("cli".into()), Some(7));
-        assert_eq!(model, "grok-build");
-        assert_eq!(cfg.model, "grok-build");
+        assert_eq!(model, "intelekt-cli");
+        assert_eq!(cfg.model, "intelekt-cli");
         assert_eq!(cfg.client_identifier.as_deref(), Some("cli"));
         assert_eq!(cfg.max_retries, Some(7));
     }
@@ -5302,7 +5302,7 @@ reasoning_effort = "low"
         let endpoints = EndpointsConfig::default();
         let mut catalog = IndexMap::new();
         catalog.insert(
-            "grok-build".to_string(),
+            "intelekt-cli".to_string(),
             test_model_entry(
                 "v9m-rl-learnability-tp8",
                 "https://vendor.example/v1",
@@ -5312,7 +5312,7 @@ reasoning_effort = "low"
             ),
         );
         let resolved = resolve_aux_model_sampling_config(
-            "grok-build",
+            "intelekt-cli",
             &catalog,
             &endpoints,
             None,
@@ -5360,7 +5360,7 @@ reasoning_effort = "low"
         let raw_config: toml::Value = toml::from_str(
             r#"
             [model.my-custom-model]
-            model = "grok-4.5"
+            model = "intelekt-4.5"
             base_url = "https://api.example.com/v1"
             context_window = 200000
             api_key = "sk-test-key-12345"
@@ -5370,7 +5370,7 @@ reasoning_effort = "low"
         let cfg = Config::new_from_toml_cfg(&raw_config).expect("config should parse");
         let resolved = resolve_model_list(&cfg, None);
         let model = resolved.get("my-custom-model").expect("model should exist");
-        assert_eq!(model.info.model, "grok-4.5");
+        assert_eq!(model.info.model, "intelekt-4.5");
         assert_eq!(model.info.base_url, "https://api.example.com/v1");
         assert_eq!(model.api_key, Some("sk-test-key-12345".to_string()));
     }
@@ -5589,7 +5589,7 @@ reasoning_effort = "low"
     #[test]
     #[serial]
     fn first_own_credential_empty_api_key_falls_through_to_env_key() {
-        use xai_grok_test_support::EnvGuard;
+        use intelekt_test_support::EnvGuard;
         let var = "GROK_TEST_FIRST_OWN_CRED_ENV";
         let _guard = EnvGuard::set(var, "env-token");
         let env_key = EnvKeys::single(var);
@@ -5641,7 +5641,7 @@ reasoning_effort = "low"
     #[serial]
     fn resolve_credentials_empty_env_key_falls_through_to_session() {
         use xai_chat_state::AuthType;
-        use xai_grok_test_support::EnvGuard;
+        use intelekt_test_support::EnvGuard;
         let primary = "GROK_TEST_EMPTY_ENV_PRIMARY";
         let alias = "GROK_TEST_EMPTY_ENV_LC_ALIAS";
         let _primary = EnvGuard::set(primary, "");
@@ -5658,7 +5658,7 @@ reasoning_effort = "low"
     fn resolve_credentials_empty_env_key_falls_through_to_global_key() {
         use crate::agent::auth_method::{LEGACY_XAI_API_KEY_ENV_VAR, XAI_API_KEY_ENV_VAR};
         use xai_chat_state::AuthType;
-        use xai_grok_test_support::EnvGuard;
+        use intelekt_test_support::EnvGuard;
         let sentinel = "xai-global-sentinel-key";
         let primary = "GROK_TEST_EMPTY_ENV_GLOBAL_PRIMARY";
         let alias = "GROK_TEST_EMPTY_ENV_GLOBAL_ALIAS";
@@ -5749,7 +5749,7 @@ reasoning_effort = "low"
     #[test]
     fn proxy_messages_models_use_bearer_auth_scheme() {
         let mut model = test_model_entry(
-            "grok-4.5",
+            "intelekt-4.5",
             crate::env::PROD_CLI_CHAT_PROXY_BASE_URL,
             None,
             None,
@@ -5773,7 +5773,7 @@ reasoning_effort = "low"
                 .extra_headers
                 .get("X-XAI-Token-Auth")
                 .map(String::as_str),
-            Some("xai-grok-cli")
+            Some("intelekt-cli")
         );
     }
     /// Regression: without a session key, `resolve_credentials` falls through
@@ -5880,14 +5880,14 @@ reasoning_effort = "low"
         let config = sampling_config_for_model(&model, creds, None, None, None, None);
         assert_eq!(config.auth_scheme, AuthScheme::XApiKey);
         assert_eq!(config.api_backend, ApiBackend::Messages);
-        let client = xai_grok_sampler::SamplingClient::new(config).expect("client should build");
+        let client = intelekt_sampler::SamplingClient::new(config).expect("client should build");
         let info = client.auth_info();
         assert_eq!(info.auth_type, "x-api-key");
     }
     #[test]
     fn auth_scheme_defaults_to_bearer_when_not_set_in_config() {
         let model = test_model_entry(
-            "grok-4.5",
+            "intelekt-4.5",
             "https://api.example.com/v1",
             Some("sk-openai-test"),
             None,
@@ -5898,7 +5898,7 @@ reasoning_effort = "low"
         assert_eq!(creds.auth_scheme, AuthScheme::Bearer);
         let config = sampling_config_for_model(&model, creds, None, None, None, None);
         assert_eq!(config.auth_scheme, AuthScheme::Bearer);
-        let client = xai_grok_sampler::SamplingClient::new(config).expect("client should build");
+        let client = intelekt_sampler::SamplingClient::new(config).expect("client should build");
         let info = client.auth_info();
         assert_eq!(info.auth_type, "bearer");
     }
@@ -6008,7 +6008,7 @@ reasoning_effort = "low"
     }
     #[test]
     fn user_override_parses_compaction_at_tokens_from_toml() {
-        use xai_grok_sampling_types::CompactionAtTokens;
+        use intelekt_sampling_types::CompactionAtTokens;
         let dm = crate::models::default_model();
         let raw_config: toml::Value = toml::from_str(&format!(
             r#"
@@ -6045,7 +6045,7 @@ reasoning_effort = "low"
     }
     #[test]
     fn user_override_parses_compactions_remaining_from_toml() {
-        use xai_grok_sampling_types::CompactionsRemaining;
+        use intelekt_sampling_types::CompactionsRemaining;
         let dm = crate::models::default_model();
         let raw_config: toml::Value = toml::from_str(&format!(
             r#"
@@ -6234,7 +6234,7 @@ reasoning_effort = "low"
         let raw_config: toml::Value = toml::from_str(
             r#"
             [model.my-responses-model]
-            model = "grok-4.5"
+            model = "intelekt-4.5"
             base_url = "https://api.example.com/v1"
             context_window = 200000
             api_backend = "responses"
@@ -6253,7 +6253,7 @@ reasoning_effort = "low"
         let raw_config: toml::Value = toml::from_str(
             r#"
             [model.my-chat-model]
-            model = "grok-4.5"
+            model = "intelekt-4.5"
             base_url = "https://api.example.com/v1"
             context_window = 200000
             api_backend = "chat_completions"
@@ -6267,13 +6267,13 @@ reasoning_effort = "low"
     }
     /// Messages backend (Anthropic) auto-defaults supports_reasoning_effort=true.
     /// Without this, `--reasoning-effort` is silently dropped in
-    /// xai-grok-shell/src/agent/models.rs:857 for any BYOK Claude config.
+    /// intelekt-shell/src/agent/models.rs:857 for any BYOK Claude config.
     #[test]
     fn model_messages_backend_auto_defaults_supports_reasoning_effort() {
         let raw_config: toml::Value = toml::from_str(
             r#"
             [model.my-claude]
-            model = "grok-4.5"
+            model = "intelekt-4.5"
             base_url = "https://messages.example.com"
             context_window = 200000
             api_backend = "messages"
@@ -6295,7 +6295,7 @@ reasoning_effort = "low"
         let raw_config: toml::Value = toml::from_str(
             r#"
             [model.my-claude]
-            model = "grok-4.5"
+            model = "intelekt-4.5"
             base_url = "https://messages.example.com"
             context_window = 200000
             api_backend = "messages"
@@ -6318,7 +6318,7 @@ reasoning_effort = "low"
         let raw_config: toml::Value = toml::from_str(
             r#"
             [model.my-openai]
-            model = "grok-4.5"
+            model = "intelekt-4.5"
             base_url = "https://api.example.com/v1"
             context_window = 200000
             api_backend = "chat_completions"
@@ -6338,7 +6338,7 @@ reasoning_effort = "low"
         let raw_config: toml::Value = toml::from_str(
             r#"
             [model.my-model]
-            model = "grok-4.5"
+            model = "intelekt-4.5"
             base_url = "https://api.example.com/v1"
             context_window = 200000
             "#,
@@ -6981,7 +6981,7 @@ reasoning_effort = "low"
         let raw_config: toml::Value = toml::from_str(
             r#"
             [model.slow-model]
-            model = "grok-4.5"
+            model = "intelekt-4.5"
             base_url = "https://api.x.ai/v1"
             context_window = 200000
             inference_idle_timeout_secs = 600
@@ -7367,7 +7367,7 @@ reasoning_effort = "low"
         let (_, models) = resolve_models_from_toml(
             r#"
             [model.acme-grok]
-            model = "grok-4.5"
+            model = "intelekt-4.5"
             base_url = "https://inference.example.com/v1"
             context_window = 256000
             env_key = "ENTERPRISE_AUTH_TOKEN"
@@ -7379,7 +7379,7 @@ reasoning_effort = "low"
             "user-defined model must be in the resolved model list"
         );
         let model = models.get("acme-grok").unwrap();
-        assert_eq!(model.info.model, "grok-4.5");
+        assert_eq!(model.info.model, "intelekt-4.5");
         assert_eq!(model.info.base_url, "https://inference.example.com/v1");
     }
     #[test]
@@ -8762,13 +8762,13 @@ reverify_after = 6
     }
     fn planner_pair() -> crate::util::config::GoalRoleModel {
         crate::util::config::GoalRoleModel {
-            model: "grok-4".to_string(),
+            model: "intelekt-4".to_string(),
             agent_type: "general-purpose".to_string(),
         }
     }
     fn strategist_pair() -> crate::util::config::GoalRoleModel {
         crate::util::config::GoalRoleModel {
-            model: "grok-4.5".to_string(),
+            model: "intelekt-4.5".to_string(),
             agent_type: "cursor".to_string(),
         }
     }
@@ -8968,15 +8968,15 @@ reverify_after = 6
         let toml_str = r#"
 [goal]
 enabled = true
-planner_model = { model = "grok-build", agent_type = "grok-build-plan" }
+planner_model = { model = "intelekt-cli", agent_type = "intelekt-cli-plan" }
 
 [goal.strategist_model]
 model = "grok-composer-2.5-fast"
 agent_type = "cursor"
 
 [[goal.skeptic_models]]
-model = "grok-build"
-agent_type = "grok-build-plan"
+model = "intelekt-cli"
+agent_type = "intelekt-cli-plan"
 
 [[goal.skeptic_models]]
 model = "grok-composer-2.5-fast"
@@ -8984,13 +8984,13 @@ agent_type = "cursor"
 "#;
         let raw: toml::Value = toml::from_str(toml_str).unwrap();
         let cfg = Config::new_from_toml_cfg(&raw).unwrap();
-        assert_eq!(cfg.goal.planner_model.as_ref().unwrap().model, "grok-build");
+        assert_eq!(cfg.goal.planner_model.as_ref().unwrap().model, "intelekt-cli");
         assert_eq!(
             cfg.goal.strategist_model.as_ref().unwrap().agent_type,
             "cursor"
         );
         assert_eq!(cfg.goal.skeptic_models.len(), 2);
-        assert_eq!(cfg.goal.skeptic_models[0].model, "grok-build");
+        assert_eq!(cfg.goal.skeptic_models[0].model, "intelekt-cli");
         assert_eq!(
             cfg.resolve_goal_planner_model(false).source,
             ConfigSource::Config
@@ -9004,7 +9004,7 @@ agent_type = "cursor"
 [goal]
 enabled = true
 classifier_max_runs = 6
-planner_model = { agent_type = "grok-build-plan" }
+planner_model = { agent_type = "intelekt-cli-plan" }
 "#;
         let raw: toml::Value = toml::from_str(toml_str).unwrap();
         let cfg = Config::new_from_toml_cfg(&raw)
@@ -9019,8 +9019,8 @@ planner_model = { agent_type = "grok-build-plan" }
 enabled = true
 
 [[goal.skeptic_models]]
-model = "grok-build"
-agent_type = "grok-build-plan"
+model = "intelekt-cli"
+agent_type = "intelekt-cli-plan"
 
 [[goal.skeptic_models]]
 agent_type = "cursor"
@@ -9032,7 +9032,7 @@ agent_type = "cursor"
         let raw: toml::Value = toml::from_str(toml_str).unwrap();
         let cfg = Config::new_from_toml_cfg(&raw).unwrap();
         assert_eq!(cfg.goal.skeptic_models.len(), 2);
-        assert_eq!(cfg.goal.skeptic_models[0].model, "grok-build");
+        assert_eq!(cfg.goal.skeptic_models[0].model, "intelekt-cli");
         assert_eq!(cfg.goal.skeptic_models[1].model, "grok-composer-2.5-fast");
     }
     /// Acceptance test: a full managed-config `[goal]` block resolves end-to-end,
@@ -9050,12 +9050,12 @@ classifier_enabled = true
 planner_enabled = true
 verifier_count = 3
 classifier_max_runs = 6
-planner_model = { model = "grok-build", agent_type = "grok-build-plan" }
+planner_model = { model = "intelekt-cli", agent_type = "intelekt-cli-plan" }
 strategist_model = { model = "grok-composer-2.5-fast", agent_type = "cursor" }
 
 [[goal.skeptic_models]]
-model = "grok-build"
-agent_type = "grok-build-plan"
+model = "intelekt-cli"
+agent_type = "intelekt-cli-plan"
 
 [[goal.skeptic_models]]
 model = "grok-composer-2.5-fast"
@@ -9065,8 +9065,8 @@ agent_type = "cursor"
         .unwrap();
         let cfg = Config::new_from_toml_cfg(&raw).expect("[goal] config must parse");
         let grok_build = crate::util::config::GoalRoleModel {
-            model: "grok-build".into(),
-            agent_type: "grok-build-plan".into(),
+            model: "intelekt-cli".into(),
+            agent_type: "intelekt-cli-plan".into(),
         };
         let composer = crate::util::config::GoalRoleModel {
             model: "grok-composer-2.5-fast".into(),
@@ -9177,7 +9177,7 @@ agent_type = "cursor"
             management_api_key = "mgmt-key"
             gcs_service_account_key = "gcs-key"
             [models]
-            default = "grok-3"
+            default = "intelekt-3"
             [ui]
             yolo = true
             theme = "dark"
@@ -9634,8 +9634,8 @@ agent_type = "cursor"
             .collect();
         move |name: &str| map.get(name).cloned()
     }
-    fn ext_client() -> xai_grok_telemetry::external::config::ExternalClientInfo {
-        xai_grok_telemetry::external::config::ExternalClientInfo::default()
+    fn ext_client() -> intelekt_telemetry::external::config::ExternalClientInfo {
+        intelekt_telemetry::external::config::ExternalClientInfo::default()
     }
     #[test]
     fn external_otel_default_off_and_double_opt_in() {
@@ -10422,25 +10422,25 @@ telemetry = "garbage"
         let mut value: toml::Value = toml::from_str(
             r#"
 [models]
-default = "grok-build"
+default = "intelekt-cli"
 
 [[version_overrides]]
 minimum_version = "1.8.0"
 [version_overrides.models]
-default = "grok-4.5"
+default = "intelekt-4.5"
 "#,
         )
         .unwrap();
         let v = semver::Version::parse("1.8.0").unwrap();
-        xai_grok_config::apply_version_overrides(&mut value, &v).unwrap();
+        intelekt_config::apply_version_overrides(&mut value, &v).unwrap();
         let cfg = Config::new_from_toml_cfg(&value).unwrap();
-        assert_eq!(cfg.models.default.as_deref(), Some("grok-4.5"));
+        assert_eq!(cfg.models.default.as_deref(), Some("intelekt-4.5"));
     }
-    /// Reproduce the enterprise managed config bug: [model.grok-build] sets
-    /// context_window=500k for model="grok-4.5", but
-    /// [models].default="grok-4.5" resolves to the bare
+    /// Reproduce the enterprise managed config bug: [model.intelekt-cli] sets
+    /// context_window=500k for model="intelekt-4.5", but
+    /// [models].default="intelekt-4.5" resolves to the bare
     /// prefetched entry (256k) because Layer 3 only overrides key
-    /// "grok-build", not key "grok-4.5".
+    /// "intelekt-cli", not key "intelekt-4.5".
     ///
     /// After the Layer 4 slug propagation fix, both keys should have 500k.
     #[test]
@@ -10449,10 +10449,10 @@ default = "grok-4.5"
         let raw: toml::Value = toml::from_str(
             r#"
             [models]
-            default = "grok-4.5"
+            default = "intelekt-4.5"
 
-            [model.grok-build]
-            model = "grok-4.5"
+            [model.intelekt-cli]
+            model = "intelekt-4.5"
             context_window = 500000
             base_url = "https://inference.example.com/v1"
             api_backend = "responses"
@@ -10462,26 +10462,26 @@ default = "grok-4.5"
         let cfg = Config::new_from_toml_cfg(&raw).expect("config should parse");
         let mut prefetched = IndexMap::new();
         let mut entry = test_model_entry(
-            "grok-4.5",
+            "intelekt-4.5",
             "https://inference.example.com/v1",
             None,
             None,
             None,
         );
         entry.info.context_window = NonZeroU64::new(default_cw).unwrap();
-        prefetched.insert("grok-4.5".to_owned(), entry);
+        prefetched.insert("intelekt-4.5".to_owned(), entry);
         let resolved = resolve_model_list(&cfg, Some(prefetched));
         let by_key = resolved
-            .get("grok-build")
-            .expect("grok-build key must exist");
+            .get("intelekt-cli")
+            .expect("intelekt-cli key must exist");
         assert_eq!(by_key.info.context_window.get(), 500_000);
-        assert_eq!(by_key.info.model, "grok-4.5");
-        let by_latest = resolved.get("grok-4.5").expect("grok-4.5 key must exist");
+        assert_eq!(by_key.info.model, "intelekt-4.5");
+        let by_latest = resolved.get("intelekt-4.5").expect("intelekt-4.5 key must exist");
         assert_eq!(
             by_latest.info.context_window.get(),
             500_000,
             "BUG: prefetched 'grok-4.5' should inherit 500k from \
-             sibling 'grok-build' (same model slug), not stay at {default_cw}"
+             sibling 'intelekt-cli' (same model slug), not stay at {default_cw}"
         );
     }
     /// Slug propagation should carry over api_backend but NOT agent_type.
@@ -10490,25 +10490,25 @@ default = "grok-4.5"
         let default_cw = DEFAULT_CONTEXT_WINDOW;
         let raw: toml::Value = toml::from_str(
             r#"
-            [model.grok-build]
-            model = "grok-4.5"
+            [model.intelekt-cli]
+            model = "intelekt-4.5"
             context_window = 500000
             base_url = "https://test.example.com/v1"
             api_backend = "responses"
-            agent_type = "grok-build"
+            agent_type = "intelekt-cli"
             "#,
         )
         .unwrap();
         let cfg = Config::new_from_toml_cfg(&raw).expect("config should parse");
         let mut prefetched = IndexMap::new();
         let mut entry =
-            test_model_entry("grok-4.5", "https://test.example.com/v1", None, None, None);
+            test_model_entry("intelekt-4.5", "https://test.example.com/v1", None, None, None);
         entry.info.context_window = NonZeroU64::new(default_cw).unwrap();
         entry.info.agent_type = default_agent_type();
         entry.info.api_backend = ApiBackend::default();
-        prefetched.insert("grok-4.5".to_owned(), entry);
+        prefetched.insert("intelekt-4.5".to_owned(), entry);
         let resolved = resolve_model_list(&cfg, Some(prefetched));
-        let latest = resolved.get("grok-4.5").unwrap();
+        let latest = resolved.get("intelekt-4.5").unwrap();
         assert_eq!(
             latest.info.agent_type,
             default_agent_type(),
@@ -10526,8 +10526,8 @@ default = "grok-4.5"
     fn slug_propagation_does_not_overwrite_explicit_context_window() {
         let raw: toml::Value = toml::from_str(
             r#"
-            [model.grok-build]
-            model = "grok-4.5"
+            [model.intelekt-cli]
+            model = "intelekt-4.5"
             context_window = 500000
             base_url = "https://test.example.com/v1"
             "#,
@@ -10536,11 +10536,11 @@ default = "grok-4.5"
         let cfg = Config::new_from_toml_cfg(&raw).expect("config should parse");
         let mut prefetched = IndexMap::new();
         let mut entry =
-            test_model_entry("grok-4.5", "https://test.example.com/v1", None, None, None);
+            test_model_entry("intelekt-4.5", "https://test.example.com/v1", None, None, None);
         entry.info.context_window = NonZeroU64::new(65_536).unwrap();
-        prefetched.insert("grok-4.5".to_owned(), entry);
+        prefetched.insert("intelekt-4.5".to_owned(), entry);
         let resolved = resolve_model_list(&cfg, Some(prefetched));
-        let latest = resolved.get("grok-4.5").unwrap();
+        let latest = resolved.get("intelekt-4.5").unwrap();
         assert_eq!(
             latest.info.context_window.get(),
             65_536,
@@ -10875,11 +10875,11 @@ default = "grok-4.5"
     fn resolve_model_list_inherits_context_window_from_default_when_prefetched_has_fallback() {
         let cfg = Config::default();
         let default_cw = DEFAULT_CONTEXT_WINDOW;
-        let entry = prefetch_model_entry("grok-build", default_cw, ApiBackend::default());
+        let entry = prefetch_model_entry("intelekt-cli", default_cw, ApiBackend::default());
         let mut prefetched = IndexMap::new();
-        prefetched.insert("grok-build".to_owned(), entry);
+        prefetched.insert("intelekt-cli".to_owned(), entry);
         let resolved = resolve_model_list(&cfg, Some(prefetched));
-        let entry = resolved.get("grok-build").expect("model must exist");
+        let entry = resolved.get("intelekt-cli").expect("model must exist");
         assert_ne!(
             entry.info.context_window.get(),
             default_cw,
@@ -10890,11 +10890,11 @@ default = "grok-4.5"
     fn resolve_model_list_does_not_override_explicitly_set_context_window() {
         let cfg = Config::default();
         let explicit_cw = 65_536;
-        let entry = prefetch_model_entry("grok-build", explicit_cw, ApiBackend::default());
+        let entry = prefetch_model_entry("intelekt-cli", explicit_cw, ApiBackend::default());
         let mut prefetched = IndexMap::new();
-        prefetched.insert("grok-build".to_owned(), entry);
+        prefetched.insert("intelekt-cli".to_owned(), entry);
         let resolved = resolve_model_list(&cfg, Some(prefetched));
-        let entry = resolved.get("grok-build").expect("model must exist");
+        let entry = resolved.get("intelekt-cli").expect("model must exist");
         assert_eq!(
             entry.info.context_window.get(),
             explicit_cw,
@@ -10905,13 +10905,13 @@ default = "grok-4.5"
     fn resolve_model_list_inherits_agent_type_and_api_backend() {
         let cfg = Config::default();
         let default_cw = DEFAULT_CONTEXT_WINDOW;
-        let entry = prefetch_model_entry("grok-build", default_cw, ApiBackend::default());
+        let entry = prefetch_model_entry("intelekt-cli", default_cw, ApiBackend::default());
         let mut prefetched = IndexMap::new();
-        prefetched.insert("grok-build".to_owned(), entry);
+        prefetched.insert("intelekt-cli".to_owned(), entry);
         let resolved = resolve_model_list(&cfg, Some(prefetched));
-        let entry = resolved.get("grok-build").expect("model must exist");
+        let entry = resolved.get("intelekt-cli").expect("model must exist");
         let defaults = default_model_entries(&EndpointsConfig::default());
-        if let Some(default) = defaults.get("grok-build") {
+        if let Some(default) = defaults.get("intelekt-cli") {
             if default.info.agent_type != DEFAULT_AGENT_TYPE {
                 assert_eq!(
                     entry.info.agent_type, default.info.agent_type,
@@ -10951,21 +10951,21 @@ default = "grok-4.5"
         let cfg = Config::default();
         let mut defs = default_model_entries(&EndpointsConfig::default());
         let mut p = IndexMap::new();
-        if let Some(e) = defs.shift_remove("grok-build") {
-            p.insert("grok-build".to_string(), e);
+        if let Some(e) = defs.shift_remove("intelekt-cli") {
+            p.insert("intelekt-cli".to_string(), e);
         }
         let resolved = resolve_model_list(&cfg, Some(p));
-        assert!(resolved.contains_key("grok-build"));
+        assert!(resolved.contains_key("intelekt-cli"));
         let no_p = resolve_model_list(&cfg, None);
-        assert!(no_p.contains_key("grok-build"));
+        assert!(no_p.contains_key("intelekt-cli"));
     }
     #[test]
     fn resolve_model_list_prefetch_visibility_matches_auth_and_server_list() {
         let cfg = Config::default();
         let mut defs = default_model_entries(&EndpointsConfig::default());
         let mut p = IndexMap::new();
-        if let Some(e) = defs.shift_remove("grok-build") {
-            p.insert("grok-build".to_string(), e);
+        if let Some(e) = defs.shift_remove("intelekt-cli") {
+            p.insert("intelekt-cli".to_string(), e);
         }
         let resolved = resolve_model_list(&cfg, Some(p));
         let sess: Vec<_> = resolved
@@ -10987,17 +10987,17 @@ default = "grok-4.5"
         p.insert("secret-xyz".to_string(), e);
         let resolved = resolve_model_list(&cfg, Some(p));
         assert!(resolved.contains_key("secret-xyz"));
-        assert!(!resolved.contains_key("grok-build"));
+        assert!(!resolved.contains_key("intelekt-cli"));
     }
     #[test]
     fn resolve_model_list_prefetch_replaces_bundled_entirely() {
         let cfg = Config::default();
         let mut p = IndexMap::new();
-        let e = prefetch_model_entry("grok-4.5", 500_000, ApiBackend::Responses);
-        p.insert("grok-4.5".to_string(), e);
+        let e = prefetch_model_entry("intelekt-4.5", 500_000, ApiBackend::Responses);
+        p.insert("intelekt-4.5".to_string(), e);
         let resolved = resolve_model_list(&cfg, Some(p));
-        assert!(resolved.contains_key("grok-4.5"));
-        assert!(!resolved.contains_key("grok-build"));
+        assert!(resolved.contains_key("intelekt-4.5"));
+        assert!(!resolved.contains_key("intelekt-cli"));
     }
     #[test]
     fn resolve_model_list_empty_prefetch_yields_empty_base() {
@@ -11005,15 +11005,15 @@ default = "grok-4.5"
         let resolved = resolve_model_list(&cfg, Some(IndexMap::new()));
         assert!(resolved.is_empty());
     }
-    /// Regression: enterprise managed config aliases grok-build to their own
-    /// endpoint with env_key. The bundled grok-build has supported_in_api=false.
+    /// Regression: enterprise managed config aliases intelekt-cli to their own
+    /// endpoint with env_key. The bundled intelekt-cli has supported_in_api=false.
     /// The config overlay must be visible to API-key users (env_key = BYOK).
     #[test]
     fn byok_config_overlay_visible_to_api_key_users() {
         let raw: toml::Value = toml::from_str(
             r#"
-            [model.grok-build]
-            model = "grok-4.5"
+            [model.intelekt-cli]
+            model = "intelekt-4.5"
             base_url = "https://inference.company.com/v1"
             env_key = "COMPANY_TOKEN"
             "#,
@@ -11021,7 +11021,7 @@ default = "grok-4.5"
         .unwrap();
         let cfg = Config::new_from_toml_cfg(&raw).expect("config should parse");
         let resolved = resolve_model_list(&cfg, None);
-        let entry = resolved.get("grok-build").expect("grok-build must exist");
+        let entry = resolved.get("intelekt-cli").expect("intelekt-cli must exist");
         assert!(
             entry.visible_for_auth(false),
             "BYOK config entry must be visible to API-key users — \
@@ -11034,14 +11034,14 @@ default = "grok-4.5"
     fn plain_config_overlay_preserves_bundled_visibility() {
         let raw: toml::Value = toml::from_str(
             r#"
-            [model.grok-build]
+            [model.intelekt-cli]
             context_window = 300000
             "#,
         )
         .unwrap();
         let cfg = Config::new_from_toml_cfg(&raw).expect("config should parse");
         let resolved = resolve_model_list(&cfg, None);
-        let entry = resolved.get("grok-build").expect("grok-build must exist");
+        let entry = resolved.get("intelekt-cli").expect("intelekt-cli must exist");
         assert!(
             !entry.visible_for_auth(false),
             "non-BYOK config overlay must preserve bundled supported_in_api=false"

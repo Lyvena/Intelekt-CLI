@@ -6,9 +6,9 @@
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use xai_grok_telemetry::client;
-use xai_grok_telemetry::config::{TelemetryConfig, TelemetryMode};
-use xai_grok_telemetry::events::{AuthTokenKind, ManualAuth, ManualAuthReason, ManualAuthSurface};
+use intelekt_telemetry::client;
+use intelekt_telemetry::config::{TelemetryConfig, TelemetryMode};
+use intelekt_telemetry::events::{AuthTokenKind, ManualAuth, ManualAuthReason, ManualAuthSurface};
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn manual_auth_posts_to_events_endpoint_as_grok_shell_manual_auth() {
@@ -45,7 +45,7 @@ async fn manual_auth_posts_to_events_endpoint_as_grok_shell_manual_auth() {
         reqwest::Client::new(),
     );
 
-    xai_grok_telemetry::log_event(ManualAuth {
+    intelekt_telemetry::log_event(ManualAuth {
         reason: ManualAuthReason::RefreshTokenRejected,
         trigger: ManualAuthSurface::Turn,
         token_kind: AuthTokenKind::OidcSession,

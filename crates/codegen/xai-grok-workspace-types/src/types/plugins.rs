@@ -3,7 +3,7 @@
 //! `WorkspaceEvent::HooksChanged`.
 //!
 //! TODO(workspace): align with the canonical types in
-//! `xai-hooks-plugins-types` and `xai-grok-plugin-marketplace`.
+//! `xai-hooks-plugins-types` and `intelekt-plugin-marketplace`.
 
 use serde::{Deserialize, Serialize};
 

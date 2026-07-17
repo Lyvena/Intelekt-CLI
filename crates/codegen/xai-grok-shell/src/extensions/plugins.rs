@@ -19,8 +19,8 @@ struct ListRequest {
 }
 
 /// Convert a `LoadedPlugin` to a `PluginInfo` DTO.
-pub fn loaded_plugin_to_info(plugin: &xai_grok_agent::plugins::LoadedPlugin) -> PluginInfo {
-    use xai_grok_agent::plugins::discovery::PluginScope as AgentScope;
+pub fn loaded_plugin_to_info(plugin: &intelekt_agent::plugins::LoadedPlugin) -> PluginInfo {
+    use intelekt_agent::plugins::discovery::PluginScope as AgentScope;
 
     let scope = match plugin.scope {
         AgentScope::CliOverride => PluginScope::Cli,
@@ -75,8 +75,8 @@ pub fn loaded_plugin_to_info(plugin: &xai_grok_agent::plugins::LoadedPlugin) -> 
 }
 
 /// Map the agent-side origin to the wire DTO.
-fn origin_to_dto(origin: &xai_grok_agent::plugins::PluginOrigin) -> PluginOrigin {
-    use xai_grok_agent::plugins::PluginOrigin as AgentOrigin;
+fn origin_to_dto(origin: &intelekt_agent::plugins::PluginOrigin) -> PluginOrigin {
+    use intelekt_agent::plugins::PluginOrigin as AgentOrigin;
     match origin {
         AgentOrigin::CliOverride => PluginOrigin::CliOverride,
         AgentOrigin::ProjectGrok => PluginOrigin::ProjectGrok,
@@ -190,12 +190,12 @@ pub async fn handle(agent: &MvpAgent, args: &acp::ExtRequest) -> ExtResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_agent::plugins::PluginOrigin as AgentOrigin;
-    use xai_grok_agent::plugins::discovery::{PluginId, PluginScope as AgentScope};
+    use intelekt_agent::plugins::PluginOrigin as AgentOrigin;
+    use intelekt_agent::plugins::discovery::{PluginId, PluginScope as AgentScope};
 
-    fn make_loaded_plugin(origin: AgentOrigin) -> xai_grok_agent::plugins::LoadedPlugin {
+    fn make_loaded_plugin(origin: AgentOrigin) -> intelekt_agent::plugins::LoadedPlugin {
         let root = std::path::PathBuf::from("/tmp/test-plugin");
-        xai_grok_agent::plugins::LoadedPlugin {
+        intelekt_agent::plugins::LoadedPlugin {
             name: "test-plugin".to_string(),
             id: PluginId::new(AgentScope::User, &root, "test-plugin"),
             root: root.clone(),

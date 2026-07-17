@@ -11,7 +11,7 @@
 mod otlp_collector;
 
 use otlp_collector as col;
-use xai_grok_telemetry::external;
+use intelekt_telemetry::external;
 
 #[test]
 fn refuses_to_activate_when_internal_consumed_standard_vars() {
@@ -46,12 +46,12 @@ fn refuses_to_activate_when_internal_consumed_standard_vars() {
     );
 
     // Emit through the real funnel; with the stream inert this must be a no-op.
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::SessionNew {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::SessionNew {
         session_id: "sess-guard".into(),
         client_identifier: None,
         client_version: None,
         is_git_repo: true,
-        permission_mode: xai_grok_telemetry::enums::PermissionMode::Ask,
+        permission_mode: intelekt_telemetry::enums::PermissionMode::Ask,
     });
     external::flush();
 

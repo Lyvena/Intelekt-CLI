@@ -9,7 +9,7 @@ use crate::views::session_picker::{
     capture_picker_selection, effective_filter_query, repo_name_from_cwd, restore_picker_selection,
 };
 
-type SearchHit = xai_grok_shell::extensions::session_search::SearchSessionHit;
+type SearchHit = intelekt_shell::extensions::session_search::SearchSessionHit;
 
 struct PickerSurface<'a> {
     entries: &'a mut Option<Vec<SessionPickerEntry>>,
@@ -161,7 +161,7 @@ pub(in crate::app::dispatch) fn dispatch_fetch_session_list(app: &mut AppView) -
         app.foreign_scan_coordinator.begin_request(foreign_seq);
         None
     } else {
-        let grok_home = xai_grok_tools::util::grok_home::grok_home();
+        let grok_home = intelekt_tools::util::grok_home::grok_home();
         crate::app::foreign_sessions::scan_effect(
             &app.cwd,
             app.foreign_session_compat,

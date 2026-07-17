@@ -5,9 +5,9 @@ use super::{
 };
 use crate::session::persistence::PersistenceMsg;
 use crate::util::config::RemoteSettings;
-use xai_grok_agent::AgentDefinition;
-use xai_grok_agent::prompt::context::{PromptAudience, TemplateOverride};
-use xai_grok_agent::system_reminder::{
+use intelekt_agent::AgentDefinition;
+use intelekt_agent::prompt::context::{PromptAudience, TemplateOverride};
+use intelekt_agent::system_reminder::{
     DEFAULT_TODO_GATE_MAX_FIRES, ReminderPolicy, TodoGateConfig,
 };
 /// Helper: a `RemoteSettings` whose only non-default fields are the
@@ -129,7 +129,7 @@ fn policy_with_gate(enabled: bool) -> ReminderPolicy {
 use crate::session::goal_tracker::GoalStatus;
 #[test]
 fn goal_slash_and_harness_available_predicate_matrix() {
-    use xai_grok_tools::implementations::grok_build::UPDATE_GOAL_TOOL_NAME;
+    use intelekt_tools::implementations::grok_build::UPDATE_GOAL_TOOL_NAME;
     let other = vec!["todo_write".to_string()];
     let with_update = vec![UPDATE_GOAL_TOOL_NAME.to_string()];
     for (goal_enabled, tool_names, expect) in [

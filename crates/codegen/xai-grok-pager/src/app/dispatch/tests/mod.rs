@@ -81,7 +81,7 @@ fn test_app() -> AppView {
         models: ModelState::default(),
         registry: crate::actions::ActionRegistry::defaults(),
         settings_registry: std::sync::Arc::new(crate::settings::SettingsRegistry::defaults()),
-        current_ui: xai_grok_shell::agent::config::UiConfig::default(),
+        current_ui: intelekt_shell::agent::config::UiConfig::default(),
         cwd: PathBuf::from("/tmp"),
         project_picker_shown: true,
         project_picker_disabled: false,
@@ -253,7 +253,7 @@ fn test_app() -> AppView {
         has_claude_import: false,
         voice_mode_enabled: false,
         voice_ui_active: false,
-        voice_config: xai_grok_voice::VoiceConfig::default(),
+        voice_config: intelekt_voice::VoiceConfig::default(),
         voice_auth: None,
         voice_cmd_tx: None,
         voice_state: VoiceState::Idle,
@@ -469,10 +469,10 @@ pub(super) fn end_turn() -> Action {
     })
 }
 /// Plant a Build session under the process `grok_home()` (OnceLock-cached;
-/// do not rely on setting `GROK_HOME` mid-process). Caller must remove `sess_dir`.
+/// do not rely on setting `INTELEKT_HOME` mid-process). Caller must remove `sess_dir`.
 fn plant_local_build_session(cwd: &std::path::Path, session_id: &str) -> std::path::PathBuf {
-    let home = xai_grok_shell::util::grok_home::grok_home();
-    let encoded = xai_grok_shell::util::grok_home::encode_cwd_dirname(&cwd.to_string_lossy());
+    let home = intelekt_shell::util::grok_home::grok_home();
+    let encoded = intelekt_shell::util::grok_home::encode_cwd_dirname(&cwd.to_string_lossy());
     let sess_dir = home.join("sessions").join(encoded).join(session_id);
     std::fs::create_dir_all(&sess_dir).expect("plant session dir");
     std::fs::write(sess_dir.join("summary.json"), b"{}").expect("plant summary");
@@ -583,13 +583,13 @@ fn make_ask_user_question_args(
     xai_acp_lib::AcpArgs<acp::ExtRequest>,
     tokio::sync::oneshot::Receiver<xai_acp_lib::AcpResult<acp::ExtResponse>>,
 ) {
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         AskUserQuestionExtRequest, Question, QuestionOption,
     };
     let req = AskUserQuestionExtRequest {
         session_id: "test-session".into(),
         tool_call_id: tool_call_id.into(),
-        mode: xai_grok_tools::implementations::grok_build::ask_user_question::AskUserQuestionMode::Default,
+        mode: intelekt_tools::implementations::grok_build::ask_user_question::AskUserQuestionMode::Default,
         questions: vec![
             Question { question : "ACP-driven question".into(), options :
             vec![QuestionOption { label : "ok".into(), description : "ok".into(), preview
@@ -792,7 +792,7 @@ fn enqueue_permission_with_enable_always_approve(
         vec![
             acp::PermissionOption::new(
                 acp::PermissionOptionId::new(Arc::from(
-                    xai_grok_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID,
+                    intelekt_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID,
                 )),
                 "Yes, and don't ask again for anything",
                 acp::PermissionOptionKind::AllowOnce,
@@ -834,7 +834,7 @@ fn enqueue_permission_with_enable_always_approve(
     response_rx
 }
 const POLICY_WARNING: &str =
-    xai_grok_workspace::permission::resolution::YOLO_PIN_REASON_REQUIREMENTS;
+    intelekt_workspace::permission::resolution::YOLO_PIN_REASON_REQUIREMENTS;
 fn agent_toast(app: &AppView) -> Option<String> {
     app.agents[&AgentId(0)]
         .toast

@@ -54,7 +54,7 @@ pub struct RequirementsLayer {
     pub value: toml::Value,
     pub source: RequirementsSource,
     /// `true` = root-owned system layer. Security decisions must trust this flag,
-    /// not re-derive from the source (`GROK_HOME`-influenced, could carry `..`).
+    /// not re-derive from the source (`INTELEKT_HOME`-influenced, could carry `..`).
     pub is_system: bool,
 }
 
@@ -199,7 +199,7 @@ fn validate_requirements_value(
         return Ok(());
     }
     let fail_closed = resolve_fail_closed_mode(&v);
-    let Ok(version) = xai_grok_version::installed_semver() else {
+    let Ok(version) = intelekt_version::installed_semver() else {
         return Ok(());
     };
     if let Err(e) = apply_version_overrides(&mut v, &version)
@@ -228,7 +228,7 @@ pub fn validate_requirements() -> Result<(), RequirementsError> {
 }
 
 /// Validate the user requirements layer if a user home resolves; otherwise a
-/// no-op (no cwd-relative `.grok/requirements.toml` is read or enforced).
+/// no-op (no cwd-relative `.intelekt/requirements.toml` is read or enforced).
 fn validate_user_requirements(home: Option<&Path>) -> Result<(), RequirementsError> {
     match home {
         Some(g) => validate_requirements_layer(&g.join("requirements.toml")),

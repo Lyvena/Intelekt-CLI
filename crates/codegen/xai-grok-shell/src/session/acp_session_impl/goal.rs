@@ -22,7 +22,7 @@ impl RoleCapability {
     /// `can_execute` for terminal/bash).
     fn is_satisfied(
         self,
-        summary: &xai_grok_tools::implementations::grok_build::task::types::SubagentTypeSummary,
+        summary: &intelekt_tools::implementations::grok_build::task::types::SubagentTypeSummary,
     ) -> bool {
         match self {
             Self::Skeptic => summary.can_read && summary.can_search,
@@ -42,7 +42,7 @@ pub(crate) struct PanelResolveCache {
     /// result for the role's `general-purpose` toolset on that harness).
     describe: std::collections::HashMap<
         String,
-        xai_grok_tools::implementations::grok_build::task::types::SubagentDescribeOutcome,
+        intelekt_tools::implementations::grok_build::task::types::SubagentDescribeOutcome,
     >,
 }
 
@@ -57,7 +57,7 @@ fn role_tool_names_from(
     cache: &PanelResolveCache,
     inherit: &crate::session::goal_role_tools::RoleToolNames,
 ) -> crate::session::goal_role_tools::RoleToolNames {
-    use xai_grok_tools::implementations::grok_build::task::types::SubagentDescribeOutcome;
+    use intelekt_tools::implementations::grok_build::task::types::SubagentDescribeOutcome;
     // `override_.agent_type` is the committed harness; the cache is keyed on it.
     match override_.agent_type.as_deref() {
         Some(harness) => match cache.describe.get(harness) {
@@ -115,9 +115,9 @@ impl SessionActor {
         &self,
         current_tokens: i64,
         purpose: DrainPurpose,
-        extra: Vec<xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalEnvelope>,
+        extra: Vec<intelekt_tools::implementations::grok_build::update_goal::UpdateGoalEnvelope>,
     ) {
-        use xai_grok_tools::implementations::grok_build::update_goal::{
+        use intelekt_tools::implementations::grok_build::update_goal::{
             RejectReason, UpdateGoalAck,
         };
         // The `update_goal` tool and its `GoalUpdateHandle` are always
@@ -652,10 +652,10 @@ impl SessionActor {
         attempt: u32,
         outcome: crate::session::goal_classifier::GoalClassifierOutcome,
         notify: &crate::session::goal_orchestrator::GoalNotifySender,
-    ) -> xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalAck {
+    ) -> intelekt_tools::implementations::grok_build::update_goal::UpdateGoalAck {
         use crate::session::goal_classifier::GoalClassifierOutcome;
         use crate::session::goal_tracker::GoalClassifierVerdict;
-        use xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalAck;
+        use intelekt_tools::implementations::grok_build::update_goal::UpdateGoalAck;
 
         let current_tokens = self.chat_state_handle.get_total_tokens().await as i64;
         let (tokens_used, finished_marginal) = self.goal_tokens(current_tokens);
@@ -1311,7 +1311,7 @@ impl SessionActor {
         choice: &crate::agent::config::GoalRoleModelChoice,
         capability: RoleCapability,
         event_tx: &tokio::sync::mpsc::UnboundedSender<
-            xai_grok_tools::implementations::grok_build::task::types::SubagentEvent,
+            intelekt_tools::implementations::grok_build::task::types::SubagentEvent,
         >,
     ) -> (
         crate::session::goal_planner::RoleSpawnOverride,
@@ -1384,17 +1384,17 @@ impl SessionActor {
         pair: &crate::util::config::GoalRoleModel,
         capability: RoleCapability,
         event_tx: &tokio::sync::mpsc::UnboundedSender<
-            xai_grok_tools::implementations::grok_build::task::types::SubagentEvent,
+            intelekt_tools::implementations::grok_build::task::types::SubagentEvent,
         >,
         available_models: &indexmap::IndexMap<String, crate::agent::config::ModelEntry>,
         cache: &mut PanelResolveCache,
     ) -> crate::session::goal_planner::RoleSpawnOverride {
         use crate::session::events::{Event, GoalRoleModelFailOpenReason as Reason};
         use crate::session::goal_planner::RoleSpawnOverride;
-        use xai_grok_tools::implementations::grok_build::task::backend::{
+        use intelekt_tools::implementations::grok_build::task::backend::{
             ChannelBackend, SubagentBackend,
         };
-        use xai_grok_tools::implementations::grok_build::task::types::SubagentDescribeOutcome;
+        use intelekt_tools::implementations::grok_build::task::types::SubagentDescribeOutcome;
 
         let fail_open = |reason: Reason| {
             self.emit_event(Event::GoalRoleModelFailOpen {
@@ -1420,10 +1420,10 @@ impl SessionActor {
         }
         // 2b. Reject a STRICT harness whose flavor isn't representable (e.g.
         //    `codex`): it resolves, but `resolve_subagent_toolset` would
-        //    silently run grok-build flavor. Non-strict names (grok-build
+        //    silently run intelekt-cli flavor. Non-strict names (intelekt-cli
         //    family) run the default flavor and pass; unresolvable names fall
         //    through to the describe `Unknown` arm below.
-        if xai_grok_agent::config::is_strict_harness_agent_type(&pair.agent_type)
+        if intelekt_agent::config::is_strict_harness_agent_type(&pair.agent_type)
             && !crate::agent::subagent::subagent_harness_flavor_is_representable(&pair.agent_type)
         {
             return fail_open(Reason::HarnessFlavorUnsupported);
@@ -1493,7 +1493,7 @@ impl SessionActor {
     /// Centralises the lookup so `setup_goal`, `maybe_queue_goal_continuation`,
     /// and `resume_goal` don't duplicate the same sequence of async calls.
     pub(super) async fn resolve_goal_tool_names(&self) -> GoalToolNames {
-        use xai_grok_tools::types::tool::ToolKind;
+        use intelekt_tools::types::tool::ToolKind;
         let bridge = self.agent.borrow().tool_bridge().clone();
         GoalToolNames {
             goal: bridge
@@ -1523,14 +1523,14 @@ impl SessionActor {
     /// toolset; [`RoleToolNames::from_parent`] applies the literal fallback for
     /// any kind the bridge lacks, and resolves `{WRITE_TOOL}` from the parent
     /// `Edit` tool when the bridge has no `Write` (so the inherit / retry render
-    /// agrees with `from_summary` — `search_replace` on the default grok-build
+    /// agrees with `from_summary` — `search_replace` on the default intelekt-cli
     /// host, not the literal `write`). The `{TOOLSET_TOOLS}` block is empty on
-    /// this path (no per-role toolset enumeration); on the default grok-build
+    /// this path (no per-role toolset enumeration); on the default intelekt-cli
     /// host the bridge resolves the parent's real tool ids (`read_file`, …).
     pub(crate) async fn resolve_inherit_role_tool_names(
         &self,
     ) -> crate::session::goal_role_tools::RoleToolNames {
-        use xai_grok_tools::types::tool::ToolKind;
+        use intelekt_tools::types::tool::ToolKind;
         let bridge = self.agent.borrow().tool_bridge().clone();
         crate::session::goal_role_tools::RoleToolNames::from_parent(
             bridge.tool_for_kind(ToolKind::Read).await,
@@ -1865,7 +1865,7 @@ impl SessionActor {
     /// arbitrary history items. Untagged legacy copies are not matched
     /// and persist until compaction (safe direction of failure).
     pub(super) async fn prune_prior_goal_continuation_directives(&self) {
-        use xai_grok_sampling_types::conversation::SyntheticReason;
+        use intelekt_sampling_types::conversation::SyntheticReason;
 
         fn is_goal_continuation_directive(item: &ConversationItem) -> bool {
             matches!(
@@ -2335,7 +2335,7 @@ impl SessionActor {
     /// detector wins over a precise pending-todo count.
     async fn has_pending_goal_todos(&self) -> bool {
         use crate::tools::todo::{TodoState, TodoStatus};
-        use xai_grok_tools::types::resources::State;
+        use intelekt_tools::types::resources::State;
         let bridge = self.tool_bridge_handle();
         match bridge.read_resource::<State<TodoState>>().await {
             Some(state) => state.0.todo_items_with_ids().any(|(_id, item)| {
@@ -2355,7 +2355,7 @@ impl SessionActor {
 #[cfg(test)]
 mod role_capability_tests {
     use super::RoleCapability;
-    use xai_grok_tools::implementations::grok_build::task::types::SubagentTypeSummary;
+    use intelekt_tools::implementations::grok_build::task::types::SubagentTypeSummary;
 
     fn summary(can_read: bool, can_search: bool, can_execute: bool) -> SubagentTypeSummary {
         SubagentTypeSummary {
@@ -2386,10 +2386,10 @@ mod role_tool_names_tests {
     use super::{PanelResolveCache, role_tool_names_from};
     use crate::session::goal_planner::RoleSpawnOverride;
     use crate::session::goal_role_tools::RoleToolNames;
-    use xai_grok_tools::implementations::grok_build::task::types::{
+    use intelekt_tools::implementations::grok_build::task::types::{
         SubagentDescribeOutcome, SubagentTypeSummary,
     };
-    use xai_grok_tools::types::tool::ToolKind;
+    use intelekt_tools::types::tool::ToolKind;
 
     /// A named summary (distinct from the inherit/default names) so the
     /// from_summary-vs-inherit dispatch is unambiguous.

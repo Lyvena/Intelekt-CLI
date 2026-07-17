@@ -20,13 +20,13 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Span;
 
-use xai_grok_pager::app::agent_view::AgentView;
-use xai_grok_pager::app::app_view::{ActiveView, AppView};
-use xai_grok_pager::minimal_api;
-use xai_grok_pager::scrollback::block::RenderBlock;
-use xai_grok_pager::theme::Theme;
-use xai_grok_pager::views::plan_approval_view::PlanApprovalFocus;
-use xai_grok_pager::views::prompt_widget::PromptStyle;
+use intelekt_pager::app::agent_view::AgentView;
+use intelekt_pager::app::app_view::{ActiveView, AppView};
+use intelekt_pager::minimal_api;
+use intelekt_pager::scrollback::block::RenderBlock;
+use intelekt_pager::theme::Theme;
+use intelekt_pager::views::plan_approval_view::PlanApprovalFocus;
+use intelekt_pager::views::prompt_widget::PromptStyle;
 
 /// The active plan-approval focus, defaulting to `Preview`.
 fn focus(agent: &AgentView) -> PlanApprovalFocus {

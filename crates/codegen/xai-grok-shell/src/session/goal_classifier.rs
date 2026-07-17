@@ -453,8 +453,8 @@ pub(crate) fn build_subagent_trace_items(
     description: &str,
     prompt: &str,
     output: &str,
-) -> Vec<xai_grok_sampling_types::conversation::ConversationItem> {
-    use xai_grok_sampling_types::conversation::{ConversationItem, ToolCall};
+) -> Vec<intelekt_sampling_types::conversation::ConversationItem> {
+    use intelekt_sampling_types::conversation::{ConversationItem, ToolCall};
     let arguments = serde_json::json!({
         "description": description,
         "subagent_type": subagent_type,
@@ -509,7 +509,7 @@ pub(crate) fn record_subagent_trace(
 /// discoverable in data collection.
 pub(crate) struct ChannelSpawner {
     pub(crate) event_tx: tokio::sync::mpsc::UnboundedSender<
-        xai_grok_tools::implementations::grok_build::task::types::SubagentEvent,
+        intelekt_tools::implementations::grok_build::task::types::SubagentEvent,
     >,
     pub(crate) parent_session_id: String,
     pub(crate) parent_prompt_id: Option<String>,
@@ -594,7 +594,7 @@ impl ChannelSpawner {
         harness_agent_type: Option<String>,
         resume_from: Option<&str>,
     ) -> Result<String, SpawnError> {
-        use xai_grok_tools::implementations::grok_build::task::types::{
+        use intelekt_tools::implementations::grok_build::task::types::{
             SubagentEvent, SubagentRequest, SubagentRuntimeOverrides,
         };
         let (result_tx, result_rx) = tokio::sync::oneshot::channel();
@@ -2446,7 +2446,7 @@ mod tests {
 
     #[tokio::test]
     async fn channel_spawner_request_is_harness_internal() {
-        use xai_grok_tools::implementations::grok_build::task::types::{
+        use intelekt_tools::implementations::grok_build::task::types::{
             SubagentEvent, SubagentResult,
         };
 
@@ -2496,7 +2496,7 @@ mod tests {
     /// SAME model — i.e. skeptic-0 keeps `pool[0]` on the cold fallback.
     #[tokio::test]
     async fn channel_spawner_applies_per_index_model_to_request() {
-        use xai_grok_tools::implementations::grok_build::task::types::{
+        use intelekt_tools::implementations::grok_build::task::types::{
             SubagentEvent, SubagentResult,
         };
 
@@ -2567,7 +2567,7 @@ mod tests {
     /// `None` — the historic default-spawn behavior.
     #[tokio::test]
     async fn channel_spawner_inherit_index_leaves_model_none() {
-        use xai_grok_tools::implementations::grok_build::task::types::{
+        use intelekt_tools::implementations::grok_build::task::types::{
             SubagentEvent, SubagentResult,
         };
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
@@ -2609,7 +2609,7 @@ mod tests {
 
     #[test]
     fn build_subagent_trace_items_shapes_a_task_call_pair() {
-        use xai_grok_sampling_types::conversation::ConversationItem;
+        use intelekt_sampling_types::conversation::ConversationItem;
 
         let items = build_subagent_trace_items(
             "spawn_subagent",
@@ -4053,18 +4053,18 @@ mod tests {
     /// renders leave no tool placeholder unresolved.
     #[test]
     fn verifier_template_renders_per_agent_type_and_falls_back() {
-        use xai_grok_tools::implementations::grok_build::task::types::SubagentTypeSummary;
+        use intelekt_tools::implementations::grok_build::task::types::SubagentTypeSummary;
         let mut tool_names = std::collections::HashMap::new();
         tool_names.insert(
-            xai_grok_tools::types::tool::ToolKind::Read,
+            intelekt_tools::types::tool::ToolKind::Read,
             "cursor_read".to_string(),
         );
         tool_names.insert(
-            xai_grok_tools::types::tool::ToolKind::ListDir,
+            intelekt_tools::types::tool::ToolKind::ListDir,
             "cursor_ls".to_string(),
         );
         tool_names.insert(
-            xai_grok_tools::types::tool::ToolKind::Search,
+            intelekt_tools::types::tool::ToolKind::Search,
             "cursor_grep".to_string(),
         );
         let summary = SubagentTypeSummary {
@@ -4086,11 +4086,11 @@ mod tests {
         );
         assert_no_tool_placeholders(&cursor);
 
-        // grok-build explicit render: no leftover placeholder either.
+        // intelekt-cli explicit render: no leftover placeholder either.
         let grok = RoleToolNames::from_summary(&summary_with(&[
-            (xai_grok_tools::types::tool::ToolKind::Read, "read_file"),
-            (xai_grok_tools::types::tool::ToolKind::ListDir, "list_dir"),
-            (xai_grok_tools::types::tool::ToolKind::Search, "grep"),
+            (intelekt_tools::types::tool::ToolKind::Read, "read_file"),
+            (intelekt_tools::types::tool::ToolKind::ListDir, "list_dir"),
+            (intelekt_tools::types::tool::ToolKind::Search, "grep"),
         ]))
         .apply(GOAL_VERIFIER_PROMPT_TEMPLATE);
         assert_no_tool_placeholders(&grok);
@@ -4109,9 +4109,9 @@ mod tests {
     #[test]
     fn cold_and_resume_renders_are_symmetric_for_an_index() {
         let summary = summary_with(&[
-            (xai_grok_tools::types::tool::ToolKind::Read, "cursor_read"),
-            (xai_grok_tools::types::tool::ToolKind::ListDir, "cursor_ls"),
-            (xai_grok_tools::types::tool::ToolKind::Search, "cursor_grep"),
+            (intelekt_tools::types::tool::ToolKind::Read, "cursor_read"),
+            (intelekt_tools::types::tool::ToolKind::ListDir, "cursor_ls"),
+            (intelekt_tools::types::tool::ToolKind::Search, "cursor_grep"),
         ]);
         let tn = RoleToolNames::from_summary(&summary);
         let cold = tn.apply(GOAL_VERIFIER_PROMPT_TEMPLATE);
@@ -4140,7 +4140,7 @@ mod tests {
     /// names for ITS OWN index and no other's.
     #[tokio::test]
     async fn verification_stage_renders_per_index_tool_names() {
-        use xai_grok_tools::types::tool::ToolKind;
+        use intelekt_tools::types::tool::ToolKind;
         // Skeptic 0 not-refuted ⇒ the full panel fans out (all 3 spawn).
         let spawner = Arc::new(MockSpawner::new([
             MockResponse::not_refuted(),
@@ -5822,7 +5822,7 @@ mod tests {
     #[tokio::test]
     async fn cold_fallback_after_resume_failure_carries_pool0_model_on_request() {
         use std::sync::Mutex as StdMutex;
-        use xai_grok_tools::implementations::grok_build::task::types::{
+        use intelekt_tools::implementations::grok_build::task::types::{
             SubagentEvent, SubagentResult,
         };
 
@@ -6216,7 +6216,7 @@ mod tests {
 
     #[tokio::test]
     async fn channel_spawner_blocks_until_subagent_result() {
-        use xai_grok_tools::implementations::grok_build::task::types::{
+        use intelekt_tools::implementations::grok_build::task::types::{
             SubagentEvent, SubagentResult,
         };
 

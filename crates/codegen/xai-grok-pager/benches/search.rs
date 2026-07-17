@@ -13,10 +13,10 @@ use std::time::Duration;
 
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 
-use xai_grok_pager::scrollback::{
+use intelekt_pager::scrollback::{
     RenderBlock, ScrollbackSearchIndex, ScrollbackSearchState, ScrollbackState,
 };
-use xai_grok_pager::search::{QueryKind, TextMatcher};
+use intelekt_pager::search::{QueryKind, TextMatcher};
 
 /// Roughly the entry count of a long working session.
 const CORPUS_ENTRIES: usize = 30_000;

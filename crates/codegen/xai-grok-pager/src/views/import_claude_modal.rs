@@ -3,7 +3,7 @@
 //! Shown when the user runs `/import-claude` (in-session) or presses `i` on
 //! the welcome screen with new Claude settings detected. Users review each
 //! discovered item, toggle which to import, and confirm. Only checked items
-//! are written to `.grok/config.toml`.
+//! are written to `.intelekt/config.toml`.
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::buffer::Buffer;
@@ -12,8 +12,8 @@ use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Widget};
 use std::path::PathBuf;
-use xai_grok_shell::claude_import::{ImportPlan, ImportableItem, PathKind, find_project_root};
-use xai_grok_workspace::permission::types::RuleAction;
+use intelekt_shell::claude_import::{ImportPlan, ImportableItem, PathKind, find_project_root};
+use intelekt_workspace::permission::types::RuleAction;
 
 use crate::theme::Theme;
 use crate::views::modal_window::{
@@ -714,7 +714,7 @@ fn build_rows(
     if !plan.global_items.is_empty() {
         let scope_start = flat_index;
         let scope_key = format!("scope:{:?}", Scope::Global);
-        let label = "Global  ~/.grok/config.toml".to_string();
+        let label = "Global  ~/.intelekt/config.toml".to_string();
         // Placeholder header; flat_indices filled after children are pushed.
         let scope_header_pos = rows.len();
         rows.push(Row::ScopeHeader {
@@ -741,7 +741,7 @@ fn build_rows(
     if !plan.project_items.is_empty() {
         let scope_start = flat_index;
         let scope_key = format!("scope:{:?}", Scope::Project);
-        let project_config = find_project_root(cwd).join(".grok").join("config.toml");
+        let project_config = find_project_root(cwd).join(".intelekt").join("config.toml");
         let label = format!("Project  {}", project_config.display());
         let scope_header_pos = rows.len();
         rows.push(Row::ScopeHeader {
@@ -1078,8 +1078,8 @@ fn is_selectable(row: &Row) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_shell::claude_import::PathKind;
-    use xai_grok_workspace::permission::types::{PatternMode, PermissionRule, ToolFilter};
+    use intelekt_shell::claude_import::PathKind;
+    use intelekt_workspace::permission::types::{PatternMode, PermissionRule, ToolFilter};
 
     fn sample_plan() -> ImportPlan {
         ImportPlan {
@@ -1147,9 +1147,9 @@ mod tests {
     /// some other item that happens to share the deselected slot's index.
     #[test]
     fn filtered_plan_respects_per_item_selection_after_grouping() {
-        use xai_grok_shell::claude_import::ImportableItem;
-        use xai_grok_shell::util::config::{McpServerConfig, McpServerTransportConfig};
-        use xai_grok_workspace::permission::types::{PatternMode, PermissionRule, ToolFilter};
+        use intelekt_shell::claude_import::ImportableItem;
+        use intelekt_shell::util::config::{McpServerConfig, McpServerTransportConfig};
+        use intelekt_workspace::permission::types::{PatternMode, PermissionRule, ToolFilter};
 
         // Mix Permissions, MCP servers, and EnvVars in a non-sorted order so
         // the display order (sorted by ItemKind) differs from the source order.

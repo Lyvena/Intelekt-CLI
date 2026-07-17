@@ -70,7 +70,7 @@ fn load_managed_toml_layers() -> Option<TomlValue> {
         (Some(s), None) => Some(s),
         (None, Some(m)) => Some(m),
         (Some(mut s), Some(m)) => {
-            xai_grok_config::deep_merge_toml(&mut s, &m);
+            intelekt_config::deep_merge_toml(&mut s, &m);
             Some(s)
         }
     }

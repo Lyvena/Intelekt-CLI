@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{ExtResult, parse_params, to_ext_response};
 use crate::agent::MvpAgent;
-use xai_grok_workspace::workspace_ops::{
+use intelekt_workspace::workspace_ops::{
     FileContentEntryWire, FileContentStatusWire, FileContentViewWire, HunkActionKind,
     HunkActionReq, HunkAllActionReq, HunkFileActionReq, HunkGetAllFileContentsReq,
     HunkGetSessionSummaryReq, HunkSingleActionReq, HunkTurnActionReq,
@@ -304,7 +304,7 @@ fn compute_file_summaries(
 
 pub async fn handle(
     agent: &MvpAgent,
-    ops: &xai_grok_workspace::WorkspaceOps,
+    ops: &intelekt_workspace::WorkspaceOps,
     args: &acp::ExtRequest,
 ) -> ExtResult {
     match args.method.as_ref() {

@@ -7,13 +7,13 @@
 
 use std::path::{Path, PathBuf};
 
-use xai_grok_agent::plugins::discovery::PluginScope;
-use xai_grok_agent::plugins::git_install::{self, UpdateStatus};
-use xai_grok_agent::plugins::install_registry::{
+use intelekt_agent::plugins::discovery::PluginScope;
+use intelekt_agent::plugins::git_install::{self, UpdateStatus};
+use intelekt_agent::plugins::install_registry::{
     InstallError, InstallKind, InstallRegistry, InstalledRepo, MarketplaceProvenance,
 };
-use xai_grok_plugin_marketplace::git::{self, SourceCacheLease};
-use xai_grok_plugin_marketplace::{
+use intelekt_plugin_marketplace::git::{self, SourceCacheLease};
+use intelekt_plugin_marketplace::{
     MarketplaceEntry, MarketplaceRelativePath, MarketplaceSource, SourceKind, install_resolve,
     installer, is_official_source_url, load_extra_sources_from_settings, load_sources,
     scan_marketplace,
@@ -119,7 +119,7 @@ impl std::fmt::Display for UninstallError {
 }
 
 /// Find, remove, clean up, and deregister a plugin.
-/// When `keep_data` is true, `~/.grok/plugin-data/<id>/` is preserved.
+/// When `keep_data` is true, `~/.intelekt/plugin-data/<id>/` is preserved.
 pub fn uninstall_plugin(
     name: &str,
     confirm: bool,
@@ -290,7 +290,7 @@ fn update_marketplace_repo(
 }
 
 fn marketplace_root_for_provenance(
-    provenance: &xai_grok_agent::plugins::install_registry::MarketplaceProvenance,
+    provenance: &intelekt_agent::plugins::install_registry::MarketplaceProvenance,
 ) -> Result<MarketplaceSourceRoot, InstallError> {
     let source = &provenance.source_url_or_path;
     if let Some((url, branch)) = configured_marketplace_git_source(source) {
@@ -714,13 +714,13 @@ pub fn load_marketplace_sources() -> Vec<MarketplaceSource> {
 /// cannot be bypassed.
 pub fn load_filtered_marketplace_sources() -> Vec<MarketplaceSource> {
     let allowlist =
-        &xai_grok_workspace::permission::resolution::managed_settings().marketplace_allowlist;
+        &intelekt_workspace::permission::resolution::managed_settings().marketplace_allowlist;
     filter_sources_by_allowlist(load_marketplace_sources(), allowlist)
 }
 
 fn filter_sources_by_allowlist(
     mut sources: Vec<MarketplaceSource>,
-    allowlist: &xai_grok_workspace::permission::resolution::MarketplaceAllowlist,
+    allowlist: &intelekt_workspace::permission::resolution::MarketplaceAllowlist,
 ) -> Vec<MarketplaceSource> {
     if allowlist.is_restricted() {
         sources.retain(|source| match &source.kind {
@@ -1174,13 +1174,13 @@ pub fn remove_toml_marketplace_block(content: &str, source_identity: &str) -> Op
 }
 
 /// Try removing a source from `settings.json` / `known_marketplaces.json` under
-/// `~/.grok/` and `~/.claude/`. Returns `true` if removed from at least one file.
+/// `~/.intelekt/` and `~/.claude/`. Returns `true` if removed from at least one file.
 pub fn try_remove_source_from_json_files(source_url_or_path: &str) -> bool {
     // Resolve user grok via user_grok_home() (None when no home resolves) and
-    // home separately, so removal still runs from $GROK_HOME when no home dir
+    // home separately, so removal still runs from $INTELEKT_HOME when no home dir
     // exists, and never touches a cwd-relative .grok.
     let home = dirs::home_dir();
-    let grok = xai_grok_config::user_grok_home();
+    let grok = intelekt_config::user_grok_home();
 
     let mut settings_candidates: Vec<std::path::PathBuf> = Vec::new();
     if let Some(ref grok) = grok {
@@ -2042,8 +2042,8 @@ mod tests {
 
     fn marketplace_allowlist(
         urls: &[&str],
-    ) -> xai_grok_workspace::permission::resolution::MarketplaceAllowlist {
-        xai_grok_workspace::permission::resolution::MarketplaceAllowlist {
+    ) -> intelekt_workspace::permission::resolution::MarketplaceAllowlist {
+        intelekt_workspace::permission::resolution::MarketplaceAllowlist {
             allowed_urls: urls.iter().map(|u| u.to_string()).collect(),
             source_path: None,
         }
@@ -2064,7 +2064,7 @@ mod tests {
 
     #[test]
     fn filter_sources_by_allowlist_unrestricted_passes_everything() {
-        let allowlist = xai_grok_workspace::permission::resolution::MarketplaceAllowlist::default();
+        let allowlist = intelekt_workspace::permission::resolution::MarketplaceAllowlist::default();
         let sources = vec![
             git_source("Any Git", "https://github.com/bad/repo.git"),
             local_source("Local", "/tmp/p"),

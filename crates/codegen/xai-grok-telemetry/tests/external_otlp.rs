@@ -16,7 +16,7 @@ fn external_stream_end_to_end() {
     let endpoint = col::start_collector(collected.clone());
 
     // Resolve through the real config path (double opt-in, gates off).
-    let mut cfg = xai_grok_telemetry::external::ExternalOtelConfig::resolve_with(
+    let mut cfg = intelekt_telemetry::external::ExternalOtelConfig::resolve_with(
         |name| match name {
             "GROK_EXTERNAL_OTEL" => Some("1".into()),
             "OTEL_LOGS_EXPORTER" | "OTEL_METRICS_EXPORTER" => Some("otlp".into()),
@@ -29,33 +29,33 @@ fn external_stream_end_to_end() {
         None,
     )
     .expect("double opt-in must resolve");
-    cfg.client = xai_grok_telemetry::external::config::ExternalClientInfo {
+    cfg.client = intelekt_telemetry::external::config::ExternalClientInfo {
         service_version: "0.0.0-test".into(),
         client_version: "0.0.0-test".into(),
         app_entrypoint: "cli".into(),
     };
 
-    xai_grok_telemetry::external::init(Some(cfg));
-    assert!(xai_grok_telemetry::external::is_active());
+    intelekt_telemetry::external::init(Some(cfg));
+    assert!(intelekt_telemetry::external::is_active());
 
     // Emit through the same funnel production uses — with the product events client
     // never initialized (TelemetryMode effectively Disabled) and no auth at
     // all, pinning the Disabled half of the G7 independence matrix at the
     // funnel level: the external sink fires anyway.
-    assert!(!xai_grok_telemetry::is_enabled());
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::SessionNew {
+    assert!(!intelekt_telemetry::is_enabled());
+    intelekt_telemetry::log_event(intelekt_telemetry::events::SessionNew {
         session_id: "sess-int-1".into(),
         client_identifier: None,
         client_version: None,
         is_git_repo: true,
-        permission_mode: xai_grok_telemetry::enums::PermissionMode::Ask,
+        permission_mode: intelekt_telemetry::enums::PermissionMode::Ask,
     });
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::SessionHarness {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::SessionHarness {
         session_id: "sess-int-1".into(),
         client_identifier: Some("grok-pager".into()),
-        model_id: "grok-4".into(),
-        agent_name: "grok-build-plan".into(),
-        permission_mode: xai_grok_telemetry::enums::PermissionMode::Ask,
+        model_id: "intelekt-4".into(),
+        agent_name: "intelekt-cli-plan".into(),
+        permission_mode: intelekt_telemetry::enums::PermissionMode::Ask,
         mcp_server_names: vec![CANARY_MCP.into()],
         plugin_names: vec![],
         skill_names: vec![],
@@ -66,15 +66,15 @@ fn external_stream_end_to_end() {
         is_git_repo: true,
         auto_update: None,
     });
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::PromptSubmitted {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::PromptSubmitted {
         prompt_length: CANARY_PROMPT.len(),
-        model_id: "grok-4".into(),
+        model_id: "intelekt-4".into(),
         client_identifier: None,
         screen_mode: None,
         prompt_text: Some(CANARY_PROMPT.into()),
     });
     // Model-id canary for the metrics body (increment-time scrub).
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::ModelResponseReceived {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::ModelResponseReceived {
         model_id: CANARY_MODEL.into(),
         duration_ms: 5,
         stop_reason: Some("stop".into()),
@@ -84,7 +84,7 @@ fn external_stream_end_to_end() {
         cached_prompt_tokens: None,
     });
 
-    xai_grok_telemetry::external::flush();
+    intelekt_telemetry::external::flush();
 
     assert!(
         col::wait_until(std::time::Duration::from_secs(10), || {
@@ -205,18 +205,18 @@ fn external_stream_end_to_end() {
 
     // ── Shutdown: ≤ 2 s + post-shutdown silence ─────────────────────────
     let start = std::time::Instant::now();
-    xai_grok_telemetry::external::shutdown();
+    intelekt_telemetry::external::shutdown();
     assert!(
         start.elapsed() <= std::time::Duration::from_millis(2500),
         "shutdown watchdog must bound exit at ~2s (took {:?})",
         start.elapsed()
     );
-    assert!(!xai_grok_telemetry::external::is_active());
+    assert!(!intelekt_telemetry::external::is_active());
 
     let logs_before = collected.logs_len();
-    xai_grok_telemetry::log_event(xai_grok_telemetry::events::PromptSubmitted {
+    intelekt_telemetry::log_event(intelekt_telemetry::events::PromptSubmitted {
         prompt_length: 1,
-        model_id: "grok-4".into(),
+        model_id: "intelekt-4".into(),
         client_identifier: None,
         screen_mode: None,
         prompt_text: None,
@@ -229,5 +229,5 @@ fn external_stream_end_to_end() {
     );
 
     // Idempotent shutdown: second call is a no-op, not an error/panic.
-    xai_grok_telemetry::external::shutdown();
+    intelekt_telemetry::external::shutdown();
 }

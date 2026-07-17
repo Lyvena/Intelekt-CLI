@@ -4,10 +4,10 @@ use std::collections::BTreeSet;
 use std::num::NonZeroU64;
 
 use serde::{Deserialize, Serialize};
-use xai_grok_sampling_types::{ConversationItem, SamplingConfig};
+use intelekt_sampling_types::{ConversationItem, SamplingConfig};
 
 /// Canonical marker for an injected memory-context block. Shared by the
-/// emitter in `xai-grok-shell` and the upsert/detection here — a drift would
+/// emitter in `intelekt-shell` and the upsert/detection here — a drift would
 /// silently break dedup and let blocks accumulate in the prompt prefix.
 /// Detection assumes the literal never appears in a system prompt except as
 /// an injected block.
@@ -112,7 +112,7 @@ pub enum AuthType {
 /// Credential/secret fields that the actor stores opaquely.
 ///
 /// These are fields from the shell's full `Config` that aren't part of
-/// `xai_grok_sampling_types::SamplingConfig` (which is secret-free).
+/// `intelekt_sampling_types::SamplingConfig` (which is secret-free).
 /// The actor just stores and returns them — it never interprets them.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Credentials {
@@ -208,7 +208,7 @@ mod tests {
 
     #[test]
     fn snapshot_round_trips_with_data() {
-        use xai_grok_sampling_types::ConversationItem;
+        use intelekt_sampling_types::ConversationItem;
 
         let snapshot = ChatStateSnapshot {
             conversation: vec![
@@ -218,7 +218,7 @@ mod tests {
             ],
             sampling_config: SamplingConfig {
                 base_url: "https://api.example.com".to_string(),
-                model: "grok-3".to_string(),
+                model: "intelekt-3".to_string(),
                 max_completion_tokens: Some(4096),
                 temperature: Some(0.7),
                 top_p: None,

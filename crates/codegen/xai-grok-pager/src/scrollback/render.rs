@@ -910,7 +910,7 @@ use super::types::BlockOutput;
 /// Also used by the `/btw` inline panel (no header offset — pure markdown body).
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn map_hyperlinks_to_overlay(
-    hyperlinks: &[xai_grok_markdown::HyperlinkTarget],
+    hyperlinks: &[intelekt_markdown::HyperlinkTarget],
     block_output: &BlockOutput,
     content_skip: usize,
     first_visible_screen_y: u16,
@@ -2343,8 +2343,8 @@ mod tests {
         cols: std::ops::Range<usize>,
         url: &str,
         id: u32,
-    ) -> xai_grok_markdown::HyperlinkTarget {
-        xai_grok_markdown::HyperlinkTarget {
+    ) -> intelekt_markdown::HyperlinkTarget {
+        intelekt_markdown::HyperlinkTarget {
             line_index: line,
             column_range: cols,
             url: url.to_string(),
@@ -2553,7 +2553,7 @@ mod tests {
     #[test]
     fn overlay_empty_hyperlinks_produces_nothing() {
         let output = make_block_output(&[("text", None)]);
-        let links: &[xai_grok_markdown::HyperlinkTarget] = &[];
+        let links: &[intelekt_markdown::HyperlinkTarget] = &[];
         let mut overlay = LinkOverlay::new();
         map_hyperlinks_to_overlay(links, &output, 0, 0, 10, 0, 0, &[], &mut overlay);
 
@@ -2605,7 +2605,7 @@ mod tests {
         // across rows. The whole path must be clickable (one overlay region
         // per row, all pointing at the full file:// URL) — not just the
         // leading path fragment on the first row.
-        let path = "/Users/alice/.grok/sessions/%2FUsers%2Falice%2Fcode%2Fxai/\
+        let path = "/Users/alice/.intelekt/sessions/%2FUsers%2Falice%2Fcode%2Fxai/\
                     019e0000-0000-7000-8000-000000000001/images/1.jpg";
         let entries = vec![make_markdown_entry(&format!(
             "Image generated and saved to {path}\n"

@@ -16,18 +16,18 @@ use std::sync::Arc;
 use agent_client_protocol::{self as acp, Client};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex as TokioMutex;
-// rmcp is quarantined in xai-grok-mcp; see that crate's docs.
-use xai_grok_mcp::rmcp;
+// rmcp is quarantined in intelekt-mcp; see that crate's docs.
+use intelekt_mcp::rmcp;
 // `wire::MCP_CALL` is the one cross-SDK contract literal; the agent-only siblings
 // live in `mcp_methods` below.
-use xai_grok_mcp::wire;
+use intelekt_mcp::wire;
 
 use super::{ExtResult, parse_params, to_ext_response};
 
 /// Agent-only `x.ai/mcp/*` ACP method/notification names.
 ///
 /// Unlike [`wire::MCP_CALL`] (the cross-SDK contract, which stays in
-/// `xai_grok_mcp::wire`), these methods are private to the agent↔client channel and
+/// `intelekt_mcp::wire`), these methods are private to the agent↔client channel and
 /// are NOT spoken by the SDK. They are centralized here only to avoid scattering the
 /// same string literal across dispatch and notification send sites.
 pub mod mcp_methods {
@@ -588,7 +588,7 @@ fn disabled_server_placeholder_entry(name: &str) -> McpServerEntry {
 /// Clones state under lock then releases — does not hold lock across awaits.
 pub async fn build_mcp_status(
     mcp_state: &Arc<TokioMutex<McpState>>,
-    tool_bridge: &Arc<xai_grok_tools::bridge::ToolBridge>,
+    tool_bridge: &Arc<intelekt_tools::bridge::ToolBridge>,
     event_writer: Option<&xai_file_utils::events::EventWriter>,
 ) -> McpStatusSnapshot {
     let _build_mcp_status_timer = crate::instrumentation::timer("build_mcp_status");
@@ -1208,9 +1208,9 @@ pub async fn read_mcp_resource(
 
 // ── McpResourceProvider bridge ───────────────────────────────────────
 //
-// Implements the `McpResourceProvider` trait from xai-grok-tools so that
+// Implements the `McpResourceProvider` trait from intelekt-tools so that
 // `ListMcpResources` / `FetchMcpResource` tools can access MCP
-// servers without depending on `xai-grok-mcp` directly.
+// servers without depending on `intelekt-mcp` directly.
 
 /// Bridge from `McpState` to the `McpResourceProvider` trait.
 ///
@@ -1219,11 +1219,11 @@ pub async fn read_mcp_resource(
 pub struct McpStateResourceProvider(pub Arc<TokioMutex<McpState>>);
 
 #[async_trait::async_trait]
-impl xai_grok_tools::types::resources::McpResourceProvider for McpStateResourceProvider {
+impl intelekt_tools::types::resources::McpResourceProvider for McpStateResourceProvider {
     async fn list_resources(
         &self,
         server: Option<String>,
-    ) -> Result<Vec<xai_grok_tools::types::resources::McpResourceInfo>, String> {
+    ) -> Result<Vec<intelekt_tools::types::resources::McpResourceInfo>, String> {
         let clients: Vec<(String, Arc<McpClient>)> = {
             let state = self.0.lock().await;
             match &server {
@@ -1255,7 +1255,7 @@ impl xai_grok_tools::types::resources::McpResourceProvider for McpStateResourceP
             match mcp_service.list_all_resources().await {
                 Ok(all_resources) => {
                     for r in all_resources {
-                        resources.push(xai_grok_tools::types::resources::McpResourceInfo {
+                        resources.push(intelekt_tools::types::resources::McpResourceInfo {
                             uri: r.uri.clone(),
                             name: Some(r.name.clone()),
                             description: r.description.clone(),
@@ -1285,7 +1285,7 @@ impl xai_grok_tools::types::resources::McpResourceProvider for McpStateResourceP
         &self,
         server: String,
         uri: String,
-    ) -> Result<xai_grok_tools::types::resources::McpResourceReadResult, String> {
+    ) -> Result<intelekt_tools::types::resources::McpResourceReadResult, String> {
         let client = {
             let state = self.0.lock().await;
             Arc::clone(
@@ -1330,12 +1330,12 @@ impl xai_grok_tools::types::resources::McpResourceProvider for McpStateResourceP
                 mime_type,
                 text,
                 ..
-            } => Ok(xai_grok_tools::types::resources::McpResourceReadResult {
+            } => Ok(intelekt_tools::types::resources::McpResourceReadResult {
                 uri: content_uri,
                 name: None,
                 description: None,
                 mime_type,
-                content: Some(xai_grok_tools::types::resources::McpResourceContent::Text(
+                content: Some(intelekt_tools::types::resources::McpResourceContent::Text(
                     text,
                 )),
             }),
@@ -1344,12 +1344,12 @@ impl xai_grok_tools::types::resources::McpResourceProvider for McpStateResourceP
                 mime_type,
                 blob,
                 ..
-            } => Ok(xai_grok_tools::types::resources::McpResourceReadResult {
+            } => Ok(intelekt_tools::types::resources::McpResourceReadResult {
                 uri: content_uri,
                 name: None,
                 description: None,
                 mime_type,
-                content: Some(xai_grok_tools::types::resources::McpResourceContent::Blob(
+                content: Some(intelekt_tools::types::resources::McpResourceContent::Blob(
                     blob.into_bytes(),
                 )),
             }),

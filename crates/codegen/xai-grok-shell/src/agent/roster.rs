@@ -13,7 +13,7 @@
 //! fold or materialized snapshot is required (the snapshot is deferred).
 
 use serde::{Deserialize, Serialize};
-use xai_grok_sampling_types::ReasoningEffort;
+use intelekt_sampling_types::ReasoningEffort;
 
 use crate::session::persistence::Summary;
 
@@ -173,7 +173,7 @@ mod merge_roster_tests {
             title: None,
             cwd: format!("/live/{id}"),
             is_worktree: false,
-            model_id: Some("grok-4".into()),
+            model_id: Some("intelekt-4".into()),
             reasoning_effort: None,
             yolo: false,
             activity,

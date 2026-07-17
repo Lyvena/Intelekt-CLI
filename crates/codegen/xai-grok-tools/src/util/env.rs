@@ -2,7 +2,7 @@
 //!
 //! All implementations now live in the lightweight [`xai_tty_utils`] crate
 //! so that every crate in the workspace can use them without pulling in the
-//! heavyweight `xai-grok-tools` dependency. This module re-exports the public
+//! heavyweight `intelekt-tools` dependency. This module re-exports the public
 //! API for backward compatibility.
 
 pub use xai_tty_utils::{detach_from_tty, pager_env};

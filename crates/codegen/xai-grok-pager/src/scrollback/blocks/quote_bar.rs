@@ -1,7 +1,7 @@
 //! Rendered blockquote-bar detection for selection/copy metadata.
 //!
 //! The markdown renderer rewrites each `>` quote marker to a `│` bar styled
-//! `blockquote_outer` (xai-grok-markdown parse.rs), so the decoration becomes
+//! `blockquote_outer` (intelekt-markdown parse.rs), so the decoration becomes
 //! ordinary span content and would otherwise leak into drag-select copies.
 //! The helpers here detect that prefix on a rendered row and exclude it from
 //! selection via [`Selectable::Spans`] — the same decoration-exclusion

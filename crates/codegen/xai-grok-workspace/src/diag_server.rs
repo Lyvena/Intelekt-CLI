@@ -148,7 +148,7 @@ impl DiagHandle {
             pid: process::id(),
             connected_at: inner.connected_at,
             state_changed_at: inner.state_changed_at,
-            version: xai_grok_version::VERSION,
+            version: intelekt_version::VERSION,
         }
     }
 

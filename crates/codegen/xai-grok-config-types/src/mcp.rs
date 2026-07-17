@@ -1,4 +1,4 @@
-//! MCP server configuration value types, extracted from xai-grok-shell
+//! MCP server configuration value types, extracted from intelekt-shell
 //! (config dependency inversion).
 
 use agent_client_protocol as acp;
@@ -6,7 +6,7 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use xai_grok_mcp::oauth_config::McpOAuthConfig;
+use intelekt_mcp::oauth_config::McpOAuthConfig;
 
 /// serde default helper. Kept module-local rather than shared — the `pool`
 /// module keeps its own copy for `PoolConfig`.

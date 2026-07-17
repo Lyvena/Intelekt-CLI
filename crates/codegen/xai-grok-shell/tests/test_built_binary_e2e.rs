@@ -1,4 +1,4 @@
-//! Built-binary end-to-end tests for the grok (xai-grok-pager) binary.
+//! Built-binary end-to-end tests for the grok (intelekt-pager) binary.
 //!
 //! These tests verify that the built grok binary works end-to-end against a mock
 //! inference server. They catch dynamic linking failures (libgit2/OpenSSL),
@@ -12,13 +12,13 @@
 //!
 //! Run locally (auto-builds the binary if not already present):
 //! ```bash
-//! cargo test -p xai-grok-shell --test test_built_binary_e2e -- --ignored
+//! cargo test -p intelekt-shell --test test_built_binary_e2e -- --ignored
 //! ```
 //!
 //! In CI, set `GROK_BINARY` to point at the release artifact:
 //! ```bash
 //! GROK_BINARY=./artifacts/grok-0.1.159-linux-x86_64 \
-//!   cargo test -p xai-grok-shell --test test_built_binary_e2e -- --ignored
+//!   cargo test -p intelekt-shell --test test_built_binary_e2e -- --ignored
 //! ```
 
 use std::future::Future;
@@ -27,8 +27,8 @@ use std::process::Command;
 use std::time::Duration;
 
 use serde_json::Value;
-use xai_grok_test_support::env::test_env_cmd_tokio;
-use xai_grok_test_support::*;
+use intelekt_test_support::env::test_env_cmd_tokio;
+use intelekt_test_support::*;
 
 /// Run an async test body inside a `LocalSet` (required by ACP's `!Send` futures).
 /// Eliminates the `let local = LocalSet::new(); local.run_until(async { ... }).await`
@@ -52,7 +52,7 @@ async fn single_model_server(model: &str, backend: &str) -> MockInferenceServer 
 
 async fn grok_build_server() -> MockInferenceServer {
     MockInferenceServer::start_with_models(vec![
-        MockModelEntry::with_agent_type("grok-4.5", "grok-build")
+        MockModelEntry::with_agent_type("intelekt-4.5", "intelekt-cli")
             .with_api_backend("responses")
             .with_supports_backend_search(true),
     ])
@@ -386,7 +386,7 @@ async fn test_headless_free_usage_exhausted_prints_paywall_message() {
     assert_no_crashes(&result.stderr);
     let combined = format!("{}\n{}", result.stdout, result.stderr);
     assert!(
-        combined.contains("reached your free Grok Build usage limit"),
+        combined.contains("reached your free Intelekt CLI usage limit"),
         "expected the free-usage paywall message\nstdout:\n{}\nstderr tail:\n{}",
         result.stdout,
         stderr_tail(&result.stderr, 1000)
@@ -466,21 +466,21 @@ async fn test_headless_streaming_json_output() {
 #[tokio::test]
 #[ignore] // requires pre-built binary; run with --ignored
 async fn test_headless_json_reports_server_cost() {
-    use xai_grok_test_support::scripted::SseEvent;
+    use intelekt_test_support::scripted::SseEvent;
 
-    let server = single_model_server("grok-4.5", "chat_completions").await;
+    let server = single_model_server("intelekt-4.5", "chat_completions").await;
     let chunk = |body: serde_json::Value| SseEvent::data(body.to_string());
     server.enqueue_response(
         "/v1/chat/completions",
-        xai_grok_test_support::scripted::ScriptedResponse::sse(vec![
+        intelekt_test_support::scripted::ScriptedResponse::sse(vec![
             chunk(serde_json::json!({
                 "id": "chatcmpl-cost", "object": "chat.completion.chunk", "created": 0,
-                "model": "grok-4.5",
+                "model": "intelekt-4.5",
                 "choices": [{ "index": 0, "delta": { "content": "4" }, "finish_reason": "stop" }]
             })),
             chunk(serde_json::json!({
                 "id": "chatcmpl-cost", "object": "chat.completion.chunk", "created": 0,
-                "model": "grok-4.5", "choices": [],
+                "model": "intelekt-4.5", "choices": [],
                 "usage": {
                     "prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15,
                     "cost_in_usd_ticks": 1_234_500_000_i64
@@ -498,7 +498,7 @@ async fn test_headless_json_reports_server_cost() {
             "what is 2+2",
             "--yolo",
             "--model",
-            "grok-4.5",
+            "intelekt-4.5",
             "--max-turns",
             "1",
             "--output-format",
@@ -528,16 +528,16 @@ async fn test_headless_json_reports_server_cost() {
 #[tokio::test]
 #[ignore] // requires pre-built binary; run with --ignored
 async fn test_headless_json_reports_usage_on_max_turns() {
-    let server = single_model_server("grok-4.5", "chat_completions").await;
+    let server = single_model_server("intelekt-4.5", "chat_completions").await;
     server.enqueue_response(
         "/v1/chat/completions",
-        xai_grok_test_support::scripted::ScriptedResponse::sse(
-            xai_grok_test_support::sse::chat_completions_reasoning_then_tool_call_events(
+        intelekt_test_support::scripted::ScriptedResponse::sse(
+            intelekt_test_support::sse::chat_completions_reasoning_then_tool_call_events(
                 "let me look",
                 "call-1",
                 "read_file",
                 r#"{"path":"README.md"}"#,
-                "grok-4.5",
+                "intelekt-4.5",
             ),
         ),
     );
@@ -550,7 +550,7 @@ async fn test_headless_json_reports_usage_on_max_turns() {
             "read the readme",
             "--yolo",
             "--model",
-            "grok-4.5",
+            "intelekt-4.5",
             "--max-turns",
             "1",
             "--output-format",
@@ -569,7 +569,7 @@ async fn test_headless_json_reports_usage_on_max_turns() {
 #[tokio::test]
 #[ignore] // requires pre-built binary; run with --ignored
 async fn test_headless_streaming_json_usage() {
-    let server = single_model_server("grok-4.5", "chat_completions").await;
+    let server = single_model_server("intelekt-4.5", "chat_completions").await;
     let workdir = git_workdir();
     let result = run_headless(
         &server,
@@ -578,7 +578,7 @@ async fn test_headless_streaming_json_usage() {
             "say hello",
             "--yolo",
             "--model",
-            "grok-4.5",
+            "intelekt-4.5",
             "--output-format",
             "streaming-json",
         ],
@@ -604,7 +604,7 @@ async fn test_headless_streaming_json_usage() {
 #[tokio::test]
 #[ignore] // requires pre-built binary; run with --ignored
 async fn headless_json_schema_chat_completions_uses_response_format() {
-    let server = single_model_server("grok-4.5", "chat_completions").await;
+    let server = single_model_server("intelekt-4.5", "chat_completions").await;
     server.set_response(r#"{"name":"Alice","age":30}"#);
 
     let workdir = git_workdir();
@@ -615,7 +615,7 @@ async fn headless_json_schema_chat_completions_uses_response_format() {
             "extract name and age",
             "--yolo",
             "--model",
-            "grok-4.5",
+            "intelekt-4.5",
             "--json-schema",
             r#"{"type":"object","properties":{"name":{"type":"string"},"age":{"type":"integer"}},"required":["name","age"],"additionalProperties":false}"#,
             "--max-turns",
@@ -663,7 +663,7 @@ async fn headless_json_schema_chat_completions_uses_response_format() {
 #[tokio::test]
 #[ignore] // requires pre-built binary; run with --ignored
 async fn headless_json_schema_responses_uses_text_format() {
-    let server = single_model_server("grok-4.5", "responses").await;
+    let server = single_model_server("intelekt-4.5", "responses").await;
     server.set_response(r#"{"name":"Alice","age":30}"#);
 
     let workdir = git_workdir();
@@ -674,7 +674,7 @@ async fn headless_json_schema_responses_uses_text_format() {
             "extract name and age",
             "--yolo",
             "--model",
-            "grok-4.5",
+            "intelekt-4.5",
             "--json-schema",
             NAME_AGE_SCHEMA,
             "--max-turns",
@@ -887,7 +887,7 @@ async fn headless_json_schema_messages_retries_on_schema_violation() {
 #[tokio::test]
 #[ignore] // requires pre-built binary; run with --ignored
 async fn invalid_json_schema_disables_structured_output_and_surfaces_error() {
-    let server = single_model_server("grok-4.5", "chat_completions").await;
+    let server = single_model_server("intelekt-4.5", "chat_completions").await;
     server.set_response(r#"{"name":"Alice","age":30}"#);
 
     let workdir = git_workdir();
@@ -898,7 +898,7 @@ async fn invalid_json_schema_disables_structured_output_and_surfaces_error() {
             "extract name and age",
             "--yolo",
             "--model",
-            "grok-4.5",
+            "intelekt-4.5",
             // Valid JSON object, but `pattern` is an invalid regex → schema
             // compilation (`jsonschema::validator_for`) fails.
             "--json-schema",
@@ -1251,7 +1251,7 @@ async fn test_stdio_xcode_escaped_slash_methods_get_responses() {
 
 // ── Config test harness ─────────────────────────────────────────────────────
 
-/// Isolated headless run with a custom `~/.grok/`. Clean env (no leaked
+/// Isolated headless run with a custom `~/.intelekt/`. Clean env (no leaked
 /// host credentials). Write config files into `grok_dir()` before `run()`.
 struct ConfigTestHarness {
     home: tempfile::TempDir,
@@ -1262,7 +1262,7 @@ struct ConfigTestHarness {
 impl ConfigTestHarness {
     fn new(server: &MockInferenceServer) -> Self {
         let home = tempfile::tempdir().unwrap();
-        std::fs::create_dir_all(home.path().join(".grok")).unwrap();
+        std::fs::create_dir_all(home.path().join(".intelekt")).unwrap();
         Self {
             home,
             workdir: git_workdir(),
@@ -1278,7 +1278,7 @@ impl ConfigTestHarness {
     }
 
     fn grok_dir(&self) -> std::path::PathBuf {
-        self.home.path().join(".grok")
+        self.home.path().join(".intelekt")
     }
 
     fn env(&mut self, key: &str, value: &str) -> &mut Self {
@@ -1299,7 +1299,7 @@ impl ConfigTestHarness {
             // Windows resolves `~` via USERPROFILE, not HOME — pin the grok
             // home explicitly so the sandbox holds on all platforms (see
             // `test_env_cmd_tokio`).
-            .env("GROK_HOME", self.grok_dir())
+            .env("INTELEKT_HOME", self.grok_dir())
             .env("PATH", std::env::var("PATH").unwrap_or_default());
         for (k, v) in &self.env {
             cmd.env(k, v);
@@ -1310,14 +1310,14 @@ impl ConfigTestHarness {
 
 // ── Enterprise managed config tests ────────────────────────────────────────
 
-/// Enterprise BYOK: managed_config.toml overrides grok-build with a custom
+/// Enterprise BYOK: managed_config.toml overrides intelekt-cli with a custom
 /// endpoint + env_key. Mock rejects unauthenticated requests with 401.
 /// Regression guard for the 0.1.220 authentication regression.
 #[tokio::test]
 #[ignore] // requires pre-built binary; run with --ignored
 async fn test_headless_managed_config_byok_sends_authorized_requests() {
     let server = MockInferenceServer::start_with_required_auth(
-        vec![MockModelEntry::new("grok-4.5")],
+        vec![MockModelEntry::new("intelekt-4.5")],
         "test-byok-secret-token",
     )
     .await
@@ -1332,15 +1332,15 @@ async fn test_headless_managed_config_byok_sends_authorized_requests() {
 deployment_key = "test-deployment-key"
 xai_api_base_url = "{url}"
 
-[model.grok-build]
+[model.intelekt-cli]
 api_backend = "responses"
 base_url = "{url}"
 context_window = 500000
 env_key = "GROK_TEST_BYOK_TOKEN"
-model = "grok-4.5"
+model = "intelekt-4.5"
 
 [models]
-default = "grok-4.5"
+default = "intelekt-4.5"
 "#,
             url = server.url()
         ),
@@ -1369,7 +1369,7 @@ default = "grok-4.5"
 #[ignore] // requires pre-built binary; run with --ignored
 async fn headless_reasoning_efforts_payload_parses_and_legacy_effort_rides_wire() {
     let server = MockInferenceServer::start_with_models(vec![
-        MockModelEntry::new("grok-4.5")
+        MockModelEntry::new("intelekt-4.5")
             .with_api_backend("chat_completions")
             .with_supports_reasoning_effort(true)
             .with_reasoning_effort("xhigh")
@@ -1390,7 +1390,7 @@ async fn headless_reasoning_efforts_payload_parses_and_legacy_effort_rides_wire(
             "hi",
             "--yolo",
             "--model",
-            "grok-4.5",
+            "intelekt-4.5",
             "--max-turns",
             "1",
         ],
@@ -1419,7 +1419,7 @@ async fn headless_reasoning_efforts_payload_parses_and_legacy_effort_rides_wire(
 // ============================================================================
 
 #[cfg(unix)]
-use xai_grok_test_support::sse::{
+use intelekt_test_support::sse::{
     chat_completions_reasoning_then_tool_call_events, responses_api_reasoning_then_tool_call_events,
 };
 

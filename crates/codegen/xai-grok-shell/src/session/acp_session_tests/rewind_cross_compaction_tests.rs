@@ -275,7 +275,7 @@ async fn rewind_before_compaction_clears_stale_compaction_marker() {
 }
 
 async fn run_clears_marker_scenario() {
-    use xai_grok_sampling_types::CompactionsRemaining;
+    use intelekt_sampling_types::CompactionsRemaining;
     let (gateway_tx, _gateway_rx) = tokio::sync::mpsc::unbounded_channel();
     let (persistence_tx, _persistence_rx) = tokio::sync::mpsc::unbounded_channel();
     let mut actor = create_test_actor(0, 200_000, 80, gateway_tx, persistence_tx).await;

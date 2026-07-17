@@ -98,8 +98,8 @@ pub(crate) fn run_external_auth_sync(command: &str, is_refresh: bool) -> Option<
     if is_refresh {
         cmd.env("GROK_AUTH_EXPIRED", "1");
     }
-    xai_grok_tools::util::detach_std_command(&mut cmd);
-    cmd.envs(xai_grok_tools::util::pager_env());
+    intelekt_tools::util::detach_std_command(&mut cmd);
+    cmd.envs(intelekt_tools::util::pager_env());
     let mut child = cmd.spawn()
         .map_err(|e| {
             tracing::warn!(error = %e, cmd = %command, "auth: failed to start external auth provider");

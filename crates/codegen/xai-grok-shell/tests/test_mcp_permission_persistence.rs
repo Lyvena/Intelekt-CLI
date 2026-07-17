@@ -12,17 +12,17 @@ use agent_client_protocol as acp;
 use serial_test::serial;
 use tokio::sync::{mpsc, oneshot};
 use xai_acp_lib::{AcpAgentGatewaySender, AcpClientMessage};
-use xai_grok_paths::AbsPathBuf;
-use xai_grok_workspace::permission::types::{
+use intelekt_paths::AbsPathBuf;
+use intelekt_workspace::permission::types::{
     PatternMode, PermissionConfig, PermissionRule, RuleAction, ToolFilter,
 };
-use xai_grok_workspace::permission::{
+use intelekt_workspace::permission::{
     AccessKind, ClientType, Decision, PermissionCommand, PermissionHandle, PermissionState,
     spawn_permission_manager, spawn_permission_manager_with_hub,
 };
 
-/// Shared `GROK_HOME` for the entire test binary. The `OnceLock` in
-/// `xai-grok-config` only allows one value per process, so all tests share
+/// Shared `INTELEKT_HOME` for the entire test binary. The `OnceLock` in
+/// `intelekt-config` only allows one value per process, so all tests share
 /// this temp directory and `#[serial]` keeps them from clobbering each
 /// other's state files.
 fn test_home() -> &'static PathBuf {
@@ -31,7 +31,7 @@ fn test_home() -> &'static PathBuf {
         let dir = tempfile::TempDir::new().unwrap();
         let path = dir.keep();
         // SAFETY: called once at init before other threads touch this var.
-        unsafe { std::env::set_var("GROK_HOME", &path) };
+        unsafe { std::env::set_var("INTELEKT_HOME", &path) };
         path
     })
 }
@@ -673,7 +673,7 @@ async fn allow_always_mcp_server_downgrades_when_access_has_no_separator() {
 #[tokio::test]
 #[serial]
 async fn dont_ask_policy_denies_without_prompting() {
-    use xai_grok_workspace::permission::types::{PermissionConfig, PromptPolicy};
+    use intelekt_workspace::permission::types::{PermissionConfig, PromptPolicy};
 
     let mut policy = PermissionConfig::new(vec![]);
     policy.prompt_policy = PromptPolicy::Deny;

@@ -9,7 +9,7 @@ use agent_client_protocol as acp;
 use std::collections::{HashMap, HashSet};
 use tokio::sync::{mpsc, oneshot};
 use xai_file_utils::queue::UploadQueue;
-use xai_grok_sampling_types::ReasoningEffort;
+use intelekt_sampling_types::ReasoningEffort;
 use xai_hunk_tracker::HunkTrackerHandle;
 /// Coarse lifecycle state of a session as known to the leader/agent.
 ///
@@ -132,14 +132,14 @@ pub struct SessionHandle {
     /// `false`) atomically on use via `compare_exchange`.
     /// Set via `x.ai/debug/arm_auto_compact`.
     pub force_compact: std::sync::Arc<std::sync::atomic::AtomicBool>,
-    pub permission_handle: xai_grok_workspace::permission::PermissionHandle,
+    pub permission_handle: intelekt_workspace::permission::PermissionHandle,
     /// The parent SessionActor's live `Auth401AttributionCallback`
     /// (if any). Exposed on the handle so
     /// `MvpAgent::build_subagent_spawn_context` can copy it into the
     /// spawn context, so subagents inherit the parent's callback
     /// rather than getting a fresh one (preserving the parent's
     /// session_id on the child's emits).
-    pub attribution_callback: Option<xai_grok_sampler::SharedAttributionCallback>,
+    pub attribution_callback: Option<intelekt_sampler::SharedAttributionCallback>,
     /// The agent definition name for this session.
     pub agent_name: String,
     pub managed_mcp_proxy_base_url: String,
@@ -147,22 +147,22 @@ pub struct SessionHandle {
     /// Subagent types this agent can spawn (from Agent(t1, t2) in tools).
     pub allowed_subagent_types: Option<Vec<String>>,
     /// Hook registry for this session (snapshot from spawn time).
-    pub hook_registry: Option<std::sync::Arc<xai_grok_hooks::discovery::HookRegistry>>,
+    pub hook_registry: Option<std::sync::Arc<intelekt_hooks::discovery::HookRegistry>>,
     /// Typed workspace operations handle (agent sessions use local ops).
-    pub workspace_ops: xai_grok_workspace::WorkspaceOps,
+    pub workspace_ops: intelekt_workspace::WorkspaceOps,
     /// Terminal backend for this session. Subagents inherit the parent's
     /// backend so background tasks and monitors survive the subagent's exit.
     pub terminal_backend:
-        Option<std::sync::Arc<dyn xai_grok_tools::computer::types::TerminalBackend>>,
+        Option<std::sync::Arc<dyn intelekt_tools::computer::types::TerminalBackend>>,
     /// Notification handle for this session's tool bridge. Subagents use
     /// this to reparent surviving tasks' notification handles on exit so
     /// events route to the parent's notification bridge.
     pub tools_notification_handle:
-        Option<xai_grok_tools::notification::types::ToolNotificationHandle>,
+        Option<intelekt_tools::notification::types::ToolNotificationHandle>,
     /// Scheduler handle for this session. Subagents inherit the parent's
     /// handle so scheduled tasks survive the subagent's exit.
     pub scheduler_handle:
-        Option<xai_grok_tools::implementations::grok_build::scheduler::types::SchedulerHandle>,
+        Option<intelekt_tools::implementations::grok_build::scheduler::types::SchedulerHandle>,
 }
 impl SessionHandle {
     /// Last assistant `model_id` / `model_fingerprint` in conversation (global, not turn-scoped).
@@ -199,7 +199,7 @@ impl SessionHandle {
     pub async fn kill_background_task(
         &self,
         task_id: &str,
-    ) -> Result<xai_grok_tools::types::KillOutcome, String> {
+    ) -> Result<intelekt_tools::types::KillOutcome, String> {
         let (tx, rx) = oneshot::channel();
         if self
             .cmd_tx
@@ -246,7 +246,7 @@ impl SessionHandle {
     }
     /// List all background tasks.
     /// Routes through the session actor to the ToolBridge's TerminalBackend.
-    pub async fn list_tasks(&self) -> Option<Vec<xai_grok_tools::types::TaskSnapshot>> {
+    pub async fn list_tasks(&self) -> Option<Vec<intelekt_tools::types::TaskSnapshot>> {
         let (tx, rx) = oneshot::channel();
         if self
             .cmd_tx
@@ -308,7 +308,7 @@ impl SessionHandle {
     /// This session's plugin registry, including plugins loaded via `_meta.pluginDirs`.
     pub async fn plugins_list(
         &self,
-    ) -> Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>> {
+    ) -> Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>> {
         let (tx, rx) = oneshot::channel();
         if self
             .cmd_tx
@@ -351,7 +351,7 @@ impl SessionHandle {
     /// Snapshot the session's resolved tool schema for verbatim-fork inheritance.
     /// A dead actor or dropped reply fails open to an empty list (child then builds
     /// its own toolset, same as a non-fork spawn).
-    pub(crate) async fn snapshot_tool_definitions(&self) -> Vec<xai_grok_sampling_types::ToolSpec> {
+    pub(crate) async fn snapshot_tool_definitions(&self) -> Vec<intelekt_sampling_types::ToolSpec> {
         let (tx, rx) = oneshot::channel();
         if self
             .cmd_tx

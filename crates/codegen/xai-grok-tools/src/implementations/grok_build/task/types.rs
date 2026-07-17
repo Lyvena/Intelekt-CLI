@@ -1,7 +1,7 @@
 //! Channel types for subagent communication (TaskTool ↔ MvpAgent coordinator).
 //!
 //! These types define the request/response protocol between the `TaskTool`
-//! (in `xai-grok-tools`) and the subagent coordinator (in `xai-grok-shell`).
+//! (in `intelekt-tools`) and the subagent coordinator (in `intelekt-shell`).
 //!
 //! ## Resource types
 //!
@@ -97,7 +97,7 @@ pub struct SubagentRuntimeOverrides {
     /// `None` means "use role/persona default" (which itself defaults to `None`/shared workspace).
     pub isolation: Option<SubagentIsolationMode>,
     /// `/goal`-only harness override: the `agent_type` (e.g. `"cursor"`,
-    /// `"grok-build-plan"`) whose `AgentDefinition` decides the child's harness
+    /// `"intelekt-cli-plan"`) whose `AgentDefinition` decides the child's harness
     /// flavor — system prompt + toolset — applied
     /// REGARDLESS of the parent agent (so a session can pin a
     /// compat-harness verifier and vice versa).
@@ -118,7 +118,7 @@ pub use xai_tool_types::is_not_sentinel;
 ///
 /// Returns `Some(cleaned)` for a usable path, `None` if the value should be
 /// treated as absent. Shared by the tool layer (`task::mod`) and the
-/// defense-in-depth check in `xai-grok-shell`'s subagent coordinator.
+/// defense-in-depth check in `intelekt-shell`'s subagent coordinator.
 pub fn sanitize_cwd_value(s: &str) -> Option<String> {
     let unquoted = s.trim().trim_matches(['"', '\'', '`']);
     // Re-trim after stripping quotes: this trim flows into the returned
@@ -648,7 +648,7 @@ pub struct SubagentDescribeRequest {
 }
 
 /// Coordinator message enum. Intentionally NOT `#[non_exhaustive]` —
-/// the cross-crate drain loop in `xai-grok-shell` relies on
+/// the cross-crate drain loop in `intelekt-shell` relies on
 /// compile-time exhaustiveness.
 pub enum SubagentEvent {
     Spawn(Box<SubagentRequest>),
@@ -688,7 +688,7 @@ pub struct MonitorEventNotification {
     ///
     /// In leader mode every session shares one [`MonitorEventBuffer`], so the
     /// drain sites filter on this to avoid surfacing one session's monitor
-    /// events inside another session's turn. `None` for legacy / non-grok-build
+    /// events inside another session's turn. `None` for legacy / non-intelekt-cli
     /// backends, which any session drains for backwards compatibility.
     pub owner_session_id: Option<String>,
 }
@@ -727,7 +727,7 @@ pub fn drain_owned(
 /// Lightweight summary of a running subagent.
 ///
 /// This is the single shared definition of this type. The coordinator in
-/// xai-grok-shell produces it, the channel protocol carries it, and the
+/// intelekt-shell produces it, the channel protocol carries it, and the
 /// compaction pipeline in xai-chat-state (via `RunningSubagentSummary`)
 /// consumes it. Do not duplicate this type in other crates.
 #[derive(Debug, Clone)]
@@ -801,7 +801,7 @@ register_resource!("grok_build", "SessionIdResource", SessionIdResource);
 
 /// Carries the current parent prompt/turn ID for TaskTool subagent scoping.
 ///
-/// Set by xai-grok-shell immediately before a prompt turn begins executing so
+/// Set by intelekt-shell immediately before a prompt turn begins executing so
 /// subagents launched during that turn can be cancelled together if the user
 /// aborts the turn.
 #[derive(Debug, Clone)]
@@ -813,7 +813,7 @@ register_resource!(
     CurrentPromptIdResource
 );
 
-/// True while a `/goal` loop is active. Set by xai-grok-shell at turn start.
+/// True while a `/goal` loop is active. Set by intelekt-shell at turn start.
 /// When true, `TaskCompletionReminder` suppresses bg-task completion
 /// reminders (marking them reported) so async "task completed" nudges don't
 /// pull a weak model off the goal continuation (e.g. relaunching a killed

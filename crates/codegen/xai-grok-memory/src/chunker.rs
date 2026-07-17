@@ -6,7 +6,7 @@
 //!
 //! Character counts are used as a proxy for token counts (chars / 4 ≈ tokens).
 
-use xai_grok_config_types::MemoryIndexConfig;
+use intelekt_config_types::MemoryIndexConfig;
 
 /// A chunk of text extracted from a memory file.
 #[derive(Debug, Clone, PartialEq, Eq)]

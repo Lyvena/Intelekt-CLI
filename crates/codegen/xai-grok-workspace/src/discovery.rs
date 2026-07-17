@@ -1,12 +1,12 @@
 //! Skill, plugin, project-config, and permissions discovery.
 //!
 //! Phase 3a delegates to the existing discovery implementations in
-//! `xai-grok-agent` and `xai-grok-tools` rather than duplicating them.
+//! `intelekt-agent` and `intelekt-tools` rather than duplicating them.
 //! The workspace stores configuration on [`WorkspaceShared`] and the
 //! [`MpscChannel`] methods call these helpers to return real data
 //! instead of `Value::Null` stubs.
 //!
-//! Re-exports [`AgentsMdTracker`] from `xai-grok-tools` for external
+//! Re-exports [`AgentsMdTracker`] from `intelekt-tools` for external
 //! consumers that need per-session project-instruction tracking.
 
 use std::path::Path;
@@ -14,13 +14,13 @@ use std::path::Path;
 use serde_json::Value;
 
 // Re-export AgentsMdTracker so consumers can reference it via the
-// workspace crate without a direct xai-grok-tools dependency.
-pub use xai_grok_tools::types::agents_md_tracker::AgentsMdTracker;
+// workspace crate without a direct intelekt-tools dependency.
+pub use intelekt_tools::types::agents_md_tracker::AgentsMdTracker;
 
 // Re-export the config types that callers pass into WorkspaceConfig.
-pub use xai_grok_agent::plugins::discovery::DiscoveryConfig as PluginDiscoveryConfig;
-pub use xai_grok_agent::plugins::trust::TrustStore as PluginTrustStore;
-pub use xai_grok_agent::prompt::skills::SkillsConfig;
+pub use intelekt_agent::plugins::discovery::DiscoveryConfig as PluginDiscoveryConfig;
+pub use intelekt_agent::plugins::trust::TrustStore as PluginTrustStore;
+pub use intelekt_agent::prompt::skills::SkillsConfig;
 
 // ---------------------------------------------------------------------------
 // Skill discovery
@@ -28,7 +28,7 @@ pub use xai_grok_agent::prompt::skills::SkillsConfig;
 
 /// Discover skills visible from the workspace root.
 ///
-/// Delegates to [`xai_grok_agent::prompt::skills::list_skills`] with
+/// Delegates to [`intelekt_agent::prompt::skills::list_skills`] with
 /// the workspace's `root_cwd` and the caller-supplied `SkillsConfig`.
 /// Returns each [`SkillInfo`] serialized to a `serde_json::Value`.
 ///
@@ -39,10 +39,10 @@ pub async fn discover_skills(root_cwd: &Path, config: &SkillsConfig) -> Vec<Valu
     let cwd_str = root_cwd.to_string_lossy();
     // Workspace discovery is out of scope for per-vendor compat gating;
     // use the all-on default to preserve prior behavior.
-    let skills = xai_grok_agent::prompt::skills::list_skills(
+    let skills = intelekt_agent::prompt::skills::list_skills(
         Some(&cwd_str),
         config,
-        xai_grok_agent::prompt::skills::CompatConfig::default(),
+        intelekt_agent::prompt::skills::CompatConfig::default(),
     )
     .await;
 
@@ -69,20 +69,20 @@ pub async fn discover_skills(root_cwd: &Path, config: &SkillsConfig) -> Vec<Valu
 /// Discover project-instruction files (AGENTS.md, Claude.md, rules) from the workspace root up to the git root.
 pub async fn discover_agents_md(root_cwd: &Path) -> Vec<Value> {
     let cwd_str = root_cwd.to_string_lossy();
-    let files = xai_grok_agent::prompt::agents_md::read_agents_config_with_paths(
+    let files = intelekt_agent::prompt::agents_md::read_agents_config_with_paths(
         &cwd_str,
-        xai_grok_tools::types::compat::CompatConfig::default(),
+        intelekt_tools::types::compat::CompatConfig::default(),
     )
     .await;
 
     files
         .into_iter()
         .map(|mut file| {
-            // Strip rules-file YAML frontmatter so it does not leak as raw YAML (matches grok-build render).
-            if file.file_path.contains("/.grok/rules/")
+            // Strip rules-file YAML frontmatter so it does not leak as raw YAML (matches intelekt-cli render).
+            if file.file_path.contains("/.intelekt/rules/")
                 || file.file_path.contains("/.claude/rules/")
             {
-                file.content = xai_grok_tools::implementations::skills::skill::extract_skill_body(
+                file.content = intelekt_tools::implementations::skills::skill::extract_skill_body(
                     &file.content,
                 );
             }
@@ -108,7 +108,7 @@ pub async fn discover_agents_md(root_cwd: &Path) -> Vec<Value> {
 
 /// Discover plugins visible from the workspace root.
 ///
-/// Delegates to [`xai_grok_agent::plugins::discover_plugins`] with
+/// Delegates to [`intelekt_agent::plugins::discover_plugins`] with
 /// the workspace's `root_cwd` and the caller-supplied
 /// [`PluginDiscoveryConfig`] and [`PluginTrustStore`].
 ///
@@ -125,7 +125,7 @@ pub fn discover_plugins(
     trust_store: &PluginTrustStore,
     project_trusted: bool,
 ) -> Vec<Value> {
-    let discovered = xai_grok_agent::plugins::discover_plugins(
+    let discovered = intelekt_agent::plugins::discover_plugins(
         Some(root_cwd),
         config,
         trust_store,
@@ -158,13 +158,13 @@ pub fn discover_plugins(
 // Project config
 // ---------------------------------------------------------------------------
 
-/// Load the project config from `<root_cwd>/.grok/config.toml`.
+/// Load the project config from `<root_cwd>/.intelekt/config.toml`.
 ///
 /// Returns `Value::Null` if the file does not exist or cannot be
 /// parsed. Non-fatal errors are logged.
 pub fn load_project_config(root_cwd: &Path) -> Value {
-    let config_path = root_cwd.join(".grok").join("config.toml");
-    match xai_grok_config::load_config_file(&config_path) {
+    let config_path = root_cwd.join(".intelekt").join("config.toml");
+    match intelekt_config::load_config_file(&config_path) {
         Ok(toml::Value::Table(ref t)) if t.is_empty() => {
             // The config loader returns an empty table when the file
             // does not exist. Normalize to Null for callers.
@@ -258,14 +258,14 @@ mod tests {
     // ---- Skill discovery tests ----
 
     // Note: `list_skills` also discovers user-scoped skills from
-    // `~/.grok/skills/`, so on a developer machine the result may be
+    // `~/.intelekt/skills/`, so on a developer machine the result may be
     // non-empty even for an empty workspace. Tests below check for
     // specific skills rather than asserting emptiness.
 
     #[tokio::test]
     async fn discover_skills_finds_skill_md() {
         let tmp = tempfile::tempdir().unwrap();
-        let skills_dir = tmp.path().join(".grok").join("skills").join("my-skill");
+        let skills_dir = tmp.path().join(".intelekt").join("skills").join("my-skill");
         fs::create_dir_all(&skills_dir).unwrap();
         fs::write(
             skills_dir.join("SKILL.md"),
@@ -285,7 +285,7 @@ mod tests {
     #[tokio::test]
     async fn discover_skills_respects_ignore_config() {
         let tmp = tempfile::tempdir().unwrap();
-        let skills_dir = tmp.path().join(".grok").join("skills").join("ignored");
+        let skills_dir = tmp.path().join(".intelekt").join("skills").join("ignored");
         fs::create_dir_all(&skills_dir).unwrap();
         fs::write(
             skills_dir.join("SKILL.md"),
@@ -313,7 +313,7 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let skills_dir = tmp
             .path()
-            .join(".grok")
+            .join(".intelekt")
             .join("skills")
             .join("serialized-check");
         fs::create_dir_all(&skills_dir).unwrap();
@@ -337,17 +337,17 @@ mod tests {
 
     #[test]
     fn agent_config_file_wire_matches_workspace_types_mirror() {
-        // The RPC serializes grok-build's AgentConfigFile and the remote
+        // The RPC serializes intelekt-cli's AgentConfigFile and the remote
         // consumer deserializes the workspace-types mirror; pin the cross-crate
         // serde shape so a rename/attr drift on either side can't silently
         // break discovery.
-        let src = xai_grok_agent::prompt::agents_md::AgentConfigFile {
+        let src = intelekt_agent::prompt::agents_md::AgentConfigFile {
             file_name: "AGENTS.md".to_string(),
             file_path: "/repo/AGENTS.md".to_string(),
             content: "# Instructions\n".to_string(),
         };
         let json = serde_json::to_value(&src).unwrap();
-        let mirror: xai_grok_workspace_types::rpc::agents_md::AgentConfigFile =
+        let mirror: intelekt_workspace_types::rpc::agents_md::AgentConfigFile =
             serde_json::from_value(json.clone())
                 .expect("server shape must deserialize into mirror");
         assert_eq!(mirror.file_name, src.file_name);
@@ -360,11 +360,11 @@ mod tests {
         );
     }
 
-    // Discovery also scans the real `~/.grok`, so fixtures use test-unique names.
+    // Discovery also scans the real `~/.intelekt`, so fixtures use test-unique names.
     #[tokio::test]
     async fn discover_agents_md_strips_rules_frontmatter() {
         let tmp = tempfile::tempdir().unwrap();
-        let rules_dir = tmp.path().join(".grok").join("rules");
+        let rules_dir = tmp.path().join(".intelekt").join("rules");
         fs::create_dir_all(&rules_dir).unwrap();
         fs::write(
             rules_dir.join("xyzzy-discover-agents-md-test.md"),
@@ -378,7 +378,7 @@ mod tests {
             .find(|f| {
                 f["file_path"]
                     .as_str()
-                    .is_some_and(|p| p.ends_with("/.grok/rules/xyzzy-discover-agents-md-test.md"))
+                    .is_some_and(|p| p.ends_with("/.intelekt/rules/xyzzy-discover-agents-md-test.md"))
             })
             .expect("should discover the rules file");
         let content = rule["content"].as_str().unwrap();
@@ -420,12 +420,12 @@ mod tests {
     // ---- Plugin discovery tests ----
 
     // Note: `discover_plugins` also discovers user-scoped plugins
-    // from `~/.grok/plugins/`, so tests check for specific plugins.
+    // from `~/.intelekt/plugins/`, so tests check for specific plugins.
 
     #[test]
     fn discover_plugins_finds_manifest_plugin() {
         let tmp = tempfile::tempdir().unwrap();
-        let plugins_dir = tmp.path().join(".grok").join("plugins").join("test-plugin");
+        let plugins_dir = tmp.path().join(".intelekt").join("plugins").join("test-plugin");
         fs::create_dir_all(&plugins_dir).unwrap();
         fs::write(
             plugins_dir.join("plugin.json"),
@@ -450,7 +450,7 @@ mod tests {
     #[test]
     fn discover_plugins_json_has_expected_fields() {
         let tmp = tempfile::tempdir().unwrap();
-        let plugins_dir = tmp.path().join(".grok").join("plugins").join("field-test");
+        let plugins_dir = tmp.path().join(".intelekt").join("plugins").join("field-test");
         fs::create_dir_all(plugins_dir.join("skills")).unwrap();
         fs::write(
             plugins_dir.join("plugin.json"),
@@ -489,7 +489,7 @@ mod tests {
     #[test]
     fn load_project_config_reads_toml_as_json() {
         let tmp = tempfile::tempdir().unwrap();
-        let grok_dir = tmp.path().join(".grok");
+        let grok_dir = tmp.path().join(".intelekt");
         fs::create_dir_all(&grok_dir).unwrap();
         fs::write(
             grok_dir.join("config.toml"),

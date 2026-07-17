@@ -327,7 +327,7 @@ async fn send_with_retry_escaping_pool_combinator_behavior() {
 #[test]
 fn marker_is_not_a_managed_artifact() {
     assert!(
-        !MANAGED_ARTIFACT_FILES.contains(&xai_grok_config::MANAGED_CONFIG_CACHE_FILE),
+        !MANAGED_ARTIFACT_FILES.contains(&intelekt_config::MANAGED_CONFIG_CACHE_FILE),
         "the marker must be removed last, never as part of the artifact loop"
     );
     // Pin the composed contents: the purge loops, tmp-prefix sweep, and eviction all
@@ -356,7 +356,7 @@ fn purge_keeps_marker_when_an_artifact_removal_fails() {
     for name in MANAGED_ARTIFACT_FILES {
         std::fs::write(home.join(name), "x").unwrap();
     }
-    std::fs::write(home.join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE), "{}").unwrap();
+    std::fs::write(home.join(intelekt_config::MANAGED_CONFIG_CACHE_FILE), "{}").unwrap();
 
     // Make one artifact unremovable: squat it with a dir whose read-only subdir
     // holds a file — `remove_dir_all` can't unlink inside the read-only subdir.
@@ -375,7 +375,7 @@ fn purge_keeps_marker_when_an_artifact_removal_fails() {
 
     remove_managed_config_files(home);
     assert!(
-        home.join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE)
+        home.join(intelekt_config::MANAGED_CONFIG_CACHE_FILE)
             .exists(),
         "a failed artifact removal must keep the marker (detector stays armed)"
     );
@@ -388,7 +388,7 @@ fn purge_keeps_marker_when_an_artifact_removal_fails() {
     }
     assert!(
         !home
-            .join(xai_grok_config::MANAGED_CONFIG_CACHE_FILE)
+            .join(intelekt_config::MANAGED_CONFIG_CACHE_FILE)
             .exists(),
         "with every artifact removed, the marker goes last"
     );

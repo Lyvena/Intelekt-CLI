@@ -16,7 +16,7 @@ use crate::auth::manager::RefreshReason;
 use crate::auth::token_type::TokenType;
 use std::sync::Arc;
 use std::time::Duration;
-/// Subscription tiers that qualify for Grok Build access.
+/// Subscription tiers that qualify for Intelekt CLI access.
 /// Any active subscription qualifies -- the access gate in remote settings
 /// controls which tiers are actually allowed.
 const QUALIFYING_TIERS: &[&str] = &[
@@ -49,7 +49,7 @@ async fn fetch_user_info(
             "X-XAI-Token-Auth",
             auth_manager.grok_com_config().token_header.as_str(),
         )
-        .header("x-grok-client-version", xai_grok_version::VERSION)
+        .header("x-grok-client-version", intelekt_version::VERSION)
         .header(
             crate::http::CLIENT_MODE_HEADER,
             crate::http::process_client_mode(),
@@ -92,7 +92,7 @@ pub(crate) async fn single_check(
     {
         Ok(ui) => ui,
         Err(kind) => {
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 "paywall_check_error",
                 None,
                 Some(serde_json::json!({ "user_id" : user_id, "kind" : kind })),
@@ -100,7 +100,7 @@ pub(crate) async fn single_check(
             return None;
         }
     };
-    xai_grok_telemetry::unified_log::info(
+    intelekt_telemetry::unified_log::info(
         "paywall_check_result",
         None,
         Some(serde_json::json!(
@@ -115,7 +115,7 @@ pub(crate) async fn single_check(
     if !QUALIFYING_TIERS.contains(&new_tier.as_str()) {
         return None;
     }
-    xai_grok_telemetry::unified_log::info(
+    intelekt_telemetry::unified_log::info(
         "paywall_check_subscription_detected",
         None,
         Some(serde_json::json!({ "user_id" : user_id, "new_tier" : new_tier, })),
@@ -124,7 +124,7 @@ pub(crate) async fn single_check(
         .refresh_chain(TokenType::OidcSession, RefreshReason::ServerRejected)
         .await
     {
-        xai_grok_telemetry::unified_log::warn(
+        intelekt_telemetry::unified_log::warn(
             "paywall_check_error",
             None,
             Some(serde_json::json!(
@@ -146,7 +146,7 @@ pub(crate) async fn single_check(
     } else {
         None
     };
-    xai_grok_telemetry::unified_log::info(
+    intelekt_telemetry::unified_log::info(
         "paywall_check_unblocked",
         None,
         Some(serde_json::json!({ "user_id" : user_id, "new_tier" : new_tier })),

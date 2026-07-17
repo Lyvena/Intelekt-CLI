@@ -1765,8 +1765,8 @@ impl PromptWidget {
             ) || (key.code == KeyCode::Char('h')
                 && key.modifiers.contains(KeyModifiers::CONTROL));
             if is_backspace_key && !old_text.is_empty() {
-                use xai_grok_telemetry::events::BackspaceNoEffect;
-                use xai_grok_telemetry::session_ctx::log_event;
+                use intelekt_telemetry::events::BackspaceNoEffect;
+                use intelekt_telemetry::session_ctx::log_event;
                 let evt = BackspaceNoEffect {
                     terminal: crate::terminal::terminal_context().telemetry_snapshot(),
                     key_code: format!("{:?}", key.code),

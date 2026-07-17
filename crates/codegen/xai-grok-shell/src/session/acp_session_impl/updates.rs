@@ -486,9 +486,9 @@ impl SessionActor {
                     );
                 }
                 let envelope = self.fire_hook(
-                    xai_grok_hooks::event::HookEventName::SubagentStart,
+                    intelekt_hooks::event::HookEventName::SubagentStart,
                     None,
-                    xai_grok_hooks::event::HookPayload::SubagentStart {
+                    intelekt_hooks::event::HookPayload::SubagentStart {
                         subagent_id: subagent_id.clone(),
                         subagent_type: subagent_type.clone(),
                         description: Some(description.clone()),
@@ -497,9 +497,9 @@ impl SessionActor {
                 let hook_registry_snapshot = self.hook_registry.borrow().clone();
                 if let Some(registry) = hook_registry_snapshot {
                     let ctx = self.hook_run_ctx();
-                    let _ = xai_grok_hooks::dispatcher::dispatch_non_blocking(
+                    let _ = intelekt_hooks::dispatcher::dispatch_non_blocking(
                         &registry,
-                        xai_grok_hooks::event::HookEventName::SubagentStart,
+                        intelekt_hooks::event::HookEventName::SubagentStart,
                         &envelope,
                         &ctx,
                     )
@@ -516,9 +516,9 @@ impl SessionActor {
                 let spawn_info = self.subagent_spawn_info.lock().remove(subagent_id);
                 let exit_code = subagent_exit_code(status.as_str());
                 let envelope = self.fire_hook(
-                    xai_grok_hooks::event::HookEventName::SubagentEnd,
+                    intelekt_hooks::event::HookEventName::SubagentEnd,
                     None,
-                    xai_grok_hooks::event::HookPayload::SubagentStop {
+                    intelekt_hooks::event::HookPayload::SubagentStop {
                         subagent_id: subagent_id.clone(),
                         subagent_type: spawn_info
                             .as_ref()
@@ -532,9 +532,9 @@ impl SessionActor {
                 let hook_registry_snapshot = self.hook_registry.borrow().clone();
                 if let Some(registry) = hook_registry_snapshot {
                     let ctx = self.hook_run_ctx();
-                    let _ = xai_grok_hooks::dispatcher::dispatch_non_blocking(
+                    let _ = intelekt_hooks::dispatcher::dispatch_non_blocking(
                         &registry,
-                        xai_grok_hooks::event::HookEventName::SubagentEnd,
+                        intelekt_hooks::event::HookEventName::SubagentEnd,
                         &envelope,
                         &ctx,
                     )
@@ -674,9 +674,9 @@ impl SessionActor {
         level: Option<String>,
     ) {
         let envelope = self.fire_hook(
-            xai_grok_hooks::event::HookEventName::Notification,
+            intelekt_hooks::event::HookEventName::Notification,
             None,
-            xai_grok_hooks::event::HookPayload::Notification {
+            intelekt_hooks::event::HookPayload::Notification {
                 notification_type: notification_type.to_string(),
                 message,
                 title,
@@ -688,9 +688,9 @@ impl SessionActor {
             return;
         };
         let ctx = self.hook_run_ctx();
-        let _ = xai_grok_hooks::dispatcher::dispatch_non_blocking(
+        let _ = intelekt_hooks::dispatcher::dispatch_non_blocking(
             &registry,
-            xai_grok_hooks::event::HookEventName::Notification,
+            intelekt_hooks::event::HookEventName::Notification,
             &envelope,
             &ctx,
         )

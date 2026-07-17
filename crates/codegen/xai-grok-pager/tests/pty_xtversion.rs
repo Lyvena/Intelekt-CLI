@@ -1,9 +1,9 @@
 //! PTY e2e tests for the runtime XTVERSION probe, run with:
-//! `cargo test -p xai-grok-pager --test pty_xtversion -- --ignored --nocapture`
+//! `cargo test -p intelekt-pager --test pty_xtversion -- --ignored --nocapture`
 
 use std::time::Duration;
 
-use xai_grok_pager_pty_harness::{PtyHarness, pager_binary};
+use intelekt_pager_pty_harness::{PtyHarness, pager_binary};
 
 const ROWS: u16 = 50;
 const COLS: u16 = 120;

@@ -1,7 +1,7 @@
-//! AcpTerminalAdapter: implements `xai-grok-tools::TerminalBackend` using ACP gateway calls.
+//! AcpTerminalAdapter: implements `intelekt-tools::TerminalBackend` using ACP gateway calls.
 //!
 //! This adapter enables bash tool execution over ACP (remote execution).
-//! It translates xai-grok-tools' `TerminalBackend` trait into ACP protocol calls:
+//! It translates intelekt-tools' `TerminalBackend` trait into ACP protocol calls:
 //!   `run()` → create_terminal → wait_for_exit → terminal_output → release_terminal
 //!   `run_background()` → create_terminal + spawn exit watcher
 //!   `get_task()` → terminal_output (merged with tracked metadata)
@@ -15,11 +15,11 @@ use std::time::Duration;
 
 use agent_client_protocol as acp;
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
-use xai_grok_tools::computer::types::{
+use intelekt_tools::computer::types::{
     BackgroundHandle, ComputerError, KillOutcome, TaskSnapshot, TerminalBackend,
     TerminalRunRequest, TerminalRunResult,
 };
-use xai_grok_tools::notification::types::ToolNotificationHandle;
+use intelekt_tools::notification::types::ToolNotificationHandle;
 
 // ── Tracked task state ───────────────────────────────────────────────
 
@@ -77,7 +77,7 @@ impl TrackedTask {
             completed,
             block_waited: self.block_waited,
             explicitly_killed: self.explicitly_killed,
-            kind: xai_grok_tools::computer::types::TaskKind::Bash,
+            kind: intelekt_tools::computer::types::TaskKind::Bash,
             owner_session_id: None,
         }
     }
@@ -250,7 +250,7 @@ fn parse_exit(status: &Option<acp::TerminalExitStatus>) -> (Option<i32>, Option<
 
 // ── Adapter ──────────────────────────────────────────────────────────
 
-/// Wraps xai-grok-shell's ACP gateway to satisfy xai-grok-tools' TerminalBackend.
+/// Wraps intelekt-shell's ACP gateway to satisfy intelekt-tools' TerminalBackend.
 pub struct AcpTerminalAdapter {
     gateway: GatewaySender,
     session_id: acp::SessionId,
@@ -441,7 +441,7 @@ impl TerminalBackend for AcpTerminalAdapter {
                     exit_code,
                     signal,
                     completed,
-                    kind: xai_grok_tools::computer::types::TaskKind::Bash,
+                    kind: intelekt_tools::computer::types::TaskKind::Bash,
                     block_waited: false,
                     explicitly_killed: false,
                     owner_session_id: None,

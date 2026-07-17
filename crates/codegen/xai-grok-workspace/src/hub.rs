@@ -42,7 +42,7 @@ use url::Url;
 use xai_computer_hub_sdk::{
     AuthProvider, ClientError, HubConnectionPool, ToolServer, ToolServerBuilder, ToolServerHandler,
 };
-use xai_grok_tools::registry::types::ToolConfig;
+use intelekt_tools::registry::types::ToolConfig;
 use xai_tool_protocol::ToolId;
 use xai_tool_runtime::{
     ToolCallContext, ToolError, ToolErrorKind, ToolStream, ToolStreamItem, TypedToolOutput,
@@ -220,7 +220,7 @@ impl HubHandle {
             .url(server_url)
             .auth_provider(config.auth.clone())
             .allow_insecure_ws(config.allow_insecure_ws)
-            .binary_version(xai_grok_version::VERSION)
+            .binary_version(intelekt_version::VERSION)
             .with_ws_ping_interval(ws_ping);
         if let Some(schedule) = ws_reconnect_backoff {
             server_builder = server_builder.with_reconnect_backoff(schedule);
@@ -625,7 +625,7 @@ pub(crate) fn hub_result<T>(result: Result<T, ClientError>) -> WorkspaceResult<T
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_tools::types::tool::ToolKind;
+    use intelekt_tools::types::tool::ToolKind;
     #[test]
     fn hub_tool_ids_to_tool_configs_basic() {
         let ids = vec![
@@ -832,15 +832,15 @@ mod tests {
             "dropping the stream must run the RAII completion guard"
         );
     }
-    use xai_grok_tools::types::tool_metadata::ToolMetadata as XaiToolMetadata;
+    use intelekt_tools::types::tool_metadata::ToolMetadata as XaiToolMetadata;
     #[derive(Debug)]
     struct GateStreamingStub;
     impl XaiToolMetadata for GateStreamingStub {
         fn kind(&self) -> ToolKind {
             ToolKind::Other
         }
-        fn tool_namespace(&self) -> xai_grok_tools::types::tool::ToolNamespace {
-            xai_grok_tools::types::tool::ToolNamespace::MCP
+        fn tool_namespace(&self) -> intelekt_tools::types::tool::ToolNamespace {
+            intelekt_tools::types::tool::ToolNamespace::MCP
         }
         fn description_template(&self) -> &str {
             "gate streaming stub"
@@ -939,8 +939,8 @@ mod tests {
     use crate::capability::CapabilityMode;
     use crate::session::tool_config::test_support::tc;
     use std::time::Duration;
-    use xai_grok_tools::notification::types::{ToolNotification, ToolNotificationHandle};
-    use xai_grok_tools::registry::types::ToolServerConfig;
+    use intelekt_tools::notification::types::{ToolNotification, ToolNotificationHandle};
+    use intelekt_tools::registry::types::ToolServerConfig;
     fn bg_config() -> ToolServerConfig {
         ToolServerConfig {
             tools: vec![
@@ -1002,7 +1002,7 @@ mod tests {
         }
     }
     fn bg_started_notif(task_id: &str) -> ToolNotification {
-        use xai_grok_tools::notification::types::{
+        use intelekt_tools::notification::types::{
             BashExecutionBackgrounded, BashNotificationBase,
         };
         ToolNotification::BashExecutionBackgrounded(BashExecutionBackgrounded {
@@ -1021,7 +1021,7 @@ mod tests {
         })
     }
     fn task_completed_notif(task_id: &str) -> ToolNotification {
-        use xai_grok_tools::computer::types::{TaskKind, TaskSnapshot};
+        use intelekt_tools::computer::types::{TaskKind, TaskSnapshot};
         ToolNotification::TaskCompleted(TaskSnapshot {
             task_id: task_id.to_owned(),
             command: "sleep 1".to_owned(),

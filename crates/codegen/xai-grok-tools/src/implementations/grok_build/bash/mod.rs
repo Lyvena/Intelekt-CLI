@@ -22,7 +22,7 @@ use std::sync::LazyLock;
 use std::time::Duration;
 
 use regex::Regex;
-use xai_grok_config::shell::AmpersandSemantics;
+use intelekt_config::shell::AmpersandSemantics;
 
 use crate::DEFAULT_TOOL_OUTPUT_CHARS;
 use crate::computer::types::{ComputerError, TerminalRunRequest};
@@ -138,7 +138,7 @@ pub struct BashParams {
     pub timeout_secs: Option<f64>,
     /// **Foreground-only** ceiling for model-provided `timeout` (seconds).
     /// None → built-in [`DEFAULT_MAX_TIMEOUT_MS`] (5 minutes); production
-    /// grok-build opts up to 10h via xai-grok-shell's `BashToolConfig`.
+    /// intelekt-cli opts up to 10h via intelekt-shell's `BashToolConfig`.
     ///
     /// When set:
     /// - Positive model `timeout` values are clamped to this ceiling (ms).
@@ -449,7 +449,7 @@ pub(crate) fn format_default_prompt(bash: &BashOutput) -> String {
 // Default upper bound for model-provided *foreground* command timeouts when
 // `BashParams.max_timeout_secs` is unset: a transport-safe **5 minutes**.
 // Consumers that want longer opt in per session via `max_timeout_secs` — in
-// particular production grok-build sets it to 10h in xai-grok-shell's
+// particular production intelekt-cli sets it to 10h in intelekt-shell's
 // `BashToolConfig`. `max_timeout_secs` only lowers/raises this *foreground*
 // ceiling; background tasks (`timeout: 0` / omitted in background mode) are
 // always unbounded regardless of this value — the model owns their lifetime via
@@ -528,7 +528,7 @@ fn contains_unwaited_background_operator(command: &str) -> bool {
 /// Whether `command` uses `&` as a bash background operator under the given
 /// contract version: legacy (0.4.10) flags only a trailing `&`; current flags
 /// an unwaited `&` anywhere. Callers apply this only when
-/// [`xai_grok_config::shell::ampersand_semantics`] reports POSIX `&` semantics
+/// [`intelekt_config::shell::ampersand_semantics`] reports POSIX `&` semantics
 /// (Unix + Git Bash).
 fn command_has_bash_background_operator(command: &str, is_legacy: bool) -> bool {
     if is_legacy {
@@ -1500,7 +1500,7 @@ ${%- endif %}"#
     fn get_prefixed_command(cmd_prefix: &Option<String>, command: &str) -> String {
         match cmd_prefix {
             Some(prefix) => {
-                let sep = xai_grok_config::shell::chain_separator();
+                let sep = intelekt_config::shell::chain_separator();
                 format!("{prefix} {sep} {command}")
             }
             None => command.to_string(),
@@ -1844,7 +1844,7 @@ impl xai_tool_runtime::Tool for BashTool {
         // shell-specific: bash/POSIX backgrounds with a bare `&`; PowerShell
         // backgrounds only with a trailing `&` (a leading `&` is the call
         // operator); cmd.exe uses `&` as a sequential separator (never rejected).
-        let ampersand = xai_grok_config::shell::ampersand_semantics();
+        let ampersand = intelekt_config::shell::ampersand_semantics();
         if let Some(violation) = should_reject_background_op(
             input.is_background,
             params.allow_background_operator,

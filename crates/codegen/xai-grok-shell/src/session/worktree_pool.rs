@@ -29,7 +29,7 @@
 //! - **macOS only**: Linux has O(1) BTRFS snapshots; the pool adds value
 //!   only on macOS/APFS where worktree creation is O(file_count).
 //! - **Multi-instance safe**: Each pool instance gets a unique subdirectory
-//!   under `~/.grok/worktree_pool/<instance_id>/` with a `.pid` liveness
+//!   under `~/.intelekt/worktree_pool/<instance_id>/` with a `.pid` liveness
 //!   file. Startup cleanup only removes directories for dead processes.
 
 use std::path::{Path, PathBuf};
@@ -100,7 +100,7 @@ pub struct AcquiredWorktree {
 /// `release()` are recycled.
 ///
 /// Each pool instance gets a unique subdirectory under
-/// `~/.grok/worktree_pool/<instance_id>/` with a `.pid` file recording
+/// `~/.intelekt/worktree_pool/<instance_id>/` with a `.pid` file recording
 /// the owning process ID.
 pub struct WorktreePool {
     /// Unique identifier for this agent instance (UUIDv7).
@@ -124,7 +124,7 @@ impl WorktreePool {
     ///
     /// The fill task immediately begins pre-creating linked worktrees up to
     /// `pool_size`. Each pool instance gets a unique subdirectory under
-    /// `~/.grok/worktree_pool/<instance_id>/`. A `.pid` file is written so
+    /// `~/.intelekt/worktree_pool/<instance_id>/`. A `.pid` file is written so
     /// that startup cleanup can determine whether this instance is still alive.
     pub fn new(source_path: PathBuf, config: PoolConfig, cached_file_count: usize) -> Self {
         let instance_id = uuid::Uuid::now_v7().to_string();
@@ -1168,7 +1168,7 @@ static PRUNE_ONCE: std::sync::Once = std::sync::Once::new();
 ///
 /// Collected during startup cleanup, consumed by `WorktreePool::new()`.
 pub struct AdoptableWorktree {
-    /// Current path: `~/.grok/worktree_pool/<old_instance>/<pool_id>/`
+    /// Current path: `~/.intelekt/worktree_pool/<old_instance>/<pool_id>/`
     pub old_path: PathBuf,
     /// The pool_id (directory name, also the key in `.git/worktrees/`)
     pub pool_id: String,
@@ -1206,7 +1206,7 @@ pub fn take_adoptable_worktrees() -> Vec<AdoptableWorktree> {
 /// cleanup already ran from an earlier call with `None`.
 ///
 /// Multi-instance safe: iterates instance subdirectories under
-/// `~/.grok/worktree_pool/`, reads each `.pid` file, and checks
+/// `~/.intelekt/worktree_pool/`, reads each `.pid` file, and checks
 /// whether the PID is still alive. Only cleans directories where the
 /// owning process is dead.
 ///
@@ -1515,9 +1515,9 @@ async fn warm_source_repo(repo_path: &Path) {
         // writes — --no-optional-locks from the helper would prevent fsmonitor,
         // untracked-cache, and split-index data from being persisted.
         let mut cmd = std::process::Command::new("git");
-        xai_grok_tools::util::detach_std_command(&mut cmd);
+        intelekt_tools::util::detach_std_command(&mut cmd);
         cmd.stdin(std::process::Stdio::null());
-        cmd.envs(xai_grok_tools::util::pager_env());
+        cmd.envs(intelekt_tools::util::pager_env());
         for &(key, val) in xai_tty_utils::GIT_AUTH_SUPPRESSION_ENVS.iter() {
             cmd.env(key, val);
         }
@@ -1587,7 +1587,7 @@ async fn warm_git_caches(repo_path: &Path) {
     );
 }
 
-/// The base pool directory under `~/.grok/`.
+/// The base pool directory under `~/.intelekt/`.
 /// Instance-scoped directories live under this: `worktree_pool/<instance_id>/`.
 fn pool_base_directory() -> PathBuf {
     grok_home().join("worktree_pool")
@@ -1619,7 +1619,7 @@ fn count_instance_worktrees(instance_id: &str) -> usize {
 /// Create one linked worktree for the pool using `WorktreeBuilder`.
 ///
 /// Always creates **linked** worktrees (shared object store) with
-/// `CleanAll` mode. Placed under `~/.grok/worktree_pool/<instance_id>/<uuid>/`.
+/// `CleanAll` mode. Placed under `~/.intelekt/worktree_pool/<instance_id>/<uuid>/`.
 async fn create_pooled_worktree(
     source: &Path,
     instance_id: &str,

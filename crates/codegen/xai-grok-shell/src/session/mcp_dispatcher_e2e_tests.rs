@@ -29,7 +29,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::sync::Mutex as TokioMutex;
-use xai_grok_mcp::servers::{McpClient, McpClientEvent, McpState};
+use intelekt_mcp::servers::{McpClient, McpClientEvent, McpState};
 
 use crate::session::mcp_dispatcher::{
     McpServerStatus, McpServerStatusPayload, McpServerStatusReason, SharedShutdownState,

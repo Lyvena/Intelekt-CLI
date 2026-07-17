@@ -1,9 +1,9 @@
 [package]
 license = "Apache-2.0"
-name = "xai-grok-voice"
+name = "intelekt-voice"
 version = "0.1.0"
 edition.workspace = true
-description = "Voice dictation (streaming STT) for Grok Build CLI"
+description = "Voice dictation (streaming STT) for Intelekt CLI CLI"
 
 [dependencies]
 anyhow = { workspace = true }

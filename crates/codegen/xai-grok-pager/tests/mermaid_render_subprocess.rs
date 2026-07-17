@@ -20,9 +20,9 @@
 
 use std::time::{Duration, Instant};
 
-use xai_grok_pager::app::mermaid_worker::render_via_subprocess;
-use xai_grok_pager::scrollback::blocks::mermaid_content::MermaidRenderQuality;
-use xai_grok_pager_pty_harness::pager_binary;
+use intelekt_pager::app::mermaid_worker::render_via_subprocess;
+use intelekt_pager::scrollback::blocks::mermaid_content::MermaidRenderQuality;
+use intelekt_pager_pty_harness::pager_binary;
 
 /// A cyclic login-flow whose back-edge (`Attempts -->|No| Enter`) routes back
 /// into the cycle — the tricky case for flowchart edge routing.
@@ -124,7 +124,7 @@ fn tight_timeout_kills_child_and_returns_err() {
     // and reap the child and return Err, then return promptly (not block on the
     // child finishing). That the kill actually terminates the child's process
     // group is asserted directly (and without the heavy binary) by the
-    // `xai_grok_mermaid::subprocess` `reap_terminates_the_process` unit test;
+    // `intelekt_mermaid::subprocess` `reap_terminates_the_process` unit test;
     // here the loose ceiling just guards against the parent blocking on a child
     // that outlived its budget, while tolerating slow-CI spawn of the real
     // binary.

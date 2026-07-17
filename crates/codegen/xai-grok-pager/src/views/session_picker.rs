@@ -185,7 +185,7 @@ enum PickerSelectionKey {
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn capture_picker_selection(
     entries: Option<&[SessionPickerEntry]>,
-    content_results: Option<&[xai_grok_shell::extensions::session_search::SearchSessionHit]>,
+    content_results: Option<&[intelekt_shell::extensions::session_search::SearchSessionHit]>,
     state: &PickerState,
     query: &str,
     grouped: bool,
@@ -231,7 +231,7 @@ pub(crate) fn capture_picker_selection(
 pub(crate) fn restore_picker_selection(
     anchor: PickerSelectionAnchor,
     entries: Option<&[SessionPickerEntry]>,
-    content_results: Option<&[xai_grok_shell::extensions::session_search::SearchSessionHit]>,
+    content_results: Option<&[intelekt_shell::extensions::session_search::SearchSessionHit]>,
     state: &mut PickerState,
     query: &str,
     grouped: bool,
@@ -356,7 +356,7 @@ pub(crate) fn filter_session_entries(
 /// deduplicating content hits that already appear in the fuzzy list.
 pub(crate) fn build_virtual_list(
     entries: Option<&[SessionPickerEntry]>,
-    content_results: Option<&[xai_grok_shell::extensions::session_search::SearchSessionHit]>,
+    content_results: Option<&[intelekt_shell::extensions::session_search::SearchSessionHit]>,
     query: &str,
     source_filter: SourceFilter,
 ) -> Vec<PickerItem> {
@@ -397,7 +397,7 @@ pub(crate) fn build_virtual_list(
 /// `current_repo` pins the matching repo group to the top of the list.
 pub(crate) fn build_entry_map(
     entries: Option<&[SessionPickerEntry]>,
-    content_results: Option<&[xai_grok_shell::extensions::session_search::SearchSessionHit]>,
+    content_results: Option<&[intelekt_shell::extensions::session_search::SearchSessionHit]>,
     query: &str,
     grouped: bool,
     content_loading: bool,
@@ -640,7 +640,7 @@ pub(crate) fn build_grouped_picker_entries<'a>(
 /// Deduplicates hits that already appear in the fuzzy results. The returned
 /// entries should be appended after the fuzzy section (and its header row).
 pub(crate) fn build_content_entry_data(
-    hits: &[xai_grok_shell::extensions::session_search::SearchSessionHit],
+    hits: &[intelekt_shell::extensions::session_search::SearchSessionHit],
     entries_data: &[SessionPickerEntry],
     filtered_indices: &[usize],
     state: &PickerState,
@@ -878,8 +878,8 @@ mod tests {
 
     fn make_content_hit(
         session_id: &str,
-    ) -> xai_grok_shell::extensions::session_search::SearchSessionHit {
-        xai_grok_shell::extensions::session_search::SearchSessionHit {
+    ) -> intelekt_shell::extensions::session_search::SearchSessionHit {
+        intelekt_shell::extensions::session_search::SearchSessionHit {
             session_id: session_id.into(),
             summary: session_id.into(),
             cwd: "/r".into(),

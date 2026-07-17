@@ -8,7 +8,7 @@
 use std::sync::LazyLock;
 
 use agent_client_protocol as acp;
-use xai_grok_tools::types::TaskSnapshot;
+use intelekt_tools::types::TaskSnapshot;
 
 use crate::extensions::notification::SessionUpdate as XaiSessionUpdate;
 

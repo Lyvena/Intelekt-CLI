@@ -21,7 +21,7 @@ use std::collections::HashMap;
 
 use super::embedding::EmbeddingProvider;
 use super::index::MemoryIndex;
-use xai_grok_config_types::MemorySearchConfig;
+use intelekt_config_types::MemorySearchConfig;
 
 /// A search result with merged scoring from FTS and vector search.
 #[derive(Debug, Clone)]
@@ -395,7 +395,7 @@ mod tests {
     use crate::index::{MemoryIndex, init_sqlite_vec};
     use crate::storage::MemoryStorage;
     use tempfile::TempDir;
-    use xai_grok_config_types::{MemoryIndexConfig, MemorySearchConfig};
+    use intelekt_config_types::{MemoryIndexConfig, MemorySearchConfig};
 
     fn test_index(tmp: &TempDir) -> MemoryIndex {
         init_sqlite_vec();

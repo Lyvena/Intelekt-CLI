@@ -2,16 +2,16 @@
 //!
 //! These are the canonical definitions for `SubagentRole`, `SubagentPersona`,
 //! and `PersonaIOField`. The shell re-exports them via
-//! `xai_grok_shell::config::{SubagentRole, SubagentPersona, PersonaIOField}`.
+//! `intelekt_shell::config::{SubagentRole, SubagentPersona, PersonaIOField}`.
 //!
-//! Methods that remain in `xai-grok-shell` (on `SubagentsConfig`):
+//! Methods that remain in `intelekt-shell` (on `SubagentsConfig`):
 //! - `discover_personas()` / `discover_roles()` — filesystem discovery
 //!   coupled to the shell's config resolution pipeline.
 //! - `resolve()` — config layering (CLI > env > TOML > remote) is
 //!   shell-specific. This crate receives already-resolved maps.
 
 use std::path::PathBuf;
-use xai_grok_tools::implementations::skills::discovery::extract_first_paragraph;
+use intelekt_tools::implementations::skills::discovery::extract_first_paragraph;
 
 use serde::Deserialize;
 
@@ -189,19 +189,19 @@ mod tests {
         let toml_str = r#"
 description = "Research agent"
 default_capability_mode = "read-only"
-model = "grok-3"
+model = "intelekt-3"
 reasoning_effort = "high"
-prompt_file = ".grok/prompts/researcher.md"
+prompt_file = ".intelekt/prompts/researcher.md"
 default_isolation = "worktree"
 "#;
         let role: SubagentRole = toml::from_str(toml_str).unwrap();
         assert_eq!(role.description, "Research agent");
         assert_eq!(role.default_capability_mode.as_deref(), Some("read-only"));
-        assert_eq!(role.model.as_deref(), Some("grok-3"));
+        assert_eq!(role.model.as_deref(), Some("intelekt-3"));
         assert_eq!(role.reasoning_effort.as_deref(), Some("high"));
         assert_eq!(
             role.prompt_file.as_deref(),
-            Some(".grok/prompts/researcher.md")
+            Some(".intelekt/prompts/researcher.md")
         );
         assert_eq!(role.default_isolation.as_deref(), Some("worktree"));
     }
@@ -221,8 +221,8 @@ default_isolation = "worktree"
         let toml_str = r#"
 instructions = "You are a concise writer."
 description = "A concise writing persona."
-instructions_file = ".grok/personas/concise.md"
-model = "grok-3-fast"
+instructions_file = ".intelekt/personas/concise.md"
+model = "intelekt-3-fast"
 reasoning_effort = "low"
 default_isolation = "none"
 
@@ -245,9 +245,9 @@ description = "Path to write the summary"
         );
         assert_eq!(
             persona.instructions_file.as_deref(),
-            Some(".grok/personas/concise.md")
+            Some(".intelekt/personas/concise.md")
         );
-        assert_eq!(persona.model.as_deref(), Some("grok-3-fast"));
+        assert_eq!(persona.model.as_deref(), Some("intelekt-3-fast"));
         assert_eq!(persona.reasoning_effort.as_deref(), Some("low"));
         assert_eq!(persona.inputs.len(), 1);
         assert_eq!(persona.inputs[0].name, "review_file");

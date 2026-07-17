@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 // Project-hook trust is no longer stored here: the shell's folder-trust store
-// (`~/.grok/trusted_folders.toml`) is the single authority for whether a repo's
+// (`~/.intelekt/trusted_folders.toml`) is the single authority for whether a repo's
 // project hooks run (the same gate as repo-local MCP/LSP). The helpers below
 // exist only to migrate prior grants out of the legacy file.
 
@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 /// (`<user_grok_home>/trusted-hook-projects`), or `None` when no user grok home
 /// resolves. Retained only for the one-time migration into folder-trust.
 pub fn legacy_trust_file_path() -> Option<PathBuf> {
-    Some(xai_grok_config::user_grok_home()?.join("trusted-hook-projects"))
+    Some(intelekt_config::user_grok_home()?.join("trusted-hook-projects"))
 }
 
 /// Parse the legacy trusted-projects file into a list of project paths.
@@ -59,7 +59,7 @@ fn is_hook_disabled_with_file(hook_name: &str, file: &Path) -> bool {
 /// Disable a hook by name. Adds to .
 pub fn disable_hook(hook_name: &str) -> Result<(), String> {
     let file = disabled_hooks_file_path()
-        .ok_or_else(|| "no user grok home (set $GROK_HOME or $HOME)".to_string())?;
+        .ok_or_else(|| "no user grok home (set $INTELEKT_HOME or $HOME)".to_string())?;
     disable_hook_with_file(hook_name, &file)
 }
 
@@ -122,10 +122,10 @@ fn enable_hook_with_file(hook_name: &str, file: &Path) -> Result<bool, String> {
     Ok(true)
 }
 
-/// Returns the path to `$GROK_HOME/disabled-hooks`, or `None` when no user grok
+/// Returns the path to `$INTELEKT_HOME/disabled-hooks`, or `None` when no user grok
 /// home resolves.
 fn disabled_hooks_file_path() -> Option<PathBuf> {
-    Some(xai_grok_config::user_grok_home()?.join("disabled-hooks"))
+    Some(intelekt_config::user_grok_home()?.join("disabled-hooks"))
 }
 
 #[cfg(test)]
@@ -134,7 +134,7 @@ mod tests {
 
     /// Each test creates its own legacy file in its own temp dir -- no shared state.
     fn trust_file_in(dir: &Path) -> PathBuf {
-        let grok_dir = dir.join(".grok");
+        let grok_dir = dir.join(".intelekt");
         std::fs::create_dir_all(&grok_dir).unwrap();
         grok_dir.join("trusted-hook-projects")
     }

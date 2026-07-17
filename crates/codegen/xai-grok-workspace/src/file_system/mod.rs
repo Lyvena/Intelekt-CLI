@@ -8,7 +8,7 @@ pub use ext_fs::{
 };
 
 // Client-facing read-only fs ops (`workspace.client_fs_*`). Not re-exported:
-// its wire types live in `xai_grok_workspace_types::rpc::fs` (the `ClientFs*`
+// its wire types live in `intelekt_workspace_types::rpc::fs` (the `ClientFs*`
 // types) and would collide with the shell-facing `ext_fs` names above.
 pub(crate) mod client_fs;
 
@@ -20,7 +20,7 @@ pub use walk::{
     clamp_read_length, encode_chunk, list_directory_paged, read_range,
 };
 // Re-exported so shell-side fs ops can name the shared read encoding.
-pub use xai_grok_workspace_types::rpc::fs::FsReadEncoding;
+pub use intelekt_workspace_types::rpc::fs::FsReadEncoding;
 
 pub mod adapter;
 pub use adapter::AcpFsAdapter;
@@ -72,8 +72,8 @@ use std::{
 };
 use uuid::Uuid;
 
-// Canonical in xai-grok-workspace-types; re-exported for existing paths.
-pub use xai_grok_workspace_types::rpc::search::{ClientId, ContentSearchRequest, TargetClientId};
+// Canonical in intelekt-workspace-types; re-exported for existing paths.
+pub use intelekt_workspace_types::rpc::search::{ClientId, ContentSearchRequest, TargetClientId};
 
 impl From<ContentSearchRequest> for ContentSearchParams {
     fn from(req: ContentSearchRequest) -> Self {

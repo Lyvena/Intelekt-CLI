@@ -1,16 +1,16 @@
 //! Backend-agnostic trait for memory search and retrieval.
 //!
-//! `MemoryBackend` is defined in `xai-grok-tools` to keep the tool crate
+//! `MemoryBackend` is defined in `intelekt-tools` to keep the tool crate
 //! backend-agnostic. The concrete implementation (`MemoryIndex`) lives in
-//! `xai-grok-shell`.
+//! `intelekt-shell`.
 //!
 //! All methods are `&self` (read-only). Write operations (record_access,
 //! memory flush writes) go through the session actor directly.
 
 /// Tracing target for memory system events.
 ///
-/// Use `tracing::info!(target: MEMORY_LOG_TARGET, ...)` in `xai-grok-tools`.
-/// Mirrors `xai_grok_shell::session::memory_log::TARGET`.
+/// Use `tracing::info!(target: MEMORY_LOG_TARGET, ...)` in `intelekt-tools`.
+/// Mirrors `intelekt_shell::session::memory_log::TARGET`.
 pub const MEMORY_LOG_TARGET: &str = "xai_memory";
 
 /// Staleness threshold (days): show a note suggesting verification.

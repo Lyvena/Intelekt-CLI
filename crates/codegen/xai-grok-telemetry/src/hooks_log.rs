@@ -1,21 +1,21 @@
 //! Hooks and plugins tracing target and optional file-based logging layer.
 //!
 //! A dedicated tracing target for hooks and plugins subsystems with an optional
-//! file logger that writes to `~/.grok/logs/hooks.log`.
+//! file logger that writes to `~/.intelekt/logs/hooks.log`.
 //!
 //! ## When to use
 //!
 //! Use regular `tracing::info!` / `tracing::debug!` / `tracing::warn!` with
-//! targets `xai_grok_hooks` or `xai_grok_agent::plugins` at key lifecycle
+//! targets `intelekt_hooks` or `intelekt_agent::plugins` at key lifecycle
 //! points — discovery, dispatch, execution, errors.
 //!
 //! ## Enabling
 //!
 //! ```bash
-//! GROK_HOOKS_LOG=1 grok              # enable, write to ~/.grok/logs/hooks.log
-//! GROK_HOOKS_LOG=/tmp/h.log grok     # write to custom path
-//! GROK_HOOKS_LOG=0 grok              # explicitly disable
-//! tail -f ~/.grok/logs/hooks.log     # watch in another terminal
+//! INTELEKT_HOOKS_LOG=1 grok              # enable, write to ~/.intelekt/logs/hooks.log
+//! INTELEKT_HOOKS_LOG=/tmp/h.log grok     # write to custom path
+//! INTELEKT_HOOKS_LOG=0 grok              # explicitly disable
+//! tail -f ~/.intelekt/logs/hooks.log     # watch in another terminal
 //! ```
 
 use std::fmt;
@@ -30,9 +30,9 @@ use tracing_subscriber::fmt::writer::BoxMakeWriter;
 use tracing_subscriber::layer::Layer;
 use tracing_subscriber::registry::LookupSpan;
 
-use xai_grok_config::grok_home;
+use intelekt_config::grok_home;
 
-const ENV_HOOKS_LOG: &str = "GROK_HOOKS_LOG";
+const ENV_HOOKS_LOG: &str = "INTELEKT_HOOKS_LOG";
 
 static LOG_GUARD: std::sync::OnceLock<Mutex<Option<tracing_appender::non_blocking::WorkerGuard>>> =
     std::sync::OnceLock::new();
@@ -59,9 +59,9 @@ impl FormatTime for UptimeTimer {
 
 /// Build the hooks/plugins log layer.
 ///
-/// Writes to `~/.grok/logs/hooks.log` (or custom path via `GROK_HOOKS_LOG`).
-/// Filters to hooks (`xai_grok_hooks`) and plugins (`xai_grok_agent::plugins`) targets.
-/// Set `GROK_HOOKS_LOG=0` to disable, `GROK_HOOKS_LOG=/path` to redirect.
+/// Writes to `~/.intelekt/logs/hooks.log` (or custom path via `INTELEKT_HOOKS_LOG`).
+/// Filters to hooks (`intelekt_hooks`) and plugins (`intelekt_agent::plugins`) targets.
+/// Set `INTELEKT_HOOKS_LOG=0` to disable, `INTELEKT_HOOKS_LOG=/path` to redirect.
 pub fn layer<S>() -> Option<impl Layer<S>>
 where
     S: Subscriber + for<'span> LookupSpan<'span>,
@@ -92,7 +92,7 @@ where
 
     // Filter for both hooks and plugins targets at debug level
     let filter = tracing_subscriber::filter::EnvFilter::new(
-        "xai_grok_hooks=debug,xai_grok_agent::plugins=debug",
+        "intelekt_hooks=debug,intelekt_agent::plugins=debug",
     );
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_target(true)

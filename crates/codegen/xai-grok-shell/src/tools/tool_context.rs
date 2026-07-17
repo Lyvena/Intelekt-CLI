@@ -4,7 +4,7 @@
 //! that the session actor needs for non-tool operations (ACP communication, git, rewind, etc.).
 //!
 //! Tool execution goes through the ToolBridge, which has its own SessionContext from
-//! xai-grok-tools. This struct is NOT used for tool execution — it's session infrastructure.
+//! intelekt-tools. This struct is NOT used for tool execution — it's session infrastructure.
 //!
 //! Note: Could be renamed to `SessionConfig` or flattened onto `SessionActor` in a future PR.
 use crate::terminal::AsyncTerminalRunner;
@@ -12,9 +12,9 @@ use agent_client_protocol as acp;
 use std::collections::HashMap;
 use std::sync::Arc;
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
-use xai_grok_paths::AbsPathBuf;
-use xai_grok_workspace::file_system::{AsyncFileSystem, AsyncFsWrapper};
-use xai_grok_workspace::session::file_state::FileStateHandle;
+use intelekt_paths::AbsPathBuf;
+use intelekt_workspace::file_system::{AsyncFileSystem, AsyncFsWrapper};
+use intelekt_workspace::session::file_state::FileStateHandle;
 use xai_hunk_tracker::HunkTrackerHandle;
 /// RAII marker: the turn is blocked inside an interruptible wait. Increments
 /// [`ToolContext::blocking_wait_depth`] for its lifetime; `Drop` decrements
@@ -60,12 +60,12 @@ pub struct ToolContext {
     /// `None` if subagent support is not enabled.
     pub subagent_event_tx: Option<
         tokio::sync::mpsc::UnboundedSender<
-            xai_grok_tools::implementations::grok_build::task::types::SubagentEvent,
+            intelekt_tools::implementations::grok_build::task::types::SubagentEvent,
         >,
     >,
     /// Shared LSP runtime — cloned cheaply (Arc) from parent to child.
     /// Same pattern as `fs` and `terminal`.
-    pub lsp: Option<Arc<dyn xai_grok_tools::implementations::lsp::LspBackend>>,
+    pub lsp: Option<Arc<dyn intelekt_tools::implementations::lsp::LspBackend>>,
     /// LSP server names snapshot from session creation (not updated mid-session).
     pub lsp_server_names: Vec<String>,
     /// Shared turn-active flag — set `true` at turn start, `false` at turn end.
@@ -76,11 +76,11 @@ pub struct ToolContext {
     /// (`inject_pending_monitor_events`) and surfaced as ONE hidden
     /// synthetic user message before the next sampling step.
     pub monitor_event_buffer:
-        Option<xai_grok_tools::implementations::grok_build::task::types::MonitorEventBuffer>,
+        Option<intelekt_tools::implementations::grok_build::task::types::MonitorEventBuffer>,
     /// Shared set of IDs delivered via auto-wake synthetic prompts.
     /// Used by `TaskCompletionReminder` to suppress duplicate reminders.
     pub auto_wake_delivered:
-        Option<xai_grok_tools::reminders::task_completion::AutoWakeDeliveredIds>,
+        Option<intelekt_tools::reminders::task_completion::AutoWakeDeliveredIds>,
     /// Channel for requesting trace uploads for synthetic auto-wake turns.
     pub(crate) synthetic_trace_tx:
         Option<tokio::sync::mpsc::UnboundedSender<crate::upload::turn::SyntheticTurnTraceRequest>>,
@@ -122,7 +122,7 @@ impl ToolContext {
         terminal: Arc<dyn AsyncTerminalRunner>,
         hunk_tracker_handle: HunkTrackerHandle,
     ) -> Self {
-        let session_env = xai_grok_workspace::envrc::load_envrc_or_empty_when_trusted(
+        let session_env = intelekt_workspace::envrc::load_envrc_or_empty_when_trusted(
             cwd.as_path(),
             crate::agent::folder_trust::project_scope_allowed(cwd.as_path()),
         );
@@ -147,7 +147,7 @@ impl ToolContext {
             synthetic_trace_tx: None,
             synthetic_trace_tx_shared: None,
             task_output_tool_name:
-                xai_grok_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL.to_string(),
+                intelekt_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL.to_string(),
             auto_wake_enabled: true,
             goal_loop_active_gate: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             blocking_wait_depth: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
@@ -183,7 +183,7 @@ impl ToolContext {
             synthetic_trace_tx: None,
             synthetic_trace_tx_shared: None,
             task_output_tool_name:
-                xai_grok_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL.to_string(),
+                intelekt_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL.to_string(),
             auto_wake_enabled: true,
             goal_loop_active_gate: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             blocking_wait_depth: Arc::new(std::sync::atomic::AtomicUsize::new(0)),
@@ -209,8 +209,8 @@ mod tests {
     use crate::{terminal::AsyncTerminalRunner, tools::ToolContext};
     use std::collections::HashMap;
     use std::sync::Arc;
-    use xai_grok_paths::AbsPathBuf;
-    use xai_grok_workspace::file_system::{AsyncFileSystem, AsyncFsWrapper};
+    use intelekt_paths::AbsPathBuf;
+    use intelekt_workspace::file_system::{AsyncFileSystem, AsyncFsWrapper};
     use xai_hunk_tracker::HunkTrackerHandle;
     impl ToolContext {
         pub fn new_local_context(
@@ -239,7 +239,7 @@ mod tests {
                 synthetic_trace_tx: None,
                 synthetic_trace_tx_shared: None,
                 task_output_tool_name:
-                    xai_grok_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL.to_string(),
+                    intelekt_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL.to_string(),
                 auto_wake_enabled: true,
                 goal_loop_active_gate: Arc::new(std::sync::atomic::AtomicBool::new(false)),
                 blocking_wait_depth: Arc::new(std::sync::atomic::AtomicUsize::new(0)),

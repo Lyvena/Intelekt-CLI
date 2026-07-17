@@ -491,7 +491,7 @@ fn paint_peek_config_badge(
     let mut flags: Vec<PromptFlag> = Vec::new();
     // Mirror the chat prompt's flag precedence: plan wins over always-approve
     // wins over auto. Plan mode blocks edits regardless of the underlying
-    // permission mode (the gate in xai-grok-shell), so `plan` alone is the
+    // permission mode (the gate in intelekt-shell), so `plan` alone is the
     // honest badge even when yolo stays armed underneath.
     if panel.plan_mode {
         flags.push(PromptFlag {

@@ -10,9 +10,9 @@ use super::*;
 /// tools (so `${{ tools.by_kind.exit_plan }}` resolves in the rejection
 /// message), with a gateway drain answering session notifications.
 async fn build_gate_actor() -> SessionActor {
-    use xai_grok_tools::implementations::grok_build::enter_plan_mode::EnterPlanModeTool;
-    use xai_grok_tools::implementations::grok_build::exit_plan_mode::ExitPlanModeTool;
-    use xai_grok_tools::registry::types::ToolConfig;
+    use intelekt_tools::implementations::grok_build::enter_plan_mode::EnterPlanModeTool;
+    use intelekt_tools::implementations::grok_build::exit_plan_mode::ExitPlanModeTool;
+    use intelekt_tools::registry::types::ToolConfig;
     let (gateway_tx, mut gateway_rx) =
         tokio::sync::mpsc::unbounded_channel::<xai_acp_lib::AcpClientMessage>();
     let (persistence_tx, _persistence_rx) =
@@ -69,7 +69,7 @@ async fn tool_result_text(actor: &SessionActor, call_id: &str) -> String {
     conv.iter()
         .rev()
         .find_map(|item| match item {
-            xai_grok_sampling_types::ConversationItem::ToolResult(tr)
+            intelekt_sampling_types::ConversationItem::ToolResult(tr)
                 if tr.tool_call_id == call_id =>
             {
                 Some(tr.content.to_string())

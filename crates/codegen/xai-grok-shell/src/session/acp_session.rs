@@ -65,24 +65,24 @@ use tokio::sync::{Mutex as TokioMutex, mpsc, oneshot};
 use tokio::time::{Duration, sleep};
 use tokio_retry::strategy::ExponentialBackoff;
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
-use xai_grok_agent::AgentDefinition;
-use xai_grok_agent::prompt::agents_md::LEGACY_AGENTS_MD_REMINDER_PREFIX;
-use xai_grok_agent::prompt::skills::SkillsConfig;
-use xai_grok_sampler::SamplerConfig as SamplingConfig;
-use xai_grok_sampling_types::truncate_bytes;
-use xai_grok_tools::computer::local::LocalTerminalBackend;
-use xai_grok_tools::implementations::BashToolInput;
-use xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig;
-use xai_grok_tools::types::ToolInput;
-use xai_grok_tools::types::compat::CompatConfig;
-use xai_grok_tools::types::output::{
+use intelekt_agent::AgentDefinition;
+use intelekt_agent::prompt::agents_md::LEGACY_AGENTS_MD_REMINDER_PREFIX;
+use intelekt_agent::prompt::skills::SkillsConfig;
+use intelekt_sampler::SamplerConfig as SamplingConfig;
+use intelekt_sampling_types::truncate_bytes;
+use intelekt_tools::computer::local::LocalTerminalBackend;
+use intelekt_tools::implementations::BashToolInput;
+use intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig;
+use intelekt_tools::types::ToolInput;
+use intelekt_tools::types::compat::CompatConfig;
+use intelekt_tools::types::output::{
     BashOutput, ReadFileOutput, ToolOutput as ToolsToolOutput, ToolRunResult,
 };
-use xai_grok_workspace::file_system::CodebaseIndexManager;
-use xai_grok_workspace::permission::{
+use intelekt_workspace::file_system::CodebaseIndexManager;
+use intelekt_workspace::permission::{
     AccessKind, ClientType, Decision, PermissionEvent, PermissionHandle,
 };
-use xai_grok_workspace::session::file_state::{FileStateHandle, FileStateTracker};
+use intelekt_workspace::session::file_state::{FileStateHandle, FileStateTracker};
 const SESSION_LOG: &str = "xai_session";
 #[path = "compaction.rs"]
 mod compaction;
@@ -364,14 +364,14 @@ struct ShellManagedGatewayToolClient {
     auth_manager: Arc<AuthManager>,
 }
 #[async_trait::async_trait]
-impl xai_grok_tools::types::resources::ManagedGatewayToolCaller for ShellManagedGatewayToolClient {
+impl intelekt_tools::types::resources::ManagedGatewayToolCaller for ShellManagedGatewayToolClient {
     async fn call_tool(
         &self,
         call_id: &str,
         arguments: serde_json::Value,
         caller: &str,
     ) -> Result<
-        xai_grok_tools::types::resources::ManagedGatewayToolCallResponse,
+        intelekt_tools::types::resources::ManagedGatewayToolCallResponse,
         xai_tool_runtime::ToolError,
     > {
         let auth_key = self
@@ -390,7 +390,7 @@ impl xai_grok_tools::types::resources::ManagedGatewayToolCaller for ShellManaged
         .await
         .map_err(|error| managed_gateway_error_to_tool_error(error, caller))?;
         Ok(
-            xai_grok_tools::types::resources::ManagedGatewayToolCallResponse {
+            intelekt_tools::types::resources::ManagedGatewayToolCallResponse {
                 result: response.result,
                 connectors_needing_reauth: response.connectors_needing_reauth,
             },
@@ -576,11 +576,11 @@ pub(crate) struct SessionActor {
     /// 401-attribution callback. Joined with the bearer the
     /// sampler sends on the wire to emit an `auth 401 attribution`
     /// event at each of the six `OaiCompatClient` 401 arms in
-    /// `xai-grok-sampler`. Threaded into every `SamplerConfig`
+    /// `intelekt-sampler`. Threaded into every `SamplerConfig`
     /// reconstructed by `reconstruct_full_config`. `None` when the
     /// session was spawned without an `AuthManager` (BYOK direct
     /// mode, test fixtures).
-    pub(crate) attribution_callback: Option<xai_grok_sampler::SharedAttributionCallback>,
+    pub(crate) attribution_callback: Option<intelekt_sampler::SharedAttributionCallback>,
     /// Auth manager. Owns the token refresher internally (via
     /// `configure_refresher()`) and is also used for non-sampler
     /// 401 attribution sites: the sampler-side path goes through
@@ -621,14 +621,14 @@ pub(crate) struct SessionActor {
     pub(crate) telemetry_enabled: bool,
     pub(crate) supports_backend_search: std::cell::Cell<bool>,
     pub(crate) compactions_remaining:
-        std::cell::Cell<Option<xai_grok_sampling_types::CompactionsRemaining>>,
+        std::cell::Cell<Option<intelekt_sampling_types::CompactionsRemaining>>,
     pub(crate) compaction_at_tokens:
-        std::cell::Cell<Option<xai_grok_sampling_types::CompactionAtTokens>>,
+        std::cell::Cell<Option<intelekt_sampling_types::CompactionAtTokens>>,
     /// Server-side doom-loop check policy, resolved once at spawn by
     /// `Config::resolve_doom_loop_recovery`; `None` = disabled.
     /// `reconstruct_full_config` threads it into the sampler config, and the
     /// sampler itself sends the matching `x-grok-doom-loop-check` header.
-    pub(crate) doom_loop_recovery: Option<xai_grok_sampling_types::DoomLoopRecoveryPolicy>,
+    pub(crate) doom_loop_recovery: Option<intelekt_sampling_types::DoomLoopRecoveryPolicy>,
     /// Telemetry-only per-turn doom-loop recovery tally (attempts, whether a
     /// budget-spent accept happened, tightest trigger label). Accumulated by
     /// the event drainer, taken at turn end for the per-turn analytics event.
@@ -693,7 +693,7 @@ pub(crate) struct SessionActor {
     /// and the AgentDefinition. Replaces the old `tool_bridge` + `agent_definition` fields.
     /// Wrapped in `RefCell` for mid-session mutation (skill refresh, prompt regen).
     /// Safe: session actor is single-threaded (LocalSet), no concurrent access.
-    pub(crate) agent: std::cell::RefCell<xai_grok_agent::Agent>,
+    pub(crate) agent: std::cell::RefCell<intelekt_agent::Agent>,
     /// Dedup slot for `x.ai/git_head_changed`, shared with the fs-watch
     /// `GitHead` consumer (see `git_head_dedup_key`).
     pub(crate) last_reported_branch: Arc<parking_lot::Mutex<Option<String>>>,
@@ -785,7 +785,7 @@ pub(crate) struct SessionActor {
     pub(crate) goal_update_rx: std::cell::RefCell<
         Option<
             tokio::sync::mpsc::UnboundedReceiver<
-                xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalEnvelope,
+                intelekt_tools::implementations::grok_build::update_goal::UpdateGoalEnvelope,
             >,
         >,
     >,
@@ -794,7 +794,7 @@ pub(crate) struct SessionActor {
     /// empty ToolBridge. The `rx` half is owned by the drainer task (see
     /// `goal_update_rx`).
     pub(crate) goal_update_tx: tokio::sync::mpsc::UnboundedSender<
-        xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalEnvelope,
+        intelekt_tools::implementations::grok_build::update_goal::UpdateGoalEnvelope,
     >,
     /// Resolved master kill-switch for the verification stage (the
     /// adversarial skeptic panel). `false` short-circuits
@@ -860,7 +860,7 @@ pub(crate) struct SessionActor {
     /// time; only the input is parked here for the TurnEnd drain to
     /// run through the verification stage.
     pub(crate) pending_classifier_completions: parking_lot::Mutex<
-        VecDeque<xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalInput>,
+        VecDeque<intelekt_tools::implementations::grok_build::update_goal::UpdateGoalInput>,
     >,
     /// Per-session re-entry guard for the verification stage. Set with
     /// `compare_exchange(false, true)` at fire-entry and cleared on
@@ -881,7 +881,7 @@ pub(crate) struct SessionActor {
     /// Tracks which servers have been announced via system-reminder, for
     /// change detection. Maps server_name -> (tool_count, description_hash).
     pub(crate) mcp_announced_servers:
-        Mutex<HashMap<String, xai_grok_tools::implementations::search_tool::ServerFingerprint>>,
+        Mutex<HashMap<String, intelekt_tools::implementations::search_tool::ServerFingerprint>>,
     /// Controls whether MCP server reminders inject only changes (Delta)
     /// or the full server list (Full). Read from `MCP_REMINDER_MODE` env var.
     pub(crate) mcp_reminder_mode: McpReminderMode,
@@ -916,7 +916,7 @@ pub(crate) struct SessionActor {
     /// Wrapped in `RefCell` for mid-session reload from `&self` methods.
     /// Safe: session actor is single-threaded (LocalSet), no concurrent access.
     pub(crate) hook_registry:
-        std::cell::RefCell<Option<Arc<xai_grok_hooks::discovery::HookRegistry>>>,
+        std::cell::RefCell<Option<Arc<intelekt_hooks::discovery::HookRegistry>>>,
     /// Client hooks from `session/new` `_meta["x.ai/hooks"]`; gated in
     /// [`crate::session::acp_session::hooks`]. `RefCell` so `load_session` reconnect can
     /// replace the set on the live actor (see `SessionCommand::SetClientHooks`).
@@ -926,16 +926,16 @@ pub(crate) struct SessionActor {
     /// and GROK_WORKSPACE_ROOT env var.
     pub(crate) hook_resolved_workspace_root: String,
     /// The detected VCS kind for this session's workspace.
-    pub(crate) vcs_kind: xai_grok_workspace::session::git::VcsKind,
+    pub(crate) vcs_kind: intelekt_workspace::session::git::VcsKind,
     /// Errors from last hook config load (parse failures, etc.).
     pub(crate) hook_load_errors: std::cell::RefCell<Vec<String>>,
     /// Plugin registry snapshot for this session. Updated on `/plugins reload`.
     /// `RefCell` for mid-session reload from `&self` methods.
     pub(crate) plugin_registry:
-        std::cell::RefCell<Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>>>,
+        std::cell::RefCell<Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>>>,
     /// Shared handle to the agent-level plugin registry.
     /// Used by `/plugins reload` to trigger a rebuild that new sessions see.
-    pub(crate) plugin_registry_handle: Option<xai_grok_agent::plugins::SharedPluginRegistryHandle>,
+    pub(crate) plugin_registry_handle: Option<intelekt_agent::plugins::SharedPluginRegistryHandle>,
     /// Centralized event tracking: event log, turn-end guard, active tool,
     /// doom loop terminate flag. All event-related state lives here.
     pub(crate) events: crate::session::events::EventTracker,
@@ -1006,17 +1006,17 @@ pub(crate) struct SessionActor {
     /// terminal `SamplingEvent::Completed` (every text/thought chunk has been
     /// `send_update`d by then). `None` between turns.
     pub(crate) turn_stream_drained: parking_lot::Mutex<Option<tokio::sync::oneshot::Sender<()>>>,
-    /// Handle to the per-session `xai-grok-sampler` actor.
+    /// Handle to the per-session `intelekt-sampler` actor.
     ///
     /// Live sessions get a real handle from `spawn_session_actor`;
     /// tests and other constructor sites use `SamplerHandle::noop()`.
     /// All inference flows through this handle.
-    pub(crate) sampler_handle: xai_grok_sampler::SamplerHandle,
-    /// Cached recipe for constructing this session's [`xai_grok_agent::Agent`].
+    pub(crate) sampler_handle: intelekt_sampler::SamplerHandle,
+    /// Cached recipe for constructing this session's [`intelekt_agent::Agent`].
     ///
     /// Populated once at session spawn and then reused by
     /// `handle_rebuild_agent_for_definition` to build a fresh `Agent`
-    /// (system prompt, [`xai_grok_tools::bridge::ToolBridge`], tool
+    /// (system prompt, [`intelekt_tools::bridge::ToolBridge`], tool
     /// registry, tool name aliases, compaction policy, and reminder
     /// policy) when the user picks a model with a different
     /// `agent_type` before sending any user message.
@@ -1035,7 +1035,7 @@ pub(crate) struct SessionActor {
     /// Per-subagent token state keyed by `subagent_id`; sums into
     /// goal totals via [`Self::goal_tokens`].
     pub(crate) subagent_token_records: parking_lot::Mutex<HashMap<String, SubagentTokenRecord>>,
-    pub(crate) workspace_ops: xai_grok_workspace::WorkspaceOps,
+    pub(crate) workspace_ops: intelekt_workspace::WorkspaceOps,
     /// Template for building trace configs on synthetic auto-wake turns.
     /// Captured from the first real user prompt's trace config so synthetic
     /// turns can upload artifacts using the same bucket/method.
@@ -1159,7 +1159,7 @@ impl SessionActor {
         &self,
         tool_names: &[String],
     ) -> slash_commands::CommandAvailability {
-        use xai_grok_tools::implementations::memory::{
+        use intelekt_tools::implementations::memory::{
             MEMORY_GET_TOOL_NAME, MEMORY_SEARCH_TOOL_NAME,
         };
         let memory_read_registered = tool_names
@@ -1171,7 +1171,7 @@ impl SessionActor {
             memory: self.memory.is_enabled() && memory_read_registered,
             memory_configured: self.memory.backend_params.is_some(),
             scheduler: tool_names.iter().any(|n| {
-                n == xai_grok_tools::implementations::grok_build::SCHEDULER_CREATE_TOOL_NAME
+                n == intelekt_tools::implementations::grok_build::SCHEDULER_CREATE_TOOL_NAME
             }),
             hooks: self.hook_registry.borrow().is_some(),
             plugins: self.plugin_registry.borrow().is_some(),
@@ -1222,7 +1222,7 @@ impl SessionActor {
     /// awaiting — `Arc::clone` is cheap, and an outstanding `Ref`
     /// across `.await` would panic if anything on the suspended path
     /// did `self.agent.borrow_mut()`.
-    fn tool_bridge_handle(&self) -> Arc<xai_grok_tools::bridge::ToolBridge> {
+    fn tool_bridge_handle(&self) -> Arc<intelekt_tools::bridge::ToolBridge> {
         Arc::clone(self.agent.borrow().tool_bridge())
     }
 }
@@ -1232,7 +1232,7 @@ const PROMPT_CONTEXT_FILENAME: &str = "prompt_context.json";
 /// This is best-effort: failures are logged but do not block session creation.
 /// The saved JSON enables deterministic re-rendering, `grok prompt --json`
 /// inspection, and post-hoc debugging of what went into a session's system prompt.
-fn save_prompt_context(session_info: &SessionInfo, prompt_context: &xai_grok_agent::PromptContext) {
+fn save_prompt_context(session_info: &SessionInfo, prompt_context: &intelekt_agent::PromptContext) {
     let dir = crate::session::persistence::session_dir(session_info);
     if let Err(e) = std::fs::create_dir_all(&dir) {
         tracing::warn!(?e, "failed to create session dir for prompt_context.json");
@@ -1329,13 +1329,13 @@ fn load_system_prompt_from_dir(session_dir: &std::path::Path) -> Option<String> 
 #[expect(dead_code, reason = "API for future viewers/debug tools")]
 pub(crate) fn load_prompt_context(
     session_info: &SessionInfo,
-) -> Option<xai_grok_agent::PromptContext> {
+) -> Option<intelekt_agent::PromptContext> {
     let dir = crate::session::persistence::session_dir(session_info);
     load_prompt_context_from_dir(&dir)
 }
 fn load_prompt_context_from_dir(
     session_dir: &std::path::Path,
-) -> Option<xai_grok_agent::PromptContext> {
+) -> Option<intelekt_agent::PromptContext> {
     let json = std::fs::read_to_string(session_dir.join(PROMPT_CONTEXT_FILENAME)).ok()?;
     serde_json::from_str(&json)
         .map_err(|e| tracing::warn!(?e, "failed to deserialize prompt_context.json"))
@@ -1356,11 +1356,11 @@ mod usage_categories_tests;
 #[cfg(test)]
 mod managed_gateway_descriptor_tests {
     use super::*;
-    use xai_grok_tools::types::output::{MCPOutput, ToolOutput};
-    use xai_grok_tools::types::tool::{ToolKind, ToolNamespace};
+    use intelekt_tools::types::output::{MCPOutput, ToolOutput};
+    use intelekt_tools::types::tool::{ToolKind, ToolNamespace};
     #[derive(Debug, Default)]
     struct FixtureMcpTool;
-    impl xai_grok_tools::types::tool_metadata::ToolMetadata for FixtureMcpTool {
+    impl intelekt_tools::types::tool_metadata::ToolMetadata for FixtureMcpTool {
         fn kind(&self) -> ToolKind {
             ToolKind::Other
         }
@@ -1620,9 +1620,9 @@ mod tool_meta_stamp_tests {
     use super::support::test_agent_with_tools;
     use super::*;
     use tokio::sync::mpsc;
-    use xai_grok_tools::registry::types::ToolConfig;
-    use xai_grok_tools::tool_taxonomy::TOOL_META_KEY;
-    use xai_grok_workspace::permission::PermissionCommand;
+    use intelekt_tools::registry::types::ToolConfig;
+    use intelekt_tools::tool_taxonomy::TOOL_META_KEY;
+    use intelekt_workspace::permission::PermissionCommand;
     fn read_file_call() -> crate::sampling::types::ToolCallResponse {
         crate::sampling::types::ToolCallResponse {
             id: "call-stamp-1".to_string(),
@@ -1843,9 +1843,9 @@ mod web_search_e2e_tests;
 #[cfg(test)]
 mod managed_gateway_tool_tests {
     use super::*;
-    use xai_grok_tools::types::output::{MCPOutput, ToolOutput};
-    use xai_grok_tools::types::tool::{ToolKind, ToolNamespace};
-    use xai_grok_tools::types::tool_metadata::ToolMetadata;
+    use intelekt_tools::types::output::{MCPOutput, ToolOutput};
+    use intelekt_tools::types::tool::{ToolKind, ToolNamespace};
+    use intelekt_tools::types::tool_metadata::ToolMetadata;
     #[derive(Debug)]
     struct FixtureMcpTool;
     impl ToolMetadata for FixtureMcpTool {
@@ -1933,7 +1933,7 @@ mod managed_gateway_tool_tests {
         ));
         refresh_mcp_snapshot_for_test(bridge.clone(), mcp_state, managed, snapshot.clone()).await;
         let catalog = bridge
-            .read_resource::<xai_grok_tools::types::resources::ManagedGatewayToolCatalog>()
+            .read_resource::<intelekt_tools::types::resources::ManagedGatewayToolCatalog>()
             .await
             .expect("catalog resource should be seeded");
         assert!(catalog.get("gateway__search").is_some());
@@ -2011,7 +2011,7 @@ mod managed_gateway_tool_tests {
         )
         .await;
         let catalog = bridge
-            .read_resource::<xai_grok_tools::types::resources::ManagedGatewayToolCatalog>()
+            .read_resource::<intelekt_tools::types::resources::ManagedGatewayToolCatalog>()
             .await
             .expect("catalog resource should be seeded");
         assert!(catalog.get("linear__list_issues").is_some());

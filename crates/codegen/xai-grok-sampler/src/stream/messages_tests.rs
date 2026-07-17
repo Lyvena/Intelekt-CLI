@@ -5,7 +5,7 @@
 use super::*;
 use futures_util::stream;
 use std::pin::pin;
-use xai_grok_sampling_types::messages::{
+use intelekt_sampling_types::messages::{
     ContentBlock, MessageDeltaBody, MessageDeltaUsage, MessagesResponse, MessagesUsage,
     StreamDelta, StreamError,
 };

@@ -12,10 +12,10 @@
 mod common;
 
 use common::create_test_client;
-use xai_grok_sampling_types::EmptyReason;
-use xai_grok_shell::sampling::{ApiBackend, ConversationItem, ConversationRequest};
-use xai_grok_test_support::sse::responses_api_reasoning_only_events;
-use xai_grok_test_support::{MockInferenceServer, ScriptedResponse};
+use intelekt_sampling_types::EmptyReason;
+use intelekt_shell::sampling::{ApiBackend, ConversationItem, ConversationRequest};
+use intelekt_test_support::sse::responses_api_reasoning_only_events;
+use intelekt_test_support::{MockInferenceServer, ScriptedResponse};
 
 /// A `/v1/responses` stream that streams only reasoning and finishes with no
 /// visible content must be collected into a response the client classifies as

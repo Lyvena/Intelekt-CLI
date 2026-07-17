@@ -2,9 +2,9 @@
 
 use std::sync::Arc;
 
-use xai_grok_sampling_types::HostedTool;
-use xai_grok_tools::bridge::ToolBridge;
-use xai_grok_tools::types::definition::ToolDefinition;
+use intelekt_sampling_types::HostedTool;
+use intelekt_tools::bridge::ToolBridge;
+use intelekt_tools::types::definition::ToolDefinition;
 
 use crate::compaction::CompactionPolicy;
 use crate::config::{AgentDefinition, CompletionRequirement, PermissionMode};

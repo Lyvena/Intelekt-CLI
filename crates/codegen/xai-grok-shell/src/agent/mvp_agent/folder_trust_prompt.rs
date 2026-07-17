@@ -5,7 +5,7 @@
 //!
 //! DORMANT in production: it only fires when the connected client advertised
 //! `x.ai/folderTrust.interactive` AND the folder-trust feature flag is on AND the
-//! verdict is [`xai_grok_workspace::folder_trust::TrustOutcome::Prompt`]. No
+//! verdict is [`intelekt_workspace::folder_trust::TrustOutcome::Prompt`]. No
 //! client advertises the capability until the desktop UI ships — so this is
 //! inert by default even with the feature flag on. The TUI/headless clients never
 //! advertise it (they self-gate trust client-side), so they are never
@@ -16,7 +16,7 @@
 //! (same `workspace_key`), each reloaded against its OWN cwd. Project LSP is NOT
 //! hot-reloaded — the LSP backend is baked into the agent's tool bridge at build
 //! time (one-shot startup coordinator, no in-place reconfigure API), so repo-local
-//! `.grok/lsp.json` servers start on the NEXT session open (the durable grant
+//! `.intelekt/lsp.json` servers start on the NEXT session open (the durable grant
 //! makes the re-spawn trusted). `lsp` is still REPORTED in the prompt's
 //! `configKinds` (it is a real reason the folder is gated) — only the post-grant
 //! hot-reload skips it.
@@ -106,7 +106,7 @@ impl MvpAgent {
         if !folder_trust::prompt_warranted(cwd, remote) {
             return;
         }
-        let key = xai_grok_workspace::trust::workspace_key(cwd);
+        let key = intelekt_workspace::trust::workspace_key(cwd);
         // Dedup: skip if this workspace was already prompted/decided (reconnect)
         // or has a prompt in flight (concurrent same-workspace session). `insert`
         // returns false when already present. Agent-owned set (no process
@@ -135,7 +135,7 @@ impl MvpAgent {
             .borrow()
             .values()
             .filter(|h| {
-                xai_grok_workspace::trust::workspace_key(std::path::Path::new(&h.info.cwd)) == key
+                intelekt_workspace::trust::workspace_key(std::path::Path::new(&h.info.cwd)) == key
             })
             .map(|h| ReloadTarget {
                 cmd_tx: h.cmd_tx.clone(),
@@ -290,12 +290,12 @@ struct ReloadAfterGrant<'a> {
     gateway: &'a GatewaySender,
     /// Every session sharing the granted workspace, each with its own cwd.
     targets: Vec<ReloadTarget>,
-    plugin_handle: &'a xai_grok_agent::plugins::SharedPluginRegistryHandle,
+    plugin_handle: &'a intelekt_agent::plugins::SharedPluginRegistryHandle,
     managed_mcp_cache: &'a crate::session::managed_mcp::ManagedMcpStateHandle,
     auth_manager: &'a std::sync::Arc<AuthManager>,
     can_fetch_managed: bool,
     proxy_url: &'a str,
-    compat: &'a xai_grok_tools::types::CompatConfig,
+    compat: &'a intelekt_tools::types::CompatConfig,
     /// The prompting session's cwd — used only for the client catalog push.
     prompt_cwd: &'a std::path::Path,
 }
@@ -361,7 +361,7 @@ async fn reload_project_servers_after_grant(ctx: ReloadAfterGrant<'_>) {
         let _ = target
             .cmd_tx
             .send(crate::session::SessionCommand::ReloadPlugins { registry });
-        // The session's OWN project hooks (`.grok/hooks`, `.cursor/hooks.json`),
+        // The session's OWN project hooks (`.intelekt/hooks`, `.cursor/hooks.json`),
         // which `ReloadPlugins` does NOT touch — re-discovered against the actor's
         // own `session_info.cwd` on the now-trusted verdict by `reload_hooks_impl`.
         let _ = target

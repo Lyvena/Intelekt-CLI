@@ -42,14 +42,14 @@ use common::{
     FakeBinGuard, can_exec_shell_scripts, host_platform, make_update_config, reset_home,
     set_test_version, small_good_artifact, test_home,
 };
-use xai_grok_update::auto_update::{ensure_latest_on_disk, install_internal_from_base, run_update};
-use xai_grok_update::version::installed_on_disk_version;
+use intelekt_update::auto_update::{ensure_latest_on_disk, install_internal_from_base, run_update};
+use intelekt_update::version::installed_on_disk_version;
 
-/// Assert the active `~/.grok/bin/grok` resolves to the expected versioned
+/// Assert the active `~/.intelekt/bin/grok` resolves to the expected versioned
 /// binary, actually runs, and has exactly the expected content (the content
 /// check is what catches a cross-racer temp-file corruption).
 fn assert_active_binary(home: &Path, version: &str, platform: &str, expected_content: &[u8]) {
-    let link = home.join("bin").join("grok");
+    let link = home.join("bin").join("intelekt");
     assert!(link.is_symlink(), "grok must be a symlink");
     let resolved = dunce::canonicalize(&link)
         .unwrap_or_else(|e| panic!("active grok symlink does not resolve: {e}"));
@@ -75,7 +75,7 @@ fn assert_active_binary(home: &Path, version: &str, platform: &str, expected_con
     assert!(ran_ok, "active grok must pass the smoke-test");
 }
 
-/// Lay down a managed-install layout in the test GROK_HOME:
+/// Lay down a managed-install layout in the test INTELEKT_HOME:
 /// `bin/grok -> ../downloads/grok-<version>-<platform>` (what
 /// `install_internal_from_base` produces).
 fn fake_managed_install(version: &str) {
@@ -93,7 +93,7 @@ fn fake_managed_install(version: &str) {
     .unwrap();
     std::os::unix::fs::symlink(
         std::path::Path::new("../downloads").join(&name),
-        bin.join("grok"),
+        bin.join("intelekt"),
     )
     .unwrap();
 }
@@ -242,7 +242,7 @@ async fn run_update_force_still_redownloads_when_disk_current() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Installer gating: the disk-version probe must only be trusted for
-// installers that actually maintain the managed `~/.grok/bin/grok` symlink
+// installers that actually maintain the managed `~/.intelekt/bin/grok` symlink
 // (internal, gh-release). For npm, a symlink left over from a previous
 // internal install LIES about the npm install's version — and in the worst
 // direction (leftover "newer" than the registry) it would silently suppress
@@ -335,7 +335,7 @@ async fn disk_probe_preserves_prerelease_versions() {
 #[serial]
 async fn disk_probe_rejects_dangling_symlink() {
     // If the symlink survives but its target binary was deleted (manual
-    // ~/.grok/downloads cleanup), the probe must report None — otherwise
+    // ~/.intelekt/downloads cleanup), the probe must report None — otherwise
     // every updater would claim "already up to date" forever while no
     // runnable binary exists, and nothing would ever repair the install.
     let home = test_home();
@@ -346,7 +346,7 @@ async fn disk_probe_rejects_dangling_symlink() {
 
     std::fs::remove_file(
         home.join("downloads")
-            .join(format!("grok-0.2.7-{platform}")),
+            .join(format!("intelekt-0.2.7-{platform}")),
     )
     .unwrap();
 
@@ -374,7 +374,7 @@ async fn ensure_latest_repairs_dangling_symlink_by_downloading() {
     fake_managed_install("0.2.7");
     std::fs::remove_file(
         home.join("downloads")
-            .join(format!("grok-0.2.7-{platform}")),
+            .join(format!("intelekt-0.2.7-{platform}")),
     )
     .unwrap();
     let cfg = make_update_config("stable");
@@ -485,7 +485,7 @@ async fn concurrent_different_version_installs_do_not_corrupt_each_other() {
 
     // The active symlink points at whichever racer swapped last; it must
     // resolve and run regardless.
-    let resolved = dunce::canonicalize(home.join("bin").join("grok")).unwrap();
+    let resolved = dunce::canonicalize(home.join("bin").join("intelekt")).unwrap();
     assert_eq!(std::fs::read(&resolved).unwrap(), artifact);
     let name = resolved.file_name().unwrap().to_string_lossy().to_string();
     assert!(
@@ -495,7 +495,7 @@ async fn concurrent_different_version_installs_do_not_corrupt_each_other() {
 
     // No stray shared temp file left behind (the pre-fix collision name).
     assert!(
-        !home.join("downloads").join("grok-0.1.tmp").exists(),
+        !home.join("downloads").join("intelekt-0.1.tmp").exists(),
         "the pre-fix shared temp name must not exist"
     );
 }

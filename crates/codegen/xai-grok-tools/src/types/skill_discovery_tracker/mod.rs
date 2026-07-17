@@ -159,7 +159,7 @@ enum PendingKind {
 }
 
 /// Dedup helpers -- defined here so the tracker can compute projections
-/// without depending on xai-grok-agent.
+/// without depending on intelekt-agent.
 fn dedup_by_canonical_path(primary: &[SkillInfo], secondary: &[SkillInfo]) -> Vec<SkillInfo> {
     let mut seen_paths = HashSet::new();
     let mut result = Vec::with_capacity(primary.len() + secondary.len());
@@ -1200,7 +1200,7 @@ mod tests {
             None,
             vec![make_skill(
                 "deploy",
-                "/overlay/worktree/.grok/skills/deploy/SKILL.md",
+                "/overlay/worktree/.intelekt/skills/deploy/SKILL.md",
             )],
             Some("/home/user/project".to_string()),
             None,
@@ -1222,7 +1222,7 @@ mod tests {
             None,
             vec![make_skill(
                 "deploy",
-                "/real/path/.grok/skills/deploy/SKILL.md",
+                "/real/path/.intelekt/skills/deploy/SKILL.md",
             )],
             None,
             None,

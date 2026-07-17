@@ -16,7 +16,7 @@
 //!   final retry attempt to escape a poisoned pool within a tight budget.
 //!
 //! Sampling traffic uses process-wide shared clients owned by
-//! `xai_grok_sampler::shared_http` (one HTTP/2 pooled client plus
+//! `intelekt_sampler::shared_http` (one HTTP/2 pooled client plus
 //! a pool-less HTTP/1.1 fallback shared across every
 //! `SamplingClient`). The sampler reads `GROK_POOL_*` /
 //! `GROK_CONNECT_TIMEOUT_SECS` once, when its shared client is
@@ -28,18 +28,18 @@
 
 use std::sync::OnceLock;
 
-use xai_grok_workspace::permission::ClientType;
+use intelekt_workspace::permission::ClientType;
 
 /// Startup span timer, local to this crate.
 ///
-/// Replaces `xai_grok_shell::instrumentation_timer!`, which cannot be referenced
+/// Replaces `intelekt_shell::instrumentation_timer!`, which cannot be referenced
 /// here (it lives in the shell crate, which now depends on this one). This is a
 /// behavior-preserving copy: it routes to the same
-/// `xai_grok_telemetry::instrumentation` API and keeps the Chrome trace
+/// `intelekt_telemetry::instrumentation` API and keeps the Chrome trace
 /// span for these startup timings.
 macro_rules! startup_timer {
     ($name:literal) => {{
-        use xai_grok_telemetry::instrumentation::{
+        use intelekt_telemetry::instrumentation::{
             InstrumentationMode, InstrumentationTimer, TARGET, current_mode,
         };
         let mode = current_mode();
@@ -55,14 +55,14 @@ macro_rules! startup_timer {
 
 static CLIENT_TYPE: OnceLock<ClientType> = OnceLock::new();
 
-// `OriginClientInfo` is owned by `xai-grok-sampler` so `SamplerConfig` can use
-// it without taking a circular dependency on `xai-grok-shell`. Re-exported
+// `OriginClientInfo` is owned by `intelekt-sampler` so `SamplerConfig` can use
+// it without taking a circular dependency on `intelekt-shell`. Re-exported
 // under the same path (`crate::http::OriginClientInfo`) so existing call-sites
-// compile unchanged. The telemetry engine in `xai-grok-telemetry` consumes
-// the same type via `xai_grok_sampler::OriginClientInfo`. The shell-specific
+// compile unchanged. The telemetry engine in `intelekt-telemetry` consumes
+// the same type via `intelekt_sampler::OriginClientInfo`. The shell-specific
 // constructors that depended on `ClientType` (a shell-only type) are free
 // functions below.
-pub use xai_grok_sampler::OriginClientInfo;
+pub use intelekt_sampler::OriginClientInfo;
 
 /// Construct an [`OriginClientInfo`] from `GROK_CLIENT_NAME` /
 /// `GROK_CLIENT_VERSION` env vars. Returns `None` when
@@ -157,7 +157,7 @@ impl UserAgent {
 }
 
 fn agent_version() -> String {
-    xai_grok_version::VERSION.to_string()
+    intelekt_version::VERSION.to_string()
 }
 
 /// Set the process-level fallback origin client type for `User-Agent`.
@@ -301,10 +301,10 @@ pub fn shared_client() -> reqwest::Client {
 /// Wrap a raw client with [`AuthRetryMiddleware`] for automatic 401 retry.
 pub fn with_auth_retry(
     client: reqwest::Client,
-    credentials: std::sync::Arc<dyn xai_grok_auth::AuthCredentialProvider>,
+    credentials: std::sync::Arc<dyn intelekt_auth::AuthCredentialProvider>,
 ) -> reqwest_middleware::ClientWithMiddleware {
     reqwest_middleware::ClientBuilder::new(client)
-        .with(xai_grok_auth::AuthRetryMiddleware::new(credentials, 1))
+        .with(intelekt_auth::AuthRetryMiddleware::new(credentials, 1))
         .build()
 }
 

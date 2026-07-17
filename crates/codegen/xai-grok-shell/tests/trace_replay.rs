@@ -16,10 +16,10 @@ use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 
-use xai_grok_shell::session::{
+use intelekt_shell::session::{
     CollectedTodoGateInput, TodoGateDecision, TodoGateReason, evaluate_todo_gate,
 };
-use xai_grok_shell::tools::todo::TodoStatus;
+use intelekt_shell::tools::todo::TodoStatus;
 
 /// Closed canonical set of shipped fixtures. Adding a fixture
 /// here is the one required Rust-side change when a new failure shape

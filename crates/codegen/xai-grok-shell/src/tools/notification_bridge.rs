@@ -1,5 +1,5 @@
-//! Notification bridge: translates `xai-grok-tools` `ToolNotification` events
-//! into `xai-grok-shell`'s native systems (ACP gateway, hunk tracker, file state tracker).
+//! Notification bridge: translates `intelekt-tools` `ToolNotification` events
+//! into `intelekt-shell`'s native systems (ACP gateway, hunk tracker, file state tracker).
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -8,14 +8,14 @@ use std::sync::Arc;
 use agent_client_protocol::{self as acp, Client as _};
 use tokio::sync::{Mutex as TokioMutex, mpsc};
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
-use xai_grok_tools::notification::types::{ToolNotification, ToolNotificationHandle};
-use xai_grok_tools::types::output::{BashOutput, ToolOutput};
+use intelekt_tools::notification::types::{ToolNotification, ToolNotificationHandle};
+use intelekt_tools::types::output::{BashOutput, ToolOutput};
 use xai_hunk_tracker::HunkTrackerHandle;
 
 use crate::session::commands::SessionCommand;
 use crate::session::commands::{NotificationPriority, NotificationSource};
 use crate::session::persistence::PersistenceMsg;
-use xai_grok_workspace::session::file_state::FileStateTracker;
+use intelekt_workspace::session::file_state::FileStateTracker;
 
 /// Configuration for the notification bridge.
 pub struct NotificationBridgeConfig {
@@ -57,7 +57,7 @@ pub struct NotificationBridgeConfig {
     pub session_cmd_tx: mpsc::UnboundedSender<SessionCommand>,
     /// Shared set of IDs delivered via auto-wake, used to suppress duplicate
     /// `TaskCompletionReminder` entries for the same task/subagent.
-    pub auto_wake_delivered: xai_grok_tools::reminders::task_completion::AutoWakeDeliveredIds,
+    pub auto_wake_delivered: intelekt_tools::reminders::task_completion::AutoWakeDeliveredIds,
     /// Channel for requesting trace uploads for synthetic auto-wake turns.
     /// Wrapped in `Arc<Mutex<..>>` because the coordinator creates the channel
     /// after the notification bridge is spawned — the bridge reads the latest
@@ -134,7 +134,7 @@ pub fn spawn_notification_bridge(config: NotificationBridgeConfig) -> ToolNotifi
 /// the gateway so the pager updates live.
 async fn emit_current_mode_update(
     config: &NotificationBridgeConfig,
-    mode: xai_grok_tools::types::SessionMode,
+    mode: intelekt_tools::types::SessionMode,
 ) {
     let mut notification = acp::SessionNotification::new(
         config.session_id.clone(),
@@ -325,7 +325,7 @@ async fn handle_notification(
 
         ToolNotification::TaskCompleted(task_snapshot) => {
             let is_monitor =
-                task_snapshot.kind == xai_grok_tools::computer::types::TaskKind::Monitor;
+                task_snapshot.kind == intelekt_tools::computer::types::TaskKind::Monitor;
             let task_id = task_snapshot.task_id.clone();
             let goal_loop_active = config
                 .goal_loop_active
@@ -374,18 +374,18 @@ async fn handle_notification(
                 let tool_name = resolved_tool_name(&config.task_output_tool_name);
                 let read_name = resolved_tool_name(&config.read_tool_name);
                 let body = if is_monitor {
-                    xai_grok_tools::reminders::task_completion::format_monitor_completion(
+                    intelekt_tools::reminders::task_completion::format_monitor_completion(
                         &task_snapshot,
                         tool_name,
                     )
                 } else {
-                    xai_grok_tools::reminders::task_completion::format_bash_completion(
+                    intelekt_tools::reminders::task_completion::format_bash_completion(
                         &task_snapshot,
                         tool_name,
                         read_name,
                     )
                 };
-                let message = xai_grok_tools::reminders::wrap_reminder(&body);
+                let message = intelekt_tools::reminders::wrap_reminder(&body);
                 let prompt_id = format!("task-completed-{task_id}");
                 let prompt_blocks = vec![acp::ContentBlock::Text(acp::TextContent::new(message))];
 
@@ -452,12 +452,12 @@ async fn handle_notification(
                 let tool_name = resolved_tool_name(&config.task_output_tool_name);
                 let read_name = resolved_tool_name(&config.read_tool_name);
                 let message = if is_monitor {
-                    xai_grok_tools::reminders::task_completion::format_monitor_completion(
+                    intelekt_tools::reminders::task_completion::format_monitor_completion(
                         &task_snapshot,
                         tool_name,
                     )
                 } else {
-                    xai_grok_tools::reminders::task_completion::format_bash_completion(
+                    intelekt_tools::reminders::task_completion::format_bash_completion(
                         &task_snapshot,
                         tool_name,
                         read_name,
@@ -530,7 +530,7 @@ async fn handle_notification(
                 // Notify the frontend immediately so the plan-mode chip appears in the UI
                 // (currentModeId = 'plan'). Without this the agent can silently enter plan
                 // mode via the EnterPlanMode tool and the UI would never update.
-                emit_current_mode_update(config, xai_grok_tools::types::SessionMode::Plan).await;
+                emit_current_mode_update(config, intelekt_tools::types::SessionMode::Plan).await;
             }
             tracing::info!(
                 tool_call_id = %entered.tool_call_id,
@@ -567,7 +567,7 @@ async fn handle_notification(
                 // so the pager flips out of plan mode without having to
                 // string-match tool titles. Persist + forward so the next
                 // session replay also sees the exit.
-                emit_current_mode_update(config, xai_grok_tools::types::SessionMode::Default).await;
+                emit_current_mode_update(config, intelekt_tools::types::SessionMode::Default).await;
             }
             tracing::info!(
                 tool_call_id = %exited.tool_call_id,
@@ -805,8 +805,8 @@ async fn handle_notification(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_tools::computer::types::TaskKind;
-    use xai_grok_tools::types::TaskSnapshot;
+    use intelekt_tools::computer::types::TaskKind;
+    use intelekt_tools::types::TaskSnapshot;
 
     fn make_test_config() -> (
         NotificationBridgeConfig,
@@ -851,7 +851,7 @@ mod tests {
             )),
             session_cmd_tx,
             auto_wake_delivered:
-                xai_grok_tools::reminders::task_completion::AutoWakeDeliveredIds::default(),
+                intelekt_tools::reminders::task_completion::AutoWakeDeliveredIds::default(),
             synthetic_trace_tx: Arc::new(std::sync::Mutex::new(None)),
             task_output_tool_name: Arc::new(std::sync::OnceLock::new()),
             read_tool_name: Arc::new(std::sync::OnceLock::new()),
@@ -1256,7 +1256,7 @@ mod tests {
 
         handle_notification(
             &config,
-            ToolNotification::MonitorEvent(xai_grok_tools::notification::types::MonitorEvent {
+            ToolNotification::MonitorEvent(intelekt_tools::notification::types::MonitorEvent {
                 task_id: "mon-done".into(),
                 description: "short exit".into(),
                 event_text: "<monitor-event>done</monitor-event>".into(),
@@ -1346,7 +1346,7 @@ mod tests {
         // replay — otherwise it stays invisible until the loop next fires.
         let (config, _gateway_rx, mut persistence_rx, _cmd_rx) = make_test_config_full();
         let notification = ToolNotification::ScheduledTaskCreated(
-            xai_grok_tools::notification::types::ScheduledTaskCreated {
+            intelekt_tools::notification::types::ScheduledTaskCreated {
                 task_id: "loop-1".into(),
                 prompt: "check deploy".into(),
                 human_schedule: "every 5 minutes".into(),
@@ -1389,8 +1389,8 @@ mod tests {
     async fn bash_output_chunk_persists_and_broadcasts_one_event_id() {
         let (config, mut gateway_rx, mut persistence_rx, _cmd_rx) = make_test_config_full();
         let notification = ToolNotification::BashOutputChunk(
-            xai_grok_tools::notification::types::BashOutputChunk {
-                base: xai_grok_tools::notification::types::BashNotificationBase {
+            intelekt_tools::notification::types::BashOutputChunk {
+                base: intelekt_tools::notification::types::BashNotificationBase {
                     tool_call_id: "call-1".into(),
                     command: "echo hi".into(),
                     output: b"hi\n".to_vec(),
@@ -1435,7 +1435,7 @@ mod tests {
         // instead of resurrecting it from the persisted `created` line.
         let (config, _gateway_rx, mut persistence_rx, _cmd_rx) = make_test_config_full();
         let notification = ToolNotification::ScheduledTaskRemoved(
-            xai_grok_tools::notification::types::ScheduledTaskRemoved {
+            intelekt_tools::notification::types::ScheduledTaskRemoved {
                 task_id: "loop-1".into(),
             },
         );
@@ -1480,8 +1480,8 @@ mod tests {
     async fn task_backgrounded_persisted_line_is_stamped() {
         let (config, _gateway_rx, mut persistence_rx, _cmd_rx) = make_test_config_full();
         let notification = ToolNotification::BashExecutionBackgrounded(
-            xai_grok_tools::notification::types::BashExecutionBackgrounded {
-                base: xai_grok_tools::notification::types::BashNotificationBase {
+            intelekt_tools::notification::types::BashExecutionBackgrounded {
+                base: intelekt_tools::notification::types::BashNotificationBase {
                     tool_call_id: "call-bg".into(),
                     command: "sleep 100".into(),
                     output: Vec::new(),
@@ -1533,7 +1533,7 @@ mod tests {
     async fn current_mode_update_persisted_line_is_stamped() {
         let (config, _gateway_rx, mut persistence_rx, _cmd_rx) = make_test_config_full();
 
-        emit_current_mode_update(&config, xai_grok_tools::types::SessionMode::Plan).await;
+        emit_current_mode_update(&config, intelekt_tools::types::SessionMode::Plan).await;
 
         match persistence_rx.try_recv().expect("must persist") {
             PersistenceMsg::Update(crate::session::storage::SessionUpdate::Acp(notif)) => {
@@ -1563,7 +1563,7 @@ mod tests {
         // fire if needed).
         let (config, _gateway_rx, mut persistence_rx, _cmd_rx) = make_test_config_full();
         let notification = ToolNotification::ScheduledTaskFired(
-            xai_grok_tools::notification::types::ScheduledTaskFired {
+            intelekt_tools::notification::types::ScheduledTaskFired {
                 task_id: "loop-1".into(),
                 prompt: "check deploy".into(),
                 human_schedule: "every 5 minutes".into(),
@@ -1581,7 +1581,7 @@ mod tests {
     }
 
     fn make_monitor_event_notification(task_id: &str, owner: Option<&str>) -> ToolNotification {
-        ToolNotification::MonitorEvent(xai_grok_tools::notification::types::MonitorEvent {
+        ToolNotification::MonitorEvent(intelekt_tools::notification::types::MonitorEvent {
             task_id: task_id.into(),
             description: "errors in deploy.log".into(),
             event_text: format!("<monitor-event task_id=\"{task_id}\">boom</monitor-event>"),
@@ -1642,7 +1642,7 @@ mod tests {
 
     #[tokio::test]
     async fn legacy_monitor_event_without_owner_is_injected() {
-        // Legacy / non-grok-build backends record no owner; such events must
+        // Legacy / non-intelekt-cli backends record no owner; such events must
         // pass through unchanged for backwards compatibility.
         let (config, mut cmd_rx) = make_test_config();
         let notification = make_monitor_event_notification("mon-legacy", None);
@@ -1850,7 +1850,7 @@ mod tests {
         *config.turn_prompt_mode.lock() = crate::session::plan_mode::PromptMode::Plan;
 
         let notification =
-            ToolNotification::PlanModeExited(xai_grok_tools::notification::types::PlanModeExited {
+            ToolNotification::PlanModeExited(intelekt_tools::notification::types::PlanModeExited {
                 tool_call_id: "tc-exit-1".into(),
                 plan_content: Some("- step 1".into()),
                 plan_file_path: "/tmp/test-session/plan.md".into(),
@@ -1910,7 +1910,7 @@ mod tests {
         }
 
         let notification =
-            ToolNotification::PlanModeExited(xai_grok_tools::notification::types::PlanModeExited {
+            ToolNotification::PlanModeExited(intelekt_tools::notification::types::PlanModeExited {
                 tool_call_id: "tc-exit-grok".into(),
                 plan_content: Some("- step 1".into()),
                 plan_file_path: "/tmp/test-session/plan.md".into(),
@@ -1954,7 +1954,7 @@ mod tests {
         }
 
         let notification =
-            ToolNotification::PlanModeExited(xai_grok_tools::notification::types::PlanModeExited {
+            ToolNotification::PlanModeExited(intelekt_tools::notification::types::PlanModeExited {
                 tool_call_id: "tc-exit-gated".into(),
                 plan_content: Some("- step 1".into()),
                 plan_file_path: "/tmp/test-session/plan.md".into(),
@@ -1989,7 +1989,7 @@ mod tests {
         let (config, mut gateway_rx, mut persistence_rx, _cmd_rx) = make_test_config_full();
 
         let notification = ToolNotification::PlanModeEntered(
-            xai_grok_tools::notification::types::PlanModeEntered {
+            intelekt_tools::notification::types::PlanModeEntered {
                 tool_call_id: "tc-enter-1".into(),
             },
         );

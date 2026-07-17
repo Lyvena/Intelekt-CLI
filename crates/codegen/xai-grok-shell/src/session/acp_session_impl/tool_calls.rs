@@ -192,7 +192,7 @@ pub(super) enum PlanApprovalOutcome {
 }
 impl PlanApprovalOutcome {
     fn from_response(
-        resp: &xai_grok_tools::implementations::grok_build::exit_plan_mode::ExitPlanModeExtResponse,
+        resp: &intelekt_tools::implementations::grok_build::exit_plan_mode::ExitPlanModeExtResponse,
     ) -> Self {
         match resp.outcome.as_str() {
             "approved" => Self::Approved,
@@ -264,7 +264,7 @@ impl SessionActor {
         parsed: Option<&ToolInput>,
     ) -> Option<acp::Meta> {
         let toolset = self.agent.borrow().tool_bridge().toolset();
-        xai_grok_tools::normalization::merge_tool_meta(
+        intelekt_tools::normalization::merge_tool_meta(
             &toolset,
             existing.map(serde_json::Value::Object),
             wire_name,
@@ -460,7 +460,7 @@ impl SessionActor {
                         Ok(tool_result) => !tool_result.output.is_error(),
                         Err(_) => false,
                     };
-                    xai_grok_telemetry::unified_log::info(
+                    intelekt_telemetry::unified_log::info(
                         "shell.tool.exec_done",
                         Some(session_id.as_ref()),
                         Some(serde_json::json!(
@@ -501,10 +501,10 @@ impl SessionActor {
                 && server.starts_with(crate::session::managed_mcp::MANAGED_MCP_PREFIX)
             {
                 let auth_rejected = match &result {
-                    Err(err) => xai_grok_mcp::servers::is_auth_rejection_message(&err.to_string()),
+                    Err(err) => intelekt_mcp::servers::is_auth_rejection_message(&err.to_string()),
                     Ok(tool_result) => {
                         tool_result.output.is_error()
-                            && xai_grok_mcp::servers::is_auth_rejection_message(
+                            && intelekt_mcp::servers::is_auth_rejection_message(
                                 &tool_result.prompt_text,
                             )
                     }
@@ -530,7 +530,7 @@ impl SessionActor {
                         .or_else(|| prepared.dispatch_target_name.clone())
                         .unwrap_or_else(|| prepared.tool_name.clone());
                     post_tool_use_result = self
-                        .hook_event_active(xai_grok_hooks::event::HookEventName::PostToolUse)
+                        .hook_event_active(intelekt_hooks::event::HookEventName::PostToolUse)
                         .then(|| {
                             serde_json::to_value(&tool_result.output)
                                 .unwrap_or(serde_json::Value::Null)
@@ -569,17 +569,17 @@ impl SessionActor {
                         .await;
                     deferred_followups.extend(err_followups);
                     if self
-                        .hook_event_active(xai_grok_hooks::event::HookEventName::PostToolUseFailure)
+                        .hook_event_active(intelekt_hooks::event::HookEventName::PostToolUseFailure)
                     {
                         let raw_input: serde_json::Value =
                             serde_json::from_str(&prepared.raw_arguments)
                                 .unwrap_or(serde_json::Value::Null);
                         let (tool_input_value, tool_input_truncated) =
-                            xai_grok_hooks::event::truncate_payload(raw_input);
+                            intelekt_hooks::event::truncate_payload(raw_input);
                         let hook_tool_name = prepared.hook_tool_name();
                         self.dispatch_hook(
-                            xai_grok_hooks::event::HookEventName::PostToolUseFailure,
-                            xai_grok_hooks::event::HookPayload::PostToolUseFailure {
+                            intelekt_hooks::event::HookEventName::PostToolUseFailure,
+                            intelekt_hooks::event::HookPayload::PostToolUseFailure {
                                 tool_name: hook_tool_name.to_owned(),
                                 tool_use_id: prepared.call_id.clone(),
                                 tool_input: tool_input_value,
@@ -610,13 +610,13 @@ impl SessionActor {
                 let raw_input: serde_json::Value = serde_json::from_str(&prepared.raw_arguments)
                     .unwrap_or(serde_json::Value::Null);
                 let (tool_input_value, tool_input_truncated) =
-                    xai_grok_hooks::event::truncate_payload(raw_input);
+                    intelekt_hooks::event::truncate_payload(raw_input);
                 let (tool_result_val, tool_result_truncated) =
-                    xai_grok_hooks::event::truncate_payload(tool_result_value);
+                    intelekt_hooks::event::truncate_payload(tool_result_value);
                 let hook_tool_name = prepared.hook_tool_name();
                 self.dispatch_hook(
-                    xai_grok_hooks::event::HookEventName::PostToolUse,
-                    xai_grok_hooks::event::HookPayload::PostToolUse {
+                    intelekt_hooks::event::HookEventName::PostToolUse,
+                    intelekt_hooks::event::HookPayload::PostToolUse {
                         tool_name: hook_tool_name.to_owned(),
                         tool_use_id: prepared.call_id.clone(),
                         tool_input: tool_input_value,
@@ -664,7 +664,7 @@ impl SessionActor {
                     },
                 )
                 .await;
-            let (ext_file_path, ext_parameters) = if xai_grok_telemetry::external::is_active() {
+            let (ext_file_path, ext_parameters) = if intelekt_telemetry::external::is_active() {
                 let parsed: Option<serde_json::Value> =
                     serde_json::from_str(&prepared.raw_arguments).ok();
                 let file_path = parsed.as_ref().and_then(|v| {
@@ -677,8 +677,8 @@ impl SessionActor {
             } else {
                 (None, None)
             };
-            xai_grok_telemetry::session_ctx::log_event(
-                xai_grok_telemetry::events::ToolCallCompleted {
+            intelekt_telemetry::session_ctx::log_event(
+                intelekt_telemetry::events::ToolCallCompleted {
                     tool_name: prepared.tool_name.clone(),
                     outcome: tool_outcome,
                     duration_ms,
@@ -915,13 +915,13 @@ impl SessionActor {
         let resolved_tool_name = dispatch_target_name
             .clone()
             .unwrap_or_else(|| call.function.name.clone());
-        if self.hook_event_active(xai_grok_hooks::event::HookEventName::PreToolUse) {
+        if self.hook_event_active(intelekt_hooks::event::HookEventName::PreToolUse) {
             let (hook_tool_input, hook_tool_input_truncated) =
-                xai_grok_hooks::event::truncate_payload(raw_input.clone());
+                intelekt_hooks::event::truncate_payload(raw_input.clone());
             let envelope = self.make_hook_envelope(
-                xai_grok_hooks::event::HookEventName::PreToolUse,
+                intelekt_hooks::event::HookEventName::PreToolUse,
                 None,
-                xai_grok_hooks::event::HookPayload::PreToolUse {
+                intelekt_hooks::event::HookPayload::PreToolUse {
                     tool_name: resolved_tool_name.clone(),
                     tool_use_id: call.id.clone(),
                     tool_input: hook_tool_input,
@@ -934,7 +934,7 @@ impl SessionActor {
             if let Some(registry) = hook_registry_snapshot {
                 let ctx = self.hook_run_ctx();
                 let pre_result =
-                    xai_grok_hooks::dispatcher::dispatch_pre_tool_use(&registry, &envelope, &ctx)
+                    intelekt_hooks::dispatcher::dispatch_pre_tool_use(&registry, &envelope, &ctx)
                         .await;
                 self.send_hook_execution(
                     "pre_tool_use",
@@ -949,7 +949,7 @@ impl SessionActor {
                     &pre_result.results,
                 )
                 .await;
-                if let xai_grok_hooks::result::HookDecision::Deny { reason, hook_name } =
+                if let intelekt_hooks::result::HookDecision::Deny { reason, hook_name } =
                     pre_result.decision
                 {
                     return Ok(Err(self
@@ -998,28 +998,28 @@ impl SessionActor {
             )
             .meta(self.stamp_tool_meta(None, &call.function.name, Some(&tool_input)));
             let (telemetry_access_kind, _access_detail) = match &access_kind {
-                xai_grok_workspace::permission::AccessKind::Read(p) => (
-                    xai_grok_telemetry::events::AccessKind::Read,
+                intelekt_workspace::permission::AccessKind::Read(p) => (
+                    intelekt_telemetry::events::AccessKind::Read,
                     p.clone().unwrap_or_default(),
                 ),
-                xai_grok_workspace::permission::AccessKind::Edit(p) => {
-                    (xai_grok_telemetry::events::AccessKind::Edit, p.clone())
+                intelekt_workspace::permission::AccessKind::Edit(p) => {
+                    (intelekt_telemetry::events::AccessKind::Edit, p.clone())
                 }
-                xai_grok_workspace::permission::AccessKind::Bash(cmd) => {
-                    (xai_grok_telemetry::events::AccessKind::Bash, cmd.clone())
+                intelekt_workspace::permission::AccessKind::Bash(cmd) => {
+                    (intelekt_telemetry::events::AccessKind::Bash, cmd.clone())
                 }
-                xai_grok_workspace::permission::AccessKind::Grep { path, glob } => (
-                    xai_grok_telemetry::events::AccessKind::Grep,
+                intelekt_workspace::permission::AccessKind::Grep { path, glob } => (
+                    intelekt_telemetry::events::AccessKind::Grep,
                     path.clone().or_else(|| glob.clone()).unwrap_or_default(),
                 ),
-                xai_grok_workspace::permission::AccessKind::MCPTool { name, .. } => {
-                    (xai_grok_telemetry::events::AccessKind::Mcp, name.clone())
+                intelekt_workspace::permission::AccessKind::MCPTool { name, .. } => {
+                    (intelekt_telemetry::events::AccessKind::Mcp, name.clone())
                 }
-                xai_grok_workspace::permission::AccessKind::WebFetch(u) => {
-                    (xai_grok_telemetry::events::AccessKind::Web, u.clone())
+                intelekt_workspace::permission::AccessKind::WebFetch(u) => {
+                    (intelekt_telemetry::events::AccessKind::Web, u.clone())
                 }
-                xai_grok_workspace::permission::AccessKind::WebSearch(q) => {
-                    (xai_grok_telemetry::events::AccessKind::Web, q.clone())
+                intelekt_workspace::permission::AccessKind::WebSearch(q) => {
+                    (intelekt_telemetry::events::AccessKind::Web, q.clone())
                 }
             };
             let subagent_session_id = if self.startup_hints.is_subagent {
@@ -1028,14 +1028,14 @@ impl SessionActor {
                 None
             };
             let perm_mode = if self.permissions.is_yolo_mode() {
-                xai_grok_telemetry::enums::PermissionMode::AlwaysApprove
+                intelekt_telemetry::enums::PermissionMode::AlwaysApprove
             } else if self.permissions.is_auto_mode() {
-                xai_grok_telemetry::enums::PermissionMode::Auto
+                intelekt_telemetry::enums::PermissionMode::Auto
             } else {
-                xai_grok_telemetry::enums::PermissionMode::Ask
+                intelekt_telemetry::enums::PermissionMode::Ask
             };
-            xai_grok_telemetry::session_ctx::log_event(
-                xai_grok_telemetry::events::PermissionPrompted {
+            intelekt_telemetry::session_ctx::log_event(
+                intelekt_telemetry::events::PermissionPrompted {
                     tool_name: call.function.name.clone(),
                     access_kind: telemetry_access_kind,
                     permission_mode: perm_mode,
@@ -1104,18 +1104,18 @@ impl SessionActor {
             let wait_ms = perm_start.elapsed().as_millis() as u64;
             let (decision_outcome, _reject_reason) = match &decision {
                 Decision::Allow | Decision::Ask => {
-                    (xai_grok_telemetry::events::PermissionOutcome::Allow, None)
+                    (intelekt_telemetry::events::PermissionOutcome::Allow, None)
                 }
                 Decision::Reject(reason) | Decision::PolicyDeny(reason) => (
-                    xai_grok_telemetry::events::PermissionOutcome::Deny,
+                    intelekt_telemetry::events::PermissionOutcome::Deny,
                     Some(reason.to_string()),
                 ),
                 Decision::Cancelled => (
-                    xai_grok_telemetry::events::PermissionOutcome::Cancelled,
+                    intelekt_telemetry::events::PermissionOutcome::Cancelled,
                     None,
                 ),
                 Decision::FollowupMessage(_) => (
-                    xai_grok_telemetry::events::PermissionOutcome::Followup,
+                    intelekt_telemetry::events::PermissionOutcome::Followup,
                     None,
                 ),
             };
@@ -1126,8 +1126,8 @@ impl SessionActor {
                 .permissions.is_yolo_mode(),), wait_ms = wait_ms as i64,
             )
             .in_scope(|| {});
-            xai_grok_telemetry::session_ctx::log_event(
-                xai_grok_telemetry::events::PermissionDecisionPayload {
+            intelekt_telemetry::session_ctx::log_event(
+                intelekt_telemetry::events::PermissionDecisionPayload {
                     tool_name: call.function.name.clone(),
                     access_kind: telemetry_access_kind,
                     decision: decision_outcome,
@@ -1151,10 +1151,10 @@ impl SessionActor {
                     self.handle_tool_not_executed(&call.id, &tool_call_id, message)
                         .await?;
                     let (tool_input_value, tool_input_truncated) =
-                        xai_grok_hooks::event::truncate_payload(raw_input.clone());
+                        intelekt_hooks::event::truncate_payload(raw_input.clone());
                     self.dispatch_hook(
-                        xai_grok_hooks::event::HookEventName::PermissionDenied,
-                        xai_grok_hooks::event::HookPayload::PermissionDenied {
+                        intelekt_hooks::event::HookEventName::PermissionDenied,
+                        intelekt_hooks::event::HookPayload::PermissionDenied {
                             tool_name: resolved_tool_name.clone(),
                             tool_use_id: tool_call_id.to_string(),
                             tool_input: tool_input_value,
@@ -1319,7 +1319,7 @@ impl SessionActor {
             .tool_bridge()
             .tool_kind(&call.function.name)
             .map(|k| {
-                use xai_grok_tools::types::tool::ToolKind;
+                use intelekt_tools::types::tool::ToolKind;
                 matches!(
                     k,
                     ToolKind::Read
@@ -1359,11 +1359,11 @@ impl SessionActor {
         tool_call_id: &acp::ToolCallId,
         plan_content: Option<String>,
     ) -> Result<
-        xai_grok_tools::implementations::grok_build::exit_plan_mode::ExitPlanModeExtResponse,
+        intelekt_tools::implementations::grok_build::exit_plan_mode::ExitPlanModeExtResponse,
         acp::Error,
     > {
         use agent_client_protocol::Client as _;
-        use xai_grok_tools::implementations::grok_build::exit_plan_mode::{
+        use intelekt_tools::implementations::grok_build::exit_plan_mode::{
             ExitPlanModeExtRequest, ExitPlanModeExtResponse,
         };
         let ext_req = ExitPlanModeExtRequest {
@@ -1427,7 +1427,7 @@ impl SessionActor {
             *self.turn_prompt_mode.lock() = PromptMode::Agent;
             self.persist_plan_mode_state();
             self.enqueue_current_mode_update(acp::SessionModeId::new(
-                xai_grok_tools::types::SessionMode::Default.as_id(),
+                intelekt_tools::types::SessionMode::Default.as_id(),
             ));
         }
     }
@@ -1593,7 +1593,7 @@ impl SessionActor {
                 acp::ToolKind::Read,
                 vec![
                     acp::ToolCallLocation::new(read_file.path).line(
-                        xai_grok_tools::normalization::norm_offset_i64(read_file.offset)
+                        intelekt_tools::normalization::norm_offset_i64(read_file.offset)
                             .map(|l| l as u32),
                     ),
                 ],
@@ -1674,8 +1674,8 @@ impl SessionActor {
                 vec![],
             ),
             ToolInput::Skill(skill) => {
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::events::SkillDispatched {
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::events::SkillDispatched {
                         skill_name: skill.skill.clone(),
                         plugin_source: None,
                     },
@@ -1883,7 +1883,7 @@ impl SessionActor {
     /// `<system-reminder>` with no assistant reply).
     ///
     /// The ID list comes from
-    /// `xai_grok_tools::reminders::task_completion::consumed_completion_ids`,
+    /// `intelekt_tools::reminders::task_completion::consumed_completion_ids`,
     /// which is the same predicate used by `TaskCompletionReminder` —
     /// they cannot drift because they share the function.
     ///
@@ -1947,10 +1947,10 @@ impl SessionActor {
     /// commands, plus MCP `create_pull_request` results (url/number parsed
     /// from the result text). Backgrounded commands are not scanned.
     fn record_git_pr_signals(&self, effective_tool_name: &str, result: &ToolRunResult) {
-        use xai_grok_telemetry::enums::PrCreationSource;
-        use xai_grok_tools::util::git_detect;
+        use intelekt_telemetry::enums::PrCreationSource;
+        use intelekt_tools::util::git_detect;
         match &result.output {
-            xai_grok_tools::types::output::ToolOutput::Bash(b) if b.exit_code == 0 => {
+            intelekt_tools::types::output::ToolOutput::Bash(b) if b.exit_code == 0 => {
                 let Some(ops) = git_detect::detect_git_ops(&b.command, &b.output_for_prompt) else {
                     return;
                 };
@@ -1962,12 +1962,12 @@ impl SessionActor {
                 }
                 if ops.pr_merged {
                     self.signals_handle().record_pr_merged();
-                    xai_grok_telemetry::session_ctx::log_event(
-                        xai_grok_telemetry::events::PrMerged {},
+                    intelekt_telemetry::session_ctx::log_event(
+                        intelekt_telemetry::events::PrMerged {},
                     );
                 }
             }
-            xai_grok_tools::types::output::ToolOutput::MCP(m)
+            intelekt_tools::types::output::ToolOutput::MCP(m)
                 if !m.is_error && is_mcp_create_pull_request(effective_tool_name) =>
             {
                 let pr = git_detect::PrRef::find_in(&result.prompt_text).unwrap_or_default();
@@ -1986,8 +1986,8 @@ impl SessionActor {
     /// `finalize_turn_bookkeeping`.
     fn record_pr_created(
         &self,
-        pr: xai_grok_tools::util::git_detect::PrRef,
-        source: xai_grok_telemetry::enums::PrCreationSource,
+        pr: intelekt_tools::util::git_detect::PrRef,
+        source: intelekt_telemetry::enums::PrCreationSource,
     ) {
         self.signals_handle()
             .record_pr_created(crate::session::signals::PrCreatedSignal {
@@ -2010,7 +2010,7 @@ impl SessionActor {
     ) -> Result<Vec<ConversationItem>, acp::Error> {
         use crate::session::acp_conversion::{acp_plan_update, acp_tool_update, maybe_rewrite};
         let consumed_ids =
-            xai_grok_tools::reminders::task_completion::consumed_completion_ids(&result.output);
+            intelekt_tools::reminders::task_completion::consumed_completion_ids(&result.output);
         if !consumed_ids.is_empty() {
             self.drop_pending_items_for_consumed_completions(&consumed_ids)
                 .await;
@@ -2021,12 +2021,12 @@ impl SessionActor {
         if matches!(
             &result.output,
             ToolsToolOutput::SearchReplace(
-                xai_grok_tools::types::output::SearchReplaceOutput::EditsApplied(_)
+                intelekt_tools::types::output::SearchReplaceOutput::EditsApplied(_)
             ) | ToolsToolOutput::Bash(_)
         ) {
             self.maybe_notify_git_branch().await;
         }
-        if let xai_grok_tools::types::output::ToolOutput::Bash(ref b) = result.output
+        if let intelekt_tools::types::output::ToolOutput::Bash(ref b) = result.output
             && b.was_bare_echo
         {
             self.signals_handle().record_bare_echo();
@@ -2055,8 +2055,8 @@ impl SessionActor {
             }
             if matches!(
                 &result.output,
-                xai_grok_tools::types::output::ToolOutput::EnterPlanMode(_)
-                    | xai_grok_tools::types::output::ToolOutput::ExitPlanMode(_)
+                intelekt_tools::types::output::ToolOutput::EnterPlanMode(_)
+                    | intelekt_tools::types::output::ToolOutput::ExitPlanMode(_)
             ) {
                 let plan_path = self.plan_mode.lock().plan_file_path().display().to_string();
                 if let Some(ref mut content) = tool_update.fields.content {
@@ -2108,9 +2108,9 @@ impl SessionActor {
                 ToolsToolOutput::ReadFile(ReadFileOutput::ImageContent(_))
                     | ToolsToolOutput::ReadFile(ReadFileOutput::PdfPageImages(_))
             ) {
-            xai_grok_tools::util::base64_images::extract_base64_images(prompt_text)
+            intelekt_tools::util::base64_images::extract_base64_images(prompt_text)
         } else {
-            xai_grok_tools::util::base64_images::ExtractionResult {
+            intelekt_tools::util::base64_images::ExtractionResult {
                 text: prompt_text,
                 images: Vec::new(),
             }
@@ -2289,7 +2289,7 @@ impl SessionActor {
         )
         .await;
     }
-    /// Translate one [`xai_grok_sampler::SamplingEvent`] from the
+    /// Translate one [`intelekt_sampler::SamplingEvent`] from the
     /// per-session sampler actor into the corresponding ACP / shell
     /// side-effects (notifications, signal recording, model-metadata
     /// refresh, etc.).
@@ -2303,9 +2303,9 @@ impl SessionActor {
     /// or resubmit.
     pub(crate) async fn handle_sampling_event(
         self: &Arc<Self>,
-        event: xai_grok_sampler::SamplingEvent,
+        event: intelekt_sampler::SamplingEvent,
     ) {
-        use xai_grok_sampler::{SamplingChannel, SamplingEvent};
+        use intelekt_sampler::{SamplingChannel, SamplingEvent};
         match event {
             SamplingEvent::StreamStarted { timestamp_ms, .. } => {
                 {
@@ -2446,7 +2446,7 @@ impl SessionActor {
                 doom_loop_triggers,
                 doom_loop_aborted_at_chunk,
             } => {
-                if kind == xai_grok_sampler::SamplingErrorKind::DoomLoopDetected {
+                if kind == intelekt_sampler::SamplingErrorKind::DoomLoopDetected {
                     let triggers = doom_loop_triggers.unwrap_or_default();
                     let attempt_number = {
                         let mut tally = self.doom_loop_turn_tally.lock();
@@ -2465,7 +2465,7 @@ impl SessionActor {
                     self.signals_handle()
                         .record_doom_loop_recovery_attempt(triggers, doom_loop_aborted_at_chunk);
                 }
-                xai_grok_telemetry::unified_log::warn(
+                intelekt_telemetry::unified_log::warn(
                     "shell.turn.inference_retry",
                     Some(self.session_info.id.0.as_ref()),
                     Some(serde_json::json!(
@@ -2484,7 +2484,7 @@ impl SessionActor {
                 .await;
             }
             SamplingEvent::Failed { request_id, error } => {
-                xai_grok_telemetry::unified_log::error(
+                intelekt_telemetry::unified_log::error(
                     "shell.turn.inference_failed",
                     Some(self.session_info.id.0.as_ref()),
                     Some(serde_json::json!(
@@ -2597,7 +2597,7 @@ fn execute_tool_call_parts(
     Vec<acp::ToolCallLocation>,
     Vec<acp::ToolCallContent>,
 ) {
-    let display = xai_grok_tools::util::strip_redundant_session_cd(command, cwd);
+    let display = intelekt_tools::util::strip_redundant_session_cd(command, cwd);
     (
         format!("Execute `{display}`"),
         acp::ToolKind::Execute,
@@ -2716,8 +2716,8 @@ mod exit_plan_intercept_tests {
 mod plan_mode_edit_gate_tests {
     use super::{PlanEditGate, plan_mode_edit_gate};
     use crate::session::plan_mode::PlanModeTracker;
-    use xai_grok_tools::types::ToolInput;
-    use xai_grok_workspace::permission::AccessKind;
+    use intelekt_tools::types::ToolInput;
+    use intelekt_workspace::permission::AccessKind;
     /// Tracker with plan mode Active and plan file at
     /// `/tmp/gate-session/plan.md`.
     fn active_tracker() -> PlanModeTracker {
@@ -2730,7 +2730,7 @@ mod plan_mode_edit_gate_tests {
         plan_mode_edit_gate(tracker, input, &AccessKind::from(input))
     }
     fn search_replace(path: &str) -> ToolInput {
-        use xai_grok_tools::implementations::grok_build::search_replace::SearchReplaceInput;
+        use intelekt_tools::implementations::grok_build::search_replace::SearchReplaceInput;
         ToolInput::SearchReplace(SearchReplaceInput {
             file_path: path.into(),
             old_string: "a".into(),
@@ -2739,7 +2739,7 @@ mod plan_mode_edit_gate_tests {
         })
     }
     fn write(path: &str) -> ToolInput {
-        use xai_grok_tools::implementations::opencode::write::WriteInput;
+        use intelekt_tools::implementations::opencode::write::WriteInput;
         ToolInput::Write(WriteInput {
             file_path: path.into(),
             content: "x".into(),
@@ -2778,7 +2778,7 @@ mod plan_mode_edit_gate_tests {
     /// always rejected in plan mode (conservative).
     #[test]
     fn apply_patch_rejected_in_plan_mode() {
-        use xai_grok_tools::implementations::codex::apply_patch::ApplyPatchInput;
+        use intelekt_tools::implementations::codex::apply_patch::ApplyPatchInput;
         let t = active_tracker();
         assert_eq!(
             gate(
@@ -2795,7 +2795,7 @@ mod plan_mode_edit_gate_tests {
     /// edits, not bash/reads.
     #[test]
     fn non_edit_tools_not_gated() {
-        use xai_grok_tools::implementations::BashToolInput;
+        use intelekt_tools::implementations::BashToolInput;
         let t = active_tracker();
         assert_eq!(
             gate(
@@ -2834,7 +2834,7 @@ mod plan_approval_helper_tests {
         PlanApprovalOutcome, ResumeAction, ext_method_no_client, resume_action_for,
         revise_plan_message,
     };
-    use xai_grok_tools::implementations::grok_build::exit_plan_mode::ExitPlanModeExtResponse;
+    use intelekt_tools::implementations::grok_build::exit_plan_mode::ExitPlanModeExtResponse;
     fn resp(outcome: &str) -> ExitPlanModeExtResponse {
         ExitPlanModeExtResponse {
             outcome: outcome.into(),
@@ -2900,7 +2900,7 @@ mod wait_interrupt_tests {
         BlockingWaitGuard, interrupted_wait_tool_result, is_interruptible_wait_tool,
         wait_for_pending_interjection,
     };
-    use xai_grok_tools::types::output::ToolOutput;
+    use intelekt_tools::types::output::ToolOutput;
     use xai_tool_types::TaskOutputOutput;
     /// The interruptible-wait select arms: a pending interjection aborts an
     /// in-flight wait, and `biased` prefers an already-completed wait result

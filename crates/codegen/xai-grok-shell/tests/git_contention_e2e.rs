@@ -39,9 +39,9 @@ use xai_acp_lib::{
     AcpAgentGatewayReceiver as GatewayReceiver, AcpAgentGatewaySender as GatewaySender,
     LineBufferedRead,
 };
-use xai_grok_shell::agent::config::Config as AgentConfig;
-use xai_grok_shell::agent::mvp_agent::MvpAgent;
-use xai_grok_test_support::{MockInferenceServer, ScriptedResponse, SseEvent};
+use intelekt_shell::agent::config::Config as AgentConfig;
+use intelekt_shell::agent::mvp_agent::MvpAgent;
+use intelekt_test_support::{MockInferenceServer, ScriptedResponse, SseEvent};
 
 const DUPLEX_BUFFER_BYTES: usize = 8 * 1024 * 1024;
 
@@ -430,7 +430,7 @@ fn git_rebase_refresh_storm_e2e() {
     // SAFETY: the only live threads are the mock runtime's workers, which
     // serve HTTP and never read the process environment.
     unsafe {
-        std::env::set_var("GROK_HOME", grok_home.path());
+        std::env::set_var("INTELEKT_HOME", grok_home.path());
         std::env::set_var("GROK_CLI_CHAT_PROXY_BASE_URL", server.url());
         std::env::set_var("GROK_XAI_API_BASE_URL", server.url());
         std::env::set_var("XAI_API_KEY", "test-key-for-ci");

@@ -6,10 +6,10 @@
 //! Run with:
 //! ```bash
 //! # On a Linux machine (as root or with cgroup delegation):
-//! cargo test -p xai-grok-tools --test cgroup_memory_test -- --ignored --nocapture
+//! cargo test -p intelekt-tools --test cgroup_memory_test -- --ignored --nocapture
 //!
 //! # If you need root:
-//! sudo -E cargo test -p xai-grok-tools --test cgroup_memory_test -- --ignored --nocapture
+//! sudo -E cargo test -p intelekt-tools --test cgroup_memory_test -- --ignored --nocapture
 //! ```
 //!
 //! The cgroup-dependent tests (1–5) are `#[ignore]`d by default so they don't
@@ -27,10 +27,10 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use xai_grok_tools::computer::local::LocalTerminalBackend;
-use xai_grok_tools::computer::local::cgroup::{CgroupMemoryConfig, PROCESS_OOM_EXIT_CODE};
-use xai_grok_tools::computer::types::{TerminalBackend, TerminalRunRequest, TerminalRunResult};
-use xai_grok_tools::notification::types::ToolNotificationHandle;
+use intelekt_tools::computer::local::LocalTerminalBackend;
+use intelekt_tools::computer::local::cgroup::{CgroupMemoryConfig, PROCESS_OOM_EXIT_CODE};
+use intelekt_tools::computer::types::{TerminalBackend, TerminalRunRequest, TerminalRunResult};
+use intelekt_tools::notification::types::ToolNotificationHandle;
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 

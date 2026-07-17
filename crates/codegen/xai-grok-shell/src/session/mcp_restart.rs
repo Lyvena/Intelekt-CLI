@@ -1,8 +1,8 @@
 //! Bounded stdio MCP auto-restart.
 //!
 //! When [`crate::session::mcp_dispatcher::run_dispatcher`] processes a
-//! window containing a [`xai_grok_mcp::servers::McpClientEventKind::TransportClosed`]
-//! or [`xai_grok_mcp::servers::McpClientEventKind::HandshakeFailed`] key for a
+//! window containing a [`intelekt_mcp::servers::McpClientEventKind::TransportClosed`]
+//! or [`intelekt_mcp::servers::McpClientEventKind::HandshakeFailed`] key for a
 //! **stdio** MCP server, the dispatcher hands the key off to
 //! [`maybe_schedule_restart`]. That function applies the guard rails listed
 //! below and, if all pass, spawns a one-shot [`auto_restart_stdio`] task that
@@ -39,7 +39,7 @@
 //!    `false` for any non-stdio configured entry, so the gate doubles as
 //!    the HTTP filter (no separate `is_http` check is needed).
 //! 3. **`kill_on_drop` from config diff** —
-//!    [`xai_grok_mcp::servers::start_mcp_server`] sets
+//!    [`intelekt_mcp::servers::start_mcp_server`] sets
 //!    `kill_on_drop(true)` on the spawned `tokio::process::Command`
 //!    in the `acp::McpServer::Stdio` arm. When
 //!    `McpState::update_configs_diff` drops the `Arc<McpClient>` the
@@ -55,7 +55,7 @@
 //!    folds the disabled-list check); on `false` mid-loop we emit one
 //!    final [`crate::session::mcp_dispatcher::McpServerStatusReason::Disabled`]
 //!    push and stop.
-//! 5. **Already-Empty** — see the [`xai_grok_mcp::servers::ClientStateKind::Empty`]
+//! 5. **Already-Empty** — see the [`intelekt_mcp::servers::ClientStateKind::Empty`]
 //!    doc: a previous handshake exhausted attempts. Recovery from
 //!    `Empty` is via the explicit `Refresh` button, not auto-restart.
 //!    Enforced upstream: the liveness watcher emits `TransportClosed`
@@ -96,7 +96,7 @@ use std::time::Duration;
 
 use agent_client_protocol as acp;
 use async_trait::async_trait;
-use xai_grok_mcp::servers::{McpClientEventKind, McpServerName};
+use intelekt_mcp::servers::{McpClientEventKind, McpServerName};
 
 use crate::session::mcp_dispatcher::{
     McpServerStatus, McpServerStatusPayload, McpServerStatusReason, SERVER_STATUS_METHOD,

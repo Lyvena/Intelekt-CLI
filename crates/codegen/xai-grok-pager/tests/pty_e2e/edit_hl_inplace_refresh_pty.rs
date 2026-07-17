@@ -12,7 +12,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use xai_grok_pager_pty_harness::StyledLine;
+use intelekt_pager_pty_harness::StyledLine;
 
 const DONE_SENTINEL: &str = "EDIT_HL_DONE";
 const ARTIFACT_DIR: &str = "/tmp/edit_hl_video";

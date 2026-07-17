@@ -33,7 +33,7 @@ impl crate::types::tool_metadata::ToolMetadata for WaitTasksTool {
     fn description_template(&self) -> &str {
         // Canonical wording lives in the shared builder; `versioned_definition`
         // renders it context-aware from the finalized toolset. This static
-        // fallback mirrors the default grok-build toolset.
+        // fallback mirrors the default intelekt-cli toolset.
         static DESC: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
             xai_tool_types::build_wait_tasks_description(&xai_tool_types::WaitTasksToolNaming {
                 background_retrieval_tool: "get_command_or_subagent_output",

@@ -77,7 +77,7 @@ pub struct ToolDuration {
 
 /// How a PR creation was performed (shared with the `pr_created` telemetry
 /// event so signal and event values can never diverge).
-pub use xai_grok_telemetry::enums::PrCreationSource;
+pub use intelekt_telemetry::enums::PrCreationSource;
 
 /// A PR created during a turn, recorded for PR metrics.
 ///
@@ -1068,7 +1068,7 @@ pub struct SessionSignalsActor {
 /// Fold `new` trigger labels into `current`, keeping the tightest
 /// (lowest-threshold) raw label overall. Labels only — telemetry-safe.
 pub(crate) fn merge_tightest_trigger(current: Option<String>, new: &[String]) -> Option<String> {
-    xai_grok_sampling_types::doom_loop::DoomLoopSignal::tightest(
+    intelekt_sampling_types::doom_loop::DoomLoopSignal::tightest(
         current
             .iter()
             .map(String::as_str)
@@ -1997,20 +1997,20 @@ mod tests {
         let actor_handle = tokio::spawn(actor.run());
 
         // Set primary model
-        handle.set_primary_model("grok-3");
+        handle.set_primary_model("intelekt-3");
 
         let snapshot = handle.snapshot().await.unwrap();
-        assert_eq!(snapshot.primary_model_id, Some("grok-3".to_string()));
-        assert_eq!(snapshot.models_used, vec!["grok-3".to_string()]);
+        assert_eq!(snapshot.primary_model_id, Some("intelekt-3".to_string()));
+        assert_eq!(snapshot.models_used, vec!["intelekt-3".to_string()]);
 
         // Record additional model usage
-        handle.record_model_usage("grok-4");
-        handle.record_model_usage("grok-3"); // Duplicate
+        handle.record_model_usage("intelekt-4");
+        handle.record_model_usage("intelekt-3"); // Duplicate
 
         let snapshot = handle.snapshot().await.unwrap();
         assert_eq!(snapshot.models_used.len(), 2);
-        assert!(snapshot.models_used.contains(&"grok-3".to_string()));
-        assert!(snapshot.models_used.contains(&"grok-4".to_string()));
+        assert!(snapshot.models_used.contains(&"intelekt-3".to_string()));
+        assert!(snapshot.models_used.contains(&"intelekt-4".to_string()));
 
         handle.shutdown();
         actor_handle.await.unwrap();
@@ -2570,7 +2570,7 @@ mod tests {
                 "bash".to_string(),
                 "search_replace".to_string(),
             ],
-            vec!["grok-3".to_string(), "grok-4".to_string()],
+            vec!["intelekt-3".to_string(), "intelekt-4".to_string()],
         );
 
         let snapshot = handle.snapshot().await.unwrap();
@@ -2589,21 +2589,21 @@ mod tests {
 
         // Model tracking (newly restored)
         assert_eq!(snapshot.models_used.len(), 2);
-        assert!(snapshot.models_used.contains(&"grok-3".to_string()));
-        assert!(snapshot.models_used.contains(&"grok-4".to_string()));
+        assert!(snapshot.models_used.contains(&"intelekt-3".to_string()));
+        assert!(snapshot.models_used.contains(&"intelekt-4".to_string()));
 
         // After seeding, new tool calls should accumulate correctly
         handle.record_tool_call("bash"); // existing tool
         handle.record_tool_call("grep"); // new tool
-        handle.record_model_usage("grok-3"); // existing model
-        handle.record_model_usage("grok-4.5"); // new model
+        handle.record_model_usage("intelekt-3"); // existing model
+        handle.record_model_usage("intelekt-4.5"); // new model
 
         let snapshot = handle.snapshot().await.unwrap();
         assert_eq!(snapshot.tool_call_count, 14); // 12 + 2
         assert_eq!(snapshot.tools_used.len(), 4); // bash not duplicated, grep added
         assert!(snapshot.tools_used.contains(&"grep".to_string()));
         assert_eq!(snapshot.models_used.len(), 3); // grok-3 not duplicated, grok-5 added
-        assert!(snapshot.models_used.contains(&"grok-4.5".to_string()));
+        assert!(snapshot.models_used.contains(&"intelekt-4.5".to_string()));
 
         handle.shutdown();
         actor_handle.await.unwrap();
@@ -2622,7 +2622,7 @@ mod tests {
         handle1.record_tool_failure("bash");
         handle1.record_error();
         handle1.record_assistant_message();
-        handle1.record_model_usage("grok-3");
+        handle1.record_model_usage("intelekt-3");
 
         // Record inference metrics with ITL intervals for turn 1
         handle1.record_inference_metrics(InferenceLatencyStats {
@@ -2641,7 +2641,7 @@ mod tests {
         handle1.record_tool_call("search_replace");
         handle1.record_cancellation();
         handle1.record_assistant_message();
-        handle1.record_model_usage("grok-4");
+        handle1.record_model_usage("intelekt-4");
 
         handle1.increment_turn(); // turn 3
         handle1.record_tool_call("bash");
@@ -2708,8 +2708,8 @@ mod tests {
         assert!(restored.tools_used.contains(&"read_file".to_string()));
         assert!(restored.tools_used.contains(&"search_replace".to_string()));
         assert_eq!(restored.models_used.len(), 2);
-        assert!(restored.models_used.contains(&"grok-3".to_string()));
-        assert!(restored.models_used.contains(&"grok-4".to_string()));
+        assert!(restored.models_used.contains(&"intelekt-3".to_string()));
+        assert!(restored.models_used.contains(&"intelekt-4".to_string()));
         assert_eq!(restored.latency_sample_count, 2);
         assert_eq!(restored.avg_time_to_first_token_ms, 150);
         assert_eq!(restored.avg_response_time_ms, 1500);
@@ -2763,7 +2763,7 @@ mod tests {
         handle2.increment_turn(); // turn 5
         handle2.record_tool_call("grep"); // new tool
         handle2.record_tool_call("bash"); // existing tool (should dedup)
-        handle2.record_model_usage("grok-3"); // existing model (should dedup)
+        handle2.record_model_usage("intelekt-3"); // existing model (should dedup)
         handle2.record_error();
         handle2.record_assistant_message();
 

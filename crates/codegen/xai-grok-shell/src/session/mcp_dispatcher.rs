@@ -1,9 +1,9 @@
 //! Session-actor side `StatusDispatcher` for MCP client events.
 //!
-//! Receives [`xai_grok_mcp::servers::McpClientEvent`]s emitted by:
+//! Receives [`intelekt_mcp::servers::McpClientEvent`]s emitted by:
 //! - per-client transport-liveness watchers
-//!   ([`xai_grok_mcp::liveness`]),
-//! - the [`xai_grok_mcp::servers::GrokClientHandler`] (server-pushed
+//!   ([`intelekt_mcp::liveness`]),
+//! - the [`intelekt_mcp::servers::GrokClientHandler`] (server-pushed
 //!   `tools/list_changed` and `resources/list_changed`),
 //! - the `ensure_initialized` success/failure path,
 //! - the session/managed-config diff path.
@@ -45,7 +45,7 @@ use agent_client_protocol as acp;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex as TokioMutex;
 use tokio::sync::mpsc::UnboundedReceiver;
-use xai_grok_mcp::servers::{
+use intelekt_mcp::servers::{
     McpClientEvent, McpClientEventKind, McpServerName, McpState, mcp_server_name, mcp_transport_str,
 };
 
@@ -68,7 +68,7 @@ pub struct McpServerStatusPayload {
     /// MCP server name (`grok_com_linear`, `github`, ...).
     pub name: String,
     /// `managed` (sourced from cli-chat-proxy / `grok_com_` prefix)
-    /// or `local` (user `.grok/config.toml`).
+    /// or `local` (user `.intelekt/config.toml`).
     pub source: McpServerSource,
     /// Current status — see [`McpServerStatus`].
     pub status: McpServerStatus,
@@ -90,7 +90,7 @@ pub struct McpServerStatusPayload {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum McpServerStatus {
-    /// Client is in [`xai_grok_mcp::servers::ClientStateKind::Ready`]
+    /// Client is in [`intelekt_mcp::servers::ClientStateKind::Ready`]
     /// and the transport is healthy.
     Ready,
     /// Per-server handshake is in flight, or a restart is being
@@ -347,7 +347,7 @@ fn insert_event(win: &mut CoalescedWindow, ev: McpClientEvent) {
 }
 
 /// Discriminant for an event (mirrors
-/// [`xai_grok_mcp::servers::McpClientEventKind`]). Used as the
+/// [`intelekt_mcp::servers::McpClientEventKind`]). Used as the
 /// second half of the coalescing key.
 ///
 /// `ConfigDiff` is fanned out by [`insert_event`] before ever
@@ -400,7 +400,7 @@ pub fn build_payload(
         // the reactive recovery path key on, so they cannot drift.
         (McpClientEventKind::HandshakeFailed, McpClientEvent::HandshakeFailed { reason, .. })
             if source == McpServerSource::Managed
-                && xai_grok_mcp::servers::is_auth_rejection_message(reason) =>
+                && intelekt_mcp::servers::is_auth_rejection_message(reason) =>
         {
             (
                 McpServerStatus::NeedsAuth,
@@ -1126,7 +1126,7 @@ mod tests {
     #[tokio::test]
     async fn dispatcher_drops_dead_clients_on_transport_closed() {
         use std::sync::Arc as StdArc;
-        use xai_grok_mcp::servers::{McpClient, McpState};
+        use intelekt_mcp::servers::{McpClient, McpState};
 
         let mcp_state = StdArc::new(TokioMutex::new(McpState::new(vec![])));
         // Pre-populate with a stub client so we have something to remove.
@@ -1226,7 +1226,7 @@ mod tests {
     #[tokio::test]
     async fn window_accumulates_all_closed_ids_and_evicts_current_client() {
         use std::sync::Arc as StdArc;
-        use xai_grok_mcp::servers::{McpClient, McpState};
+        use intelekt_mcp::servers::{McpClient, McpState};
 
         let old_client = StdArc::new(McpClient::stub("demo-mcp"));
         let current = StdArc::new(McpClient::stub("demo-mcp"));
@@ -1285,7 +1285,7 @@ mod tests {
     #[tokio::test]
     async fn stale_transport_closed_does_not_evict_replacement_client() {
         use std::sync::Arc as StdArc;
-        use xai_grok_mcp::servers::{McpClient, McpState};
+        use intelekt_mcp::servers::{McpClient, McpState};
 
         let old_client = StdArc::new(McpClient::stub("demo-mcp"));
         let old_id = old_client.client_id();
@@ -1542,7 +1542,7 @@ mod tests {
     /// Deterministic under loaded CI.
     #[tokio::test(start_paused = true, flavor = "current_thread")]
     async fn run_dispatcher_schedules_restart_on_transport_closed() {
-        use xai_grok_mcp::servers::McpState;
+        use intelekt_mcp::servers::McpState;
 
         let mcp_state = Arc::new(TokioMutex::new(McpState::new(vec![])));
         let shutdown = new_shutdown_state();
@@ -1616,7 +1616,7 @@ mod tests {
     #[tokio::test(start_paused = true, flavor = "current_thread")]
     async fn run_dispatcher_stale_transport_closed_is_fully_inert() {
         use std::sync::Arc as StdArc;
-        use xai_grok_mcp::servers::{McpClient, McpState};
+        use intelekt_mcp::servers::{McpClient, McpState};
 
         let old_client = StdArc::new(McpClient::stub("svr"));
         let replacement = StdArc::new(McpClient::stub("svr"));

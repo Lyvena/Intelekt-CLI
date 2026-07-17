@@ -15,12 +15,12 @@ use ratatui::style::{Modifier, Style};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use unicode_width::UnicodeWidthStr;
-use xai_grok_agent::config::{AgentDefinition, AgentScope, BuiltinAgentName};
-use xai_grok_shell::agent::config::AgentSelectionConfig;
-use xai_grok_tools::implementations::skills::discovery::extract_first_paragraph;
-use xai_grok_tools::registry::types::ToolServerConfig;
-use xai_grok_tools::types::template_renderer::TemplateRenderer;
-use xai_grok_tools::types::tool::ToolKind;
+use intelekt_agent::config::{AgentDefinition, AgentScope, BuiltinAgentName};
+use intelekt_shell::agent::config::AgentSelectionConfig;
+use intelekt_tools::implementations::skills::discovery::extract_first_paragraph;
+use intelekt_tools::registry::types::ToolServerConfig;
+use intelekt_tools::types::template_renderer::TemplateRenderer;
+use intelekt_tools::types::tool::ToolKind;
 /// Which tab is active in the agents modal.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AgentsTab {
@@ -124,7 +124,7 @@ pub enum AgentsModalOutcome {
         tab: AgentsTab,
     },
 }
-/// User-level vs project-level config files (`~/.grok` vs `{cwd}/.grok`).
+/// User-level vs project-level config files (`~/.intelekt` vs `{cwd}/.grok`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ConfigFileScope {
     #[default]
@@ -197,7 +197,7 @@ pub struct AgentsModalState {
     /// Snapshot of bundle catalog used to merge persona lists.
     bundle: BundleState,
     /// Resolved startup agent name (same chain as shell: `[agent]`, `GROK_AGENT`,
-    /// model `agentType`, then `grok-build`).
+    /// model `agentType`, then `intelekt-cli`).
     pub default_agent: String,
     /// Agent running in the current session (`session/info` `agentName`).
     pub active_agent: Option<String>,
@@ -307,7 +307,7 @@ pub fn build_agent_list(cwd: &Path, toggle: &HashMap<String, bool>) -> Vec<Agent
         .iter()
         .map(|b| b.definition().name)
         .collect();
-    let discovered = xai_grok_agent::discovery::discover(cwd);
+    let discovered = intelekt_agent::discovery::discover(cwd);
     fn scope_priority(scope: AgentScope) -> usize {
         match scope {
             AgentScope::Project => 3,
@@ -374,14 +374,14 @@ fn personas_from_bundle(bundle: &BundleState) -> Vec<PersonaDetail> {
             .collect()
     }
 }
-/// Union bundled personas with local `~/.grok/personas` and `{cwd}/.grok/personas`.
+/// Union bundled personas with local `~/.intelekt/personas` and `{cwd}/.intelekt/personas`.
 ///
 /// Bundled names take precedence; local-only names are appended with scope tags.
 pub fn merge_persona_lists(bundle: &BundleState, cwd: &Path) -> Vec<PersonaDetail> {
     let mut list = personas_from_bundle(bundle);
     let mut names: std::collections::HashSet<String> =
         list.iter().map(|p| p.name.clone()).collect();
-    let grok_home = xai_grok_config::grok_home();
+    let grok_home = intelekt_config::grok_home();
     let bundled_dir = grok_home.join("bundled").join("personas");
     for persona in &mut list {
         if persona.source_path.is_none() {
@@ -395,7 +395,7 @@ pub fn merge_persona_lists(bundle: &BundleState, cwd: &Path) -> Vec<PersonaDetai
         }
     }
     let dirs = [
-        (ConfigFileScope::Project, cwd.join(".grok").join("personas")),
+        (ConfigFileScope::Project, cwd.join(".intelekt").join("personas")),
         (ConfigFileScope::User, grok_home.join("personas")),
     ];
     for (scope, dir) in dirs {
@@ -471,7 +471,7 @@ fn persona_detail_from_local_file(
 }
 /// Load the `[subagents.toggle]` map from config.toml.
 pub fn load_agent_toggle() -> HashMap<String, bool> {
-    let root = match xai_grok_shell::config::load_effective_config() {
+    let root = match intelekt_shell::config::load_effective_config() {
         Ok(r) => r,
         Err(_) => return HashMap::new(),
     };
@@ -509,8 +509,8 @@ pub fn sanitize_config_name(name: &str) -> Result<String, String> {
 }
 fn personas_dir_for_scope(scope: ConfigFileScope, cwd: &Path) -> PathBuf {
     match scope {
-        ConfigFileScope::User => xai_grok_config::grok_home().join("personas"),
-        ConfigFileScope::Project => cwd.join(".grok").join("personas"),
+        ConfigFileScope::User => intelekt_config::grok_home().join("personas"),
+        ConfigFileScope::Project => cwd.join(".intelekt").join("personas"),
     }
 }
 #[derive(serde::Serialize)]
@@ -548,11 +548,11 @@ pub fn create_persona_template(
     std::fs::write(&path, content).map_err(|e| format!("Failed to write persona file: {e}"))?;
     Ok(path)
 }
-/// True when `path` is a deletable local persona file (user or project `.grok/personas`).
+/// True when `path` is a deletable local persona file (user or project `.intelekt/personas`).
 pub fn persona_path_is_deletable(path: &Path) -> bool {
     config_path_is_user_or_project(path, "personas")
 }
-/// Shared guard: canonical path under `~/.grok/{subdir}` or `{cwd}/.grok/{subdir}`, not bundled.
+/// Shared guard: canonical path under `~/.intelekt/{subdir}` or `{cwd}/.intelekt/{subdir}`, not bundled.
 fn config_path_is_user_or_project(path: &Path, subdir: &str) -> bool {
     let Ok(canonical) = dunce::canonicalize(path) else {
         return false;
@@ -563,11 +563,11 @@ fn config_path_is_user_or_project(path: &Path, subdir: &str) -> bool {
     {
         return false;
     }
-    let grok_home = xai_grok_config::grok_home();
+    let grok_home = intelekt_config::grok_home();
     let in_user = dunce::canonicalize(grok_home.join(subdir))
         .ok()
         .is_some_and(|d| canonical.starts_with(&d));
-    let project_suffix = std::path::Path::new(".grok").join(subdir);
+    let project_suffix = std::path::Path::new(".intelekt").join(subdir);
     let in_project = canonical
         .ancestors()
         .any(|a| a.ends_with(project_suffix.as_path()));
@@ -601,9 +601,9 @@ pub fn delete_persona_file(path: &Path) -> Result<(), String> {
 }
 /// Load `[agent]` from effective config (merged shell + pager config layers).
 fn load_agent_selection_config() -> AgentSelectionConfig {
-    xai_grok_shell::config::load_effective_config()
+    intelekt_shell::config::load_effective_config()
         .ok()
-        .and_then(|root| xai_grok_shell::agent::config::Config::new_from_toml_cfg(&root).ok())
+        .and_then(|root| intelekt_shell::agent::config::Config::new_from_toml_cfg(&root).ok())
         .map(|cfg| cfg.agent)
         .unwrap_or_default()
 }
@@ -612,10 +612,10 @@ fn load_config_agent_name() -> Option<String> {
     load_agent_selection_config().name.filter(|s| !s.is_empty())
 }
 /// Resolve the agent name new sessions would start with — mirrors
-/// `MvpAgent::resolve_agent_definition` in xai-grok-shell.
+/// `MvpAgent::resolve_agent_definition` in intelekt-shell.
 pub fn resolve_default_agent_name(cwd: &Path, model_agent_type: Option<&str>) -> String {
     let agent_config = load_agent_selection_config();
-    xai_grok_shell::agent::mvp_agent::MvpAgent::resolve_agent_definition(
+    intelekt_shell::agent::mvp_agent::MvpAgent::resolve_agent_definition(
         cwd,
         None,
         &agent_config,
@@ -632,7 +632,7 @@ fn refresh_default_agent(state: &mut AgentsModalState) {
 ///
 /// Pass `Some(name)` to set, `None` to clear (remove the key).
 pub fn set_default_agent(name: Option<&str>) -> Result<(), String> {
-    let config_path = xai_grok_config::grok_home().join("config.toml");
+    let config_path = intelekt_config::grok_home().join("config.toml");
     if let Some(parent) = config_path.parent() {
         let _ = std::fs::create_dir_all(parent);
     }
@@ -656,7 +656,7 @@ pub fn set_default_agent(name: Option<&str>) -> Result<(), String> {
 }
 /// Toggle an agent's enabled state via `[subagents.toggle]` in config.toml.
 pub fn toggle_agent(name: &str, enabled: bool) -> Result<(), String> {
-    let config_path = xai_grok_config::grok_home().join("config.toml");
+    let config_path = intelekt_config::grok_home().join("config.toml");
     if let Some(parent) = config_path.parent() {
         let _ = std::fs::create_dir_all(parent);
     }
@@ -686,8 +686,8 @@ pub fn format_agent_detail(entry: &AgentListEntry) -> Vec<String> {
     let mut lines = Vec::new();
     lines.push(format!("  Model: {}", def.model));
     let mode_label = match def.prompt_mode {
-        xai_grok_agent::config::PromptMode::Extend => "extend",
-        xai_grok_agent::config::PromptMode::Full => "full",
+        intelekt_agent::config::PromptMode::Extend => "extend",
+        intelekt_agent::config::PromptMode::Full => "full",
     };
     lines.push(format!("  Prompt mode: {mode_label}"));
     let tools = &def.tool_config.tools;
@@ -2465,7 +2465,7 @@ pub fn handle_agents_mouse(state: &mut AgentsModalState, mouse: &MouseEvent) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_shell::agent::config::DEFAULT_AGENT_TYPE;
+    use intelekt_shell::agent::config::DEFAULT_AGENT_TYPE;
     #[test]
     fn agents_tab_next_cycles() {
         assert_eq!(AgentsTab::Agents.next(), AgentsTab::Personas);
@@ -2554,7 +2554,7 @@ mod tests {
     #[test]
     fn merge_persona_lists_appends_local_only() {
         let dir = tempfile::tempdir().expect("tempdir");
-        let personas_dir = dir.path().join(".grok").join("personas");
+        let personas_dir = dir.path().join(".intelekt").join("personas");
         std::fs::create_dir_all(&personas_dir).expect("mkdir");
         std::fs::write(
             personas_dir.join("local-only.toml"),
@@ -2619,7 +2619,7 @@ mod tests {
     #[test]
     fn persona_is_deletable_local_vs_bundled() {
         let dir = tempfile::tempdir().expect("tempdir");
-        let local = dir.path().join(".grok").join("personas").join("p.toml");
+        let local = dir.path().join(".intelekt").join("personas").join("p.toml");
         std::fs::create_dir_all(local.parent().unwrap()).unwrap();
         std::fs::write(&local, "instructions = \"x\"\n").unwrap();
         let local_detail = PersonaDetail {
@@ -2636,7 +2636,7 @@ mod tests {
             description: None,
             has_inputs: false,
             has_outputs: false,
-            source_path: Some("/home/user/.grok/bundled/personas/b.toml".into()),
+            source_path: Some("/home/user/.intelekt/bundled/personas/b.toml".into()),
             scope_label: None,
         };
         assert!(!persona_is_deletable(&bundled_detail));
@@ -2651,7 +2651,7 @@ mod tests {
     #[test]
     fn delete_persona_file_allows_project_persona() {
         let dir = tempfile::tempdir().expect("tempdir");
-        let path = dir.path().join(".grok").join("personas").join("gone.toml");
+        let path = dir.path().join(".intelekt").join("personas").join("gone.toml");
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(&path, "instructions = \"bye\"\n").unwrap();
         delete_persona_file(&path).expect("delete");

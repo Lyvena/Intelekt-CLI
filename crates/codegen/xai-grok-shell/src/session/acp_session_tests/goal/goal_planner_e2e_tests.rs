@@ -9,7 +9,7 @@ use serial_test::serial;
 use std::sync::Arc as StdArc;
 use std::sync::atomic::{AtomicUsize, Ordering as SeqOrd};
 use tempfile::TempDir;
-use xai_grok_tools::implementations::grok_build::task::types::{SubagentEvent, SubagentResult};
+use intelekt_tools::implementations::grok_build::task::types::{SubagentEvent, SubagentResult};
 
 /// Spawn behaviour knobs for the planner-coordinator stub.
 enum SpawnBehaviour {

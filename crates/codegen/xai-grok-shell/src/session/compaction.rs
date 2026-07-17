@@ -30,7 +30,7 @@ use xai_chat_state::compaction_utils::{
     prepare_conversation_for_verbatim_summarization, sanitize_compacted_history,
     validate_compacted_history,
 };
-use xai_grok_sampling_types::{ApiBackend, ConversationItem};
+use intelekt_sampling_types::{ApiBackend, ConversationItem};
 /// Default percentage points below the auto-compact threshold at which prefire
 /// (background pass-1) starts, giving pass-1 runway to finish before the limit.
 /// Override with `GROK_PREFIRE_LEAD_PERCENT`.
@@ -114,7 +114,7 @@ impl From<PrefireOutcome> for PrefirePass1Run {
 #[cfg(test)]
 mod two_pass_prefire_helper_tests {
     use super::{fingerprint_prefix, prefire_lead_percent};
-    use xai_grok_sampling_types::ConversationItem;
+    use intelekt_sampling_types::ConversationItem;
     #[test]
     fn fingerprint_stable_for_same_prefix() {
         let items = vec![
@@ -616,7 +616,7 @@ impl SessionActor {
             .run_compact_inner(
                 user_context,
                 None,
-                xai_grok_telemetry::events::CompactionTrigger::Manual,
+                intelekt_telemetry::events::CompactionTrigger::Manual,
             )
             .await
         {
@@ -668,8 +668,8 @@ impl SessionActor {
                 context_window,
                 "auto-compaction suppressed after deterministic compaction failure"
             );
-            xai_grok_telemetry::session_ctx::log_event(
-                xai_grok_telemetry::events::AutoCompactSuppressed {
+            intelekt_telemetry::session_ctx::log_event(
+                intelekt_telemetry::events::AutoCompactSuppressed {
                     reason: reason.as_str(),
                     estimated_tokens,
                     context_window,
@@ -812,14 +812,14 @@ impl SessionActor {
         &self,
         user_context: Option<String>,
         auto_continue: Option<crate::extensions::notification::AutoContinueInfo>,
-        trigger: xai_grok_telemetry::events::CompactionTrigger,
+        trigger: intelekt_telemetry::events::CompactionTrigger,
     ) -> Result<(), acp::Error> {
         let tokens_before = self.chat_state_handle.get_total_tokens().await;
         tracing::Span::current().record("compaction_tokens_before", tokens_before as i64);
         self.signals_handle().record_compaction(tokens_before);
         let trigger_str = match trigger {
-            xai_grok_telemetry::events::CompactionTrigger::Manual => "manual",
-            xai_grok_telemetry::events::CompactionTrigger::Auto => "auto",
+            intelekt_telemetry::events::CompactionTrigger::Manual => "manual",
+            intelekt_telemetry::events::CompactionTrigger::Auto => "auto",
         };
         let sampling_config = self.chat_state_handle.get_sampling_config().await;
         let context_window = sampling_config
@@ -845,7 +845,7 @@ impl SessionActor {
             .map(|c| c.api_backend == ApiBackend::Messages)
             .unwrap_or(false);
         let model_id = sampling_config.map(|c| c.model).unwrap_or_default();
-        let compaction = xai_grok_telemetry::events::CompactionScope::begin(
+        let compaction = intelekt_telemetry::events::CompactionScope::begin(
             trigger,
             tokens_before,
             context_window,
@@ -854,8 +854,8 @@ impl SessionActor {
         );
         let compact_source = trigger_str;
         self.dispatch_hook(
-            xai_grok_hooks::event::HookEventName::PreCompact,
-            xai_grok_hooks::event::HookPayload::PreCompact {
+            intelekt_hooks::event::HookEventName::PreCompact,
+            intelekt_hooks::event::HookPayload::PreCompact {
                 source: compact_source.into(),
             },
             None,
@@ -932,7 +932,7 @@ impl SessionActor {
         let sampling_client = self.prepare_chat_completion(false).await?;
         let use_backend_search =
             self.agent.borrow().backend_search_enabled() && self.supports_backend_search.get();
-        let effective_tool_defs: Vec<xai_grok_sampling_types::ToolDefinition> = self
+        let effective_tool_defs: Vec<intelekt_sampling_types::ToolDefinition> = self
             .prepare_tool_definitions()
             .await
             .into_iter()
@@ -940,11 +940,11 @@ impl SessionActor {
             .collect();
         let compaction_tool_tokens =
             xai_chat_state::estimate_tool_definitions_tokens(&effective_tool_defs);
-        let compaction_tools: Vec<xai_grok_sampling_types::ToolSpec> = effective_tool_defs
+        let compaction_tools: Vec<intelekt_sampling_types::ToolSpec> = effective_tool_defs
             .into_iter()
-            .map(xai_grok_sampling_types::ToolSpec::from)
+            .map(intelekt_sampling_types::ToolSpec::from)
             .collect();
-        let compaction_hosted_tools: Vec<xai_grok_sampling_types::HostedTool> =
+        let compaction_hosted_tools: Vec<intelekt_sampling_types::HostedTool> =
             if use_backend_search {
                 self.agent.borrow().hosted_tools().to_vec()
             } else {
@@ -983,7 +983,7 @@ impl SessionActor {
         let started_at = chrono::Utc::now().to_rfc3339();
         let estimated_input_tokens =
             xai_chat_state::estimate_conversation_tokens(&simplified_messages);
-        let auto_trigger = matches!(trigger, xai_grok_telemetry::events::CompactionTrigger::Auto);
+        let auto_trigger = matches!(trigger, intelekt_telemetry::events::CompactionTrigger::Auto);
         let wall_clock_budget_secs = self
             .agent
             .borrow()
@@ -1009,7 +1009,7 @@ impl SessionActor {
                 estimated_input_tokens,
                 retry_delay_secs,
             );
-        let fr_config = xai_grok_compaction::FullReplaceConfig {
+        let fr_config = intelekt_compaction::FullReplaceConfig {
             max_attempts: max_retries,
             retry_delay_secs,
             sampling_timeout_secs: 0,
@@ -1022,7 +1022,7 @@ impl SessionActor {
         let mut compact_summary: Option<String> =
             two_pass_output.as_ref().map(|o| o.content.clone());
         while compact_summary.is_none() {
-            match xai_grok_compaction::sample_full_replace_summary(
+            match intelekt_compaction::sample_full_replace_summary(
                 &sampler,
                 &request_turns,
                 user_context.as_deref(),
@@ -1035,13 +1035,13 @@ impl SessionActor {
                     compact_summary = Some(summary.summary);
                     break;
                 }
-                Err(xai_grok_compaction::FullReplaceError::NothingToCompact) => {
+                Err(intelekt_compaction::FullReplaceError::NothingToCompact) => {
                     last_error = Some(
                         acp::Error::internal_error().data("compact failed: nothing to compact"),
                     );
                     break;
                 }
-                Err(xai_grok_compaction::FullReplaceError::EmptyResponse) => {
+                Err(intelekt_compaction::FullReplaceError::EmptyResponse) => {
                     last_failure_outcome = if observer.degenerate_seen() {
                         CompactionOutcome::Degenerate
                     } else {
@@ -1054,7 +1054,7 @@ impl SessionActor {
                     ));
                     break;
                 }
-                Err(xai_grok_compaction::FullReplaceError::Sampler {
+                Err(intelekt_compaction::FullReplaceError::Sampler {
                     message,
                     deterministic,
                     context_overflow,
@@ -1067,8 +1067,8 @@ impl SessionActor {
                         };
                         if let Some(stage) = next_stage {
                             input_overflow_rejections += 1;
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::CompactionRetryDegraded {
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::CompactionRetryDegraded {
                                     trigger,
                                     reason: "input_overflow",
                                     from_stage: Some(input_stage.as_str()),
@@ -1252,10 +1252,10 @@ impl SessionActor {
                         .into_iter()
                         .map(|t| {
                             let tool_name = match t.kind {
-                                xai_grok_tools::computer::types::TaskKind::Monitor => {
+                                intelekt_tools::computer::types::TaskKind::Monitor => {
                                     monitor_tool_name.clone()
                                 }
-                                xai_grok_tools::computer::types::TaskKind::Bash => {
+                                intelekt_tools::computer::types::TaskKind::Bash => {
                                     execute_tool_name.clone()
                                 }
                             };
@@ -1268,7 +1268,7 @@ impl SessionActor {
                         self.tool_context.subagent_event_tx
                     {
                         let (tx, rx) = tokio::sync::oneshot::channel();
-                        use xai_grok_tools::implementations::grok_build::task::types::{
+                        use intelekt_tools::implementations::grok_build::task::types::{
                             SubagentEvent, SubagentListActiveRequest,
                         };
                         let _ =
@@ -1291,7 +1291,7 @@ impl SessionActor {
                     };
                     let connected_mcp_servers = {
                         use crate::session::helpers::compaction_context::CompactionServerSummary;
-                        use xai_grok_tools::implementations::search_tool::{
+                        use intelekt_tools::implementations::search_tool::{
                             sanitize_description, truncate_description,
                         };
                         self.connected_server_summaries()
@@ -1314,7 +1314,7 @@ impl SessionActor {
                             TodoSummary, TodoSummaryStatus,
                         };
                         use crate::tools::todo::{TodoState, TodoStatus};
-                        use xai_grok_tools::types::resources::State;
+                        use intelekt_tools::types::resources::State;
                         let bridge = self.agent.borrow().tool_bridge().clone();
                         bridge
                             .read_resource::<State<TodoState>>()
@@ -1414,13 +1414,13 @@ impl SessionActor {
                 })
         };
         let memory_opt_out = false;
-        let memory_ref: Option<&dyn xai_grok_tools::types::memory_backend::MemoryBackend> =
+        let memory_ref: Option<&dyn intelekt_tools::types::memory_backend::MemoryBackend> =
             if memory_opt_out {
                 None
             } else {
                 memory_backend_impl
                     .as_ref()
-                    .map(|b| b as &dyn xai_grok_tools::types::memory_backend::MemoryBackend)
+                    .map(|b| b as &dyn intelekt_tools::types::memory_backend::MemoryBackend)
             };
         let suppress_state_reminder = false;
         let system_reminder = if suppress_state_reminder {
@@ -1487,7 +1487,7 @@ impl SessionActor {
                     .compaction_recovery_count
                     .fetch_add(n, std::sync::atomic::Ordering::Relaxed);
                 tracing::debug!(
-                    target : xai_grok_telemetry::memory_log::TARGET, count = n,
+                    target : intelekt_telemetry::memory_log::TARGET, count = n,
                     "MEMORY_COMPACTION_RECOVERY: {} search(es) performed", n,
                 );
             }
@@ -1556,7 +1556,7 @@ impl SessionActor {
             .and_then(|item| match item {
                 ConversationItem::User(parts) => {
                     parts.content.into_iter().next().and_then(|p| match p {
-                        xai_grok_sampling_types::ContentPart::Text { text } => {
+                        intelekt_sampling_types::ContentPart::Text { text } => {
                             Some(text.as_ref().to_owned())
                         }
                         _ => None,
@@ -1625,7 +1625,7 @@ impl SessionActor {
             .store(false, std::sync::atomic::Ordering::Relaxed);
         if self.memory.is_enabled() {
             tracing::info!(
-                target : xai_grok_telemetry::memory_log::TARGET,
+                target : intelekt_telemetry::memory_log::TARGET,
                 "MEMORY_COMPACT: post-compaction reset, next turn re-checks injection (search only if no block persisted)"
             );
         }
@@ -1649,8 +1649,8 @@ impl SessionActor {
         self.plan_mode.lock().reset_after_compaction();
         self.persist_plan_mode_state();
         self.dispatch_hook(
-            xai_grok_hooks::event::HookEventName::PostCompact,
-            xai_grok_hooks::event::HookPayload::PostCompact {
+            intelekt_hooks::event::HookEventName::PostCompact,
+            intelekt_hooks::event::HookPayload::PostCompact {
                 source: compact_source.into(),
             },
             None,
@@ -1736,7 +1736,7 @@ impl SessionActor {
     /// `SamplingErrorInfo` the sampler hands back.
     pub(crate) async fn should_compact_on_error(
         &self,
-        err: &xai_grok_sampler::SamplingErrorInfo,
+        err: &intelekt_sampler::SamplingErrorInfo,
     ) -> bool {
         if self
             .compaction
@@ -1931,7 +1931,7 @@ impl SessionActor {
         self.record_compaction_variant();
         let tokens_before = self.chat_state_handle.get_total_tokens().await;
         tracing::Span::current().record("pre_tokens", tokens_before as i64);
-        xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::AutoCompactFired {
+        intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::AutoCompactFired {
             tokens_before: trigger_info.tokens_used,
             percentage: trigger_info.percentage,
         });
@@ -1955,7 +1955,7 @@ impl SessionActor {
             .run_compact_inner(
                 None,
                 None,
-                xai_grok_telemetry::events::CompactionTrigger::Auto,
+                intelekt_telemetry::events::CompactionTrigger::Auto,
             )
             .await;
         let elapsed_ms = compact_start.elapsed().as_millis() as i64;
@@ -2012,11 +2012,11 @@ impl SessionActor {
     fn persist_compaction_request_artifact(
         &self,
         chat_history: Vec<ConversationItem>,
-        tools: Vec<xai_grok_sampling_types::ToolSpec>,
+        tools: Vec<intelekt_sampling_types::ToolSpec>,
         user_context: Option<&str>,
         use_short_prompt: bool,
         model: &str,
-        trigger: xai_grok_telemetry::events::CompactionTrigger,
+        trigger: intelekt_telemetry::events::CompactionTrigger,
         summary: Option<&str>,
         error: Option<&acp::Error>,
         attempts: u32,
@@ -2026,8 +2026,8 @@ impl SessionActor {
         use crate::extensions::notification::CompactionRequestFile;
         let request_id = uuid::Uuid::new_v4().to_string();
         let trigger_str = match trigger {
-            xai_grok_telemetry::events::CompactionTrigger::Manual => "manual",
-            xai_grok_telemetry::events::CompactionTrigger::Auto => "auto",
+            intelekt_telemetry::events::CompactionTrigger::Manual => "manual",
+            intelekt_telemetry::events::CompactionTrigger::Auto => "auto",
         };
         let prompt_variant = if use_short_prompt {
             "short"
@@ -2128,9 +2128,9 @@ mod inline_auto_compact_flow_tests {
     use crate::terminal::runner::{TerminalError, TerminalRunRequest, TerminalRunResult};
     use std::sync::OnceLock;
     use tokio::sync::mpsc;
-    use xai_grok_paths::AbsPathBuf;
-    use xai_grok_workspace::file_system::MockFs;
-    use xai_grok_workspace::permission::PermissionHandle;
+    use intelekt_paths::AbsPathBuf;
+    use intelekt_workspace::file_system::MockFs;
+    use intelekt_workspace::permission::PermissionHandle;
     #[derive(Debug)]
     struct DummyTerminal;
     #[async_trait::async_trait]
@@ -2176,7 +2176,7 @@ mod inline_auto_compact_flow_tests {
             tokio::sync::mpsc::unbounded_channel::<crate::session::replay_events::SessionEvent>();
         let chat_state_handle = xai_chat_state::ChatStateActor::spawn(
             vec![],
-            xai_grok_sampling_types::SamplingConfig {
+            intelekt_sampling_types::SamplingConfig {
                 base_url: "http://localhost".to_string(),
                 model: "test".to_string(),
                 max_completion_tokens: None,
@@ -2344,7 +2344,7 @@ mod inline_auto_compact_flow_tests {
             hook_registry: std::cell::RefCell::new(None),
             client_hooks: Default::default(),
             hook_resolved_workspace_root: String::new(),
-            vcs_kind: xai_grok_workspace::session::git::VcsKind::Git,
+            vcs_kind: intelekt_workspace::session::git::VcsKind::Git,
             hook_load_errors: std::cell::RefCell::new(Vec::new()),
             plugin_registry: std::cell::RefCell::new(None),
             plugin_registry_handle: None,
@@ -2359,7 +2359,7 @@ mod inline_auto_compact_flow_tests {
                 crate::session::acp_session::StreamingTurnCapture::default(),
             ),
             turn_stream_drained: parking_lot::Mutex::new(None),
-            sampler_handle: xai_grok_sampler::SamplerHandle::noop(),
+            sampler_handle: intelekt_sampler::SamplerHandle::noop(),
             rebuild_spec: crate::session::agent_rebuild::test_rebuild_spec_default(),
             image_description_model: crate::test_support::TEST_MODEL.to_owned(),
             image_describe_cache: Arc::new(
@@ -2367,7 +2367,7 @@ mod inline_auto_compact_flow_tests {
             ),
             subagent_spawn_info: parking_lot::Mutex::new(std::collections::HashMap::new()),
             subagent_token_records: parking_lot::Mutex::new(std::collections::HashMap::new()),
-            workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+            workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
             trace_config_template: std::cell::RefCell::new(None),
         }
     }
@@ -2722,7 +2722,7 @@ mod inline_auto_compact_flow_tests {
     async fn forked_prefix_released_under_pressure_and_stays_released() {
         use crate::session::compaction_config::SUPPRESS_NONE;
         use std::sync::atomic::Ordering::Relaxed;
-        use xai_grok_test_support::MockInferenceServer;
+        use intelekt_test_support::MockInferenceServer;
         let local = tokio::task::LocalSet::new();
         local
             .run_until(async {
@@ -2797,7 +2797,7 @@ mod inline_auto_compact_flow_tests {
     async fn forked_release_still_over_threshold_suppresses_auto() {
         use crate::session::compaction_config::SUPPRESS_STICKY;
         use std::sync::atomic::Ordering::Relaxed;
-        use xai_grok_test_support::MockInferenceServer;
+        use intelekt_test_support::MockInferenceServer;
         let local = tokio::task::LocalSet::new();
         local
             .run_until(async {
@@ -2871,11 +2871,11 @@ mod inline_auto_compact_flow_tests {
             SuppressReason::CreditBlock
         );
         assert_eq!(
-            classify("API error (status 402 Payment Required): Grok Build usage balance exhausted"),
+            classify("API error (status 402 Payment Required): Intelekt CLI usage balance exhausted"),
             SuppressReason::CreditBlock
         );
         assert_eq!(
-            classify("Grok Build usage limit reached"),
+            classify("Intelekt CLI usage limit reached"),
             SuppressReason::CreditBlock
         );
         assert_eq!(
@@ -2916,7 +2916,7 @@ mod inline_auto_compact_flow_tests {
     mod preserve_prefix {
         use super::super::preserve_inherited_prefix;
         use super::super::project_preserved_reseed_tokens;
-        use xai_grok_sampling_types::conversation::ConversationItem;
+        use intelekt_sampling_types::conversation::ConversationItem;
         #[test]
         fn splices_inherited_with_compacted_suffix() {
             let conversation = vec![
@@ -3155,9 +3155,9 @@ mod inline_auto_compact_flow_tests {
             })
             .await;
     }
-    fn api_error_with_context_window(context_window: u64) -> xai_grok_sampler::SamplingErrorInfo {
-        xai_grok_sampler::SamplingErrorInfo {
-            kind: xai_grok_sampler::SamplingErrorKind::Api,
+    fn api_error_with_context_window(context_window: u64) -> intelekt_sampler::SamplingErrorInfo {
+        intelekt_sampler::SamplingErrorInfo {
+            kind: intelekt_sampler::SamplingErrorKind::Api,
             status_code: Some(400),
             message: "prompt is too long".to_string(),
             is_retryable: false,
@@ -3216,8 +3216,8 @@ mod inline_auto_compact_flow_tests {
                 let (persistence_tx, _) = mpsc::unbounded_channel::<PersistenceMsg>();
                 let actor =
                     create_test_actor(500_000, 200_000, 85, gateway_tx, persistence_tx).await;
-                let err = xai_grok_sampler::SamplingErrorInfo {
-                    kind: xai_grok_sampler::SamplingErrorKind::Api,
+                let err = intelekt_sampler::SamplingErrorInfo {
+                    kind: intelekt_sampler::SamplingErrorKind::Api,
                     status_code: Some(400),
                     message: "prompt is too long".to_string(),
                     is_retryable: false,

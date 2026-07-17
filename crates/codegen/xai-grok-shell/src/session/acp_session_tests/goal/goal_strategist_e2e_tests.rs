@@ -21,10 +21,10 @@ use serial_test::serial;
 use std::collections::VecDeque;
 use std::sync::Arc as StdArc;
 use std::sync::atomic::{AtomicUsize, Ordering as SeqOrd};
-use xai_grok_tools::implementations::grok_build::task::types::{
+use intelekt_tools::implementations::grok_build::task::types::{
     SubagentCancelOutcome, SubagentEvent, SubagentResult,
 };
-use xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalInput;
+use intelekt_tools::implementations::grok_build::update_goal::UpdateGoalInput;
 
 const ENV_FLAG: &str = "GROK_GOAL_CLASSIFIER";
 
@@ -104,7 +104,7 @@ fn spawn_coordinator(
 
 async fn answer_strategist(
     behaviour: StrategistBehaviour,
-    req: Box<xai_grok_tools::implementations::grok_build::task::types::SubagentRequest>,
+    req: Box<intelekt_tools::implementations::grok_build::task::types::SubagentRequest>,
 ) {
     match behaviour {
         StrategistBehaviour::WriteNoteThenDone => {
@@ -139,7 +139,7 @@ async fn answer_strategist(
 async fn answer_skeptic(
     verdict: SkepticVerdict,
     spawn_idx: usize,
-    req: Box<xai_grok_tools::implementations::grok_build::task::types::SubagentRequest>,
+    req: Box<intelekt_tools::implementations::grok_build::task::types::SubagentRequest>,
 ) {
     if let Some(p) = parse_details_path(&req.prompt) {
         let _ = tokio::fs::write(&p, b"# mock skeptic details\n").await;
@@ -219,7 +219,7 @@ async fn make_actor(
     actor.tool_context.subagent_event_tx = coordinator_tx;
     // Isolated cwd for a hermetic, fast harness run.
     actor.tool_context.cwd =
-        xai_grok_paths::AbsPathBuf::new(tmp.path().to_path_buf()).expect("abs cwd");
+        intelekt_paths::AbsPathBuf::new(tmp.path().to_path_buf()).expect("abs cwd");
     actor.goal_tracker.lock().create_goal(
         "test-goal".to_string(),
         "test objective".to_string(),
@@ -243,7 +243,7 @@ fn seed_channel(actor: &SessionActor, cmds: Vec<UpdateGoalInput>) {
     let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
     *actor.goal_update_rx.borrow_mut() = Some(rx);
     for cmd in cmds {
-        tx.send(xai_grok_tools::implementations::grok_build::update_goal::envelope_for_test(cmd))
+        tx.send(intelekt_tools::implementations::grok_build::update_goal::envelope_for_test(cmd))
             .unwrap();
     }
     drop(tx);

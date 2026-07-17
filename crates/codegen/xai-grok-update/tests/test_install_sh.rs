@@ -9,7 +9,7 @@
 //! Also covers shell-rc rewrite: stowed/symlinked `~/.bashrc` etc. must survive
 //! reinstall without being replaced by a plain file.
 //!
-//! The installer lives in the sibling `xai-grok-pager` crate; it is resolved by
+//! The installer lives in the sibling `intelekt-pager` crate; it is resolved by
 //! relative path. If it cannot be found (e.g. a sandbox that does not vendor it)
 //! the test skips rather than fail — under the repo's `cargo nextest` workflow
 //! the path resolves and the installer is exercised end to end.
@@ -22,7 +22,7 @@ use std::process::Command;
 
 fn script_path(name: &str) -> Option<PathBuf> {
     dunce::canonicalize(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("../xai-grok-pager/scripts/{name}")),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("../intelekt-pager/scripts/{name}")),
     )
     .ok()
     .filter(|p| p.exists())
@@ -92,14 +92,14 @@ exit 0
 
 /// Seed a valid previous-good binary + symlink in the isolated home.
 fn seed_previous_good(home: &Path, platform: &str) -> PathBuf {
-    let downloads = home.join(".grok").join("downloads");
-    let bin = home.join(".grok").join("bin");
+    let downloads = home.join(".intelekt").join("downloads");
+    let bin = home.join(".intelekt").join("bin");
     std::fs::create_dir_all(&downloads).unwrap();
     std::fs::create_dir_all(&bin).unwrap();
     let prev = downloads.join(format!("grok-{platform}"));
     std::fs::write(&prev, GOOD_SCRIPT).unwrap();
     std::fs::set_permissions(&prev, std::fs::Permissions::from_mode(0o755)).unwrap();
-    let link = bin.join("grok");
+    let link = bin.join("intelekt");
     let _ = std::fs::remove_file(&link);
     std::os::unix::fs::symlink(format!("../downloads/grok-{platform}"), &link).unwrap();
     dunce::canonicalize(&prev).unwrap()
@@ -108,7 +108,7 @@ fn seed_previous_good(home: &Path, platform: &str) -> PathBuf {
 /// Re-resolve `$BIN_DIR/grok` from disk and re-run it: the active grok must
 /// always execute, and never be a `.tmp`/partial file.
 fn assert_active_grok_runs(home: &Path) {
-    let link = home.join(".grok").join("bin").join("grok");
+    let link = home.join(".intelekt").join("bin").join("intelekt");
     assert!(link.is_symlink(), "grok must remain a symlink");
     let resolved =
         dunce::canonicalize(&link).unwrap_or_else(|e| panic!("grok symlink dangles: {e}"));
@@ -134,8 +134,8 @@ fn run_installer(install_sh: &Path, home: &Path, fakebin: &Path, mode: &str, she
         .env("HOME", home)
         .env("PATH", path_env)
         .env("SHELL", shell)
-        .env("GROK_BIN_DIR", home.join(".grok").join("bin"))
-        .env("GROK_CHANNEL", "stable")
+        .env("INTELEKT_BIN_DIR", home.join(".intelekt").join("bin"))
+        .env("INTELEKT_CHANNEL", "stable")
         .env("FAKE_MODE", mode)
         .status()
         .expect("spawn bash install.sh");

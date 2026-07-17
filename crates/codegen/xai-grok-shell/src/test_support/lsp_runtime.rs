@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot};
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
-use xai_grok_tools::implementations::grok_build::task::types::{SubagentRequest, SubagentResult};
+use intelekt_tools::implementations::grok_build::task::types::{SubagentRequest, SubagentResult};
 pub(crate) type GatewayOut = <acp::AgentSide as xai_acp_lib::AcpSide>::OutMessage;
 pub(crate) fn test_gateway() -> GatewaySender {
     let (tx, _rx) = mpsc::unbounded_channel();
@@ -36,7 +36,7 @@ pub(crate) fn ctx_with_toggle(toggle: HashMap<String, bool>) -> SubagentSpawnCon
         parent_max_turns: None,
         gateway: test_gateway(),
         client_hooks: Default::default(),
-        sampling_config: xai_grok_sampler::SamplerConfig {
+        sampling_config: intelekt_sampler::SamplerConfig {
             api_key: None,
             base_url: String::new(),
             model: String::new(),
@@ -76,7 +76,7 @@ pub(crate) fn ctx_with_toggle(toggle: HashMap<String, bool>) -> SubagentSpawnCon
         subagent_event_tx: tx,
         hunk_tracker_handle: xai_hunk_tracker::HunkTrackerHandle::noop(),
         hunk_tracking_enabled: false,
-        fs: Arc::new(xai_grok_workspace::file_system::LocalFs::new(
+        fs: Arc::new(intelekt_workspace::file_system::LocalFs::new(
             PathBuf::from("/tmp"),
         )),
         terminal: Arc::new(crate::terminal::TerminalRunner::new(
@@ -124,7 +124,7 @@ pub(crate) fn ctx_with_toggle(toggle: HashMap<String, bool>) -> SubagentSpawnCon
         worktree_type: crate::util::config::WorktreeType::Linked,
         api_key_provider: None,
         image_description_model: crate::test_support::TEST_MODEL.to_owned(),
-        workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+        workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
         auth_manager: Arc::new(crate::auth::AuthManager::new(
             std::path::Path::new("/tmp/nonexistent-grok-test"),
             crate::auth::GrokComConfig::default(),
@@ -139,11 +139,11 @@ pub(crate) fn ctx_with_toggle(toggle: HashMap<String, bool>) -> SubagentSpawnCon
         parent_mcp_pool: None,
         parent_tool_snapshot: None,
         parent_skills: None,
-        parent_skills_config: xai_grok_agent::prompt::skills::SkillsConfig::default(),
-        parent_compat: xai_grok_tools::types::compat::CompatConfig::default(),
+        parent_skills_config: intelekt_agent::prompt::skills::SkillsConfig::default(),
+        parent_compat: intelekt_tools::types::compat::CompatConfig::default(),
         auto_wake_delivered: None,
         synthetic_trace_tx: None,
-        task_output_tool_name: xai_grok_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL
+        task_output_tool_name: intelekt_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL
             .to_string(),
         auto_wake_enabled: true,
         goal_loop_active: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
@@ -177,7 +177,7 @@ pub(crate) fn make_request(
 #[derive(Default)]
 pub(crate) struct DummyLspDispatch;
 #[async_trait::async_trait]
-impl xai_grok_tools::implementations::lsp::LspBackend for DummyLspDispatch {
+impl intelekt_tools::implementations::lsp::LspBackend for DummyLspDispatch {
     fn ensure_started_background(&self) {}
     async fn ensure_ready(&self) -> Result<(), String> {
         Ok(())
@@ -187,9 +187,9 @@ impl xai_grok_tools::implementations::lsp::LspBackend for DummyLspDispatch {
     }
     async fn dispatch(
         &self,
-        _input: &xai_grok_tools::implementations::lsp::LspToolInput,
-    ) -> xai_grok_tools::implementations::lsp::LspToolResult {
-        xai_grok_tools::implementations::lsp::LspToolResult {
+        _input: &intelekt_tools::implementations::lsp::LspToolInput,
+    ) -> intelekt_tools::implementations::lsp::LspToolResult {
+        intelekt_tools::implementations::lsp::LspToolResult {
             text: String::new(),
             is_error: false,
         }
@@ -197,14 +197,14 @@ impl xai_grok_tools::implementations::lsp::LspBackend for DummyLspDispatch {
     async fn drain_diagnostics(
         &self,
         _timeout: std::time::Duration,
-    ) -> Option<xai_grok_tools::implementations::lsp::DiagnosticsSummary> {
+    ) -> Option<intelekt_tools::implementations::lsp::DiagnosticsSummary> {
         None
     }
     async fn notify_file_changed(&self, _path: &std::path::Path, _content: &str) {}
     async fn read_diagnostics(
         &self,
         _paths: &[std::path::PathBuf],
-    ) -> Vec<xai_grok_tools::implementations::lsp::FileDiagnosticEntry> {
+    ) -> Vec<intelekt_tools::implementations::lsp::FileDiagnosticEntry> {
         vec![]
     }
 }

@@ -21,8 +21,8 @@ use crate::upload::trace::{
 };
 use crate::upload::turn::{PromptTraceContext, complete_prompt_trace};
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
-use xai_grok_tools::implementations::grok_build::task::types::*;
-use xai_grok_workspace::file_system::AsyncFileSystem;
+use intelekt_tools::implementations::grok_build::task::types::*;
+use intelekt_workspace::file_system::AsyncFileSystem;
 use xai_hunk_tracker::HunkTrackerHandle;
 use super::*;
 pub(super) fn task_model_override_error(
@@ -158,7 +158,7 @@ pub(crate) async fn handle_subagent_request(
         use xai_tool_types::SubagentIsolationMode;
         if effective_runtime.isolation == SubagentIsolationMode::None
             && definition.isolation
-                == Some(xai_grok_agent::config::IsolationMode::Worktree)
+                == Some(intelekt_agent::config::IsolationMode::Worktree)
         {
             effective_runtime.isolation = SubagentIsolationMode::Worktree;
         }
@@ -222,7 +222,7 @@ pub(crate) async fn handle_subagent_request(
             );
         }
         effective_runtime.model = None;
-        if let Err(e) = xai_grok_subagent_resolution::validate_resume_identity(
+        if let Err(e) = intelekt_subagent_resolution::validate_resume_identity(
             &request.subagent_type,
             request.runtime_overrides.persona.as_deref(),
             source,
@@ -402,8 +402,8 @@ pub(crate) async fn handle_subagent_request(
         );
     }
     {
-        use xai_grok_tools::implementations::grok_build::task::MAX_SUBAGENT_DEPTH;
-        use xai_grok_tools::types::tool::ToolKind;
+        use intelekt_tools::implementations::grok_build::task::MAX_SUBAGENT_DEPTH;
+        use intelekt_tools::types::tool::ToolKind;
         let child_depth = ctx.parent_depth + 1;
         if child_depth >= MAX_SUBAGENT_DEPTH {
             let before = definition.tool_config.tools.len();
@@ -474,7 +474,7 @@ pub(crate) async fn handle_subagent_request(
             .models_manager
             .model_supports_reasoning_effort(effective_model_id.0.as_ref())
     {
-        use xai_grok_sampling_types::ReasoningEffort;
+        use intelekt_sampling_types::ReasoningEffort;
         match raw.parse::<ReasoningEffort>() {
             Ok(eff) => effective_sampling_config.reasoning_effort = Some(eff),
             Err(err) => {
@@ -547,7 +547,7 @@ pub(crate) async fn handle_subagent_request(
     if context_source != InitialContextSource::Resumed && !verbatim_mirror_fork
         && let Some(ref pi) = effective_runtime.persona_instructions
     {
-        let reminder = xai_grok_sampling_types::conversation::ConversationItem::system_reminder(
+        let reminder = intelekt_sampling_types::conversation::ConversationItem::system_reminder(
             format!("<system-reminder>\n{pi}\n</system-reminder>"),
         );
         let insert_at = inherited_prefix_len.min(forked_conversation.len());
@@ -731,9 +731,9 @@ pub(crate) async fn handle_subagent_request(
         hunk_tracking: ctx.hunk_tracking_enabled && cwd_outside_parent,
         ..FsWatchCapabilities::none()
     };
-    let child_cwd_abs = xai_grok_paths::AbsPathBuf::new(child_cwd)
+    let child_cwd_abs = intelekt_paths::AbsPathBuf::new(child_cwd)
         .unwrap_or_else(|_| {
-            xai_grok_paths::AbsPathBuf::new(std::env::current_dir().unwrap_or_default())
+            intelekt_paths::AbsPathBuf::new(std::env::current_dir().unwrap_or_default())
                 .expect("current_dir should be absolute")
         });
     let mut tool_ctx = ToolContext::with_preloaded_env(
@@ -769,7 +769,7 @@ pub(crate) async fn handle_subagent_request(
         alpha_test_key: ctx.alpha_test_key.clone(),
         client_version: effective_sampling_config.client_version.clone(),
     };
-    xai_grok_telemetry::unified_log::info(
+    intelekt_telemetry::unified_log::info(
         "subagent spawn credentials",
         None,
         Some(
@@ -787,14 +787,14 @@ pub(crate) async fn handle_subagent_request(
             ),
         ),
     );
-    let attribution_callback: Option<xai_grok_sampler::SharedAttributionCallback> = effective_sampling_config
+    let attribution_callback: Option<intelekt_sampler::SharedAttributionCallback> = effective_sampling_config
         .attribution_callback
         .clone();
     let tracker_color = definition.color;
     let agent_memory_scope = definition.memory;
     let agent_name_for_memory = definition.name.clone();
     let is_plugin_agent = definition.plugin_name.is_some();
-    let yolo_policy_block = xai_grok_workspace::permission::resolution::yolo_disabled_by_policy();
+    let yolo_policy_block = intelekt_workspace::permission::resolution::yolo_disabled_by_policy();
     let agent_permission_mode = resolve_subagent_permission_mode(
         definition.permission_mode.clone(),
         is_plugin_agent,
@@ -814,9 +814,9 @@ pub(crate) async fn handle_subagent_request(
         }
     }
     if let Some(scope) = agent_memory_scope {
-        use xai_grok_tools::implementations::grok_build;
-        use xai_grok_tools::implementations::opencode;
-        let memory_tools: Vec<xai_grok_tools::registry::types::ToolConfig> = vec![
+        use intelekt_tools::implementations::grok_build;
+        use intelekt_tools::implementations::opencode;
+        let memory_tools: Vec<intelekt_tools::registry::types::ToolConfig> = vec![
             (& grok_build::ReadFileTool).into(), (& grok_build::SearchReplaceTool)
             .into(), (& opencode::OpenCodeWriteTool).into(),
         ];
@@ -836,7 +836,7 @@ pub(crate) async fn handle_subagent_request(
                 .take(MAX_LINES)
                 .collect::<Vec<_>>()
                 .join("\n");
-            let truncated = xai_grok_tools::util::truncate::truncate_str(
+            let truncated = intelekt_tools::util::truncate::truncate_str(
                     &truncated,
                     MAX_BYTES,
                 )
@@ -869,7 +869,7 @@ pub(crate) async fn handle_subagent_request(
             );
         } else {
             let hooks_val = hooks_config.as_value();
-            let (specs, errors) = xai_grok_hooks::config::parse_hooks_from_value_with_dir(
+            let (specs, errors) = intelekt_hooks::config::parse_hooks_from_value_with_dir(
                 &hooks_val,
                 &format!("agent:{}", definition.name),
                 &ctx.parent_cwd,
@@ -883,8 +883,8 @@ pub(crate) async fn handle_subagent_request(
                 let specs: Vec<_> = specs
                     .into_iter()
                     .map(|mut s| {
-                        if s.event == xai_grok_hooks::event::HookEventName::Stop {
-                            s.event = xai_grok_hooks::event::HookEventName::SubagentStop;
+                        if s.event == intelekt_hooks::event::HookEventName::Stop {
+                            s.event = intelekt_hooks::event::HookEventName::SubagentStop;
                         }
                         s
                     })
@@ -912,7 +912,7 @@ pub(crate) async fn handle_subagent_request(
                 .mcp_servers
                 .iter()
                 .filter_map(|entry| match entry {
-                    xai_grok_agent::config::McpServerRef::Named(name) => {
+                    intelekt_agent::config::McpServerRef::Named(name) => {
                         ctx.parent_mcp_configs
                             .iter()
                             .find(|s| {
@@ -927,7 +927,7 @@ pub(crate) async fn handle_subagent_request(
                                 None
                             })
                     }
-                    xai_grok_agent::config::McpServerRef::Inline { name, config } => {
+                    intelekt_agent::config::McpServerRef::Inline { name, config } => {
                         if let serde_json::Value::Object(obj) = config
                             && obj.contains_key("type")
                         {
@@ -997,7 +997,7 @@ pub(crate) async fn handle_subagent_request(
     if inherit_skills && ctx.parent_skills.is_none() {
         let parent_cwd_str = ctx.parent_cwd.to_string_lossy().to_string();
         ctx.parent_skills = Some(
-            xai_grok_agent::prompt::skills::list_skills_with_plugins(
+            intelekt_agent::prompt::skills::list_skills_with_plugins(
                     Some(&parent_cwd_str),
                     &ctx.parent_skills_config,
                     ctx.plugin_registry.as_deref(),
@@ -1018,7 +1018,7 @@ pub(crate) async fn handle_subagent_request(
         );
     }
     let mcp_owned_count = agent_mcp_servers.len() as u32;
-    xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::SubagentLaunched {
+    intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::SubagentLaunched {
         subagent_id: request.id.clone(),
         parent_session_id: request.parent_session_id.clone(),
         subagent_type: request.subagent_type.clone(),
@@ -1076,9 +1076,9 @@ pub(crate) async fn handle_subagent_request(
                 preserve_inherited_system: verbatim_mirror_fork,
                 ..Default::default()
             },
-            xai_grok_workspace::permission::ClientType::Generic,
+            intelekt_workspace::permission::ClientType::Generic,
             ctx.resolve_auto_compact_threshold_percent(&subagent_model_id),
-            xai_grok_agent::DEFAULT_SYSTEM_PROMPT_LABEL.to_string(),
+            intelekt_agent::DEFAULT_SYSTEM_PROMPT_LABEL.to_string(),
             xai_chat_state::CompactionMode::Summary,
             ctx.resolve_compaction_verbatim_input(),
             false,
@@ -1086,7 +1086,7 @@ pub(crate) async fn handle_subagent_request(
             None,
             std::sync::Arc::new(
                 parking_lot::Mutex::new(
-                    xai_grok_workspace::file_system::CodebaseIndexManager::new(),
+                    intelekt_workspace::file_system::CodebaseIndexManager::new(),
                 ),
             ),
             false,
@@ -1103,7 +1103,7 @@ pub(crate) async fn handle_subagent_request(
             if inherit_skills {
                 ctx.parent_skills_config.clone()
             } else {
-                xai_grok_agent::prompt::skills::SkillsConfig::default()
+                intelekt_agent::prompt::skills::SkillsConfig::default()
             },
             if inherit_skills { ctx.parent_skills.take() } else { None },
             ctx.parent_compat,
@@ -1138,7 +1138,7 @@ pub(crate) async fn handle_subagent_request(
             ctx.yolo_mode
                 || matches!(
                     agent_permission_mode,
-                    xai_grok_agent::config::PermissionMode::BypassPermissions
+                    intelekt_agent::config::PermissionMode::BypassPermissions
                 ),
             false,
             None,
@@ -1157,7 +1157,7 @@ pub(crate) async fn handle_subagent_request(
             None,
             std::collections::HashMap::new(),
             ctx.persona_io_summaries.clone(),
-            xai_grok_agent::prompt::context::PromptAudience::Subagent,
+            intelekt_agent::prompt::context::PromptAudience::Subagent,
             effective_runtime.role_prompt.clone(),
             None,
             ctx.disable_web_search,
@@ -1699,7 +1699,7 @@ pub(crate) async fn handle_subagent_request(
             prompt_verbatim: Some(true),
             cwd: Some(child_handle.info.cwd.clone()),
             agent_type: Some(request.subagent_type.clone()),
-            shell_version: Some(xai_grok_version::VERSION.to_string()),
+            shell_version: Some(intelekt_version::VERSION.to_string()),
             workspace_type: None,
             sandbox: local_sandbox_telemetry(),
         };
@@ -1828,13 +1828,13 @@ pub(crate) async fn handle_subagent_request(
         }
     }
     let outcome = if result.success {
-        xai_grok_telemetry::events::Outcome::Completed
+        intelekt_telemetry::events::Outcome::Completed
     } else if result.cancelled {
-        xai_grok_telemetry::events::Outcome::Cancelled
+        intelekt_telemetry::events::Outcome::Cancelled
     } else {
-        xai_grok_telemetry::events::Outcome::Error
+        intelekt_telemetry::events::Outcome::Error
     };
-    xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::SubagentCompleted {
+    intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::SubagentCompleted {
         subagent_id: request.id.clone(),
         parent_session_id: request.parent_session_id.clone(),
         outcome,

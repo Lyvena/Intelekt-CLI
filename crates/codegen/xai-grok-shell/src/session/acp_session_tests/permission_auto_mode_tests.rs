@@ -8,8 +8,8 @@ use std::sync::Arc;
 
 use agent_client_protocol as acp;
 use xai_acp_lib::AcpAgentGatewaySender;
-use xai_grok_paths::AbsPathBuf;
-use xai_grok_workspace::permission::{AccessKind, ClientType, spawn_permission_manager};
+use intelekt_paths::AbsPathBuf;
+use intelekt_workspace::permission::{AccessKind, ClientType, spawn_permission_manager};
 
 use super::support::create_test_actor;
 use super::{PersistenceMsg, SessionActor};
@@ -76,7 +76,7 @@ async fn set_auto_mode_path_wires_live_side_query_via_session_actor() {
             let d = session
                 .permissions
                 .request(
-                    AccessKind::Bash("cargo test -p xai-grok-workspace".into()),
+                    AccessKind::Bash("cargo test -p intelekt-workspace".into()),
                     dummy_update,
                     None,
                     None,
@@ -87,7 +87,7 @@ async fn set_auto_mode_path_wires_live_side_query_via_session_actor() {
             // silent always-approve for arbitrary binaries.
             // cargo is typically Allow via heuristic when sampling fails in unit tests
             assert!(
-                matches!(d, xai_grok_workspace::permission::Decision::Allow),
+                matches!(d, intelekt_workspace::permission::Decision::Allow),
                 "cargo under auto should Allow (LLM or heuristic), got {d:?}"
             );
 
@@ -102,7 +102,7 @@ async fn set_auto_mode_path_wires_live_side_query_via_session_actor() {
                 )
                 .await;
             assert!(
-                !matches!(d2, xai_grok_workspace::permission::Decision::Allow),
+                !matches!(d2, intelekt_workspace::permission::Decision::Allow),
                 "dangerous bash must not Allow under auto when classifier/heuristic blocks; got {d2:?}"
             );
         })
@@ -124,7 +124,7 @@ async fn spawn_auto_seed_wires_classifier_when_is_auto_mode() {
             // `_meta.autoMode` / CLI seed at spawn
             actor.permissions.set_auto_mode(true);
             actor.permissions.set_classifier_transcript(vec![
-                xai_grok_workspace::permission::ClassifierTurn::UserText("please run tests".into()),
+                intelekt_workspace::permission::ClassifierTurn::UserText("please run tests".into()),
             ]);
 
             let session = Arc::new(actor);
@@ -242,12 +242,12 @@ fn neutralize_handles_multibyte_without_panic() {
 /// EXCLUDES assistant free-text and tool results (auto-mode classifier parity).
 #[test]
 fn build_classifier_turns_captures_tool_use_excludes_text_and_results() {
-    use xai_grok_workspace::permission::ClassifierTurn;
+    use intelekt_workspace::permission::ClassifierTurn;
     let conv = vec![
         super::ConversationItem::user("please build"),
         super::ConversationItem::assistant("sure, running it"),
         super::ConversationItem::assistant_tool_calls(vec![
-            xai_grok_sampling_types::conversation::ToolCall {
+            intelekt_sampling_types::conversation::ToolCall {
                 id: std::sync::Arc::from("tc1"),
                 name: "run_terminal_command".into(),
                 arguments: std::sync::Arc::from(r#"{ "command": "cargo build" }"#),
@@ -272,7 +272,7 @@ fn build_classifier_turns_captures_tool_use_excludes_text_and_results() {
 /// The recency window keeps only the last `max_items` conversation items.
 #[test]
 fn build_classifier_turns_respects_recency_window() {
-    use xai_grok_workspace::permission::ClassifierTurn;
+    use intelekt_workspace::permission::ClassifierTurn;
     let conv = vec![
         super::ConversationItem::user("old"),
         super::ConversationItem::user("mid"),
@@ -294,7 +294,7 @@ fn build_classifier_turns_respects_recency_window() {
 /// AutoContinue, etc.) is dropped (injection vector + AGENTS.md double-include).
 #[test]
 fn build_classifier_turns_filters_synthetic_users() {
-    use xai_grok_workspace::permission::ClassifierTurn;
+    use intelekt_workspace::permission::ClassifierTurn;
     let conv = vec![
         super::ConversationItem::project_instructions("AGENTS.md body: be careful"),
         super::ConversationItem::auto_continue("keep going"),
@@ -317,9 +317,9 @@ fn build_classifier_turns_filters_synthetic_users() {
 /// transcript line via the assistant-tool_use channel (one turn = one line).
 #[test]
 fn build_classifier_turns_neutralizes_malformed_tool_args() {
-    use xai_grok_workspace::permission::ClassifierTurn;
+    use intelekt_workspace::permission::ClassifierTurn;
     let conv = vec![super::ConversationItem::assistant_tool_calls(vec![
-        xai_grok_sampling_types::conversation::ToolCall {
+        intelekt_sampling_types::conversation::ToolCall {
             id: std::sync::Arc::from("tc1"),
             name: "run_terminal_command".into(),
             // Not valid JSON → raw fallback; embeds a newline + a forged role line.
@@ -341,14 +341,14 @@ fn build_classifier_turns_neutralizes_malformed_tool_args() {
 /// Multiple tool_calls on one assistant item produce one classifier turn each.
 #[test]
 fn build_classifier_turns_one_turn_per_tool_call() {
-    use xai_grok_workspace::permission::ClassifierTurn;
+    use intelekt_workspace::permission::ClassifierTurn;
     let conv = vec![super::ConversationItem::assistant_tool_calls(vec![
-        xai_grok_sampling_types::conversation::ToolCall {
+        intelekt_sampling_types::conversation::ToolCall {
             id: std::sync::Arc::from("tc1"),
             name: "read_file".into(),
             arguments: std::sync::Arc::from(r#"{"path":"a.rs"}"#),
         },
-        xai_grok_sampling_types::conversation::ToolCall {
+        intelekt_sampling_types::conversation::ToolCall {
             id: std::sync::Arc::from("tc2"),
             name: "read_file".into(),
             arguments: std::sync::Arc::from(r#"{"path":"b.rs"}"#),

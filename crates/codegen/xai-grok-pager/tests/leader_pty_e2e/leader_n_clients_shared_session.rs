@@ -14,7 +14,7 @@ use super::common::*;
 /// and the multi-turn scrollback exactly-once integrity stay unique to that
 /// test, so it must not be deleted as redundant.
 #[tokio::test(flavor = "multi_thread", worker_threads = 6)]
-#[ignore = "PTY e2e; run with cargo test -p xai-grok-pager --test leader_pty_e2e -- --ignored --test-threads=1"]
+#[ignore = "PTY e2e; run with cargo test -p intelekt-pager --test leader_pty_e2e -- --ignored --test-threads=1"]
 async fn leader_n_clients_shared_session() {
     // N = 1 driver + VIEWERS viewers; bump to scale the live fan-out. Keep N
     // small: worker_threads above and the per-viewer survival pump below are

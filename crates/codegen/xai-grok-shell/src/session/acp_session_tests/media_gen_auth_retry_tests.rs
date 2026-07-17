@@ -1,7 +1,7 @@
 use super::*;
 use crate::auth::{AuthManager, AuthMode, GrokAuth, GrokComConfig};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use xai_grok_tools::types::output::{ToolOutput, ToolRunResult};
+use intelekt_tools::types::output::{ToolOutput, ToolRunResult};
 
 fn succeeding_am() -> Arc<AuthManager> {
     let dir = tempfile::tempdir().unwrap();
@@ -112,7 +112,7 @@ fn is_auth_tool_error_classification() {
             ),
         ),
         // Negative: 403 Forbidden must NOT trigger a refresh. Mirrors
-        // the inference path's gate in xai-grok-sampling-types/src/error.rs:
+        // the inference path's gate in intelekt-sampling-types/src/error.rs:
         // 403 means "authenticated but not permitted" (content safety,
         // ZDR, remote settings gates) and refreshing the token is a no-op
         // that surfaces as a spurious auth_required teardown.

@@ -2,14 +2,14 @@ use crate::auth::AuthManager;
 use crate::util::grok_auth_credentials::GrokAuthCredentials;
 use reqwest::RequestBuilder;
 use std::sync::Arc;
-use xai_grok_auth::{
+use intelekt_auth::{
     AuthCredentialProvider, CredentialSnapshot, HttpAuth, StaticAuthCredentialProvider,
 };
 /// `api_key.id` for the active credential: hash the stable API key, never the
 /// OIDC bearer (which rotates). `None` for non-API-key auth.
 fn api_key_id_for(auth: Option<&crate::auth::GrokAuth>) -> Option<String> {
     auth.filter(|a| matches!(a.auth_mode, crate::auth::AuthMode::ApiKey))
-        .map(|a| xai_grok_telemetry::config::deployment_id_from_key(&a.key))
+        .map(|a| intelekt_telemetry::config::deployment_id_from_key(&a.key))
 }
 /// Production impl: wraps the live `AuthManager`. 401 recovery
 /// delegates to `AuthManager::unauthorized_recovery`.
@@ -95,8 +95,8 @@ impl AuthCredentialProvider for ShellAuthCredentialProvider {
 /// Every call site **must** pass the correct `client_identifier` so that
 /// the API proxy (and telemetry / metrics backends) can properly attribute requests:
 ///
-/// - `"grok-shell"`   — classic Grok CLI / TUI (xai-grok-shell)
-/// - `"grok-pager"`   — new Grok Pager / TUI (xai-grok-pager)
+/// - `"grok-shell"`   — classic Grok CLI / TUI (intelekt-shell)
+/// - `"grok-pager"`   — new Grok Pager / TUI (intelekt-pager)
 /// - `"grok-desktop"` — Grok Desktop app
 /// - `"grok-extension"` — VS Code / browser extension
 ///
@@ -141,7 +141,7 @@ pub fn build_storage_client_for_proxy(
             http_client,
             provider,
         )
-        .with_client_identity(xai_grok_version::VERSION, client_identifier)
+        .with_client_identity(intelekt_version::VERSION, client_identifier)
         .with_client_mode(crate::http::process_client_mode())
         .with_attribution(bridge)
     } else {
@@ -160,7 +160,7 @@ pub fn build_storage_client_for_proxy(
             http_client,
             provider,
         )
-        .with_client_identity(xai_grok_version::VERSION, client_identifier)
+        .with_client_identity(intelekt_version::VERSION, client_identifier)
         .with_client_mode(crate::http::process_client_mode())
     }
 }
@@ -355,8 +355,8 @@ pub fn wire_otel_auth_manager(auth_manager: Arc<AuthManager>) {
 pub fn sync_external_otel_identity() {
     if let Some(provider) = OTEL_PROVIDER.get() {
         let snapshot = provider.snapshot();
-        xai_grok_telemetry::external::set_identity(
-            xai_grok_telemetry::external::IdentityAttrs::from_snapshot(&snapshot),
+        intelekt_telemetry::external::set_identity(
+            intelekt_telemetry::external::IdentityAttrs::from_snapshot(&snapshot),
         );
     }
 }
@@ -369,15 +369,15 @@ pub fn wire_otel_deployment_key(key: String) {
     }
 }
 /// Bootstrap helper: build the full [`OtelLayerConfig`] that both
-/// `xai-grok-pager` and `xai-grok-tui` need at tracing init time.
+/// `intelekt-pager` and `intelekt-tui` need at tracing init time.
 ///
 /// The credential provider starts in bootstrap mode (disk-read-only).
 /// Call [`wire_otel_auth_manager`] after agent init to upgrade to the
 /// live `AuthManager` with active refresh.
-pub fn build_default_otel_layer_config() -> xai_grok_telemetry::otel_layer::OtelLayerConfig {
+pub fn build_default_otel_layer_config() -> intelekt_telemetry::otel_layer::OtelLayerConfig {
     let endpoints = crate::agent::config::EndpointsConfig::default();
     let grok_com_config = crate::auth::GrokComConfig::default();
-    let exporter = xai_grok_telemetry::otel_layer::OtelExporterConfig {
+    let exporter = intelekt_telemetry::otel_layer::OtelExporterConfig {
         traces_url: endpoints.resolve_otlp_traces_endpoint(),
         extra_headers: endpoints.resolve_otlp_headers(),
         export_interval: endpoints.resolve_otlp_export_interval(),
@@ -390,7 +390,7 @@ pub fn build_default_otel_layer_config() -> xai_grok_telemetry::otel_layer::Otel
     let bootstrap = Arc::new(AuthManager::new(&grok_home, grok_com_config));
     let provider = Arc::new(OtelAuthCredentialProvider::new(bootstrap));
     let _ = OTEL_PROVIDER.set(provider.clone());
-    xai_grok_telemetry::otel_layer::OtelLayerConfig {
+    intelekt_telemetry::otel_layer::OtelLayerConfig {
         credentials: provider as Arc<dyn AuthCredentialProvider>,
         token_header_value,
         alpha_test_key: None,
@@ -405,7 +405,7 @@ mod tests {
     use crate::auth::manager::AuthManager;
     use chrono::{Duration as ChronoDuration, Utc};
     use std::sync::Mutex;
-    use xai_grok_auth::AuthCredentialProvider;
+    use intelekt_auth::AuthCredentialProvider;
     /// Serializes tests that pin `GROK_AUTH_EARLY_INVALIDATION_SECS`, since
     /// env vars are process-global and parallel tests would race.
     static EARLY_INVALIDATION_LOCK: Mutex<()> = Mutex::new(());
@@ -580,7 +580,7 @@ mod tests {
     }
     #[test]
     fn snapshot_populates_tenant_id_per_auth_mode() {
-        use xai_grok_telemetry::config::deployment_id_from_key;
+        use intelekt_telemetry::config::deployment_id_from_key;
         let _guard = EarlyInvalidationGuard::pin_to_default();
         let dir = tempfile::tempdir().unwrap();
         let dep = ShellAuthCredentialProvider::new(

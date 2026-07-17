@@ -574,12 +574,12 @@ impl TerminalContext {
     }
 
     /// Extract a flat snapshot of terminal details for telemetry.
-    pub fn telemetry_snapshot(&self) -> xai_grok_telemetry::events::TerminalTelemetry {
+    pub fn telemetry_snapshot(&self) -> intelekt_telemetry::events::TerminalTelemetry {
         let os = crate::host::HostOs::current();
         let server = crate::host::DisplayServer::current();
         let kb = self.keyboard_capabilities();
         let route = crate::clipboard::clipboard_route();
-        xai_grok_telemetry::events::TerminalTelemetry {
+        intelekt_telemetry::events::TerminalTelemetry {
             brand: self.brand.to_string(),
             multiplexer: self.multiplexer.to_string(),
             is_ssh: self.is_ssh,
@@ -595,14 +595,14 @@ impl TerminalContext {
             hyperlink_osc8: self.hyperlink_capabilities().osc8.to_string(),
             hyperlink_skip_reason: self.hyperlink_skip_reason().unwrap_or("none").to_owned(),
             clipboard_route: route.to_string(),
-            clipboard_native_tool: xai_grok_shared::clipboard::native_tool_name().to_owned(),
+            clipboard_native_tool: intelekt_shared::clipboard::native_tool_name().to_owned(),
             clipboard_data_control: crate::clipboard::wayland_data_control_label().to_owned(),
         }
     }
 
     /// Extract terminal info for feedback submissions.
-    pub fn feedback_info(&self) -> xai_grok_shared::session::FeedbackTerminalInfo {
-        use xai_grok_shared::session::FeedbackTerminalInfo;
+    pub fn feedback_info(&self) -> intelekt_shared::session::FeedbackTerminalInfo {
+        use intelekt_shared::session::FeedbackTerminalInfo;
         // XTVERSION self-report lets feedback triage identify the terminal
         // even when env detection failed (e.g. over SSH).
         let brand = match xtversion::detected() {
@@ -622,7 +622,7 @@ impl TerminalContext {
             },
             hyperlink_osc8_support: Some(self.hyperlink_capabilities().osc8.to_string()),
             clipboard_route: Some(crate::clipboard::clipboard_route().to_string()),
-            clipboard_native_tool: Some(xai_grok_shared::clipboard::native_tool_name().to_owned()),
+            clipboard_native_tool: Some(intelekt_shared::clipboard::native_tool_name().to_owned()),
             display_server: Some(crate::host::DisplayServer::current().to_string()),
         }
     }
@@ -685,7 +685,7 @@ fn is_official_vscode_remote_askpass(path: &str) -> bool {
 /// Adding a new env marker to this brand chain (or to
 /// [`detect_byobu_from_env`] / [`detect_multiplexer_from_env`] below)
 /// requires extending `HOST_TERMINAL_ENV_VARS` in
-/// `xai-grok-pager-pty-harness/src/pty.rs` (test-env hygiene — the PTY
+/// `intelekt-pager-pty-harness/src/pty.rs` (test-env hygiene — the PTY
 /// harness strips every marker read here so the host terminal can't leak
 /// into tests).
 pub fn detect_terminal_brand_from_env(env: &HashMap<String, String>) -> TerminalName {
@@ -1003,7 +1003,7 @@ fn terminal_name_from_term_program(value: &str) -> Option<TerminalName> {
 
 /// User-configured alt-screen (fullscreen) mode.
 ///
-/// Parsed from `[terminal] alt_screen` in `~/.grok/pager.toml` and
+/// Parsed from `[terminal] alt_screen` in `~/.intelekt/pager.toml` and
 /// overridden by the `--no-alt-screen` CLI flag.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum AltScreenMode {

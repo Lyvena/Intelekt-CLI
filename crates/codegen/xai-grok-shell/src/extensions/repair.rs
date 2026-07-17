@@ -153,7 +153,7 @@ mod tests {
     use crate::session::info::Info;
     use crate::session::persistence::default_model_id;
     use tempfile::TempDir;
-    use xai_grok_sampling_types::ToolCall;
+    use intelekt_sampling_types::ToolCall;
 
     const SESSION_ID: &str = "019f3df7-3d70-7f60-8ca0-a38d2d005670";
 

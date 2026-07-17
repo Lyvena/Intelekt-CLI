@@ -228,7 +228,7 @@ pub fn spawn_writer_thread() -> (mpsc::Sender<Vec<u8>>, WriterSync, WriterThread
                     std::thread::sleep(delay);
                 }
                 {
-                    let _guard = xai_grok_shared::stderr::stderr_lock();
+                    let _guard = intelekt_shared::stderr::stderr_lock();
                     let _ = writer.write_all(&data);
                     let _ = writer.flush();
                 }

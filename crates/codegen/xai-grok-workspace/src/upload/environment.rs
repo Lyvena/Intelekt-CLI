@@ -109,7 +109,7 @@ pub struct WorkspaceEnvironment {
     pub session_id: String,
     /// RFC3339 capture time (UTC).
     pub recorded_at: String,
-    /// Version of the `xai-grok-workspace` crate that produced the record.
+    /// Version of the `intelekt-workspace` crate that produced the record.
     pub workspace_version: String,
     /// Stable hub server identity (`--server-id`), when registered.
     pub server_id: Option<String>,
@@ -158,7 +158,7 @@ impl WorkspaceEnvironment {
             server_id,
             sandbox_id,
             std::env::var("GROK_SANDBOX_PROFILE").ok(),
-            xai_grok_sandbox::is_inside_bwrap(),
+            intelekt_sandbox::is_inside_bwrap(),
             std::env::var("HOSTNAME").ok().filter(|h| !h.is_empty()),
             repo_root,
             remote_url,

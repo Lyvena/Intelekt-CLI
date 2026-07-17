@@ -15,7 +15,7 @@ use crate::views::modal_window::{
     self, ModalContentArea, ModalSizing, ModalWindowConfig, ModalWindowState, Shortcut,
 };
 use crate::views::picker;
-use xai_grok_tools::implementations::skills::types::SkillInfo;
+use intelekt_tools::implementations::skills::types::SkillInfo;
 
 /// Check if a name fuzzy-matches the search query.
 /// Empty query matches everything.
@@ -541,8 +541,8 @@ impl ExtensionsTab {
         }
     }
 
-    pub fn telemetry_tab(self) -> xai_grok_telemetry::events::ExtensionsModalTab {
-        use xai_grok_telemetry::events::ExtensionsModalTab;
+    pub fn telemetry_tab(self) -> intelekt_telemetry::events::ExtensionsModalTab {
+        use intelekt_telemetry::events::ExtensionsModalTab;
         match self {
             Self::Hooks => ExtensionsModalTab::Hooks,
             Self::Plugins => ExtensionsModalTab::Plugins,
@@ -618,7 +618,7 @@ pub enum ButtonAction {
     /// Add an MCP server (parsed from inline input).
     AddMcpServer {
         name: String,
-        config: Box<xai_grok_shell::util::config::McpServerConfig>,
+        config: Box<intelekt_shell::util::config::McpServerConfig>,
     },
     /// Remove the selected MCP server from config.toml.
     RemoveSelectedMcpServer,
@@ -1733,7 +1733,7 @@ fn derive_name_from_url(url: &str) -> String {
 /// The `url_or_cmd` field is split on whitespace to extract the command
 /// and any trailing args for stdio transport.
 fn parse_mcp_add_fields(name: &str, url_or_cmd: &str) -> Option<ButtonAction> {
-    use xai_grok_shell::util::config::{McpServerConfig, McpServerTransportConfig};
+    use intelekt_shell::util::config::{McpServerConfig, McpServerTransportConfig};
 
     let mut parts = url_or_cmd.split_whitespace();
     let command_or_url = parts.next()?;
@@ -2349,10 +2349,10 @@ pub(crate) fn mcp_section_children_hidden(
 /// Returns `(label, is_custom)` where `is_custom` means the source was added
 /// via hooks-paths and can be removed.
 pub fn derive_source_label(source_dir: &str) -> (String, bool) {
-    let grok = xai_grok_config::grok_home();
+    let grok = intelekt_config::grok_home();
     let source_path = std::path::Path::new(source_dir);
-    // Plugin / installed-plugin dirs, under the user grok home (GROK_HOME-aware)
-    // or a project-scoped `{cwd}/.grok/<subdir>/`. Returns the first path
+    // Plugin / installed-plugin dirs, under the user grok home (INTELEKT_HOME-aware)
+    // or a project-scoped `{cwd}/.intelekt/<subdir>/`. Returns the first path
     // component after the subdir (the plugin's install directory name).
     let plugin_name = |subdir: &str| -> Option<String> {
         let first_comp = |p: &std::path::Path| {
@@ -2361,13 +2361,13 @@ pub fn derive_source_label(source_dir: &str) -> (String, bool) {
                 .map(|c| c.as_os_str().to_string_lossy().into_owned())
                 .filter(|s| !s.is_empty())
         };
-        // User grok home (GROK_HOME-aware).
+        // User grok home (INTELEKT_HOME-aware).
         if let Ok(rest) = source_path.strip_prefix(grok.join(subdir))
             && let Some(name) = first_comp(rest)
         {
             return Some(name);
         }
-        // Project-scoped `.grok/<subdir>/<name>` anywhere in the path.
+        // Project-scoped `.intelekt/<subdir>/<name>` anywhere in the path.
         // Component-based so it works regardless of path separator.
         let comps: Vec<_> = source_path
             .components()
@@ -2375,13 +2375,13 @@ pub fn derive_source_label(source_dir: &str) -> (String, bool) {
             .collect();
         comps
             .windows(3)
-            .find(|w| w[0] == ".grok" && w[1] == subdir && !w[2].is_empty())
+            .find(|w| w[0] == ".intelekt" && w[1] == subdir && !w[2].is_empty())
             .map(|w| w[2].clone())
     };
     if let Some(name) = plugin_name("plugins").or_else(|| plugin_name("installed-plugins")) {
         return (format!("Plugin: {name}"), false);
     }
-    // Global hooks under $GROK_HOME/hooks
+    // Global hooks under $INTELEKT_HOME/hooks
     let global_hooks = grok.join("hooks");
     let global_str = global_hooks.display().to_string();
     if source_dir == global_str || source_dir.starts_with(&format!("{global_str}/")) {
@@ -2392,7 +2392,7 @@ pub fn derive_source_label(source_dir: &str) -> (String, bool) {
         return ("Claude settings".into(), false);
     }
     // Project hooks
-    if source_dir.ends_with("/.grok/hooks") || source_dir.contains("/.grok/hooks/") {
+    if source_dir.ends_with("/.intelekt/hooks") || source_dir.contains("/.intelekt/hooks/") {
         return ("Project hooks".into(), false);
     }
     // Custom directory — removable
@@ -2464,7 +2464,7 @@ fn filter_and_sort_skills(
 fn skill_source_str(skill: &SkillInfo) -> String {
     if let Some(ref cs) = skill.config_source {
         match cs {
-            xai_grok_tools::types::config_source::ConfigSource::User { path } => {
+            intelekt_tools::types::config_source::ConfigSource::User { path } => {
                 if crate::util::is_under_user_grok_home(path) {
                     crate::util::display_user_grok_path("skills")
                 } else if path.display().to_string().contains("/.claude/") {
@@ -2473,17 +2473,17 @@ fn skill_source_str(skill: &SkillInfo) -> String {
                     "user".into()
                 }
             }
-            xai_grok_tools::types::config_source::ConfigSource::Project { path } => {
+            intelekt_tools::types::config_source::ConfigSource::Project { path } => {
                 let s = path.display().to_string();
-                if s.contains("/.grok/") {
-                    ".grok/skills".into()
+                if s.contains("/.intelekt/") {
+                    ".intelekt/skills".into()
                 } else if s.contains("/.claude/") {
                     ".claude/skills".into()
                 } else {
                     "project".into()
                 }
             }
-            xai_grok_tools::types::config_source::ConfigSource::Plugin { plugin_name, .. } => {
+            intelekt_tools::types::config_source::ConfigSource::Plugin { plugin_name, .. } => {
                 format!("plugin: {}", plugin_name)
             }
             _ => format!("{:?}", skill.scope).to_lowercase(),
@@ -4010,15 +4010,15 @@ mod tests {
 
     #[test]
     fn derive_source_label_detects_project_scoped_plugins() {
-        // Regression: project-scoped `{cwd}/.grok/plugins/<name>/` must label as
+        // Regression: project-scoped `{cwd}/.intelekt/plugins/<name>/` must label as
         // a (non-removable) plugin, not a removable "Custom" source. The user
-        // grok-home branch is GROK_HOME-aware; this covers the project fallback.
-        let (label, is_custom) = derive_source_label("/repo/work/.grok/plugins/my-plugin/hooks");
+        // grok-home branch is INTELEKT_HOME-aware; this covers the project fallback.
+        let (label, is_custom) = derive_source_label("/repo/work/.intelekt/plugins/my-plugin/hooks");
         assert_eq!(label, "Plugin: my-plugin");
         assert!(!is_custom);
 
         let (label, is_custom) =
-            derive_source_label("/repo/work/.grok/installed-plugins/vendor-abc123/skills");
+            derive_source_label("/repo/work/.intelekt/installed-plugins/vendor-abc123/skills");
         assert_eq!(label, "Plugin: vendor-abc123");
         assert!(!is_custom);
     }
@@ -4545,8 +4545,8 @@ mod tests {
     fn make_skill(
         name: &str,
         desc: &str,
-    ) -> xai_grok_tools::implementations::skills::types::SkillInfo {
-        xai_grok_tools::implementations::skills::types::SkillInfo {
+    ) -> intelekt_tools::implementations::skills::types::SkillInfo {
+        intelekt_tools::implementations::skills::types::SkillInfo {
             name: name.to_string(),
             display_name: None,
             description: desc.to_string(),
@@ -4558,7 +4558,7 @@ mod tests {
             compatibility: None,
             metadata: None,
             path: "test".to_string(),
-            scope: xai_grok_tools::implementations::skills::types::SkillScope::User,
+            scope: intelekt_tools::implementations::skills::types::SkillScope::User,
             config_source: None,
             plugin_name: None,
             plugin_version: None,
@@ -4669,11 +4669,11 @@ mod tests {
         name: &str,
         desc: &str,
         plugin: &str,
-    ) -> xai_grok_tools::implementations::skills::types::SkillInfo {
+    ) -> intelekt_tools::implementations::skills::types::SkillInfo {
         let mut skill = make_skill(name, desc);
         skill.plugin_name = Some(plugin.to_string());
-        skill.scope = xai_grok_tools::implementations::skills::types::SkillScope::Plugin;
-        skill.config_source = Some(xai_grok_tools::types::config_source::ConfigSource::Plugin {
+        skill.scope = intelekt_tools::implementations::skills::types::SkillScope::Plugin;
+        skill.config_source = Some(intelekt_tools::types::config_source::ConfigSource::Plugin {
             plugin_name: plugin.to_string(),
             path: std::path::PathBuf::from(format!("/plugins/{plugin}/skills/{name}/SKILL.md")),
         });
@@ -5207,7 +5207,7 @@ mod tests {
                 assert_eq!(name, "linear");
                 assert!(matches!(
                     config.transport,
-                    xai_grok_shell::util::config::McpServerTransportConfig::StreamableHttp { .. }
+                    intelekt_shell::util::config::McpServerTransportConfig::StreamableHttp { .. }
                 ));
             }
             other => panic!("expected AddMcpServer, got {other:?}"),
@@ -5234,7 +5234,7 @@ mod tests {
             Some(ButtonAction::AddMcpServer { name, config }) => {
                 assert_eq!(name, "srv");
                 match config.transport {
-                    xai_grok_shell::util::config::McpServerTransportConfig::Stdio {
+                    intelekt_shell::util::config::McpServerTransportConfig::Stdio {
                         command,
                         args,
                         ..
@@ -5578,7 +5578,7 @@ mod tests {
         xai_hooks_plugins_types::MarketplaceScanResult {
             source_name: "local-plugins".into(),
             source_kind: "local".into(),
-            source_url_or_path: "/home/user/.grok/marketplace/local".into(),
+            source_url_or_path: "/home/user/.intelekt/marketplace/local".into(),
             plugins: vec![
                 TestPlugin {
                     name: "my-linter",

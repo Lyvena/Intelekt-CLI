@@ -313,13 +313,13 @@ mod tests {
     }
     #[test]
     fn name_falls_back_to_id_when_title_blank() {
-        let mut m = available("grok-4.5", "");
+        let mut m = available("intelekt-4.5", "");
         m.title = "   ".to_owned();
         let resp = ListModesResponse {
             modes: vec![m],
             default_mode_id: String::new(),
         };
         let state = modes_to_model_state(&resp);
-        assert_eq!(state.available_models[0].name, "grok-4.5");
+        assert_eq!(state.available_models[0].name, "intelekt-4.5");
     }
 }

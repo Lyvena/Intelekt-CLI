@@ -354,7 +354,7 @@ pub(crate) fn flatten_transcript_for_classifier(
             ConversationItem::User(user) => {
                 let mut text = String::new();
                 for part in &user.content {
-                    if let xai_grok_sampling_types::ContentPart::Text { text: t } = part {
+                    if let intelekt_sampling_types::ContentPart::Text { text: t } = part {
                         if !text.is_empty() {
                             text.push(' ');
                         }
@@ -389,7 +389,7 @@ pub(crate) fn flatten_transcript_for_classifier(
             }
             ConversationItem::Reasoning(r) => {
                 if include_reasoning {
-                    let text = xai_grok_sampling_types::reasoning_item_text(r);
+                    let text = intelekt_sampling_types::reasoning_item_text(r);
                     if !text.trim().is_empty() {
                         let _ = writeln!(
                             out,
@@ -471,7 +471,7 @@ pub(crate) const CLASSIFIER_REFRESH_TURNS: usize = 16;
 /// user message or huge tool args can't blow up the per-call classifier request
 /// (token/latency, or context overflow → error → silent heuristic fallback).
 /// Mirrors the laziness classifier's 400-char field cap; truncation appends the
-const CLASSIFIER_TURN_MAX_LEN: usize = xai_grok_workspace::permission::CLASSIFIER_TURN_MAX_LEN;
+const CLASSIFIER_TURN_MAX_LEN: usize = intelekt_workspace::permission::CLASSIFIER_TURN_MAX_LEN;
 
 /// Build the auto-mode classifier transcript from the most recent `max_items`
 /// conversation items, chronological. Captures GENUINE user text (real input or
@@ -484,8 +484,8 @@ const CLASSIFIER_TURN_MAX_LEN: usize = xai_grok_workspace::permission::CLASSIFIE
 pub(crate) fn build_classifier_turns(
     items: &[ConversationItem],
     max_items: usize,
-) -> Vec<xai_grok_workspace::permission::ClassifierTurn> {
-    use xai_grok_workspace::permission::ClassifierTurn;
+) -> Vec<intelekt_workspace::permission::ClassifierTurn> {
+    use intelekt_workspace::permission::ClassifierTurn;
     let start = items.len().saturating_sub(max_items);
     let mut turns = Vec::new();
     for item in &items[start..] {
@@ -506,7 +506,7 @@ pub(crate) fn build_classifier_turns(
                 if !text.is_empty() {
                     // Neutralize so the user's own text can't forge a turn, then cap.
                     let text = neutralize_transcript_user_text(&text);
-                    let text = xai_grok_tools::util::truncate_str_with_marker(
+                    let text = intelekt_tools::util::truncate_str_with_marker(
                         &text,
                         CLASSIFIER_TURN_MAX_LEN,
                     )
@@ -524,7 +524,7 @@ pub(crate) fn build_classifier_turns(
                     // unescaped newlines / a leading role label that would forge a
                     // transcript line via the assistant-tool_use channel), then cap.
                     let args = neutralize_transcript_user_text(&args);
-                    let args = xai_grok_tools::util::truncate_str_with_marker(
+                    let args = intelekt_tools::util::truncate_str_with_marker(
                         &args,
                         CLASSIFIER_TURN_MAX_LEN,
                     )

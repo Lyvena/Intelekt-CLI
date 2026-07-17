@@ -22,11 +22,11 @@ use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 use unicode_width::UnicodeWidthStr;
-use xai_grok_pager::scrollback::{
+use intelekt_pager::scrollback::{
     RenderBlock, ScratchBuffer, ScrollbackPane, ScrollbackSearchState, ScrollbackState,
 };
-use xai_grok_pager::theme::Theme;
-use xai_grok_pager::views::picker::render_search_bar;
+use intelekt_pager::theme::Theme;
+use intelekt_pager::views::picker::render_search_bar;
 
 struct App {
     scrollback: ScrollbackState,

@@ -16,10 +16,10 @@ use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, BorderType, Borders, Widget};
 
-use xai_grok_pager::app::PagerTerminal;
-use xai_grok_pager::app::app_view::{ActiveView, AppView};
-use xai_grok_pager::minimal_api;
-use xai_grok_pager::theme::Theme;
+use intelekt_pager::app::PagerTerminal;
+use intelekt_pager::app::app_view::{ActiveView, AppView};
+use intelekt_pager::minimal_api;
+use intelekt_pager::theme::Theme;
 
 /// Commit the welcome card when one is pending (set at session start / `/new`).
 ///
@@ -54,7 +54,7 @@ pub fn maybe_commit_welcome(app: &mut AppView, terminal: &mut PagerTerminal) {
     let _ = terminal.clear();
 
     let theme = Theme::current();
-    let version = xai_grok_version::VERSION;
+    let version = intelekt_version::VERSION;
     let (cwd, model) = match &app.active_view {
         ActiveView::Agent(id) => {
             let agent = app.agents.get(id);
@@ -72,7 +72,7 @@ pub fn maybe_commit_welcome(app: &mut AppView, terminal: &mut PagerTerminal) {
     let mut info: Vec<Line<'static>> = Vec::new();
     info.push(Line::from(vec![
         Span::styled(
-            "Grok Build",
+            "Intelekt CLI",
             Style::default()
                 .fg(theme.accent_user)
                 .add_modifier(Modifier::BOLD),
@@ -99,7 +99,7 @@ pub fn maybe_commit_welcome(app: &mut AppView, terminal: &mut PagerTerminal) {
     // RGB themes: blend a soft border. Terminal-native (both Reset): fall
     // through to Reset so the terminal default fg draws the chrome.
     let border_color =
-        xai_grok_pager::render::color::blend_color(theme.bg_base, theme.gray_dim, 0.45)
+        intelekt_pager::render::color::blend_color(theme.bg_base, theme.gray_dim, 0.45)
             .unwrap_or(theme.gray_dim);
 
     let inserted = terminal.insert_before(height, move |buf| {

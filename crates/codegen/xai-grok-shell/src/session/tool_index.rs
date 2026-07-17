@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use bm25::{Language, SearchEngineBuilder};
-use xai_grok_tools::types::tool_index::{
+use intelekt_tools::types::tool_index::{
     SearchSnapshot, ServerSummary, ToolSearchIndex, ToolSearchResult,
 };
 
@@ -1186,7 +1186,7 @@ mod tests {
     fn split_mixed_formats() {
         assert_eq!(
             split_identifier("grok_com_slack__slack_send_message"),
-            vec!["grok", "com", "slack", "slack", "send", "message"]
+            vec!["intelekt", "com", "slack", "slack", "send", "message"]
         );
     }
 

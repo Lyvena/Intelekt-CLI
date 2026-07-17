@@ -5,7 +5,7 @@
 //! workspace overview, optional rules / skills / MCP listings).
 //!
 //! `UserMessageTemplate` selects the rendering strategy:
-//! - `Default` -- the legacy Grok Build prefix (built by the shell layer).
+//! - `Default` -- the legacy Intelekt CLI prefix (built by the shell layer).
 //! - `Custom`  -- caller-supplied template string (MiniJinja, same delimiters
 //!   as the system prompt templates).
 //!
@@ -17,9 +17,9 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
-use xai_grok_tools::bridge::ToolBridge;
-use xai_grok_tools::implementations::skills::types::SkillInfo;
-use xai_grok_tools::types::skill_discovery_tracker::{XmlRenderMode, format_announcement_xml};
+use intelekt_tools::bridge::ToolBridge;
+use intelekt_tools::implementations::skills::types::SkillInfo;
+use intelekt_tools::types::skill_discovery_tracker::{XmlRenderMode, format_announcement_xml};
 /// Date format for the `Today's date` field of the user-message preamble
 /// (e.g. "Friday Apr 24, 2026"). Any format change is observable to the model.
 pub const USER_MESSAGE_DATE_FORMAT: &str = "%A %b %-d, %Y";
@@ -63,7 +63,7 @@ fn normalize_git_status(status: &str) -> Option<String> {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum UserMessageTemplate {
-    /// Legacy Grok Build prefix: `<user_info>` + optional `<git_status>`.
+    /// Legacy Intelekt CLI prefix: `<user_info>` + optional `<git_status>`.
     /// Built directly by the shell layer; this
     ///   renderer returns `None` for `Default` and the caller falls back to
     ///   its own legacy path.
@@ -114,7 +114,7 @@ impl<'de> Deserialize<'de> for UserMessageTemplate {
         deserializer.deserialize_any(Visitor)
     }
 }
-/// One discovered rule file (AGENTS.md / Claude.md / .grok/rules/*.md).
+/// One discovered rule file (AGENTS.md / Claude.md / .intelekt/rules/*.md).
 ///
 /// Wire-compatible with `AgentConfigFile` -- this type exists so the
 /// `UserMessageContext` does not depend on the AGENTS-discovery internals
@@ -163,7 +163,7 @@ pub struct UserMessageContext {
     /// `"linux 6.5.0-..."`) -- not the OS family (`std::env::consts::OS`, e.g.
     /// `"macos"`). Producers that don't have a uname-style string available may
     /// pass `std::env::consts::OS` as a fallback; callers that need the full
-    /// string should use `xai_grok_shell::util::uname::os_kernel_and_release`
+    /// string should use `intelekt_shell::util::uname::os_kernel_and_release`
     /// (or equivalent).
     pub os_family: String,
     /// `$SHELL` env, basename only -- e.g. "zsh", "bash".
@@ -185,7 +185,7 @@ pub struct UserMessageContext {
     pub terminals_folder: Option<PathBuf>,
     /// Workspace-scoped rule files (cwd / repo root / optional workspace user dir).
     pub workspace_rules: Vec<RuleEntry>,
-    /// User-scoped rule files (~/.grok/, ~/.claude/).
+    /// User-scoped rule files (~/.intelekt/, ~/.claude/).
     pub user_rules: Vec<RuleEntry>,
     /// Skill registry snapshot (already deduped). Rendered through the
     /// shared budget-tier renderer.
@@ -196,7 +196,7 @@ pub struct UserMessageContext {
     /// Connected MCP servers (alphabetical).
     pub mcp_servers: Vec<McpServerEntry>,
     /// Absolute path to the per-workspace MCP descriptor root
-    /// (`~/.grok/projects/<encoded-cwd>/mcps`). Surfaced in
+    /// (`~/.intelekt/projects/<encoded-cwd>/mcps`). Surfaced in
     /// the `<mcp_file_system>` instructions so the model knows where
     /// to discover tool/resource schemas. Required when `mcp_servers` is
     /// non-empty; ignored otherwise.

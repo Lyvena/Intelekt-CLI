@@ -1,10 +1,10 @@
 //! `WorkspaceError` <-> wire-code mapping for the workspace RPC envelope
-//! (the envelope types are canonical in `xai_grok_workspace_types::rpc`).
+//! (the envelope types are canonical in `intelekt_workspace_types::rpc`).
 //!
 //! `error_code` uses a non-wildcard match so the compiler enforces
 //! coverage of new `WorkspaceError` variants.
 
-pub use xai_grok_workspace_types::rpc::{RpcEnvelope, RpcError};
+pub use intelekt_workspace_types::rpc::{RpcEnvelope, RpcError};
 
 use crate::error::WorkspaceError;
 
@@ -28,7 +28,7 @@ pub fn error_code(err: &WorkspaceError) -> &'static str {
         WorkspaceError::Finalize(_) => "finalize",
         WorkspaceError::CapabilityWidening { .. } => "capability_widening",
         WorkspaceError::Unauthorized { .. } => "unauthorized",
-        WorkspaceError::TurnActive(_) => xai_grok_workspace_types::rpc::envelope::TURN_ACTIVE,
+        WorkspaceError::TurnActive(_) => intelekt_workspace_types::rpc::envelope::TURN_ACTIVE,
         WorkspaceError::MaxDepthExceeded { .. } => "max_depth_exceeded",
         WorkspaceError::JoinError(_) => "join_error",
         WorkspaceError::InvalidHunkAction(_) => "invalid_hunk_action",
@@ -59,7 +59,7 @@ pub fn error_code(err: &WorkspaceError) -> &'static str {
 /// prefix (e.g. `"capability_widening: ..."`).
 pub fn rpc_error_to_workspace(err: RpcError) -> WorkspaceError {
     if let Some(kind) =
-        xai_grok_workspace_types::rpc::deploy::DeployError::from_wire_code(&err.code)
+        intelekt_workspace_types::rpc::deploy::DeployError::from_wire_code(&err.code)
     {
         return WorkspaceError::DeployError {
             kind,
@@ -126,7 +126,7 @@ mod tests {
             WorkspaceError::ToolsetExternallyOwned("s".into()),
         ];
         variants.extend(
-            xai_grok_workspace_types::rpc::deploy::DeployError::ALL
+            intelekt_workspace_types::rpc::deploy::DeployError::ALL
                 .into_iter()
                 .map(|kind| WorkspaceError::DeployError {
                     kind,

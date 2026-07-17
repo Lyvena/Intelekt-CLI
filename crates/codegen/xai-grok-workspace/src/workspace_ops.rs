@@ -28,20 +28,20 @@ use serde_json::Value;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use xai_computer_hub_sdk::ToolHarness;
-use xai_grok_tools::types::output::ToolRunResult;
-use xai_grok_workspace_client::{WorkspaceClient, is_transport_fatal};
-pub use xai_grok_workspace_types::rpc::WorkspaceRpc;
-pub use xai_grok_workspace_types::rpc::agents_md::DiscoverAgentsMdReq;
-pub use xai_grok_workspace_types::rpc::code_nav::{
+use intelekt_tools::types::output::ToolRunResult;
+use intelekt_workspace_client::{WorkspaceClient, is_transport_fatal};
+pub use intelekt_workspace_types::rpc::WorkspaceRpc;
+pub use intelekt_workspace_types::rpc::agents_md::DiscoverAgentsMdReq;
+pub use intelekt_workspace_types::rpc::code_nav::{
     CodeFindDefinitionsReq, CodeFindReferencesReq, CodeGotoDefinitionReq, CodeGotoReferencesReq,
     CodeIndexStats, CodeIndexStatusReq, CodeIndexStatusResponse, CodeNavLocation, CodeNavResponse,
 };
-pub use xai_grok_workspace_types::rpc::fs::{
+pub use intelekt_workspace_types::rpc::fs::{
     ClientFsListNode, ClientFsListReq, ClientFsListRes, ClientFsReadFileReq, ClientFsReadFileRes,
     ClientFsStatReq, ClientFsStatRes, GetFileEntry, GetFileResult, GetFilesReq, GetFilesRes,
     PutFileEntry, PutFileResult, PutFilesReq, PutFilesRes,
 };
-pub use xai_grok_workspace_types::rpc::git::{
+pub use intelekt_workspace_types::rpc::git::{
     BinaryFileInfoData, CheckoutCommitResponse, CommitWithPatchData, DetectVcsKindReq,
     DiffStatsSummary, GitBranchesReq, GitCheckoutCommitReq, GitCheckoutReq, GitCollectChangesReq,
     GitCollectChangesResponse, GitCommitReq, GitCurrentCommitReq, GitDiffReq, GitDiscardReq,
@@ -50,10 +50,10 @@ pub use xai_grok_workspace_types::rpc::git::{
     IdentityData, PublicBaseData, RepoInfo, UNTRACKED_CONTENT_THRESHOLD, UncommittedChangesData,
     UntrackedFileData,
 };
-pub use xai_grok_workspace_types::rpc::hooks::{
+pub use intelekt_workspace_types::rpc::hooks::{
     HookEventNameWire, HookRegistryReq, HookRegistryWire, HookSpecWire,
 };
-pub use xai_grok_workspace_types::rpc::hunks::{
+pub use intelekt_workspace_types::rpc::hunks::{
     BulkHunkActionResponse, FileContentEntryWire, FileContentStatusWire, FileContentViewWire,
     FileSummary, FilteredHunksResponse, HunkActionKind, HunkActionReq, HunkActionResponse,
     HunkAllActionReq, HunkFileActionReq, HunkGetAllFileContentsReq, HunkGetAllHunksReq,
@@ -61,11 +61,11 @@ pub use xai_grok_workspace_types::rpc::hunks::{
     HunkGetStagedFilesReq, HunkLineInfoWire, HunkSingleActionReq, HunkSourceWire,
     HunkTurnActionReq, HunkWire, SessionStatsWire, SessionSummaryWire, TurnSummaryWire,
 };
-pub use xai_grok_workspace_types::rpc::search::{FuzzyChangeReq, FuzzyCloseReq, FuzzyOpenReq};
-pub use xai_grok_workspace_types::rpc::session::{BeginPromptReq, EndPromptReq, RewindToReq};
-pub use xai_grok_workspace_types::rpc::skills::DiscoverSkillsReq;
-pub use xai_grok_workspace_types::rpc::workspace::WorkspaceInfoReq;
-pub use xai_grok_workspace_types::rpc::worktree::{
+pub use intelekt_workspace_types::rpc::search::{FuzzyChangeReq, FuzzyCloseReq, FuzzyOpenReq};
+pub use intelekt_workspace_types::rpc::session::{BeginPromptReq, EndPromptReq, RewindToReq};
+pub use intelekt_workspace_types::rpc::skills::DiscoverSkillsReq;
+pub use intelekt_workspace_types::rpc::workspace::WorkspaceInfoReq;
+pub use intelekt_workspace_types::rpc::worktree::{
     CreateWorktreeFromWorktreeRequestWire, CreateWorktreeFromWorktreeSyncReq,
     PrepareWorktreeFromWorktreeResponse, WorktreeDbPathReq, WorktreeDbPathResponse,
     WorktreeDbRebuildReq, WorktreeDbStatsReq, WorktreeGcReq, WorktreeListReq, WorktreeShowReq,
@@ -861,7 +861,7 @@ impl WorkspaceOp for ContentSearchRequest {
 /// isn't possible; the round-trip is faithful because the wire type mirrors the
 /// serde shape exactly (the compiled `matcher` is `#[serde(skip)]` either way).
 fn hook_registry_to_wire(
-    registry: &xai_grok_hooks::discovery::HookRegistry,
+    registry: &intelekt_hooks::discovery::HookRegistry,
 ) -> WorkspaceResult<HookRegistryWire> {
     let value =
         serde_json::to_value(registry).map_err(|e| WorkspaceError::HubError(e.to_string()))?;
@@ -872,7 +872,7 @@ fn hook_registry_to_wire(
 /// `HookRegistry::recompile_matchers`, exactly as the proxy path already did.
 fn wire_to_hook_registry(
     wire: &HookRegistryWire,
-) -> WorkspaceResult<xai_grok_hooks::discovery::HookRegistry> {
+) -> WorkspaceResult<intelekt_hooks::discovery::HookRegistry> {
     let value = serde_json::to_value(wire).map_err(|e| WorkspaceError::HubError(e.to_string()))?;
     serde_json::from_value(value).map_err(|e| WorkspaceError::HubError(e.to_string()))
 }
@@ -1196,7 +1196,7 @@ impl WorkspaceOp for WorktreeDbStatsReq {
 ///
 /// - **`Local`** — wraps a [`WorkspaceHandle`]. Extensions dispatch
 ///   through the handle; tool calls dispatch through the workspace
-///   session's [`FinalizedToolset`](xai_grok_tools::registry::types::FinalizedToolset).
+///   session's [`FinalizedToolset`](intelekt_tools::registry::types::FinalizedToolset).
 ///   Call [`bind_local_session`](Self::bind_local_session) after building
 ///   the agent to install the toolset on the workspace session.
 ///
@@ -1271,7 +1271,7 @@ impl WorkspaceOps {
         session_id: &str,
         cwd: std::path::PathBuf,
         hunk_tracker: xai_hunk_tracker::HunkTrackerHandle,
-        toolset: Arc<xai_grok_tools::registry::types::FinalizedToolset>,
+        toolset: Arc<intelekt_tools::registry::types::FinalizedToolset>,
         viewer_ctx: Option<xai_tool_runtime::WorkspaceViewerContext>,
     ) -> WorkspaceResult<()> {
         let Self::Local { handle } = self else {
@@ -1404,7 +1404,7 @@ impl WorkspaceOps {
     ) -> WorkspaceResult<GitStatusExtResponse> {
         self.dispatch(req, None).await
     }
-    pub async fn hook_registry(&self) -> WorkspaceResult<xai_grok_hooks::discovery::HookRegistry> {
+    pub async fn hook_registry(&self) -> WorkspaceResult<intelekt_hooks::discovery::HookRegistry> {
         let wire = self.dispatch(&HookRegistryReq {}, None).await?;
         wire_to_hook_registry(&wire)
     }
@@ -1451,7 +1451,7 @@ impl WorkspaceOps {
     /// Dispatch a tool call through the workspace.
     ///
     /// - **Local**: dispatches through the workspace session's
-    ///   [`FinalizedToolset`](xai_grok_tools::registry::types::FinalizedToolset)
+    ///   [`FinalizedToolset`](intelekt_tools::registry::types::FinalizedToolset)
     ///   (in-process). Requires `session_id` to look up the session.
     /// - **Proxy**: routes through the server `ToolHarness` (remote).
     pub async fn call_tool(
@@ -1537,7 +1537,7 @@ impl WorkspaceOps {
 mod tests {
     use super::*;
     /// Drift pin for these workspace methods' `workspace.*` wire names. The
-    /// request types are defined in `xai-grok-workspace-types` (and re-exported
+    /// request types are defined in `intelekt-workspace-types` (and re-exported
     /// from this module for existing call sites) so the gateway's typed dispatch
     /// in `workspace_typed/` can consume them without depending on this crate;
     /// this test pins the `::METHOD` strings so a rename can't silently change
@@ -1599,7 +1599,7 @@ mod tests {
         };
         let sid = "sess-teardown";
         let toolset = std::sync::Arc::new(
-            xai_grok_tools::registry::types::FinalizedToolset::empty_for_test(),
+            intelekt_tools::registry::types::FinalizedToolset::empty_for_test(),
         );
         let weak = std::sync::Arc::downgrade(&toolset);
         ops.bind_local_session(
@@ -1749,9 +1749,9 @@ mod tests {
     /// (heavy → wire serializes identically; wire → heavy is the inverse).
     #[test]
     fn hook_registry_wire_round_trip_both_directions() {
-        let spec = xai_grok_hooks::config::HookSpec {
+        let spec = intelekt_hooks::config::HookSpec {
             name: "global/safety".to_string(),
-            event: xai_grok_hooks::event::HookEventName::PreToolUse,
+            event: intelekt_hooks::event::HookEventName::PreToolUse,
             handler_type: "command".to_string(),
             configured_matcher: Some("Bash".to_string()),
             matcher: None,
@@ -1761,10 +1761,10 @@ mod tests {
             url: None,
             url_raw: None,
             timeout_ms: 5000,
-            source_dir: std::path::PathBuf::from("/home/u/.grok/hooks"),
+            source_dir: std::path::PathBuf::from("/home/u/.intelekt/hooks"),
             extra_env: std::collections::HashMap::from([("FOO".to_string(), "bar".to_string())]),
         };
-        let mut registry = xai_grok_hooks::discovery::HookRegistry::default();
+        let mut registry = intelekt_hooks::discovery::HookRegistry::default();
         registry.append_specs(vec![spec]);
         let wire = hook_registry_to_wire(&registry).expect("heavy → wire");
         assert_eq!(
@@ -1785,7 +1785,7 @@ mod tests {
     /// also pins that each variant's serialized key is byte-identical on both sides.
     #[test]
     fn hook_event_name_wire_covers_all_upstream_variants() {
-        use xai_grok_hooks::event::HookEventName as E;
+        use intelekt_hooks::event::HookEventName as E;
         fn to_wire(e: E) -> HookEventNameWire {
             match e {
                 E::SessionStart => HookEventNameWire::SessionStart,
@@ -1831,7 +1831,7 @@ mod tests {
     }
     /// Compile-time drift guard for `HookSpecWire`, the struct analog of
     /// `hook_event_name_wire_covers_all_upstream_variants`. The lean types crate
-    /// can't depend on `xai-grok-hooks`, and `hook_registry_to_wire` only couples
+    /// can't depend on `intelekt-hooks`, and `hook_registry_to_wire` only couples
     /// the two via a serde round-trip, so a new serialized field on upstream
     /// `HookSpec` would otherwise be dropped on the wire silently. The exhaustive
     /// destructuring below (no `..`) fails to compile when upstream adds or renames
@@ -1841,7 +1841,7 @@ mod tests {
     /// absent from the wire.
     #[test]
     fn hook_spec_wire_covers_all_upstream_fields() {
-        use xai_grok_hooks::config::HookSpec;
+        use intelekt_hooks::config::HookSpec;
         fn to_wire(spec: HookSpec) -> HookSpecWire {
             let HookSpec {
                 name,
@@ -1876,7 +1876,7 @@ mod tests {
         }
         let spec = HookSpec {
             name: "global/safety".to_string(),
-            event: xai_grok_hooks::event::HookEventName::PreToolUse,
+            event: intelekt_hooks::event::HookEventName::PreToolUse,
             handler_type: "command".to_string(),
             configured_matcher: Some("Bash".to_string()),
             matcher: None,
@@ -1886,7 +1886,7 @@ mod tests {
             url: None,
             url_raw: None,
             timeout_ms: 5000,
-            source_dir: std::path::PathBuf::from("/home/u/.grok/hooks"),
+            source_dir: std::path::PathBuf::from("/home/u/.intelekt/hooks"),
             extra_env: std::collections::HashMap::from([("FOO".to_string(), "bar".to_string())]),
         };
         assert_eq!(

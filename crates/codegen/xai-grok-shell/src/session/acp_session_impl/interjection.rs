@@ -253,14 +253,14 @@ impl SessionActor {
         // turn, which this skill did not start. `SkillDispatched` still
         // carries `plugin_source`, so dispatch counts stay complete.
         for sk in &parsed {
-            xai_grok_telemetry::session_ctx::log_event(
-                xai_grok_telemetry::events::SlashCommandUsed {
+            intelekt_telemetry::session_ctx::log_event(
+                intelekt_telemetry::events::SlashCommandUsed {
                     command: sk.name.clone(),
                     args_provided: !sk.args.is_empty(),
                 },
             );
-            xai_grok_telemetry::session_ctx::log_event(
-                xai_grok_telemetry::events::SkillDispatched {
+            intelekt_telemetry::session_ctx::log_event(
+                intelekt_telemetry::events::SkillDispatched {
                     skill_name: sk.name.clone(),
                     plugin_source: sk.plugin_name.clone(),
                 },

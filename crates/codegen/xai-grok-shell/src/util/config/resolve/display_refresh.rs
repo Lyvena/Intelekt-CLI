@@ -3,7 +3,7 @@
 use crate::util::config::RemoteSettings;
 use serde::Deserialize;
 use toml::Value as TomlValue;
-use xai_grok_config_types::DisplayRefreshSettings;
+use intelekt_config_types::DisplayRefreshSettings;
 
 pub const ENV_DISPLAY_REFRESH_PROBE_ENABLED: &str = "GROK_DISPLAY_REFRESH_PROBE_ENABLED";
 pub const ENV_DISPLAY_REFRESH_AUTO_CADENCE: &str = "GROK_DISPLAY_REFRESH_AUTO_CADENCE";

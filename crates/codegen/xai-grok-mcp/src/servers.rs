@@ -32,17 +32,17 @@ use rmcp::{
 
 use crate::oauth_config::McpOAuthConfig;
 
-use xai_grok_tools::types::{
+use intelekt_tools::types::{
     output::{MCPOutput, MCPOutputDetails, ToolOutput},
     tool::{ToolKind, ToolNamespace},
     tool_metadata::ToolMetadata,
 };
-use xai_grok_tools::util::ProcessGroup;
+use intelekt_tools::util::ProcessGroup;
 
 /// MCP tool name delimiter: server names are qualified as `"server__tool"`.
-/// Canonical definition lives in `xai_grok_workspace_types`; re-exported here
+/// Canonical definition lives in `intelekt_workspace_types`; re-exported here
 /// for callers that historically imported it from this module.
-pub use xai_grok_workspace_types::MCP_TOOL_NAME_DELIMITER;
+pub use intelekt_workspace_types::MCP_TOOL_NAME_DELIMITER;
 
 /// Normalize an MCP server URL for comparison: strip trailing slashes.
 /// Must match the normalization the host's managed-config layer uses
@@ -371,7 +371,7 @@ pub struct McpState {
     /// as `Ready`. Cleared when the server begins a fresh init attempt.
     pub init_failed: std::collections::HashMap<McpServerName, String>,
     /// Per-server set of unqualified tool names that the user has disabled.
-    /// Persisted to `~/.grok/config.toml` under `[mcp_servers.<name>].disabled_tools`.
+    /// Persisted to `~/.intelekt/config.toml` under `[mcp_servers.<name>].disabled_tools`.
     pub disabled_tools: HashMap<McpServerName, std::collections::HashSet<ToolName>>,
     /// Stashed registrations for disabled tools so they can be re-enabled
     /// without a full MCP re-init (no need to call `list_tools` again).
@@ -1040,9 +1040,9 @@ pub fn parse_mcp_meta_config(
         .unwrap_or_default()
 }
 
-/// MCP initialization strategy. Defined in `xai-grok-telemetry`; re-exported
+/// MCP initialization strategy. Defined in `intelekt-telemetry`; re-exported
 /// here so existing call sites continue to work.
-pub use xai_grok_telemetry::enums::McpInitStrategy;
+pub use intelekt_telemetry::enums::McpInitStrategy;
 
 /// Parse MCP tool name in format "server__tool"
 /// Returns (server_name, tool_name) if valid MCP tool, None otherwise
@@ -1502,7 +1502,7 @@ impl xai_tool_runtime::Tool for McpErasedTool {
             reconnect_attempted,
             auth_retry_attempted,
         });
-        xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::McpToolCalled {
+        intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::McpToolCalled {
             server_name: server.clone(),
             tool_name: tool.clone(),
             qualified_name,
@@ -2568,7 +2568,7 @@ pub struct McpClient {
 pub type SharedEventTx =
     Arc<parking_lot::Mutex<Option<tokio::sync::mpsc::UnboundedSender<McpClientEvent>>>>;
 
-/// External-config overrides for an MCP server, surfaced to xai-grok-mcp
+/// External-config overrides for an MCP server, surfaced to intelekt-mcp
 /// from whatever loader the host crate uses (e.g. the host's `config.toml` parser).
 ///
 /// All fields are pre-precedence: [`McpClient::load_timeouts`] (and
@@ -3237,7 +3237,7 @@ impl McpClient {
         let mut result = self.try_handshake(pending).await;
 
         let handshake_elapsed = handshake_start.elapsed().as_micros() as u64;
-        tracing::info!(target: xai_grok_telemetry::instrumentation::TARGET, event = "timing", name = "mcp_try_handshake", elapsed_us = handshake_elapsed);
+        tracing::info!(target: intelekt_telemetry::instrumentation::TARGET, event = "timing", name = "mcp_try_handshake", elapsed_us = handshake_elapsed);
         // On handshake failure, if we have an auth_manager, try
         // refreshing the token and retrying once. Handles expired
         // access tokens loaded from disk — the handshake fails at the
@@ -3460,7 +3460,7 @@ impl McpClient {
             capabilities,
             Implementation::new(
                 format!("grok-shell-{server_name}"),
-                xai_grok_version::VERSION.to_string(),
+                intelekt_version::VERSION.to_string(),
             ),
         )
         // rmcp's default `ProtocolVersion` tracks its LATEST; pin explicitly
@@ -3786,13 +3786,13 @@ impl McpClient {
         mcp_state: Arc<Mutex<McpState>>,
     ) -> Result<Vec<McpToolRegistration>, McpError> {
         let _ensure_init_timer =
-            xai_grok_telemetry::instrumentation::timer("mcp_ensure_initialized");
+            intelekt_telemetry::instrumentation::timer("mcp_ensure_initialized");
         let mcp_service = self.ensure_initialized().await?;
 
         let mut all_tools = Vec::new();
         let mut cursor: Option<String> = None;
 
-        let _list_tools_timer = xai_grok_telemetry::instrumentation::timer("mcp_list_tools");
+        let _list_tools_timer = intelekt_telemetry::instrumentation::timer("mcp_list_tools");
         loop {
             let list_tools_result = mcp_service
                 .list_tools(Some(
@@ -3914,10 +3914,10 @@ fn sanitize_mcp_log_filename(name: &str) -> String {
     }
 }
 
-/// Copy an MCP server's stderr to `~/.grok/logs/mcp/<server>.stderr.log`
+/// Copy an MCP server's stderr to `~/.intelekt/logs/mcp/<server>.stderr.log`
 /// in a background task. Truncated per spawn.
 fn drain_mcp_stderr_to_log(server_name: &str, mut stderr: tokio::process::ChildStderr) {
-    let log_dir = xai_grok_config::grok_home().join("logs").join("mcp");
+    let log_dir = intelekt_config::grok_home().join("logs").join("mcp");
     if let Err(e) = std::fs::create_dir_all(&log_dir) {
         tracing::warn!("MCP stderr drain: failed to create log dir: {e}");
         return;
@@ -4048,7 +4048,7 @@ pub async fn start_mcp_server(
     event_writer: &xai_file_utils::events::EventWriter,
     mode: OauthInteractivity,
 ) -> Result<McpClient, McpError> {
-    let _per_server_timer = xai_grok_telemetry::instrumentation::timer("mcp_start_one_server");
+    let _per_server_timer = intelekt_telemetry::instrumentation::timer("mcp_start_one_server");
     match mcp_server {
         acp::McpServer::Stdio(acp::McpServerStdio {
             name,
@@ -4064,7 +4064,7 @@ pub async fn start_mcp_server(
             let (startup_timeout, _, _) = McpClient::load_timeouts(overrides, meta_config);
             let command_str = command.to_string_lossy().into_owned();
             let spawn_start = std::time::Instant::now();
-            let _stdio_spawn_timer = xai_grok_telemetry::instrumentation::timer("mcp_stdio_spawn");
+            let _stdio_spawn_timer = intelekt_telemetry::instrumentation::timer("mcp_stdio_spawn");
             let path_override = stdio_path_override(&env);
             let (program, spawn_args) = plan_stdio_spawn(&command_str, &args, cfg!(windows), |c| {
                 if let Some(path) = path_override
@@ -4080,16 +4080,16 @@ pub async fn start_mcp_server(
             for env_variable in &env {
                 cmd.env(&env_variable.name, &env_variable.value);
             }
-            xai_grok_tools::util::detach_command(&mut cmd);
+            intelekt_tools::util::detach_command(&mut cmd);
 
             let (transport, stderr_handle) =
                 SafeTokioChildProcess::spawn(cmd, name.clone(), event_writer.clone()).map_err(
                     |e| {
                         tracing::error!("Failed to spawn MCP server '{}': {}", name, e);
-                        xai_grok_telemetry::session_ctx::log_event(
-                            xai_grok_telemetry::events::McpServerFailed {
+                        intelekt_telemetry::session_ctx::log_event(
+                            intelekt_telemetry::events::McpServerFailed {
                                 server_name: name.clone(),
-                                error_type: xai_grok_telemetry::events::McpErrorType::SpawnFailed,
+                                error_type: intelekt_telemetry::events::McpErrorType::SpawnFailed,
                                 duration_ms: spawn_start.elapsed().as_millis() as u64,
                                 timeout_sec: startup_timeout,
                             },
@@ -4143,7 +4143,7 @@ pub async fn start_mcp_server(
                 HttpOauthPrep::NoOauthSupport
             } else {
                 let _auth_discovery_timer =
-                    xai_grok_telemetry::instrumentation::timer("mcp_http_auth_discovery");
+                    intelekt_telemetry::instrumentation::timer("mcp_http_auth_discovery");
                 match tokio::time::timeout(
                     OAUTH_DISCOVERY_TIMEOUT,
                     discover_and_prepare_auth(&name, &url, mode),
@@ -4206,7 +4206,7 @@ pub async fn start_mcp_servers(
     event_writer: &xai_file_utils::events::EventWriter,
     mode: OauthInteractivity,
 ) -> Vec<Result<McpClient, McpError>> {
-    let _mcp_start_timer = xai_grok_telemetry::instrumentation::timer("mcp_start_servers");
+    let _mcp_start_timer = intelekt_telemetry::instrumentation::timer("mcp_start_servers");
 
     if !meta_config_map.is_empty() {
         tracing::info!(
@@ -4578,7 +4578,7 @@ mod tests {
         let (transport, pid) = rt.block_on(async {
             let mut cmd = Command::new("sleep");
             cmd.arg("30").kill_on_drop(true);
-            xai_grok_tools::util::detach_command(&mut cmd);
+            intelekt_tools::util::detach_command(&mut cmd);
             let (transport, _stderr) = SafeTokioChildProcess::spawn(
                 cmd,
                 "test".to_string(),

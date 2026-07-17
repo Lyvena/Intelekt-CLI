@@ -44,7 +44,7 @@ impl Default for ToolContext {
         }
     }
 }
-use xai_grok_paths::{RelPathBuf, ToAbsPath};
+use intelekt_paths::{RelPathBuf, ToAbsPath};
 
 /// A flexible path that can be either a relative path (preferred) or an absolute path
 /// (for backwards compatibility with older sessions that stored absolute paths).
@@ -904,8 +904,8 @@ impl FileStateTracker {
     }
 }
 
-// Canonical in xai-grok-workspace-types; re-exported for existing paths.
-pub use xai_grok_workspace_types::rpc::session::{
+// Canonical in intelekt-workspace-types; re-exported for existing paths.
+pub use intelekt_workspace_types::rpc::session::{
     ConflictType, FileRewindConflict, FileRewindResponse,
 };
 
@@ -1071,7 +1071,7 @@ mod tests {
     use super::*;
     use crate::file_system::MockFs;
     use std::sync::Arc;
-    use xai_grok_paths::AbsPathBuf;
+    use intelekt_paths::AbsPathBuf;
 
     #[tokio::test]
     async fn test_rewind_point_creation() {

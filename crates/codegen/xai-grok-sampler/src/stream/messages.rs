@@ -9,8 +9,8 @@ use std::time::{Duration, Instant};
 use futures_util::StreamExt;
 use futures_util::stream::{BoxStream, Stream};
 
-use xai_grok_sampling_types::messages::{self, MessageStreamEvent};
-use xai_grok_sampling_types::{
+use intelekt_sampling_types::messages::{self, MessageStreamEvent};
+use intelekt_sampling_types::{
     AssistantItem, ConversationItem, ConversationResponse, ResponseModelMetadata, SamplingError,
     StopReason, TokenUsage, ToolCall, rs,
 };

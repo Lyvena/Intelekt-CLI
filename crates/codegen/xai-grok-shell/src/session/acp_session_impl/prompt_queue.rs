@@ -24,7 +24,7 @@ impl SessionActor {
     ) -> bool {
         tracing::info!("queueing prompt: {prompt_id}");
         let queue_depth = { self.state.lock().await.pending_inputs.len() };
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "shell.prompt.queued",
             Some(self.session_info.id.0.as_ref()),
             Some(serde_json::json!({
@@ -257,7 +257,7 @@ impl SessionActor {
             "server appended prompt to pending_inputs",
         );
         if cancel_running_turn {
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "shell.prompt.send_now_cancels_turn",
                 Some(self.session_info.id.0.as_ref()),
                 Some(serde_json::json!({
@@ -533,7 +533,7 @@ impl SessionActor {
             }
             state.pending_inputs.insert(insert_at, item);
             cancel_running_turn = turn_running && !goal_active;
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "shell.prompt.send_now_cancels_turn",
                 Some(self.session_info.id.0.as_ref()),
                 Some(serde_json::json!({

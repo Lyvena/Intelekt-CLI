@@ -1,11 +1,11 @@
 //! Sampler-specific helpers for the shared-HTTP-client integration binaries:
 //! config + request drivers for real `SamplingClient`s. The generic
-//! connection-counting server lives in `xai_grok_test_support`.
+//! connection-counting server lives in `intelekt_test_support`.
 
 use std::sync::Arc;
 
-use xai_grok_sampler::{SamplerConfig, SamplingClient};
-use xai_grok_sampling_types::{ContentPart, ConversationItem, ConversationRequest, UserItem};
+use intelekt_sampler::{SamplerConfig, SamplingClient};
+use intelekt_sampling_types::{ContentPart, ConversationItem, ConversationRequest, UserItem};
 
 pub fn test_config(base_url: &str, api_key: &str) -> SamplerConfig {
     SamplerConfig {

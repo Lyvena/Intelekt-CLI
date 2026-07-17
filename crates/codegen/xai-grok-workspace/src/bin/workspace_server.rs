@@ -1,15 +1,15 @@
 //! Standalone workspace ToolServer for remote sandboxes.
 //!
-//! Reads OIDC credentials from `~/.grok/auth.json`, connects to a
+//! Reads OIDC credentials from `~/.intelekt/auth.json`, connects to a
 //! server, exposes workspace tools, and refreshes tokens
 //! automatically.
 use clap::Parser;
 use std::path::PathBuf;
 use url::Url;
-use xai_grok_workspace::config::WorkspaceServerMetadata;
-use xai_grok_workspace::daemonize;
-use xai_grok_workspace::diag_server;
-use xai_grok_workspace::preview_supervisor::{self, PreviewArgs, PreviewVisibility};
+use intelekt_workspace::config::WorkspaceServerMetadata;
+use intelekt_workspace::daemonize;
+use intelekt_workspace::diag_server;
+use intelekt_workspace::preview_supervisor::{self, PreviewArgs, PreviewVisibility};
 /// OTLP `service.name` for this binary's exported traces/logs/metrics and
 /// direct-OTLP fastrace export. Single source so the call sites can't drift.
 const SERVICE_NAME: &str = "prod_grok_workspace";
@@ -112,7 +112,7 @@ struct Args {
     preview: PreviewCliArgs,
 }
 /// Preview-proxy supervision flags. Forwarded 1:1 to the
-/// `/usr/local/bin/xai-grok-preview-proxy` child (see `cli.rs` for the proxy's
+/// `/usr/local/bin/intelekt-preview-proxy` child (see `cli.rs` for the proxy's
 /// flag names). Off by default — when `--preview-enabled` is absent the
 /// supervisor is never started and startup is byte-for-byte the non-preview
 /// path.
@@ -234,7 +234,7 @@ async fn run(args: Args, cwd: PathBuf) -> anyhow::Result<()> {
     };
     let url = Url::parse(&args.hub_url).map_err(|e| anyhow::anyhow!("invalid --hub-url: {e}"))?;
     {
-        use xai_grok_sandbox::{ProfileName, SandboxManager};
+        use intelekt_sandbox::{ProfileName, SandboxManager};
         let profile = match std::env::var("GROK_SANDBOX_PROFILE").ok() {
             Some(val) => {
                 let parsed = val
@@ -250,7 +250,7 @@ async fn run(args: Args, cwd: PathBuf) -> anyhow::Result<()> {
                     parsed
                 }
             }
-            None if xai_grok_sandbox::trust_bwrap_marker_for_devbox() => ProfileName::Devbox,
+            None if intelekt_sandbox::trust_bwrap_marker_for_devbox() => ProfileName::Devbox,
             None => ProfileName::Workspace,
         };
         let profile_name = profile.to_string();
@@ -269,7 +269,7 @@ async fn run(args: Args, cwd: PathBuf) -> anyhow::Result<()> {
                 tracing::warn!("Sandbox could not be applied (unsupported platform)");
             }
             sandbox.install();
-            let active = xai_grok_sandbox::is_active();
+            let active = intelekt_sandbox::is_active();
             let status_msg = if active {
                 "Workspace server sandbox active"
             } else {
@@ -277,11 +277,11 @@ async fn run(args: Args, cwd: PathBuf) -> anyhow::Result<()> {
             };
             tracing::info!(
                 profile = % profile_name, active, restrict_network =
-                xai_grok_sandbox::should_restrict_child_network(), "{status_msg}"
+                intelekt_sandbox::should_restrict_child_network(), "{status_msg}"
             );
         }
     }
-    let auth_provider = xai_grok_workspace::hub_auth::provider(&url, args.auth_config.as_deref())?;
+    let auth_provider = intelekt_workspace::hub_auth::provider(&url, args.auth_config.as_deref())?;
     tracing::info!(hub_url = % url, cwd = % cwd.display(), "Starting workspace server");
     let cwd_display = cwd.display().to_string();
     let session_id = std::env::var("GROK_SESSION_ID").ok();
@@ -327,7 +327,7 @@ async fn run(args: Args, cwd: PathBuf) -> anyhow::Result<()> {
         "Workspace server starting — sessions created dynamically via server bind"
     );
     let server_id = args.server_id.clone();
-    let status_config = xai_grok_workspace::StatusConfig::from_env();
+    let status_config = intelekt_workspace::StatusConfig::from_env();
     let preview_shutdown = if args.preview.preview_enabled {
         let control_port = args.preview.preview_control_port;
         let cfg = args.preview.into_preview_args(cwd.clone());
@@ -339,8 +339,8 @@ async fn run(args: Args, cwd: PathBuf) -> anyhow::Result<()> {
     };
     let project_lsp_trusted = true;
     let preview_scrape_interval = status_config.preview_activity_scrape_interval;
-    xai_grok_workspace::init_metrics();
-    let ws_handle = xai_grok_workspace::handle::connect_local_workspace(
+    intelekt_workspace::init_metrics();
+    let ws_handle = intelekt_workspace::handle::connect_local_workspace(
         cwd,
         url,
         auth_provider,
@@ -412,11 +412,11 @@ async fn run(args: Args, cwd: PathBuf) -> anyhow::Result<()> {
     diag_handle.set_shutting_down();
     tracing::info!("Received shutdown signal, draining...");
     let tracker = ws_handle.activity_tracker().clone();
-    let grace_budget = xai_grok_workspace::handle::termination_grace_from_env();
+    let grace_budget = intelekt_workspace::handle::termination_grace_from_env();
     ws_handle
         .two_phase_drain(
             grace_budget,
-            xai_grok_workspace::handle::DrainReason::Sigterm,
+            intelekt_workspace::handle::DrainReason::Sigterm,
         )
         .await;
     tracker.set_shutting_down();
@@ -433,7 +433,7 @@ async fn run(args: Args, cwd: PathBuf) -> anyhow::Result<()> {
         pump.drain().await;
     }
     ws_handle.shutdown_hub().await;
-    xai_grok_sandbox::flush();
+    intelekt_sandbox::flush();
     Ok(())
 }
 #[cfg(test)]

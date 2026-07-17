@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use xai_grok_workspace::session::git::VcsKind;
+use intelekt_workspace::session::git::VcsKind;
 
 // Re-export from xai-chat-state — canonical definition lives there.
 pub use xai_chat_state::compaction_utils::extract_user_query;
@@ -74,7 +74,7 @@ fn resolve_shell_display() -> String {
 
     #[cfg(not(unix))]
     {
-        xai_grok_config::shell::detect_windows_shell()
+        intelekt_config::shell::detect_windows_shell()
             .name()
             .to_string()
     }
@@ -104,7 +104,7 @@ pub async fn compute_vcs_status_block(
     working_directory: &Path,
     vcs_kind: VcsKind,
 ) -> Option<String> {
-    use xai_grok_workspace::file_system::{git_status, jj_status};
+    use intelekt_workspace::file_system::{git_status, jj_status};
 
     if matches!(vcs_kind, VcsKind::None) {
         return None;
@@ -164,7 +164,7 @@ pub async fn construct_user_message(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_workspace::file_system::FsError;
+    use intelekt_workspace::file_system::FsError;
 
     /// Verify that construct_user_message completes within the 2s git_status
     /// timeout even when pointed at a non-existent directory (git commands

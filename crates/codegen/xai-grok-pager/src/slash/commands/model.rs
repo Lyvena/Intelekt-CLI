@@ -3,7 +3,7 @@
 //! re-opens the dropdown into a `low|medium|high|xhigh` sub-menu.
 
 use agent_client_protocol as acp;
-use xai_grok_shell::sampling::types::supports_reasoning_effort_meta;
+use intelekt_shell::sampling::types::supports_reasoning_effort_meta;
 
 use crate::acp::model_state::ModelState;
 use crate::app::actions::Action;
@@ -204,7 +204,7 @@ fn build_effort_items(models: &ModelState, model_id: &acp::ModelId) -> Vec<ArgIt
 mod tests {
     use super::*;
     use std::sync::Arc;
-    use xai_grok_shell::sampling::types::ReasoningEffort;
+    use intelekt_shell::sampling::types::ReasoningEffort;
 
     fn model_with_reasoning(id: &str, name: &str) -> (acp::ModelId, acp::ModelInfo) {
         let id = acp::ModelId::new(Arc::from(id));
@@ -267,7 +267,7 @@ mod tests {
     fn empty_query_returns_one_row_per_logical_model() {
         let mut state = ModelState::default();
         let (rid, rinfo) = model_with_reasoning("reasoning-x", "Reasoning X");
-        let (pid, pinfo) = plain_model("grok-4.5", "Grok 4.5");
+        let (pid, pinfo) = plain_model("intelekt-4.5", "Grok 4.5");
         state.available.insert(rid, rinfo);
         state.available.insert(pid, pinfo);
 
@@ -416,7 +416,7 @@ mod tests {
         // must select the full name, not treat "4.5" as an effort on "Grok".
         let mut state = ModelState::default();
         let (short_id, short_info) = model_with_reasoning("grok", "Grok");
-        let (long_id, long_info) = model_with_reasoning("grok-4.5", "Grok 4.5");
+        let (long_id, long_info) = model_with_reasoning("intelekt-4.5", "Grok 4.5");
         state.available.insert(short_id, short_info);
         state.available.insert(long_id.clone(), long_info);
         let mut ctx = dummy_exec_ctx(&state);
@@ -432,7 +432,7 @@ mod tests {
     #[test]
     fn run_rejects_effort_for_non_reasoning_model() {
         let mut state = ModelState::default();
-        let (id, info) = plain_model("grok-4.5", "Grok 4.5");
+        let (id, info) = plain_model("intelekt-4.5", "Grok 4.5");
         state.available.insert(id, info);
         let mut ctx = dummy_exec_ctx(&state);
         let result = ModelCommand.run(&mut ctx, "Grok 4.5 high");
@@ -453,7 +453,7 @@ mod tests {
     #[test]
     fn run_bare_model_name_dispatches_set_default_model() {
         let mut state = ModelState::default();
-        let (id, info) = plain_model("grok-4.5", "Grok 4.5");
+        let (id, info) = plain_model("intelekt-4.5", "Grok 4.5");
         state.available.insert(id.clone(), info);
         let mut ctx = dummy_exec_ctx(&state);
         let result = ModelCommand.run(&mut ctx, "Grok 4.5");
@@ -470,7 +470,7 @@ mod tests {
     #[test]
     fn run_set_default_model_resolves_case_insensitively() {
         let mut state = ModelState::default();
-        let (id, info) = plain_model("grok-4.5", "Grok 4.5");
+        let (id, info) = plain_model("intelekt-4.5", "Grok 4.5");
         state.available.insert(id.clone(), info);
         let mut ctx = dummy_exec_ctx(&state);
         let result = ModelCommand.run(&mut ctx, "grok 4.5");

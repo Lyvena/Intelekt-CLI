@@ -1,7 +1,7 @@
 //! Per-request transport for server-reported doom-loop signals.
 //!
 //! The wire shapes and tolerant parsers live in
-//! [`xai_grok_sampling_types::doom_loop`]; this module only moves the parsed
+//! [`intelekt_sampling_types::doom_loop`]; this module only moves the parsed
 //! signals across the layer boundary: the Layer-1 SSE decoder in
 //! [`crate::client`] records them as raw payloads arrive, and the Layer-2
 //! transform in [`crate::stream::responses`] drains them into the final
@@ -9,7 +9,7 @@
 
 use std::sync::{Arc, Mutex};
 
-use xai_grok_sampling_types::doom_loop::{
+use intelekt_sampling_types::doom_loop::{
     DOOM_LOOP_CHECK_EVENT_TYPE, DoomLoopPeek, DoomLoopRecoveryPolicy, DoomLoopSignal,
     peek_doom_loop,
 };
@@ -126,7 +126,7 @@ impl DoomLoopSignalCollector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_sampling_types::doom_loop::{
+    use intelekt_sampling_types::doom_loop::{
         DoomLoopSignalKind, SAMPLE_CHECK_EVENT_DATA, SAMPLE_CHECK_EVENT_DATA_CUMULATIVE,
     };
 

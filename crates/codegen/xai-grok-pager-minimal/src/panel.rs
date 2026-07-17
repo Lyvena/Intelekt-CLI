@@ -29,12 +29,12 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Span;
 
-use xai_grok_pager::app::agent_view::AgentView;
-use xai_grok_pager::minimal_api;
-use xai_grok_pager::theme::Theme;
-use xai_grok_pager::views::extensions_modal::{ExtensionsTab, TabDataState};
-use xai_grok_pager::views::modal::ActiveModal;
-use xai_grok_pager::views::picker::{self, PickerEntry, PickerField, PickerHitAreas, PickerRow};
+use intelekt_pager::app::agent_view::AgentView;
+use intelekt_pager::minimal_api;
+use intelekt_pager::theme::Theme;
+use intelekt_pager::views::extensions_modal::{ExtensionsTab, TabDataState};
+use intelekt_pager::views::modal::ActiveModal;
+use intelekt_pager::views::picker::{self, PickerEntry, PickerField, PickerHitAreas, PickerRow};
 
 /// Rows of chrome around the scrolling list: title + subtitle/search + divider
 /// + footer.
@@ -516,8 +516,8 @@ fn measure_entries(entries: &[PickerEntry<'_>]) -> u16 {
 mod tests {
     use super::*;
     use ratatui::layout::Rect;
-    use xai_grok_pager::views::extensions_modal::ExtensionsModalState;
-    use xai_grok_pager::views::mcps_modal::{McpServerDisplayStatus, McpServerInfo, McpWireSource};
+    use intelekt_pager::views::extensions_modal::ExtensionsModalState;
+    use intelekt_pager::views::mcps_modal::{McpServerDisplayStatus, McpServerInfo, McpWireSource};
 
     fn agent() -> AgentView {
         minimal_api::test_agent_view(Some("s1"), std::path::PathBuf::from("/tmp/repo"))
@@ -552,8 +552,8 @@ mod tests {
         a
     }
 
-    fn session_entry(id: &str) -> xai_grok_pager::app::app_view::SessionPickerEntry {
-        xai_grok_pager::app::app_view::SessionPickerEntry {
+    fn session_entry(id: &str) -> intelekt_pager::app::app_view::SessionPickerEntry {
+        intelekt_pager::app::app_view::SessionPickerEntry {
             id: id.into(),
             summary: id.into(),
             updated_at: chrono::Utc::now(),
@@ -571,7 +571,7 @@ mod tests {
         }
     }
 
-    fn with_resume(entries: Vec<xai_grok_pager::app::app_view::SessionPickerEntry>) -> AgentView {
+    fn with_resume(entries: Vec<intelekt_pager::app::app_view::SessionPickerEntry>) -> AgentView {
         let mut a = agent();
         a.active_modal = Some(ActiveModal::SessionPicker {
             state: picker::PickerState::default(),
@@ -579,11 +579,11 @@ mod tests {
             loading: false,
             lanes: Default::default(),
             previous_palette: None,
-            window: xai_grok_pager::views::modal_window::ModalWindowState::new(),
+            window: intelekt_pager::views::modal_window::ModalWindowState::new(),
             content_results: None,
             content_loading: false,
             deep_search_seq: 0,
-            source_filter: xai_grok_pager::views::session_picker::SourceFilter::default(),
+            source_filter: intelekt_pager::views::session_picker::SourceFilter::default(),
             pending_delete: None,
             entries_query: None,
         });

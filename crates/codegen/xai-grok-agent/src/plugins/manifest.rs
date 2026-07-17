@@ -2,7 +2,7 @@
 //!
 //! The canonical manifest location is `plugin.json` at the plugin root.
 //! Fallback locations (checked in order when the root manifest is absent):
-//! 1. `.grok-plugin/plugin.json`
+//! 1. `.intelekt-plugin/plugin.json`
 //! 2. `.claude-plugin/plugin.json`
 //!
 //! If no manifest is found at all, the plugin can still function via
@@ -292,7 +292,7 @@ fn resolve_dirs(
 /// Manifest search order within a plugin directory.
 const MANIFEST_PATHS: &[&str] = &[
     "plugin.json",
-    ".grok-plugin/plugin.json",
+    ".intelekt-plugin/plugin.json",
     ".claude-plugin/plugin.json",
 ];
 
@@ -361,10 +361,10 @@ pub fn name_from_dirname(dir: &Path) -> Option<String> {
 /// Replaces `${GROK_PLUGIN_ROOT}`, `${CLAUDE_PLUGIN_ROOT}`,
 /// `${GROK_PLUGIN_DATA}`, and `${CLAUDE_PLUGIN_DATA}` with the provided values.
 ///
-/// Delegates to [`xai_grok_tools::util::substitute_plugin_tokens`], the single
+/// Delegates to [`intelekt_tools::util::substitute_plugin_tokens`], the single
 /// source of truth shared with plugin skill/command body substitution.
 pub fn substitute_env_vars(s: &str, plugin_root: &str, plugin_data: &str) -> String {
-    xai_grok_tools::util::substitute_plugin_tokens(s, Some(plugin_root), Some(plugin_data))
+    intelekt_tools::util::substitute_plugin_tokens(s, Some(plugin_root), Some(plugin_data))
 }
 
 pub fn normalize_inline_mcp_servers(value: &serde_json::Value) -> serde_json::Value {
@@ -567,11 +567,11 @@ mod tests {
     fn load_manifest_fallback_paths() {
         let tmp = tempfile::tempdir().unwrap();
         let plugin_root = tmp.path().join("fallback-plugin");
-        std::fs::create_dir_all(plugin_root.join(".grok-plugin")).unwrap();
+        std::fs::create_dir_all(plugin_root.join(".intelekt-plugin")).unwrap();
 
-        // Write manifest in .grok-plugin/ fallback location
+        // Write manifest in .intelekt-plugin/ fallback location
         std::fs::write(
-            plugin_root.join(".grok-plugin/plugin.json"),
+            plugin_root.join(".intelekt-plugin/plugin.json"),
             r#"{"name": "fallback-plugin"}"#,
         )
         .unwrap();
@@ -586,12 +586,12 @@ mod tests {
     fn load_manifest_root_wins_over_fallback() {
         let tmp = tempfile::tempdir().unwrap();
         let plugin_root = tmp.path().join("priority-test");
-        std::fs::create_dir_all(plugin_root.join(".grok-plugin")).unwrap();
+        std::fs::create_dir_all(plugin_root.join(".intelekt-plugin")).unwrap();
 
         // Write both root and fallback
         std::fs::write(plugin_root.join("plugin.json"), r#"{"name": "root-wins"}"#).unwrap();
         std::fs::write(
-            plugin_root.join(".grok-plugin/plugin.json"),
+            plugin_root.join(".intelekt-plugin/plugin.json"),
             r#"{"name": "fallback-loses"}"#,
         )
         .unwrap();

@@ -1,4 +1,4 @@
-//! `scroll-matrix` — scroll validation matrix sweep for xai-grok-pager.
+//! `scroll-matrix` — scroll validation matrix sweep for intelekt-pager.
 //!
 //! Runs matrix cells (`scroll_matrix::CELLS`) against a real pager binary in
 //! a PTY, prints the per-cell verdict table, writes `report.json` into the
@@ -13,8 +13,8 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result, bail};
 use clap::{Parser as ClapParser, ValueEnum};
-use xai_grok_pager_pty_harness::pager_binary;
-use xai_grok_pager_pty_harness::scroll_matrix::{
+use intelekt_pager_pty_harness::pager_binary;
+use intelekt_pager_pty_harness::scroll_matrix::{
     CELLS, CellReport, MatrixCell, Tier, exit_code, run_cell, summary_table, write_report_json,
 };
 
@@ -29,7 +29,7 @@ enum TierArg {
 #[derive(ClapParser, Debug)]
 #[command(
     name = "scroll-matrix",
-    about = "Run the scroll validation matrix against xai-grok-pager",
+    about = "Run the scroll validation matrix against intelekt-pager",
     long_about = None,
 )]
 struct Cli {
@@ -53,7 +53,7 @@ struct Cli {
     #[arg(long, value_name = "DIR", default_value = "target/scroll-matrix")]
     artifacts: PathBuf,
 
-    /// Pager binary. Defaults to PAGER_BINARY, CARGO_BIN_EXE_xai-grok-pager,
+    /// Pager binary. Defaults to PAGER_BINARY, CARGO_BIN_EXE_intelekt-pager,
     /// or a locally-built debug binary.
     #[arg(long, value_name = "PATH")]
     binary: Option<PathBuf>,

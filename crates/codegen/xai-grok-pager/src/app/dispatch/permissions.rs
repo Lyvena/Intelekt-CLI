@@ -15,14 +15,14 @@ use agent_client_protocol as acp;
 /// Pops the front request, sends the response, and handles queue transitions
 /// (prompt restore on empty, prompt clear on next-front).
 ///
-/// Special case for [`xai_grok_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID`]:
+/// Special case for [`intelekt_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID`]:
 /// when the user picks the prepended "Yes, and don't ask again for anything"
 /// option, this dispatcher (a) sends the standard `Selected` response so the
 /// in-flight request is allowed once (the shell's `map_selected_outcome`
 /// resolves the id to `PromptOutcome::AllowOnce`), then (b) reuses the
 /// existing `set_yolo_mode(true)` flow to flip the local YOLO state, drain
 /// any remaining queued permissions, persist `[ui] permission_mode =
-/// "always-approve"` to `~/.grok/config.toml`, and fire the
+/// "always-approve"` to `~/.intelekt/config.toml`, and fire the
 /// `x.ai/yolo_mode_changed` ACP notification. See the option-id constant
 /// doc-comment for the full client/shell split. Under a managed-policy
 /// pin step (b) is refused with a toast — the request is still allowed once.
@@ -43,7 +43,7 @@ pub(super) fn dispatch_permission_select(
     // Detect the "enable always-approve mode" id BEFORE moving option_id
     // into the response. Cheap str compare on the `Arc<str>` interior.
     let enable_always_approve =
-        option_id.0.as_ref() == xai_grok_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID;
+        option_id.0.as_ref() == intelekt_workspace::permission::ENABLE_ALWAYS_APPROVE_OPTION_ID;
 
     // Remember the user's choice (by option kind) so the next prompt's cursor
     // sticks to it. Allow-flavored choices only — a rejection must not steer a
@@ -55,7 +55,7 @@ pub(super) fn dispatch_permission_select(
     //    `AllowAlways`) — letting it stick would steer an unrelated later
     //    prompt onto its "always allow this command" row, escalating scope.
     let steers_next_cursor = !enable_always_approve
-        && option_id.0.as_ref() != xai_grok_workspace::permission::ALLOW_EDITS_SESSION_OPTION_ID;
+        && option_id.0.as_ref() != intelekt_workspace::permission::ALLOW_EDITS_SESSION_OPTION_ID;
     if steers_next_cursor
         && let Some(kind) = perm
             .options
@@ -83,16 +83,16 @@ pub(super) fn dispatch_permission_select(
     {
         let selection = match scope.selected {
             crate::views::permission_view::McpScope::Tool => {
-                xai_grok_workspace::permission::McpScopeSelection::Tool {
+                intelekt_workspace::permission::McpScopeSelection::Tool {
                     tool_name: scope.tool_name.clone(),
                 }
             }
             crate::views::permission_view::McpScope::Server => match &scope.server_prefix {
-                Some(prefix) => xai_grok_workspace::permission::McpScopeSelection::Server {
+                Some(prefix) => intelekt_workspace::permission::McpScopeSelection::Server {
                     server: prefix.clone(),
                 },
                 // Defensive: render path should disable Server when no prefix.
-                None => xai_grok_workspace::permission::McpScopeSelection::Tool {
+                None => intelekt_workspace::permission::McpScopeSelection::Tool {
                     tool_name: scope.tool_name.clone(),
                 },
             },
@@ -104,7 +104,7 @@ pub(super) fn dispatch_permission_select(
         && perm.bash_selection_count > 0
     {
         let parts: Vec<String> = h.highlighted_words[..perm.bash_selection_count].to_vec();
-        serde_json::to_value(xai_grok_workspace::permission::BashCommandSelectedTerms {
+        serde_json::to_value(intelekt_workspace::permission::BashCommandSelectedTerms {
             command_parts: parts,
         })
         .ok()

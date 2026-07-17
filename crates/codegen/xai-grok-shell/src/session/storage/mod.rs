@@ -12,8 +12,8 @@ use crate::session::wire_tags::{
 };
 use crate::tools::todo::TodoState;
 use agent_client_protocol as acp;
-use xai_grok_sampling_types::ReasoningEffort;
-use xai_grok_workspace::session::file_state::RewindPoint;
+use intelekt_sampling_types::ReasoningEffort;
+use intelekt_workspace::session::file_state::RewindPoint;
 
 pub mod jsonl;
 pub mod search;

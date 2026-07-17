@@ -7,8 +7,8 @@ use std::time::Instant;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 
-// Canonical in xai-grok-workspace-types; re-exported for existing paths.
-pub use xai_grok_workspace_types::rpc::search::{
+// Canonical in intelekt-workspace-types; re-exported for existing paths.
+pub use intelekt_workspace_types::rpc::search::{
     ContentMatch, ContentMatchFile, ContentSearchData,
 };
 
@@ -45,7 +45,7 @@ fn build_ripgrep_command(root: &Path, params: &ContentSearchParams) -> Command {
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::null());
     cmd.stdin(Stdio::null());
-    xai_grok_tools::util::detach_command(&mut cmd);
+    intelekt_tools::util::detach_command(&mut cmd);
 
     cmd.arg("--json");
     cmd.arg("--line-number");

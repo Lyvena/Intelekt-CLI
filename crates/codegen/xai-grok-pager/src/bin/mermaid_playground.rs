@@ -16,7 +16,7 @@ use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::Rect;
-use xai_grok_pager::scrollback::{RenderBlock, ScratchBuffer, ScrollbackPane, ScrollbackState};
+use intelekt_pager::scrollback::{RenderBlock, ScratchBuffer, ScrollbackPane, ScrollbackState};
 
 const SAMPLES: &[(&str, &str)] = &[
     (

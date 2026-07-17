@@ -257,10 +257,10 @@ fn clone_repo(
     }
 
     let mut cmd = Command::new("git");
-    xai_grok_tools::util::detach_std_command(&mut cmd);
+    intelekt_tools::util::detach_std_command(&mut cmd);
     cmd.arg("clone").arg("--depth").arg("1");
     cmd.stdin(std::process::Stdio::null());
-    cmd.envs(xai_grok_tools::util::pager_env());
+    cmd.envs(intelekt_tools::util::pager_env());
 
     if let Some(r) = git_ref {
         cmd.arg("--branch").arg(r);
@@ -337,11 +337,11 @@ fn run_git_in(cwd: &Path, args: &[&str]) -> Result<(), String> {
 
 fn run_git_in_capture(cwd: &Path, args: &[&str]) -> Result<std::process::Output, String> {
     let mut cmd = Command::new("git");
-    xai_grok_tools::util::detach_std_command(&mut cmd);
+    intelekt_tools::util::detach_std_command(&mut cmd);
     cmd.args(args)
         .current_dir(cwd)
         .stdin(std::process::Stdio::null())
-        .envs(xai_grok_tools::util::pager_env());
+        .envs(intelekt_tools::util::pager_env());
     let output = cmd
         .output()
         .map_err(|e| format!("failed to run git {}: {e}", args.first().unwrap_or(&"")))?;
@@ -381,10 +381,10 @@ pub fn remove_repo_path(path: &Path) -> Result<(), InstallError> {
 
 /// Clean up plugin data directories for all plugins in a repo.
 ///
-/// Each plugin has a data dir at `~/.grok/plugin-data/<plugin_id>/`.
+/// Each plugin has a data dir at `~/.intelekt/plugin-data/<plugin_id>/`.
 /// This iterates all plugins in the repo and removes their data dirs.
 pub fn cleanup_plugin_data(repo: &InstalledRepo, scope: super::discovery::PluginScope) {
-    let plugin_data_base = xai_grok_config::grok_home().join("plugin-data");
+    let plugin_data_base = intelekt_config::grok_home().join("plugin-data");
 
     for (plugin_name, repo_plugin) in &repo.plugins {
         let plugin_root = match &repo_plugin.subdir {
@@ -612,11 +612,11 @@ pub fn update_repo(repo_key: &str, repo: &InstalledRepo) -> Result<UpdateStatus,
             }
 
             let mut cmd = Command::new("git");
-            xai_grok_tools::util::detach_std_command(&mut cmd);
+            intelekt_tools::util::detach_std_command(&mut cmd);
             cmd.args(["pull", "--ff-only"])
                 .current_dir(repo_path)
                 .stdin(std::process::Stdio::null())
-                .envs(xai_grok_tools::util::pager_env());
+                .envs(intelekt_tools::util::pager_env());
             let output = cmd.output().map_err(|e| InstallError::InstallFailed {
                 detail: format!("failed to run git pull: {e}"),
             })?;

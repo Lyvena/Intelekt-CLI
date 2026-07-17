@@ -10,11 +10,11 @@ use crate::remote::DEFAULT_CONTEXT_WINDOW;
 /// `policy_block` is set; keep everything else (and everything without a pin).
 /// Pure (no I/O) so the wiring is unit-testable; the caller surfaces `dropped`.
 fn drop_cli_catchall_allows(
-    rules: Vec<xai_grok_workspace::permission::types::PermissionRule>,
+    rules: Vec<intelekt_workspace::permission::types::PermissionRule>,
     policy_block: Option<&'static str>,
 ) -> (
-    Vec<xai_grok_workspace::permission::types::PermissionRule>,
-    Vec<xai_grok_workspace::permission::types::PermissionRule>,
+    Vec<intelekt_workspace::permission::types::PermissionRule>,
+    Vec<intelekt_workspace::permission::types::PermissionRule>,
 ) {
     if policy_block.is_none() {
         return (rules, Vec::new());
@@ -22,7 +22,7 @@ fn drop_cli_catchall_allows(
     let mut kept = Vec::with_capacity(rules.len());
     let mut dropped = Vec::new();
     for rule in rules {
-        if xai_grok_workspace::permission::resolution::is_catchall_allow(&rule) {
+        if intelekt_workspace::permission::resolution::is_catchall_allow(&rule) {
             dropped.push(rule);
         } else {
             kept.push(rule);
@@ -33,9 +33,9 @@ fn drop_cli_catchall_allows(
 #[cfg(test)]
 mod cli_catchall_drop_tests {
     use super::drop_cli_catchall_allows;
-    use xai_grok_workspace::permission::resolution::YOLO_PIN_REASON_REQUIREMENTS;
-    use xai_grok_workspace::permission::rules::parse_permission_rule;
-    use xai_grok_workspace::permission::types::{PermissionRule, RuleAction, ToolFilter};
+    use intelekt_workspace::permission::resolution::YOLO_PIN_REASON_REQUIREMENTS;
+    use intelekt_workspace::permission::rules::parse_permission_rule;
+    use intelekt_workspace::permission::types::{PermissionRule, RuleAction, ToolFilter};
     fn allow(rule: &str) -> PermissionRule {
         parse_permission_rule(rule, RuleAction::Allow).expect("rule parses")
     }
@@ -95,7 +95,7 @@ pub(crate) async fn spawn_session_actor(
     credentials: xai_chat_state::Credentials,
     auth_method_id: crate::agent::auth_method::SharedAuthMethodId,
     auth_manager: Option<Arc<AuthManager>>,
-    attribution_callback: Option<xai_grok_sampler::SharedAttributionCallback>,
+    attribution_callback: Option<intelekt_sampler::SharedAttributionCallback>,
     mut tool_context: ToolContext,
     mcp_servers: Vec<acp::McpServer>,
     initial_client_mcp_servers: Vec<acp::McpServer>,
@@ -134,7 +134,7 @@ pub(crate) async fn spawn_session_actor(
     agent_definition: AgentDefinition,
     session_default_agent_profile: Option<String>,
     skills_config: SkillsConfig,
-    preloaded_skills: Option<Vec<xai_grok_tools::implementations::skills::types::SkillInfo>>,
+    preloaded_skills: Option<Vec<intelekt_tools::implementations::skills::types::SkillInfo>>,
     compat: CompatConfig,
     incremental_bash_output: bool,
     persisted_signals: Option<crate::session::signals::SessionSignals>,
@@ -153,11 +153,11 @@ pub(crate) async fn spawn_session_actor(
     session_client_identifier: Option<String>,
     inference_idle_timeout_secs: u64,
     max_retries: Option<u32>,
-    web_search_sampling_config: Option<xai_grok_sampler::SamplerConfig>,
-    web_fetch_config: xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig,
-    image_gen_config: xai_grok_tools::implementations::grok_build::image_gen::ImageGenConfig,
-    video_gen_config: xai_grok_tools::implementations::grok_build::video_gen::VideoGenConfig,
-    app_builder_deployer_config: xai_grok_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig,
+    web_search_sampling_config: Option<intelekt_sampler::SamplerConfig>,
+    web_fetch_config: intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig,
+    image_gen_config: intelekt_tools::implementations::grok_build::image_gen::ImageGenConfig,
+    video_gen_config: intelekt_tools::implementations::grok_build::video_gen::VideoGenConfig,
+    app_builder_deployer_config: intelekt_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig,
     write_file_enabled: bool,
     goal_enabled: bool,
     subagents_enabled: bool,
@@ -166,7 +166,7 @@ pub(crate) async fn spawn_session_actor(
     prompt_display_cwd: Option<String>,
     subagent_toggle: std::collections::HashMap<String, bool>,
     persona_summaries: Vec<String>,
-    prompt_audience: xai_grok_agent::prompt::context::PromptAudience,
+    prompt_audience: intelekt_agent::prompt::context::PromptAudience,
     role_instructions: Option<String>,
     persona_instructions: Option<String>,
     disable_web_search: bool,
@@ -174,23 +174,23 @@ pub(crate) async fn spawn_session_actor(
     respect_gitignore: bool,
     path_not_found_hints: bool,
     tool_params_json: crate::session::agent_rebuild::ResolvedToolParamsJson,
-    plugin_registry: Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>>,
-    plugin_registry_handle: Option<xai_grok_agent::plugins::SharedPluginRegistryHandle>,
+    plugin_registry: Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>>,
+    plugin_registry_handle: Option<intelekt_agent::plugins::SharedPluginRegistryHandle>,
     models_manager: crate::agent::models::ModelsManager,
-    inherited_permission_handle: Option<xai_grok_workspace::permission::PermissionHandle>,
-    api_key_provider: Option<xai_grok_tools::types::SharedApiKeyProvider>,
+    inherited_permission_handle: Option<intelekt_workspace::permission::PermissionHandle>,
+    api_key_provider: Option<intelekt_tools::types::SharedApiKeyProvider>,
     image_description_model: String,
-    hook_registry_override: Option<std::sync::Arc<xai_grok_hooks::discovery::HookRegistry>>,
-    workspace_ops: xai_grok_workspace::WorkspaceOps,
-    cli_permission_rules: Vec<xai_grok_workspace::permission::types::PermissionRule>,
+    hook_registry_override: Option<std::sync::Arc<intelekt_hooks::discovery::HookRegistry>>,
+    workspace_ops: intelekt_workspace::WorkspaceOps,
+    cli_permission_rules: Vec<intelekt_workspace::permission::types::PermissionRule>,
     todo_gate: bool,
     remote_settings: Option<crate::util::config::RemoteSettings>,
     laziness_debug_log: Option<std::path::PathBuf>,
     parent_terminal_backend: Option<
-        std::sync::Arc<dyn xai_grok_tools::computer::types::TerminalBackend>,
+        std::sync::Arc<dyn intelekt_tools::computer::types::TerminalBackend>,
     >,
     parent_scheduler_handle: Option<
-        xai_grok_tools::implementations::grok_build::scheduler::types::SchedulerHandle,
+        intelekt_tools::implementations::grok_build::scheduler::types::SchedulerHandle,
     >,
     max_turns: Option<usize>,
     forked_tool_override: Option<Vec<ToolSpec>>,
@@ -201,10 +201,10 @@ pub(crate) async fn spawn_session_actor(
         String,
         tokio::sync::oneshot::Receiver<()>,
     ),
-    xai_grok_agent::AgentBuildError,
+    intelekt_agent::AgentBuildError,
 > {
     if max_turns == Some(0) {
-        return Err(xai_grok_agent::AgentBuildError::InvalidConfig(
+        return Err(intelekt_agent::AgentBuildError::InvalidConfig(
             "max_turns must be greater than 0".to_string(),
         ));
     }
@@ -228,11 +228,11 @@ pub(crate) async fn spawn_session_actor(
             WebFetchConfig::Disabled => vec![],
         };
         let mut permission_config =
-            xai_grok_workspace::permission::resolution::resolve_permission_config_with_fallback(
+            intelekt_workspace::permission::resolution::resolve_permission_config_with_fallback(
                 tool_context.cwd.as_path(),
             )
             .await;
-        let yolo_pin = xai_grok_workspace::permission::resolution::yolo_disabled_by_policy();
+        let yolo_pin = intelekt_workspace::permission::resolution::yolo_disabled_by_policy();
         let (cli_permission_rules, dropped_catchalls) =
             drop_cli_catchall_allows(cli_permission_rules, yolo_pin);
         if let Some(reason) = yolo_pin
@@ -256,7 +256,7 @@ pub(crate) async fn spawn_session_actor(
                 }
                 None => {
                     permission_config = Some(
-                        xai_grok_workspace::permission::types::PermissionConfig::new(
+                        intelekt_workspace::permission::types::PermissionConfig::new(
                             cli_permission_rules,
                         ),
                     );
@@ -265,16 +265,16 @@ pub(crate) async fn spawn_session_actor(
         }
         let deny_read_globs = permission_config
             .as_ref()
-            .map(xai_grok_workspace::permission::resolution::deny_read_globs_from_config)
+            .map(intelekt_workspace::permission::resolution::deny_read_globs_from_config)
             .unwrap_or_default();
-        let hub_permission = if xai_grok_workspace::permission::hitl_permission_live_enabled() {
+        let hub_permission = if intelekt_workspace::permission::hitl_permission_live_enabled() {
             let server = match workspace_ops.workspace_handle() {
                 Some(handle) => handle.hub_server_blocking().await,
                 None => None,
             };
             let transport = server
                 .and_then(|server| {
-                    xai_grok_workspace::permission::ToolServerPermissionTransport::from_session_id(
+                    intelekt_workspace::permission::ToolServerPermissionTransport::from_session_id(
                         server,
                         session_info.id.0.as_ref(),
                     )
@@ -282,7 +282,7 @@ pub(crate) async fn spawn_session_actor(
                 .map(|t| {
                     std::sync::Arc::new(t)
                         as std::sync::Arc<
-                            dyn xai_grok_workspace::permission::PermissionHookTransport,
+                            dyn intelekt_workspace::permission::PermissionHookTransport,
                         >
                 });
             if transport.is_none() {
@@ -296,7 +296,7 @@ pub(crate) async fn spawn_session_actor(
             None
         };
         let (permissions, permission_events_rx) =
-            xai_grok_workspace::permission::spawn_permission_manager_with_hub(
+            intelekt_workspace::permission::spawn_permission_manager_with_hub(
                 session_info.id.clone(),
                 gateway.clone(),
                 tool_context.cwd.clone(),
@@ -358,10 +358,10 @@ pub(crate) async fn spawn_session_actor(
         };
     let primary_model_id = sampling_config.model.clone();
     let web_search_config = if disable_web_search {
-        xai_grok_tools::implementations::WebSearchConfig::Disabled
+        intelekt_tools::implementations::WebSearchConfig::Disabled
     } else if let Some(cfg) = web_search_sampling_config {
         if let Some(api_key) = cfg.api_key {
-            xai_grok_tools::implementations::WebSearchConfig::Enabled {
+            intelekt_tools::implementations::WebSearchConfig::Enabled {
                 api_key,
                 base_url: cfg.base_url,
                 model: cfg.model,
@@ -370,11 +370,11 @@ pub(crate) async fn spawn_session_actor(
             }
         } else {
             tracing::warn!("web_search disabled: resolved config has no API key");
-            xai_grok_tools::implementations::WebSearchConfig::Disabled
+            intelekt_tools::implementations::WebSearchConfig::Disabled
         }
     } else {
         tracing::warn!("web_search disabled: configured model could not be resolved");
-        xai_grok_tools::implementations::WebSearchConfig::Disabled
+        intelekt_tools::implementations::WebSearchConfig::Disabled
     };
     let embed_base_url = sampling_config.base_url.clone();
     let embed_api_key = sampling_config.api_key.clone();
@@ -401,7 +401,7 @@ pub(crate) async fn spawn_session_actor(
             "GROK_DEBUG_CONTEXT_WINDOW override active"
         );
     }
-    let chat_state_sampling_config = xai_grok_sampling_types::SamplingConfig {
+    let chat_state_sampling_config = intelekt_sampling_types::SamplingConfig {
         base_url: sampling_config.base_url.clone(),
         model: sampling_config.model.clone(),
         max_completion_tokens: sampling_config.max_completion_tokens,
@@ -465,7 +465,7 @@ pub(crate) async fn spawn_session_actor(
     });
     let file_state_handle = FileStateHandle::new(file_state_tracker.clone());
     let auto_wake_delivered =
-        xai_grok_tools::reminders::task_completion::AutoWakeDeliveredIds::default();
+        intelekt_tools::reminders::task_completion::AutoWakeDeliveredIds::default();
     tool_context.auto_wake_delivered = Some(auto_wake_delivered.clone());
     let synthetic_trace_tx_shared: std::sync::Arc<
         std::sync::Mutex<
@@ -478,7 +478,7 @@ pub(crate) async fn spawn_session_actor(
     tool_context.synthetic_trace_tx_shared = Some(synthetic_trace_tx_shared.clone());
     let mut tool_context = tool_context.with_file_state_handle(file_state_handle);
     let index_root_for_session =
-        xai_grok_workspace::session::git::find_git_root_from_path(tool_context.cwd.as_path())
+        intelekt_workspace::session::git::find_git_root_from_path(tool_context.cwd.as_path())
             .unwrap_or_else(|_| tool_context.cwd.to_path_buf());
     let chat_state_handle_for_handle = chat_state_handle.clone();
     let hunk_tracker_handle_for_bridge = tool_context.hunk_tracker_handle.clone();
@@ -540,7 +540,7 @@ pub(crate) async fn spawn_session_actor(
             user_cfg.as_ref(),
             None,
         );
-        xai_grok_tools::computer::local::SearchShadowConfig {
+        intelekt_tools::computer::local::SearchShadowConfig {
             find_bfs,
             grep_ugrep,
         }
@@ -557,7 +557,7 @@ pub(crate) async fn spawn_session_actor(
         tool_context.gateway.is_some(),
         persistent_local_shell,
     );
-    let terminal_backend: std::sync::Arc<dyn xai_grok_tools::computer::types::TerminalBackend> =
+    let terminal_backend: std::sync::Arc<dyn intelekt_tools::computer::types::TerminalBackend> =
         match terminal_backend_kind {
             TerminalBackendKind::ReuseParent => parent_terminal_backend
                 .expect("ReuseParent is only selected when a parent backend is present"),
@@ -566,7 +566,7 @@ pub(crate) async fn spawn_session_actor(
                     tool_context.gateway.clone().unwrap(),
                     tool_context.session_id.clone().unwrap(),
                 ))
-                    as std::sync::Arc<dyn xai_grok_tools::computer::types::TerminalBackend>
+                    as std::sync::Arc<dyn intelekt_tools::computer::types::TerminalBackend>
             }
             TerminalBackendKind::LocalPersistent => std::sync::Arc::new(
                 LocalTerminalBackend::new_local_with_persistent_shell(resolve_search_shadows()),
@@ -580,19 +580,19 @@ pub(crate) async fn spawn_session_actor(
             .warm_persistent_shell(tool_context.cwd.as_path())
             .await;
     }
-    let fs_backend: std::sync::Arc<dyn xai_grok_tools::computer::types::AsyncFileSystem> =
+    let fs_backend: std::sync::Arc<dyn intelekt_tools::computer::types::AsyncFileSystem> =
         if client_fs_capable && tool_context.gateway.is_some() {
-            std::sync::Arc::new(xai_grok_workspace::file_system::AcpFsAdapter::new(
+            std::sync::Arc::new(intelekt_workspace::file_system::AcpFsAdapter::new(
                 tool_context.gateway.clone().unwrap(),
                 tool_context.session_id.clone().unwrap(),
             ))
         } else {
-            std::sync::Arc::new(xai_grok_tools::computer::local::LocalFs)
+            std::sync::Arc::new(intelekt_tools::computer::local::LocalFs)
         };
     let bridge_state_path =
         crate::session::persistence::session_dir(&session_info).join("tool_state.json");
     let initial_agent_type = Some(agent_definition.name.clone());
-    let harness_metrics = if telemetry_enabled || xai_grok_telemetry::external::is_active() {
+    let harness_metrics = if telemetry_enabled || intelekt_telemetry::external::is_active() {
         let plugin_names = plugin_registry
             .as_ref()
             .map(|reg| {
@@ -608,13 +608,13 @@ pub(crate) async fn spawn_session_actor(
             model_id: session_model_id.0.to_string(),
             agent_name: agent_definition.name.clone(),
             permission_mode: if session_yolo_mode {
-                xai_grok_telemetry::enums::PermissionMode::AlwaysApprove
+                intelekt_telemetry::enums::PermissionMode::AlwaysApprove
             } else if session_auto_mode
                 && crate::util::config::auto_permission_mode_enabled_from_disk()
             {
-                xai_grok_telemetry::enums::PermissionMode::Auto
+                intelekt_telemetry::enums::PermissionMode::Auto
             } else {
-                xai_grok_telemetry::enums::PermissionMode::Ask
+                intelekt_telemetry::enums::PermissionMode::Ask
             },
             mcp_server_names: mcp_servers
                 .iter()
@@ -632,7 +632,7 @@ pub(crate) async fn spawn_session_actor(
     } else {
         None
     };
-    let compaction_policy = xai_grok_agent::CompactionPolicy {
+    let compaction_policy = intelekt_agent::CompactionPolicy {
         auto_compact_threshold_percent: auto_compact_threshold_percent as u32,
         compact_model: None,
         memory_flush_enabled: memory_config.as_ref().is_some_and(|mc| mc.flush.enabled),
@@ -645,7 +645,7 @@ pub(crate) async fn spawn_session_actor(
     };
     let reminder_policy = resolve_reminder_policy(remote_settings.as_ref(), todo_gate);
     let (user_question_tx, user_question_rx) = tokio::sync::mpsc::unbounded_channel::<
-        xai_grok_tools::implementations::grok_build::ask_user_question::types::UserQuestionRequest,
+        intelekt_tools::implementations::grok_build::ask_user_question::types::UserQuestionRequest,
     >();
     let attribution_callback_for_spec = auth_manager.as_ref().map(|am| {
         crate::auth::attribution::ShellAttribution::new_tool_callback(
@@ -674,11 +674,11 @@ pub(crate) async fn spawn_session_actor(
         None;
     let mut memory_search_counter: Option<std::sync::Arc<std::sync::atomic::AtomicU64>> = None;
     let memory_backend_for_spec: Option<
-        std::sync::Arc<dyn xai_grok_tools::types::memory_backend::MemoryBackend>,
+        std::sync::Arc<dyn intelekt_tools::types::memory_backend::MemoryBackend>,
     > = if let Some(ref storage) = memory_storage_for_session {
         if let Err(e) = storage.ensure_initialized() {
             tracing::warn!(
-                target : xai_grok_telemetry::memory_log::TARGET, error = % e,
+                target : intelekt_telemetry::memory_log::TARGET, error = % e,
                 "MEMORY_INIT: ensure_initialized failed, continuing without template files"
             );
         }
@@ -688,13 +688,13 @@ pub(crate) async fn spawn_session_actor(
             tokio::task::spawn_blocking(move || match gc_storage.gc(gc_max_age) {
                 Ok(removed) if removed > 0 => {
                     tracing::info!(
-                        target : xai_grok_telemetry::memory_log::TARGET, removed,
+                        target : intelekt_telemetry::memory_log::TARGET, removed,
                         "MEMORY_GC: cleaned orphaned workspace directories"
                     );
                 }
                 Err(e) => {
                     tracing::debug!(
-                        target : xai_grok_telemetry::memory_log::TARGET, error = % e,
+                        target : intelekt_telemetry::memory_log::TARGET, error = % e,
                         "MEMORY_GC: failed"
                     );
                 }
@@ -731,7 +731,7 @@ pub(crate) async fn spawn_session_actor(
                         None,
                         None,
                     ),
-                ) as std::sync::Arc<dyn xai_grok_auth::AuthCredentialProvider>
+                ) as std::sync::Arc<dyn intelekt_auth::AuthCredentialProvider>
             }),
         };
         let backend = crate::session::memory::MemoryBackendImpl::from_session_params(
@@ -740,26 +740,26 @@ pub(crate) async fn spawn_session_actor(
         );
         memory_search_counter = Some(backend.search_counter.clone());
         let watcher_started = params.watcher.is_some();
-        let backend: std::sync::Arc<dyn xai_grok_tools::types::memory_backend::MemoryBackend> =
+        let backend: std::sync::Arc<dyn intelekt_tools::types::memory_backend::MemoryBackend> =
             std::sync::Arc::new(backend);
         memory_backend_params_for_session = Some(params);
         if watcher_config.enabled && !watcher_started {
             tracing::warn!(
-                target : xai_grok_telemetry::memory_log::TARGET,
+                target : intelekt_telemetry::memory_log::TARGET,
                 "MEMORY_INIT: watcher was configured but failed to start \
                  (directory may not exist or OS watcher unavailable)"
             );
         }
         tracing::info!(
-            target : xai_grok_telemetry::memory_log::TARGET, workspace = % storage
+            target : intelekt_telemetry::memory_log::TARGET, workspace = % storage
             .workspace_dir().display(), global = % storage.global_dir().display(),
             watcher_config_enabled = watcher_config.enabled, watcher_started,
             "MEMORY_INIT: storage + backend created"
         );
         let mc = memory_config.as_ref();
         let total_chunks = storage.total_chunk_count();
-        xai_grok_telemetry::session_ctx::log_event(
-            xai_grok_telemetry::memory_telemetry::MemorySessionInit {
+        intelekt_telemetry::session_ctx::log_event(
+            intelekt_telemetry::memory_telemetry::MemorySessionInit {
                 session_id: session_info.id.to_string(),
                 memory_enabled: true,
                 watcher_config_enabled: watcher_config.enabled,
@@ -778,7 +778,7 @@ pub(crate) async fn spawn_session_actor(
         Some(backend)
     } else {
         tracing::debug!(
-            target : xai_grok_telemetry::memory_log::TARGET,
+            target : intelekt_telemetry::memory_log::TARGET,
             "MEMORY_INIT: memory disabled, no storage created"
         );
         None
@@ -787,7 +787,7 @@ pub(crate) async fn spawn_session_actor(
         .map(|c| c.get())
         .unwrap_or(sampling_config.context_window);
     let managed_gateway_tool_client = auth_manager.as_ref().map(|am| {
-        xai_grok_tools::types::resources::ManagedGatewayToolClient(Arc::new(
+        intelekt_tools::types::resources::ManagedGatewayToolClient(Arc::new(
             ShellManagedGatewayToolClient {
                 proxy_base_url: managed_mcp_proxy_base_url.clone(),
                 auth_manager: am.clone(),
@@ -893,22 +893,22 @@ pub(crate) async fn spawn_session_actor(
             e
         })?;
     let resolved_task_output =
-        xai_grok_tools::reminders::task_completion::resolve_task_output_tool_name(
+        intelekt_tools::reminders::task_completion::resolve_task_output_tool_name(
             agent.tool_bridge(),
         )
         .await;
     let resolved_read =
-        xai_grok_tools::reminders::task_completion::resolve_read_tool_name(agent.tool_bridge())
+        intelekt_tools::reminders::task_completion::resolve_read_tool_name(agent.tool_bridge())
             .await;
     let _ = task_output_tool_name.set(resolved_task_output.clone());
     let _ = read_tool_name.set(resolved_read);
     tool_context.task_output_tool_name = resolved_task_output.unwrap_or_else(|| {
-        xai_grok_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL.to_string()
+        intelekt_tools::reminders::task_completion::DEFAULT_TASK_OUTPUT_TOOL.to_string()
     });
     let scheduler_handle_for_handle = {
         let toolset = agent.tool_bridge().toolset();
         let res = toolset.resources.lock().await;
-        res.get::<xai_grok_tools::implementations::grok_build::scheduler::types::SchedulerHandle>()
+        res.get::<intelekt_tools::implementations::grok_build::scheduler::types::SchedulerHandle>()
             .cloned()
     };
     if let Err(e) = workspace_ops.bind_local_session(
@@ -1021,7 +1021,7 @@ pub(crate) async fn spawn_session_actor(
         None
     };
     let force_compact = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-    let resolved_workspace_root = xai_grok_workspace::session::git::find_git_root_from_path(
+    let resolved_workspace_root = intelekt_workspace::session::git::find_git_root_from_path(
         std::path::Path::new(&session_info.cwd),
     )
     .ok()
@@ -1034,13 +1034,13 @@ pub(crate) async fn spawn_session_actor(
     let (event_tx, event_rx) = mpsc::unbounded_channel::<SessionEvent>();
     let mut sampler_config_initial = sampling_config.clone();
     sampler_config_initial.idle_timeout_secs = Some(inference_idle_timeout_secs);
-    let sampler_retry_policy = xai_grok_sampler::RetryPolicy {
+    let sampler_retry_policy = intelekt_sampler::RetryPolicy {
         max_retries: max_retries.unwrap_or(5),
         rate_limit_retry_threshold: 2,
     };
     let (sampler_event_tx, sampler_event_rx) =
-        tokio::sync::mpsc::unbounded_channel::<xai_grok_sampler::SamplingEvent>();
-    let sampler_handle = xai_grok_sampler::SamplerActor::spawn(
+        tokio::sync::mpsc::unbounded_channel::<intelekt_sampler::SamplingEvent>();
+    let sampler_handle = intelekt_sampler::SamplerActor::spawn(
         sampler_config_initial,
         sampler_retry_policy,
         sampler_event_tx,
@@ -1051,8 +1051,8 @@ pub(crate) async fn spawn_session_actor(
         .unwrap_or(crate::agent::config::DEFAULT_AGENT_TYPE)
         .to_owned();
     let allowed_subagent_types_for_handle = agent.definition().allowed_subagent_types.clone();
-    let mut hook_discovery_errors: Vec<xai_grok_hooks::error::HookError> = Vec::new();
-    let built_hook_registry: Option<Arc<xai_grok_hooks::discovery::HookRegistry>> =
+    let mut hook_discovery_errors: Vec<intelekt_hooks::error::HookError> = Vec::new();
+    let built_hook_registry: Option<Arc<intelekt_hooks::discovery::HookRegistry>> =
         if let Some(override_reg) = hook_registry_override {
             Some(override_reg)
         } else {
@@ -1062,7 +1062,7 @@ pub(crate) async fn spawn_session_actor(
                 remote_settings.as_ref(),
                 false,
             );
-            let git_root = xai_grok_workspace::session::git::find_git_root_from_path(cwd_path).ok();
+            let git_root = intelekt_workspace::session::git::find_git_root_from_path(cwd_path).ok();
             let (registry, errors) = crate::util::hooks::discover_hooks(
                 git_root.as_deref(),
                 &rebuild_spec.compat,
@@ -1088,7 +1088,7 @@ pub(crate) async fn spawn_session_actor(
         .collect();
     let upload_queue = Arc::new(std::sync::OnceLock::new());
     let (goal_update_tx, goal_update_rx) = tokio::sync::mpsc::unbounded_channel::<
-        xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalEnvelope,
+        intelekt_tools::implementations::grok_build::update_goal::UpdateGoalEnvelope,
     >();
     let obs_bridge = {
         let sid = xai_tool_protocol::SessionId::new(&*session_info.id.0)
@@ -1207,7 +1207,7 @@ pub(crate) async fn spawn_session_actor(
         session_start: std::time::Instant::now(),
         inference_idle_timeout: Duration::from_secs(inference_idle_timeout_secs),
         max_turns,
-        max_retries: xai_grok_sampler::resolve_max_retries(max_retries),
+        max_retries: intelekt_sampler::resolve_max_retries(max_retries),
         pending_interjections: InterjectionBuffer::new(),
         pending_skill_reminders: Mutex::new(Vec::new()),
         idle_flush_timeout: memory_config
@@ -1304,11 +1304,11 @@ pub(crate) async fn spawn_session_actor(
         hook_resolved_workspace_root: resolved_workspace_root,
         vcs_kind: {
             let root = std::path::Path::new(&session_info.cwd);
-            match xai_grok_workspace::session::git::discover_git_root(root) {
-                xai_grok_workspace::session::git::GitDiscoveryResult::Found(git_root) => {
-                    xai_grok_workspace::session::git::detect_vcs_kind(&git_root)
+            match intelekt_workspace::session::git::discover_git_root(root) {
+                intelekt_workspace::session::git::GitDiscoveryResult::Found(git_root) => {
+                    intelekt_workspace::session::git::detect_vcs_kind(&git_root)
                 }
-                _ => xai_grok_workspace::session::git::VcsKind::None,
+                _ => intelekt_workspace::session::git::VcsKind::None,
             }
         },
         hook_load_errors: std::cell::RefCell::new(_hook_load_errors),
@@ -1371,7 +1371,7 @@ pub(crate) async fn spawn_session_actor(
             .agent
             .borrow()
             .tool_bridge()
-            .update_resource(xai_grok_tools::types::tool_index::ToolIndex(
+            .update_resource(intelekt_tools::types::tool_index::ToolIndex(
                 std::sync::Arc::new(tool_index),
             ))
             .await;
@@ -1390,7 +1390,7 @@ pub(crate) async fn spawn_session_actor(
             .agent
             .borrow()
             .tool_bridge()
-            .update_resource(xai_grok_tools::types::resources::PlanFilePath(plan_path))
+            .update_resource(intelekt_tools::types::resources::PlanFilePath(plan_path))
             .await;
     }
     session.inject_deny_read_globs().await;
@@ -1402,7 +1402,7 @@ pub(crate) async fn spawn_session_actor(
         .borrow()
         .tool_bridge()
         .update_resource(
-            xai_grok_tools::implementations::grok_build::update_goal::GoalUpdateHandle(
+            intelekt_tools::implementations::grok_build::update_goal::GoalUpdateHandle(
                 session.goal_update_tx.clone(),
             ),
         )
@@ -1449,7 +1449,7 @@ pub(crate) async fn spawn_session_actor(
                     }
                 }
                 tracing::info!(
-                    target : xai_grok_telemetry::memory_log::TARGET, files = files.len(),
+                    target : intelekt_telemetry::memory_log::TARGET, files = files.len(),
                     "MEMORY_REINDEX: background reindex complete"
                 );
                 let embedded_count = if let Some(api_key) = sampling_api_key {
@@ -1467,8 +1467,8 @@ pub(crate) async fn spawn_session_actor(
                 } else {
                     0
                 };
-                xai_grok_telemetry::session_ctx::log_event(
-                    xai_grok_telemetry::memory_telemetry::MemoryReindex {
+                intelekt_telemetry::session_ctx::log_event(
+                    intelekt_telemetry::memory_telemetry::MemoryReindex {
                         session_id: session_id_for_reindex.clone(),
                         source: "init".to_owned(),
                         added: total_added,
@@ -1498,7 +1498,7 @@ pub(crate) async fn spawn_session_actor(
     }
     {
         use agent_client_protocol::Client as _;
-        use xai_grok_tools::implementations::grok_build::ask_user_question::{
+        use intelekt_tools::implementations::grok_build::ask_user_question::{
             AskUserQuestionExtRequest, AskUserQuestionExtResponse, UserQuestionError,
             UserQuestionResponse,
         };
@@ -1510,7 +1510,7 @@ pub(crate) async fn spawn_session_actor(
         let mut user_question_rx = user_question_rx;
         tokio::task::spawn_local(async move {
             while let Some(mut request) = user_question_rx.recv().await {
-                use xai_grok_tools::implementations::grok_build::ask_user_question::AskUserQuestionMode;
+                use intelekt_tools::implementations::grok_build::ask_user_question::AskUserQuestionMode;
                 let mode = match *current_prompt_mode.lock() {
                     PromptMode::Plan => AskUserQuestionMode::Plan,
                     _ => AskUserQuestionMode::Default,
@@ -1569,7 +1569,7 @@ pub(crate) async fn spawn_session_actor(
         });
     }
     let (session_done_tx, session_done_rx) = tokio::sync::oneshot::channel::<()>();
-    let telemetry_ctx = xai_grok_telemetry::session_ctx::TelemetryCtx::new(
+    let telemetry_ctx = intelekt_telemetry::session_ctx::TelemetryCtx::new(
         session.session_info.id.0.to_string(),
         session.tool_context.prompt_index.clone(),
     );
@@ -1588,11 +1588,11 @@ pub(crate) async fn spawn_session_actor(
         let telemetry_enabled = session.telemetry_enabled;
         tokio::spawn(async move {
             let ev = metrics.into_event(hooks).await;
-            xai_grok_telemetry::session_ctx::log_event_dual(telemetry_enabled, ev);
+            intelekt_telemetry::session_ctx::log_event_dual(telemetry_enabled, ev);
         });
     }
     tokio::task::spawn_local(async move {
-        xai_grok_telemetry::session_ctx::with_session_ctx(
+        intelekt_telemetry::session_ctx::with_session_ctx(
             telemetry_ctx,
             run_session(
                 session,
@@ -1691,7 +1691,7 @@ pub(crate) async fn spawn_session_on_thread(
     credentials: xai_chat_state::Credentials,
     auth_method_id: crate::agent::auth_method::SharedAuthMethodId,
     auth_manager: Option<Arc<AuthManager>>,
-    attribution_callback: Option<xai_grok_sampler::SharedAttributionCallback>,
+    attribution_callback: Option<intelekt_sampler::SharedAttributionCallback>,
     tool_context: ToolContext,
     mcp_servers: Vec<acp::McpServer>,
     initial_client_mcp_servers: Vec<acp::McpServer>,
@@ -1728,7 +1728,7 @@ pub(crate) async fn spawn_session_on_thread(
     agent_definition: AgentDefinition,
     session_default_agent_profile: Option<String>,
     skills_config: SkillsConfig,
-    preloaded_skills: Option<Vec<xai_grok_tools::implementations::skills::types::SkillInfo>>,
+    preloaded_skills: Option<Vec<intelekt_tools::implementations::skills::types::SkillInfo>>,
     compat: CompatConfig,
     incremental_bash_output: bool,
     persisted_signals: Option<crate::session::signals::SessionSignals>,
@@ -1747,11 +1747,11 @@ pub(crate) async fn spawn_session_on_thread(
     session_client_identifier: Option<String>,
     inference_idle_timeout_secs: u64,
     max_retries: Option<u32>,
-    web_search_sampling_config: Option<xai_grok_sampler::SamplerConfig>,
-    web_fetch_config: xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig,
-    image_gen_config: xai_grok_tools::implementations::grok_build::image_gen::ImageGenConfig,
-    video_gen_config: xai_grok_tools::implementations::grok_build::video_gen::VideoGenConfig,
-    app_builder_deployer_config: xai_grok_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig,
+    web_search_sampling_config: Option<intelekt_sampler::SamplerConfig>,
+    web_fetch_config: intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig,
+    image_gen_config: intelekt_tools::implementations::grok_build::image_gen::ImageGenConfig,
+    video_gen_config: intelekt_tools::implementations::grok_build::video_gen::VideoGenConfig,
+    app_builder_deployer_config: intelekt_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig,
     write_file_enabled: bool,
     goal_enabled: bool,
     subagents_enabled: bool,
@@ -1760,7 +1760,7 @@ pub(crate) async fn spawn_session_on_thread(
     prompt_display_cwd: Option<String>,
     subagent_toggle: std::collections::HashMap<String, bool>,
     persona_summaries: Vec<String>,
-    prompt_audience: xai_grok_agent::prompt::context::PromptAudience,
+    prompt_audience: intelekt_agent::prompt::context::PromptAudience,
     role_instructions: Option<String>,
     persona_instructions: Option<String>,
     disable_web_search: bool,
@@ -1768,24 +1768,24 @@ pub(crate) async fn spawn_session_on_thread(
     respect_gitignore: bool,
     path_not_found_hints: bool,
     tool_params_json: crate::session::agent_rebuild::ResolvedToolParamsJson,
-    plugin_registry: Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>>,
-    plugin_registry_handle: Option<xai_grok_agent::plugins::SharedPluginRegistryHandle>,
+    plugin_registry: Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>>,
+    plugin_registry_handle: Option<intelekt_agent::plugins::SharedPluginRegistryHandle>,
     models_manager: crate::agent::models::ModelsManager,
     parent_traceparent: Option<String>,
-    inherited_permission_handle: Option<xai_grok_workspace::permission::PermissionHandle>,
-    api_key_provider: Option<xai_grok_tools::types::SharedApiKeyProvider>,
+    inherited_permission_handle: Option<intelekt_workspace::permission::PermissionHandle>,
+    api_key_provider: Option<intelekt_tools::types::SharedApiKeyProvider>,
     image_description_model: String,
-    hook_registry_override: Option<std::sync::Arc<xai_grok_hooks::discovery::HookRegistry>>,
-    workspace_ops: xai_grok_workspace::WorkspaceOps,
-    cli_permission_rules: Vec<xai_grok_workspace::permission::types::PermissionRule>,
+    hook_registry_override: Option<std::sync::Arc<intelekt_hooks::discovery::HookRegistry>>,
+    workspace_ops: intelekt_workspace::WorkspaceOps,
+    cli_permission_rules: Vec<intelekt_workspace::permission::types::PermissionRule>,
     todo_gate: bool,
     remote_settings: Option<crate::util::config::RemoteSettings>,
     laziness_debug_log: Option<std::path::PathBuf>,
     parent_terminal_backend: Option<
-        std::sync::Arc<dyn xai_grok_tools::computer::types::TerminalBackend>,
+        std::sync::Arc<dyn intelekt_tools::computer::types::TerminalBackend>,
     >,
     parent_scheduler_handle: Option<
-        xai_grok_tools::implementations::grok_build::scheduler::types::SchedulerHandle,
+        intelekt_tools::implementations::grok_build::scheduler::types::SchedulerHandle,
     >,
     max_turns: Option<usize>,
     forked_tool_override: Option<Vec<ToolSpec>>,
@@ -1799,7 +1799,7 @@ pub(crate) async fn spawn_session_on_thread(
     acp::Error,
 > {
     let (init_tx, init_rx) = tokio::sync::oneshot::channel::<
-        Result<SessionInitResult, xai_grok_agent::AgentBuildError>,
+        Result<SessionInitResult, intelekt_agent::AgentBuildError>,
     >();
     let sid = session_info.id.0.to_string();
     let thread_name = format!("ses-{}", &sid[..sid.len().min(8)]);

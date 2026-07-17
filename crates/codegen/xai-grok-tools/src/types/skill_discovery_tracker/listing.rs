@@ -136,7 +136,7 @@ impl<'a> SkillEntry<'a> {
         }
     }
 
-    // ── Budgeted XML rendering (grok build harness) ─────────────
+    // ── Budgeted XML rendering (intelekt cli harness) ─────────────
 
     /// Render as an `<agent_skill>` XML row with description and when_to_use
     /// truncated to their budgets. When `when_to_use` is present it follows the
@@ -269,7 +269,7 @@ impl<'a> SkillListing<'a> {
         ))
     }
 
-    // ── Budgeted XML rendering (grok build harness) ─────────────
+    // ── Budgeted XML rendering (intelekt cli harness) ─────────────
 
     /// Render as XML within `budget` bytes using the three-tier strategy:
     /// 1. Full descriptions (each capped at `MAX_LISTING_COMBINED_BYTES`).
@@ -402,7 +402,7 @@ impl<'a> SkillListing<'a> {
 
 /// Extract the skill source directory from a SKILL.md display path.
 ///
-/// `"/path/.grok/skills/my-skill/SKILL.md"` -> `"/path/.grok/skills/"`
+/// `"/path/.intelekt/skills/my-skill/SKILL.md"` -> `"/path/.intelekt/skills/"`
 fn skill_source_dir(display_path: &str) -> Option<&str> {
     let p = std::path::Path::new(display_path);
     // SKILL.md -> skill-name dir -> skills dir
@@ -490,7 +490,7 @@ fn strip_leading_trigger_prefix(wtu: &str) -> &str {
 
 /// XML-escape a string for use in attribute values. Replaces the five XML
 /// metacharacters (`<`, `>`, `&`, `"`, `'`) with their named entities.
-/// Used by the budgeted (grok build) XML rendering path.
+/// Used by the budgeted (intelekt cli) XML rendering path.
 fn xml_attr_escape(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
@@ -500,7 +500,7 @@ fn xml_attr_escape(s: &str) -> String {
 }
 
 /// XML-escape body text. Same as attribute escape minus the quote handling.
-/// Used by the budgeted (grok build) XML rendering path.
+/// Used by the budgeted (intelekt cli) XML rendering path.
 fn xml_text_escape(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
@@ -819,7 +819,7 @@ mod tests {
 
     #[test]
     fn verbatim_bypasses_is_listable_filter() {
-        // grok-build drops a description-less skill; compat mode renders all.
+        // intelekt-cli drops a description-less skill; compat mode renders all.
         let skills = [plugin_skill("noise", "derived")];
         let mut a = HashSet::new();
         assert!(
@@ -1056,7 +1056,7 @@ mod tests {
         );
     }
 
-    // ── budgeted mode: grok build harness (budgeted XML) ───────────
+    // ── budgeted mode: intelekt cli harness (budgeted XML) ───────────
 
     /// 200 skills must fit within the default budget.
     #[test]

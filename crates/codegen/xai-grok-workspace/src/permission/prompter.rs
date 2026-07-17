@@ -9,7 +9,7 @@ use crate::permission::{
 use agent_client_protocol::{self as acp, Client as _};
 use xai_acp_lib::AcpAgentGatewaySender as GatewaySender;
 use xai_file_utils::events::{Event, EventWriter, PermissionDecision};
-use xai_grok_tools::implementations::grok_build::web_fetch::domain_from_url;
+use intelekt_tools::implementations::grok_build::web_fetch::domain_from_url;
 
 const REJECT_ONCE_LABEL: &str = "No, and tell Grok what to do differently";
 
@@ -39,7 +39,7 @@ pub const ALLOW_EDITS_SESSION_OPTION_ID: &str = "allow-edits-session";
 ///     1. Flips local YOLO state on the active agent
 ///     2. Drains any queued permission requests with `AllowOnce` responses
 ///     3. Persists `[ui] permission_mode = "always-approve"` to
-///        `~/.grok/config.toml` via the `Effect::PersistPermissionMode` effect
+///        `~/.intelekt/config.toml` via the `Effect::PersistPermissionMode` effect
 ///     4. Sends the existing `x.ai/yolo_mode_changed` ACP notification so
 ///        the agent's permission manager flips its `yolo_mode` flag
 ///
@@ -157,15 +157,15 @@ pub struct BashCommandSelectedTerms {
 }
 
 /// Delimiter used to qualify MCP tool names as `"<server>__<tool>"`.
-/// Canonical definition lives in `xai_grok_workspace_types` (so both the
-/// permission-validation layer and the MCP transport in `xai-grok-mcp` can
+/// Canonical definition lives in `intelekt_workspace_types` (so both the
+/// permission-validation layer and the MCP transport in `intelekt-mcp` can
 /// depend on it without dragging the full workspace or rmcp into each
 /// other). Re-exported here for backward-compat with callers that historically
-/// reached `xai_grok_workspace::permission::MCP_TOOL_NAME_DELIMITER`.
+/// reached `intelekt_workspace::permission::MCP_TOOL_NAME_DELIMITER`.
 /// Validation in `into_registration` rejects MCP tools whose qualified name
 /// contains more than one occurrence of this delimiter, so stripping it given
 /// a trusted `server_prefix` is always unambiguous.
-pub use xai_grok_workspace_types::MCP_TOOL_NAME_DELIMITER;
+pub use intelekt_workspace_types::MCP_TOOL_NAME_DELIMITER;
 
 /// Extract the action segment of a qualified MCP tool name using a
 /// trusted `server_prefix`. Returns the full `tool_name` when there is

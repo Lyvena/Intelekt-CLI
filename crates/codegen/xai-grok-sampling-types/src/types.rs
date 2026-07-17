@@ -390,10 +390,10 @@ pub enum ToolType {
     Function,
 }
 
-// Re-export ToolDefinition and FunctionTool from xai-grok-tools.
+// Re-export ToolDefinition and FunctionTool from intelekt-tools.
 // The canonical definitions now live there; this re-export keeps
 // all existing `crate::sampling::types::ToolDefinition` imports working.
-pub use xai_grok_tools::types::definition::{FunctionTool, ToolDefinition};
+pub use intelekt_tools::types::definition::{FunctionTool, ToolDefinition};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]

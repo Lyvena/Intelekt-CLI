@@ -13,14 +13,14 @@ use chrono::{DateTime, Utc};
 use prometheus::{HistogramVec, IntCounterVec, register_histogram_vec, register_int_counter_vec};
 use serde_json::Value;
 use xai_computer_hub_sdk::ToolServerHandler;
-use xai_grok_tools::computer::types::TaskKind;
-use xai_grok_tools::implementations::grok_build::scheduler::interval::interval_to_human;
-use xai_grok_tools::implementations::grok_build::scheduler::types::{
+use intelekt_tools::computer::types::TaskKind;
+use intelekt_tools::implementations::grok_build::scheduler::interval::interval_to_human;
+use intelekt_tools::implementations::grok_build::scheduler::types::{
     SchedulerCommand, SchedulerHandle,
 };
-use xai_grok_tools::registry::types::FinalizedToolset;
-use xai_grok_tools::types::resources::Terminal;
-use xai_grok_workspace_types::rpc::workspace::{
+use intelekt_tools::registry::types::FinalizedToolset;
+use intelekt_tools::types::resources::Terminal;
+use intelekt_workspace_types::rpc::workspace::{
     BackgroundTaskSnapshotWire, ScheduledTaskSnapshotWire, TasksSnapshotResponse,
 };
 use xai_tool_protocol::{HookEvent, HookFrame, SessionId, ToolId, ToolServerEvictParams};
@@ -195,12 +195,12 @@ async fn dispatch_op<Op: WorkspaceOp>(
 /// DTO. Empty when the session has no terminal backend. Source of truth for the
 /// `workspace.list_background_tasks` RPC (post-compaction system-reminder state).
 async fn list_outstanding_background_tasks(
-    toolset: &xai_grok_tools::registry::types::FinalizedToolset,
-) -> Vec<xai_grok_workspace_types::rpc::workspace::BackgroundTaskSummaryWire> {
-    use xai_grok_tools::computer::types::TaskKind;
-    use xai_grok_tools::types::resources::Terminal;
-    use xai_grok_tools::types::tool::ToolKind;
-    use xai_grok_workspace_types::rpc::workspace::BackgroundTaskSummaryWire;
+    toolset: &intelekt_tools::registry::types::FinalizedToolset,
+) -> Vec<intelekt_workspace_types::rpc::workspace::BackgroundTaskSummaryWire> {
+    use intelekt_tools::computer::types::TaskKind;
+    use intelekt_tools::types::resources::Terminal;
+    use intelekt_tools::types::tool::ToolKind;
+    use intelekt_workspace_types::rpc::workspace::BackgroundTaskSummaryWire;
     let terminal = {
         let res = toolset.resources.lock().await;
         res.get::<Terminal>().map(|t| t.0.clone())
@@ -298,11 +298,11 @@ async fn tasks_snapshot(toolset: &FinalizedToolset) -> TasksSnapshotResponse {
 /// session has no todo state. Source of truth for the `workspace.list_todos`
 /// RPC (post-compaction system-reminder state).
 async fn list_session_todos(
-    toolset: &xai_grok_tools::registry::types::FinalizedToolset,
-) -> Vec<xai_grok_workspace_types::rpc::workspace::TodoSummaryWire> {
-    use xai_grok_tools::implementations::grok_build::todo::{TodoState, TodoStatus};
-    use xai_grok_tools::types::resources::State;
-    use xai_grok_workspace_types::rpc::workspace::TodoSummaryWire;
+    toolset: &intelekt_tools::registry::types::FinalizedToolset,
+) -> Vec<intelekt_workspace_types::rpc::workspace::TodoSummaryWire> {
+    use intelekt_tools::implementations::grok_build::todo::{TodoState, TodoStatus};
+    use intelekt_tools::types::resources::State;
+    use intelekt_workspace_types::rpc::workspace::TodoSummaryWire;
     let res = toolset.resources.lock().await;
     let Some(state) = res.get::<State<TodoState>>() else {
         return Vec::new();
@@ -347,16 +347,16 @@ impl WorkspaceRpcHandler {
         use crate::session::checkpoint::TurnBoundary;
         use crate::workspace_ops::*;
         use crate::worktree::{ApplyWorktreeRequest, CreateWorktreeRequest, RemoveWorktreeRequest};
-        use xai_grok_workspace_types::rpc::git::{GitBranchInfoReq, GitMetadataReq};
-        use xai_grok_workspace_types::rpc::search::FuzzyStatusReq;
-        use xai_grok_workspace_types::rpc::skills::DiscoverPluginsReq;
-        use xai_grok_workspace_types::rpc::workspace::{
+        use intelekt_workspace_types::rpc::git::{GitBranchInfoReq, GitMetadataReq};
+        use intelekt_workspace_types::rpc::search::FuzzyStatusReq;
+        use intelekt_workspace_types::rpc::skills::DiscoverPluginsReq;
+        use intelekt_workspace_types::rpc::workspace::{
             ConfigureMcpReq, DropSessionReq, InstallPluginReq, ListBackgroundTasksReq,
             ListBackgroundTasksResponse, ListTodosReq, ListTodosResponse, LoadEnvrcReq,
             LoadPermissionsReq, LoadProjectConfigReq, RefreshPluginsReq, ResolveFileReferencesReq,
             TasksSnapshotReq, ToolDefinitionsReq, UpdateToolConfigReq,
         };
-        use xai_grok_workspace_types::rpc::worktree::WorktreeCreateSyncReq;
+        use intelekt_workspace_types::rpc::worktree::WorktreeCreateSyncReq;
         tracing::debug!(method, "workspace rpc dispatch");
         let params = if params.is_null() {
             serde_json::json!({})
@@ -1125,7 +1125,7 @@ mod tests {
     use super::*;
     use crate::capability::CapabilityMode;
     use crate::handle::tests::{background_capable_cfg, make_handle, start_background_sleep};
-    use xai_grok_tools::implementations::grok_build::scheduler::types::ScheduledTask;
+    use intelekt_tools::implementations::grok_build::scheduler::types::ScheduledTask;
     use xai_tool_protocol::turn_hook;
     /// Helper: consume the first item from a ToolStream.
     async fn next_item(
@@ -1147,7 +1147,7 @@ mod tests {
         let handler = WorkspaceRpcHandler::new(make_handle());
         let req = turn_hook::TurnHookRequest::Before(turn_hook::BeforeTurnPayload {
             turn_number: 1,
-            model_id: "grok-3".to_owned(),
+            model_id: "intelekt-3".to_owned(),
             yolo_mode: false,
             conversation_message_count: 0,
             session_relationship: "primary".to_owned(),
@@ -1184,7 +1184,7 @@ mod tests {
         let handler = WorkspaceRpcHandler::new(make_handle());
         let req = turn_hook::TurnHookRequest::Before(turn_hook::BeforeTurnPayload {
             turn_number: 1,
-            model_id: "grok-3".to_owned(),
+            model_id: "intelekt-3".to_owned(),
             yolo_mode: false,
             conversation_message_count: 0,
             session_relationship: "primary".to_owned(),
@@ -1269,8 +1269,8 @@ mod tests {
         use crate::handle::RebindOutcome;
         use crate::handle::tests::{background_capable_cfg, start_background_sleep};
         use crate::session::tool_config::test_support::tc;
-        use xai_grok_tools::registry::types::ToolServerConfig;
-        use xai_grok_workspace_types::rpc::workspace::ListBackgroundTasksResponse;
+        use intelekt_tools::registry::types::ToolServerConfig;
+        use intelekt_workspace_types::rpc::workspace::ListBackgroundTasksResponse;
         let handle = make_handle();
         let cfg = background_capable_cfg();
         let session = handle
@@ -1289,7 +1289,7 @@ mod tests {
         let handler = WorkspaceRpcHandler::new(handle.clone());
         async fn list_tasks(
             handler: &WorkspaceRpcHandler,
-        ) -> Vec<xai_grok_workspace_types::rpc::workspace::BackgroundTaskSummaryWire> {
+        ) -> Vec<intelekt_workspace_types::rpc::workspace::BackgroundTaskSummaryWire> {
             let value = handler
                 .dispatch(
                     "workspace.list_background_tasks",
@@ -1324,7 +1324,7 @@ mod tests {
         let read_only = ToolServerConfig {
             tools: vec![tc(
                 "GrokBuild:read_file",
-                Some(xai_grok_tools::types::tool::ToolKind::Read),
+                Some(intelekt_tools::types::tool::ToolKind::Read),
             )],
             behavior_preset: None,
         };
@@ -2211,7 +2211,7 @@ mod tests {
         let handler = WorkspaceRpcHandler::new(handle.clone());
         let payload = turn_hook::BeforeTurnPayload {
             turn_number: 1,
-            model_id: "grok-3".to_string(),
+            model_id: "intelekt-3".to_string(),
             yolo_mode: false,
             conversation_message_count: 0,
             session_relationship: "primary".to_string(),
@@ -2247,7 +2247,7 @@ mod tests {
             outcome: turn_hook::TurnHookOutcome::Completed,
             duration_ms: 500,
             tool_call_count: 3,
-            model_id: "grok-3".to_string(),
+            model_id: "intelekt-3".to_string(),
             written_repo_paths: Vec::new(),
             cancellation_category: None,
             cancellation_context: None,
@@ -2896,15 +2896,15 @@ mod tests {
         };
         use crate::workspace_ops::*;
         use crate::worktree::{ApplyWorktreeRequest, CreateWorktreeRequest, RemoveWorktreeRequest};
-        use xai_grok_workspace_types::rpc::git::{GitBranchInfoReq, GitMetadataReq};
-        use xai_grok_workspace_types::rpc::search::FuzzyStatusReq;
-        use xai_grok_workspace_types::rpc::skills::DiscoverPluginsReq;
-        use xai_grok_workspace_types::rpc::workspace::{
+        use intelekt_workspace_types::rpc::git::{GitBranchInfoReq, GitMetadataReq};
+        use intelekt_workspace_types::rpc::search::FuzzyStatusReq;
+        use intelekt_workspace_types::rpc::skills::DiscoverPluginsReq;
+        use intelekt_workspace_types::rpc::workspace::{
             ConfigureMcpReq, DropSessionReq, InstallPluginReq, LoadEnvrcReq, LoadPermissionsReq,
             LoadProjectConfigReq, RefreshPluginsReq, ResolveFileReferencesReq, ToolDefinitionsReq,
             UpdateToolConfigReq,
         };
-        use xai_grok_workspace_types::rpc::worktree::WorktreeCreateSyncReq;
+        use intelekt_workspace_types::rpc::worktree::WorktreeCreateSyncReq;
         let handler = WorkspaceRpcHandler::new(make_handle());
         let methods = [
             <WorkspaceInfoReq as WorkspaceRpc>::METHOD,

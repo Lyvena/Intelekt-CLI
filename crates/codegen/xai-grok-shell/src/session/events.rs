@@ -202,8 +202,8 @@ const _: () = assert!(
 /// never cancels a turn — so it is mapped directly at the drain site.)
 pub(crate) fn prior_turn_interrupt_from_cancellation(
     category: CancellationCategory,
-) -> Option<xai_grok_sampling_types::PriorTurnInterrupt> {
-    use xai_grok_sampling_types::PriorTurnInterrupt;
+) -> Option<intelekt_sampling_types::PriorTurnInterrupt> {
+    use intelekt_sampling_types::PriorTurnInterrupt;
     match category {
         CancellationCategory::MidTurnAbort => Some(PriorTurnInterrupt::MidTurnAbort),
         CancellationCategory::PermissionRejected => Some(PriorTurnInterrupt::PermissionRejected),
@@ -569,7 +569,7 @@ pub const GOAL_ROLE_MODEL_FAIL_OPEN_SPAWN_FAILED: &str = "spawn_failed";
 
 /// Fail-open — the configured `agent_type` resolves as a STRICT harness whose
 /// subagent flavor `resolve_subagent_toolset` can't represent (e.g. `codex`):
-/// committing it would silently run grok-build flavor. Distinct from
+/// committing it would silently run intelekt-cli flavor. Distinct from
 /// `toolset_unknown` (a name that doesn't resolve at all).
 pub const GOAL_ROLE_MODEL_FAIL_OPEN_HARNESS_FLAVOR_UNSUPPORTED: &str = "harness_flavor_unsupported";
 
@@ -691,7 +691,7 @@ mod tests {
 
     #[test]
     fn prior_turn_interrupt_from_cancellation_maps_user_interrupts_only() {
-        use xai_grok_sampling_types::PriorTurnInterrupt;
+        use intelekt_sampling_types::PriorTurnInterrupt;
         // The three user-interrupt causes map to a marker.
         assert_eq!(
             prior_turn_interrupt_from_cancellation(CancellationCategory::MidTurnAbort),

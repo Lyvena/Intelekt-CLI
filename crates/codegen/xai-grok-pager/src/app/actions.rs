@@ -9,7 +9,7 @@
 use super::agent::AgentId;
 use crate::scrollback::entry::EntryId;
 use agent_client_protocol as acp;
-use xai_grok_shell::sampling::types::ReasoningEffort;
+use intelekt_shell::sampling::types::ReasoningEffort;
 /// Typed error for model switch failures. Replaces the raw `String` in
 /// `TaskResult::SwitchModelComplete` so dispatch can match on the variant
 /// instead of parsing strings.
@@ -20,7 +20,7 @@ pub enum SwitchModelError {
     /// Deserialized from `ModelSwitchIncompatibleAgentError` in
     /// `acp::Error.data`.
     IncompatibleAgent {
-        error: xai_grok_shell::agent::config::ModelSwitchIncompatibleAgentError,
+        error: intelekt_shell::agent::config::ModelSwitchIncompatibleAgentError,
         /// The model that was active before the optimistic UI update
         /// (if any). Used to roll back `models.current` when the user
         /// declines to start a new session.
@@ -335,7 +335,7 @@ pub enum Action {
     /// Open the extensions modal dialog on a specific tab.
     OpenExtensionsModal {
         tab: crate::views::extensions_modal::ExtensionsTab,
-        trigger: xai_grok_telemetry::events::ExtensionsModalTrigger,
+        trigger: intelekt_telemetry::events::ExtensionsModalTrigger,
     },
     /// Open the agents modal (listing all agent definitions).
     /// Optionally opens directly on a specific tab.
@@ -357,7 +357,7 @@ pub enum Action {
     /// Add or update an MCP server via x.ai/mcp/upsert.
     UpsertMcpServer {
         name: String,
-        config: Box<xai_grok_shell::util::config::McpServerConfig>,
+        config: Box<intelekt_shell::util::config::McpServerConfig>,
     },
     /// Delete an MCP server via x.ai/mcp/delete.
     DeleteMcpServer {
@@ -411,7 +411,7 @@ pub enum Action {
     /// Open the promo CTA link (url resolved from current state at dispatch
     /// time, mirroring how `AnnouncementsHide` resolves its target). The
     /// payload records which surface activated it, for telemetry.
-    AnnouncementsOpenCta(xai_grok_telemetry::events::AnnouncementCtaSurface),
+    AnnouncementsOpenCta(intelekt_telemetry::events::AnnouncementCtaSurface),
     /// Cycle session mode (Shift+Tab): Normal → Plan → Always-Approve → Normal.
     /// Plan mode sends a signal to the shell; always-approve is local.
     CycleMode,
@@ -957,7 +957,7 @@ pub enum Action {
 }
 /// Persist-and-notify semantics for [`Effect::PersistPermissionMode`].
 ///
-/// Both variants write to `~/.grok/config.toml` and route ACP
+/// Both variants write to `~/.intelekt/config.toml` and route ACP
 /// `x.ai/yolo_mode_changed` notifications. The ACP notification is
 /// gated on disk-write success when `WithRollback` is used.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1378,7 +1378,7 @@ pub enum Effect {
     /// Scan enabled foreign session stores without delaying the native list.
     ScanForeignSessions {
         cwd: std::path::PathBuf,
-        compat: xai_grok_workspace::foreign_sessions::EnabledForeignSessionSources,
+        compat: intelekt_workspace::foreign_sessions::EnabledForeignSessionSources,
         grok_home: std::path::PathBuf,
         coordinator: crate::app::ForeignScanCoordinator,
         seq: u64,
@@ -1391,7 +1391,7 @@ pub enum Effect {
     /// Detect the newest resumable foreign session without delaying first paint.
     DetectForeignResumeHint {
         canonical_cwd: std::path::PathBuf,
-        compat: xai_grok_workspace::foreign_sessions::EnabledForeignSessionSources,
+        compat: intelekt_workspace::foreign_sessions::EnabledForeignSessionSources,
         grok_home: std::path::PathBuf,
         launch_token: u64,
     },
@@ -1523,7 +1523,7 @@ pub enum Effect {
     PersistMemoryFullscreen { fullscreen: bool },
     /// Persist the project-picker opt-out to `[hints] project_picker_disabled`.
     PersistProjectPickerDisabled { disabled: bool },
-    /// Persist the dashboard's `[dashboard]` configuration to `~/.grok/config.toml`.
+    /// Persist the dashboard's `[dashboard]` configuration to `~/.intelekt/config.toml`.
     /// Edge case 15: multi-pager safe via `config_toml_edit::read_config_document_for_edit`,
     /// which loads → modifies → writes the whole document. Concurrent
     /// pagers may produce last-writer-wins behaviour but never corrupt
@@ -1549,7 +1549,7 @@ pub enum Effect {
         session_id: Option<acp::SessionId>,
         persist: PermissionModePersist,
     },
-    /// Persist a typed setting to `~/.grok/config.toml`. On failure,
+    /// Persist a typed setting to `~/.intelekt/config.toml`. On failure,
     /// rolls the in-memory cache back to `rollback_value`.
     PersistSetting {
         key: crate::settings::SettingKey,
@@ -1771,7 +1771,7 @@ pub enum Effect {
         agent_id: AgentId,
         session_id: acp::SessionId,
         name: String,
-        config: Box<xai_grok_shell::util::config::McpServerConfig>,
+        config: Box<intelekt_shell::util::config::McpServerConfig>,
     },
     /// Delete an MCP server via x.ai/mcp/delete.
     DeleteMcpServer {
@@ -1895,7 +1895,7 @@ pub enum Effect {
     /// Clear the "copied!" feedback after a delay.
     ScheduleClearAuthCopied,
     /// Register the current session in the active-sessions crash-recovery
-    /// registry (`~/.grok/active_sessions.json`).
+    /// registry (`~/.intelekt/active_sessions.json`).
     RegisterActiveSession {
         session_id: acp::SessionId,
         cwd: String,
@@ -2006,7 +2006,7 @@ pub enum Effect {
     FetchPromptSuggestion {
         agent_id: AgentId,
         generation: u64,
-        /// Suggestion model resolved by the pager (`grok-build-0.1` when the
+        /// Suggestion model resolved by the pager (`intelekt-cli-0.1` when the
         /// catalog offers it); `None` = shell falls back to the session model.
         model: Option<String>,
         session_id: Option<String>,
@@ -2078,7 +2078,7 @@ pub enum TaskResult {
         session_cwd: std::path::PathBuf,
         code_restored: bool,
         restore_summary: Option<String>,
-        restore_degree: Option<xai_grok_workspace::session::git::RestoreDegree>,
+        restore_degree: Option<intelekt_workspace::session::git::RestoreDegree>,
     },
     /// Worktree session creation failed.
     WorktreeSessionFailed {
@@ -2092,7 +2092,7 @@ pub enum TaskResult {
         models: Option<acp::SessionModelState>,
         code_restored: bool,
         restore_summary: Option<String>,
-        restore_degree: Option<xai_grok_workspace::session::git::RestoreDegree>,
+        restore_degree: Option<intelekt_workspace::session::git::RestoreDegree>,
         /// The session's in-flight running prompt id (from the load response
         /// `_meta["x.ai/runningPromptId"]`), present only when the session was
         /// loaded MID-turn (another client is driving). The loader adopts it to
@@ -2143,7 +2143,7 @@ pub enum TaskResult {
     ForeignResumeHintDetected {
         canonical_cwd: std::path::PathBuf,
         launch_token: u64,
-        hint: Option<xai_grok_workspace::foreign_sessions::RecentForeignSession>,
+        hint: Option<intelekt_workspace::foreign_sessions::RecentForeignSession>,
     },
     /// Session list fetch failed.
     SessionListFailed {
@@ -2251,7 +2251,7 @@ pub enum TaskResult {
     BgTaskKilled {
         session_id: String,
         task_id: String,
-        outcome: Option<xai_grok_tools::types::KillOutcome>,
+        outcome: Option<intelekt_tools::types::KillOutcome>,
     },
     /// Background task kill failed.
     BgTaskKillFailed {
@@ -2272,7 +2272,7 @@ pub enum TaskResult {
     /// Changelog fetched from CDN (both formats).
     ChangelogFetched {
         markdown: Option<String>,
-        entries: Vec<xai_grok_shell::util::changelog::ChangelogEntry>,
+        entries: Vec<intelekt_shell::util::changelog::ChangelogEntry>,
     },
     /// Announcements hidden state persisted.
     AnnouncementsHiddenPersisted {
@@ -2356,12 +2356,12 @@ pub enum TaskResult {
     /// Skills list loaded.
     SkillsListLoaded {
         agent_id: AgentId,
-        result: Result<Vec<xai_grok_tools::implementations::skills::types::SkillInfo>, String>,
+        result: Result<Vec<intelekt_tools::implementations::skills::types::SkillInfo>, String>,
     },
     /// Skill toggle completed (enable/disable).
     SkillsToggleDone {
         agent_id: AgentId,
-        result: Result<Vec<xai_grok_tools::implementations::skills::types::SkillInfo>, String>,
+        result: Result<Vec<intelekt_tools::implementations::skills::types::SkillInfo>, String>,
     },
     /// Background marketplace auto-update completed.
     MarketplaceUpdatesAvailable {
@@ -2414,7 +2414,7 @@ pub enum TaskResult {
     /// Session info fetched successfully.
     SessionInfoComplete {
         agent_id: AgentId,
-        info: Box<xai_grok_shell::session::SessionInfoResponse>,
+        info: Box<intelekt_shell::session::SessionInfoResponse>,
         text: String,
     },
     /// Session info fetch failed.
@@ -2457,7 +2457,7 @@ pub enum TaskResult {
     /// Context info fetched successfully.
     ContextInfoComplete {
         agent_id: AgentId,
-        info: Box<xai_grok_shell::session::SessionInfoResponse>,
+        info: Box<intelekt_shell::session::SessionInfoResponse>,
     },
     /// Context info fetch failed.
     ContextInfoFailed {
@@ -2572,7 +2572,7 @@ pub enum TaskResult {
     /// The 2-second "copied!" display timer expired.
     AuthCopiedTimeout,
     DeepSearchResults {
-        results: Vec<xai_grok_shell::extensions::session_search::SearchSessionHit>,
+        results: Vec<intelekt_shell::extensions::session_search::SearchSessionHit>,
         seq: u64,
     },
     /// `x.ai/session/fork` completed (no-worktree path). The pager adopts
@@ -2632,7 +2632,7 @@ pub enum TaskResult {
         autotopup: crate::views::credit_bar::AutoTopupFetch,
     },
     GateRefreshed {
-        settings: Option<xai_grok_shell::util::config::RemoteSettings>,
+        settings: Option<intelekt_shell::util::config::RemoteSettings>,
     },
     /// Billing fetch failed with an error message.
     BillingError {

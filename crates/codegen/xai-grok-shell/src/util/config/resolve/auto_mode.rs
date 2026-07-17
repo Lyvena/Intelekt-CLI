@@ -196,14 +196,14 @@ pub fn auto_mode_classifier_defaults(
     cfg: &crate::agent::config::AutoModeConfig,
     effective_supports_reasoning_effort: bool,
 ) -> (
-    xai_grok_workspace::permission::ClassifierPromptType,
-    Option<xai_grok_sampling_types::ReasoningEffort>,
+    intelekt_workspace::permission::ClassifierPromptType,
+    Option<intelekt_sampling_types::ReasoningEffort>,
 ) {
     let prompt_type = cfg
         .prompt_type
-        .unwrap_or(xai_grok_workspace::permission::ClassifierPromptType::Full);
+        .unwrap_or(intelekt_workspace::permission::ClassifierPromptType::Full);
     let reasoning_effort = cfg.reasoning_effort.or_else(|| {
-        effective_supports_reasoning_effort.then_some(xai_grok_sampling_types::ReasoningEffort::Low)
+        effective_supports_reasoning_effort.then_some(intelekt_sampling_types::ReasoningEffort::Low)
     });
     (prompt_type, reasoning_effort)
 }
@@ -396,8 +396,8 @@ mod auto_permission_mode_gate_tests {
     #[test]
     fn merge_auto_mode_config_precedence() {
         use crate::agent::config::AutoModeConfig;
-        use xai_grok_sampling_types::ReasoningEffort;
-        use xai_grok_workspace::permission::ClassifierPromptType;
+        use intelekt_sampling_types::ReasoningEffort;
+        use intelekt_workspace::permission::ClassifierPromptType;
         // config wins where set; remote fills the gaps.
         let config = AutoModeConfig {
             enabled: Some(true),
@@ -424,8 +424,8 @@ mod auto_permission_mode_gate_tests {
     #[test]
     fn auto_mode_classifier_defaults_apply_when_unset() {
         use crate::agent::config::AutoModeConfig;
-        use xai_grok_sampling_types::ReasoningEffort;
-        use xai_grok_workspace::permission::ClassifierPromptType;
+        use intelekt_sampling_types::ReasoningEffort;
+        use intelekt_workspace::permission::ClassifierPromptType;
         // Unset + RE-supporting effective model ⇒ full (transcript) + low.
         let (pt, eff) = auto_mode_classifier_defaults(&AutoModeConfig::default(), true);
         assert_eq!(pt, ClassifierPromptType::Full);
@@ -447,7 +447,7 @@ mod auto_permission_mode_gate_tests {
 
     #[test]
     fn auto_mode_config_from_toml_round_trips_and_warns_on_malformed() {
-        use xai_grok_workspace::permission::ClassifierPromptType;
+        use intelekt_workspace::permission::ClassifierPromptType;
         // A real [auto_mode] table round-trips (not silently dropped).
         let toml: TomlValue = toml::from_str(
             "[auto_mode]\nenabled = true\nprompt_type = \"just_command\"\nclassifier_model = \"m\"\n",
@@ -467,7 +467,7 @@ mod auto_permission_mode_gate_tests {
 
     #[test]
     fn remote_cache_single_store_killswitch_preserves_fields() {
-        use xai_grok_workspace::permission::ClassifierPromptType;
+        use intelekt_workspace::permission::ClassifierPromptType;
         let _g = guard();
         // Seed the full remote config, then flip ONLY the gate via the pager
         // kill-switch path — prompt_type / classifier_model must survive.

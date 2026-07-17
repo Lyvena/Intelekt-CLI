@@ -14,7 +14,7 @@ use tokio::sync::{mpsc, oneshot};
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument;
 
-use xai_grok_sampling_types::{
+use intelekt_sampling_types::{
     ConversationRequest, ConversationResponse, EmptyResponseContext, SamplingError,
     error::Result as SamplingResult,
 };
@@ -423,7 +423,7 @@ async fn run_one_attempt(
     idle_timeout: Duration,
     event_tx: &mpsc::UnboundedSender<SamplingEvent>,
     cancel_token: &CancellationToken,
-    doom_check: Option<xai_grok_sampling_types::DoomLoopRecoveryPolicy>,
+    doom_check: Option<intelekt_sampling_types::DoomLoopRecoveryPolicy>,
 ) -> AttemptOutcome {
     match client.api_backend() {
         ApiBackend::ChatCompletions => {
@@ -503,7 +503,7 @@ async fn drive_l2(
     event_tx: &mpsc::UnboundedSender<SamplingEvent>,
     cancel_token: &CancellationToken,
     captured: ErrorCell,
-    doom_check: Option<xai_grok_sampling_types::DoomLoopRecoveryPolicy>,
+    doom_check: Option<intelekt_sampling_types::DoomLoopRecoveryPolicy>,
 ) -> AttemptOutcome {
     let mut l2 = pin!(l2);
     loop {
@@ -527,7 +527,7 @@ async fn drive_l2(
                             };
                         }
                     }
-                    if response.stop_reason == Some(xai_grok_sampling_types::StopReason::Length) {
+                    if response.stop_reason == Some(intelekt_sampling_types::StopReason::Length) {
                         return AttemptOutcome::Failed {
                             error: SamplingError::MaxTokensTruncation,
                         };
@@ -536,7 +536,7 @@ async fn drive_l2(
                     // content_filter stop reason) is legitimately content-less and
                     // deterministic — resampling it would retry-storm.
                     let content_filtered = response.stop_reason
-                        == Some(xai_grok_sampling_types::StopReason::ContentFilter);
+                        == Some(intelekt_sampling_types::StopReason::ContentFilter);
                     if !content_filtered && let Some(reason) = response.empty_reason() {
                         let context = build_empty_context(reason, &response);
                         return AttemptOutcome::Empty { context };
@@ -631,7 +631,7 @@ fn synthesize_from_info(info: &SamplingErrorInfo) -> SamplingError {
 
 /// Build an [`EmptyResponseContext`] from a completed-but-empty response.
 fn build_empty_context(
-    reason: xai_grok_sampling_types::EmptyReason,
+    reason: intelekt_sampling_types::EmptyReason,
     response: &ConversationResponse,
 ) -> EmptyResponseContext {
     let had_reasoning = response

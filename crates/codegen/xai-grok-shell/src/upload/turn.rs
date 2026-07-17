@@ -2,7 +2,7 @@
 use crate::session::repo_changes::TraceExportConfig;
 use futures::FutureExt as _;
 use tokio::sync::oneshot;
-use xai_grok_workspace::permission::PermissionEvent;
+use intelekt_workspace::permission::PermissionEvent;
 /// Request to upload a trace for a synthetic auto-wake turn.
 ///
 /// Sent by the notification bridge (for bash task completions) or the
@@ -50,7 +50,7 @@ pub(crate) enum UploadWait {
 }
 /// Why trace uploads are enabled or disabled for a given prompt.
 /// Recorded on the `agent.prompt` span as `upload_reason` for log queries.
-pub(crate) use xai_grok_telemetry::session_metrics::TraceUploadReason;
+pub(crate) use intelekt_telemetry::session_metrics::TraceUploadReason;
 /// Per-turn context for trace artifact uploads.
 #[derive(Clone)]
 pub(crate) struct PromptTraceContext {
@@ -181,7 +181,7 @@ pub(crate) async fn complete_prompt_trace(
     };
     let upload_method = resolve_upload_method(&ctx);
     let method_str = upload_method.as_str();
-    xai_grok_telemetry::session_ctx::log_session_event(
+    intelekt_telemetry::session_ctx::log_session_event(
         crate::agent::session_metrics::TraceUploadAttempted {
             session_id: ctx.session_info.id.0.to_string(),
             turn_number: ctx.turn_number,
@@ -244,7 +244,7 @@ pub(crate) async fn complete_prompt_trace(
     };
     match terminal_failure {
         Some((error_category, status_code)) => {
-            xai_grok_telemetry::session_ctx::log_session_event(
+            intelekt_telemetry::session_ctx::log_session_event(
                 crate::agent::session_metrics::TraceUploadFailed {
                     session_id: ctx.session_info.id.0.to_string(),
                     turn_number: ctx.turn_number,
@@ -255,7 +255,7 @@ pub(crate) async fn complete_prompt_trace(
             );
         }
         None => {
-            xai_grok_telemetry::session_ctx::log_session_event(
+            intelekt_telemetry::session_ctx::log_session_event(
                 crate::agent::session_metrics::TraceUploadSucceeded {
                     session_id: ctx.session_info.id.0.to_string(),
                     turn_number: ctx.turn_number,
@@ -283,10 +283,10 @@ pub(crate) async fn complete_prompt_trace(
 /// Returns `None` if absent or invalid.
 pub(crate) fn parse_agent_profile_from_meta(
     meta: Option<&agent_client_protocol::Meta>,
-) -> Option<xai_grok_agent::AgentDefinition> {
+) -> Option<intelekt_agent::AgentDefinition> {
     let value = meta?.get("agentProfile")?;
     if value.is_object() {
-        return match xai_grok_agent::AgentDefinition::from_json(value) {
+        return match intelekt_agent::AgentDefinition::from_json(value) {
             Ok(def) => {
                 tracing::info!(
                     agent_name = % def.name,
@@ -307,7 +307,7 @@ pub(crate) fn parse_agent_profile_from_meta(
         tracing::info!(
             agent_name = % name, "Resolving agent from _meta.agentProfile (string name)"
         );
-        return xai_grok_agent::discovery::by_name(name);
+        return intelekt_agent::discovery::by_name(name);
     }
     tracing::warn!(
         "Ignoring _meta.agentProfile: expected a JSON object or string, got {:?}",
@@ -459,7 +459,7 @@ mod tests {
     }
     #[test]
     fn parse_ask_user_question_returns_none_when_absent() {
-        let meta = serde_json::json!({ "agentProfile" : "grok-build-plan" });
+        let meta = serde_json::json!({ "agentProfile" : "intelekt-cli-plan" });
         assert_eq!(parse_ask_user_question_from_meta(meta.as_object()), None);
     }
     #[test]

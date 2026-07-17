@@ -6,7 +6,7 @@ use regex::Regex;
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 use tracing::warn;
-use xai_grok_tools::util::truncate::estimate_tokens;
+use intelekt_tools::util::truncate::estimate_tokens;
 #[cfg(test)]
 mod persistence {
     use std::path::PathBuf;
@@ -104,7 +104,7 @@ const FILE_REGEX: &str = r"^(?:file://)?([^#]+)(?:#L(\d+)-L?(\d+))?$";
 /// Parses URIs in the format: `file://[path]#L[start]-[end]` or `file://[path]#L[start]-L[end]`
 ///
 /// When content exceeds [`MAX_FILE_TOKENS`], the text is written to
-/// `~/.grok/sessions/{cwd}/{session_id}/pasted/` so the model can `read_file`
+/// `~/.intelekt/sessions/{cwd}/{session_id}/pasted/` so the model can `read_file`
 /// specific sections instead of receiving the full content inline.
 ///
 /// Binary blob resources are written to `attachments/` and a path hint is returned.

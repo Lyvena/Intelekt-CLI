@@ -6,7 +6,7 @@ impl SessionActor {
         self: &Arc<Self>,
         action: BuiltinAction,
     ) -> PromptTurnResult {
-        xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::SlashCommandUsed {
+        intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::SlashCommandUsed {
             command: action.command_name().to_string(),
             args_provided: action.args_provided(),
         });
@@ -25,11 +25,11 @@ impl SessionActor {
                 let actual = self.permissions.is_yolo_mode();
                 if let Some(actual) = yolo_toggle_report(was, actual) {
                     self.emit_event(crate::session::events::Event::YoloToggled { enabled: actual });
-                    xai_grok_telemetry::session_ctx::log_event(
-                        xai_grok_telemetry::events::YoloToggled {
+                    intelekt_telemetry::session_ctx::log_event(
+                        intelekt_telemetry::events::YoloToggled {
                             enabled: actual,
                             previous_state: was,
-                            trigger: xai_grok_telemetry::events::YoloTrigger::SlashCommand,
+                            trigger: intelekt_telemetry::events::YoloTrigger::SlashCommand,
                         },
                     );
                     tracing::info_span!(
@@ -83,14 +83,14 @@ impl SessionActor {
             BuiltinAction::HooksTrust => {
                 let msg = match Self::do_hooks_trust_project(&self.session_info.cwd) {
                     Ok(root) => {
-                        xai_grok_telemetry::session_ctx::log_event(
-                            xai_grok_telemetry::events::HookTrusted { success: true },
+                        intelekt_telemetry::session_ctx::log_event(
+                            intelekt_telemetry::events::HookTrusted { success: true },
                         );
                         format!("Trusted: {}.", root.display())
                     }
                     Err(e) => {
-                        xai_grok_telemetry::session_ctx::log_event(
-                            xai_grok_telemetry::events::HookTrusted { success: false },
+                        intelekt_telemetry::session_ctx::log_event(
+                            intelekt_telemetry::events::HookTrusted { success: false },
                         );
                         e
                     }
@@ -138,16 +138,16 @@ impl SessionActor {
             BuiltinAction::HooksAdd { path } => {
                 if path.is_empty() {
                     self.send_slash_command_output(
-                        "Usage: /hooks add <path>\nProvide a path to a hook JSON file or directory under ~/.grok/.",
+                        "Usage: /hooks add <path>\nProvide a path to a hook JSON file or directory under ~/.intelekt/.",
                     )
                     .await;
                 } else {
                     // CWE-427: Use shared add_hooks_path() which validates
-                    // paths are under ~/.grok/ to prevent hook path injection.
+                    // paths are under ~/.intelekt/ to prevent hook path injection.
                     match crate::config::add_hooks_path(&path) {
                         Ok(()) => {
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::HookAdded { success: true },
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::HookAdded { success: true },
                             );
                             self.send_slash_command_output(&format!(
                                 "Added hook path: {path}\n\
@@ -156,8 +156,8 @@ impl SessionActor {
                             .await;
                         }
                         Err(e) => {
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::HookAdded { success: false },
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::HookAdded { success: false },
                             );
                             self.send_slash_command_output(&format!(
                                 "Failed to add hook path: {e}"
@@ -177,8 +177,8 @@ impl SessionActor {
                 } else {
                     match crate::config::remove_hooks_path(&path) {
                         Ok(()) => {
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::HookRemoved { success: true },
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::HookRemoved { success: true },
                             );
                             self.send_slash_command_output(&format!(
                                 "Removed hook path: {path}\nRestart session to stop loading hooks from this path."
@@ -186,8 +186,8 @@ impl SessionActor {
                             .await;
                         }
                         Err(e) => {
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::HookRemoved { success: false },
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::HookRemoved { success: false },
                             );
                             self.send_slash_command_output(&format!(
                                 "Failed to remove hook path: {e}"
@@ -279,14 +279,14 @@ impl SessionActor {
                     Some(handle) => {
                         // Explicit user reload: force a full local-install re-copy.
                         let msg = self.reload_plugins_impl(handle, true).await;
-                        xai_grok_telemetry::session_ctx::log_event(
-                            xai_grok_telemetry::events::PluginReloaded { success: true },
+                        intelekt_telemetry::session_ctx::log_event(
+                            intelekt_telemetry::events::PluginReloaded { success: true },
                         );
                         self.send_slash_command_output(&msg).await;
                     }
                     None => {
-                        xai_grok_telemetry::session_ctx::log_event(
-                            xai_grok_telemetry::events::PluginReloaded { success: false },
+                        intelekt_telemetry::session_ctx::log_event(
+                            intelekt_telemetry::events::PluginReloaded { success: false },
                         );
                         self.send_slash_command_output(
                             "No plugin registry handle available. Start a new session to discover plugins.",
@@ -389,9 +389,9 @@ impl SessionActor {
                     let path_str = resolved.to_string_lossy().to_string();
                     match crate::config::add_plugin_path(&path_str) {
                         Ok(()) => {
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::PluginAdded {
-                                    source: xai_grok_telemetry::events::PluginSource::LocalPath,
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::PluginAdded {
+                                    source: intelekt_telemetry::events::PluginSource::LocalPath,
                                     success: true,
                                 },
                             );
@@ -403,9 +403,9 @@ impl SessionActor {
                             }
                         }
                         Err(e) => {
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::PluginAdded {
-                                    source: xai_grok_telemetry::events::PluginSource::LocalPath,
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::PluginAdded {
+                                    source: intelekt_telemetry::events::PluginSource::LocalPath,
                                     success: false,
                                 },
                             );
@@ -437,8 +437,8 @@ impl SessionActor {
                     let path_str = resolved.to_string_lossy().to_string();
                     match crate::config::remove_plugin_path(&path_str) {
                         Ok(()) => {
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::PluginRemoved { success: true },
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::PluginRemoved { success: true },
                             );
                             let msg = format!("Removed plugin path: {path_str}");
                             self.send_slash_command_output(&msg).await;
@@ -448,8 +448,8 @@ impl SessionActor {
                             }
                         }
                         Err(e) => {
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::PluginRemoved { success: false },
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::PluginRemoved { success: false },
                             );
                             self.send_slash_command_output(&format!(
                                 "Failed to remove plugin path: {e}"
@@ -476,17 +476,17 @@ impl SessionActor {
 
                     if !trust {
                         let install_source =
-                            xai_grok_agent::plugins::git_install::parse_install_source(
+                            intelekt_agent::plugins::git_install::parse_install_source(
                                 &source, cwd,
                             );
                         let source_desc = match &install_source {
-                            xai_grok_agent::plugins::git_install::InstallSource::Git {
+                            intelekt_agent::plugins::git_install::InstallSource::Git {
                                 url,
                                 ..
                             } => {
                                 format!("remote git repo: {url}")
                             }
-                            xai_grok_agent::plugins::git_install::InstallSource::Local {
+                            intelekt_agent::plugins::git_install::InstallSource::Local {
                                 path,
                                 ..
                             } => {
@@ -512,12 +512,12 @@ impl SessionActor {
                                     tracing::warn!("{w}");
                                 }
                                 let kind = if outcome.is_local {
-                                    xai_grok_telemetry::events::InstallKind::Local
+                                    intelekt_telemetry::events::InstallKind::Local
                                 } else {
-                                    xai_grok_telemetry::events::InstallKind::Git
+                                    intelekt_telemetry::events::InstallKind::Git
                                 };
-                                xai_grok_telemetry::session_ctx::log_event(
-                                    xai_grok_telemetry::events::PluginInstalled {
+                                intelekt_telemetry::session_ctx::log_event(
+                                    intelekt_telemetry::events::PluginInstalled {
                                         install_kind: kind,
                                         success: true,
                                         trust: true,
@@ -543,9 +543,9 @@ impl SessionActor {
                             Err(e) => {
                                 let error_category = Self::classify_install_error(&e);
                                 let kind = if crate::plugin::install_source_is_local(&source, cwd) {
-                                    xai_grok_telemetry::events::InstallKind::Local
+                                    intelekt_telemetry::events::InstallKind::Local
                                 } else {
-                                    xai_grok_telemetry::events::InstallKind::Git
+                                    intelekt_telemetry::events::InstallKind::Git
                                 };
                                 tracing::info_span!(
                                     "plugin.installed",
@@ -554,8 +554,8 @@ impl SessionActor {
                                     error_category = %error_category,
                                 )
                                 .in_scope(|| {});
-                                xai_grok_telemetry::session_ctx::log_event(
-                                    xai_grok_telemetry::events::PluginInstalled {
+                                intelekt_telemetry::session_ctx::log_event(
+                                    intelekt_telemetry::events::PluginInstalled {
                                         install_kind: kind,
                                         success: false,
                                         trust: true,
@@ -583,8 +583,8 @@ impl SessionActor {
                     use crate::plugin::UninstallError;
                     match crate::plugin::uninstall_plugin(&name, confirm, false) {
                         Ok(outcome) => {
-                            xai_grok_telemetry::session_ctx::log_event(
-                                xai_grok_telemetry::events::PluginUninstalled {
+                            intelekt_telemetry::session_ctx::log_event(
+                                intelekt_telemetry::events::PluginUninstalled {
                                     confirmed: true,
                                     success: true,
                                 },
@@ -752,7 +752,7 @@ impl SessionActor {
                             *self.memory.search_counter.borrow_mut() =
                                 Some(backend.search_counter.clone());
                             let backend: std::sync::Arc<
-                                dyn xai_grok_tools::types::memory_backend::MemoryBackend,
+                                dyn intelekt_tools::types::memory_backend::MemoryBackend,
                             > = std::sync::Arc::new(backend);
                             let bridge = self.agent.borrow().tool_bridge().clone();
                             bridge.update_resource(backend.clone()).await;
@@ -768,12 +768,12 @@ impl SessionActor {
                 } else if !enabled && self.memory.is_enabled() {
                     let bridge = self.agent.borrow().tool_bridge().clone();
                     if !bridge.unregister_tool_by_name(
-                        xai_grok_tools::implementations::memory::MEMORY_SEARCH_TOOL_NAME,
+                        intelekt_tools::implementations::memory::MEMORY_SEARCH_TOOL_NAME,
                     ) {
                         tracing::debug!("memory_search tool was not registered during unregister");
                     }
                     if !bridge.unregister_tool_by_name(
-                        xai_grok_tools::implementations::memory::MEMORY_GET_TOOL_NAME,
+                        intelekt_tools::implementations::memory::MEMORY_GET_TOOL_NAME,
                     ) {
                         tracing::debug!("memory_get tool was not registered during unregister");
                     }

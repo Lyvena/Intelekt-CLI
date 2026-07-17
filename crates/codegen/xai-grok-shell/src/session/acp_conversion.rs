@@ -1,6 +1,6 @@
-//! ACP conversion functions for `xai-grok-tools`'s `ToolOutput`.
+//! ACP conversion functions for `intelekt-tools`'s `ToolOutput`.
 //!
-//! These standalone functions convert `xai_grok_tools::types::output::ToolOutput`
+//! These standalone functions convert `intelekt_tools::types::output::ToolOutput`
 //! into ACP protocol types (`acp::ToolCallUpdate`, `acp::Plan`).
 //!
 //! `raw_output` is serialized directly from ToolOutput via serde — no manual JSON
@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use agent_client_protocol as acp;
-use xai_grok_tools::types::output::{
+use intelekt_tools::types::output::{
     ApplyPatchOutput, CodexGrepFilesOutput, ListDirOutput, MCPOutputDetails, ReadFileOutput,
     SearchReplaceEditContextInformation, SearchReplaceEditDetail, SearchReplaceOutput, ToolOutput,
 };
@@ -21,7 +21,7 @@ use xai_tool_types::{KillTaskOutput, TaskOutputOutput};
 /// Rewrites real worktree paths to display paths in serialized output.
 ///
 /// In forked sessions, tools produce output containing the worktree
-/// directory (e.g., `/root/.grok/worktrees/project/fork-019cb252-...`). The
+/// directory (e.g., `/root/.intelekt/worktrees/project/fork-019cb252-...`). The
 /// client UI should instead see the original project path (the `display_cwd`).
 #[derive(Clone, Debug)]
 pub struct PathRewriter {
@@ -49,7 +49,7 @@ impl PathRewriter {
 
     /// Rewrite all occurrences of the real worktree path with the display path.
     ///
-    /// Handles both plain paths (e.g., `/root/.grok/worktrees/project/fork-...`)
+    /// Handles both plain paths (e.g., `/root/.intelekt/worktrees/project/fork-...`)
     /// and URL-encoded paths (e.g., `%2Froot%2F.grok%2Fworktrees%2F...`) that
     /// appear in session directory structures and `output_file` references.
     pub fn rewrite(&self, text: &str) -> String {
@@ -158,7 +158,7 @@ pub fn acp_tool_update(
                     // Construct the ACP `ImageContent` directly from the
                     // tool's local image type rather than going through a
                     // `From` impl on the tools crate -- that lets
-                    // `xai-grok-tools` stay free of an
+                    // `intelekt-tools` stay free of an
                     // `agent-client-protocol` dependency.
                     let content = Some(vec![acp::ToolCallContent::from(acp::ContentBlock::Image(
                         acp::ImageContent::new(
@@ -302,7 +302,7 @@ pub fn acp_tool_update(
         // Success (Content) → Completed; errors (DomainNotAllowed, CrossHostRedirect) → Failed.
         // This matches the pattern used by ReadFile, ListDir, and SearchReplace.
         ToolOutput::WebFetch(web_fetch_output) => {
-            use xai_grok_tools::types::output::WebFetchOutput;
+            use intelekt_tools::types::output::WebFetchOutput;
             let status = match web_fetch_output {
                 WebFetchOutput::Content(_) => acp::ToolCallStatus::Completed,
                 WebFetchOutput::DomainNotAllowed(_)
@@ -327,7 +327,7 @@ pub fn acp_tool_update(
         // Error variants (e.g., DuplicateId) get `Failed` status so the Python
         // side can distinguish tool-logic errors from infra errors via raw_output.
         ToolOutput::Todo(todo_output) => {
-            use xai_grok_tools::types::output::TodoWriteOutput;
+            use intelekt_tools::types::output::TodoWriteOutput;
             let (status, content) = match todo_output {
                 TodoWriteOutput::TodosUpdated(_) => (acp::ToolCallStatus::Completed, None),
                 TodoWriteOutput::DuplicateId(msg) | TodoWriteOutput::InvalidArgument(msg) => (
@@ -563,10 +563,10 @@ pub fn acp_tool_update(
         }
         ToolOutput::AskUserQuestion(ask) => {
             let message = match ask {
-                xai_grok_tools::types::output::AskUserQuestionOutput::UserAnswered { message } => {
+                intelekt_tools::types::output::AskUserQuestionOutput::UserAnswered { message } => {
                     message.clone()
                 }
-                xai_grok_tools::types::output::AskUserQuestionOutput::QuestionsSent {
+                intelekt_tools::types::output::AskUserQuestionOutput::QuestionsSent {
                     message,
                     ..
                 } => message.clone(),
@@ -583,7 +583,7 @@ pub fn acp_tool_update(
         }
         ToolOutput::EnterPlanMode(enter) => {
             let message = match enter {
-                xai_grok_tools::types::output::EnterPlanModeOutput::Entered { message, .. } => {
+                intelekt_tools::types::output::EnterPlanModeOutput::Entered { message, .. } => {
                     message.clone()
                 }
             };
@@ -600,10 +600,10 @@ pub fn acp_tool_update(
         }
         ToolOutput::ExitPlanMode(exit) => {
             let message = match exit {
-                xai_grok_tools::types::output::ExitPlanModeOutput::PlanReady {
+                intelekt_tools::types::output::ExitPlanModeOutput::PlanReady {
                     message, ..
                 } => message.clone(),
-                xai_grok_tools::types::output::ExitPlanModeOutput::EmptyPlan {
+                intelekt_tools::types::output::ExitPlanModeOutput::EmptyPlan {
                     message, ..
                 } => message.clone(),
             };
@@ -640,12 +640,12 @@ pub fn acp_tool_update(
 ///
 /// Returns `None` for non-Todo outputs.
 ///
-/// This converts `xai-grok-tools`' TodoItem (which has `id`, `content: Option<String>`,
+/// This converts `intelekt-tools`' TodoItem (which has `id`, `content: Option<String>`,
 /// `status: Option<String>`) to `acp::PlanEntry` (which has `content`, `priority`, `status`).
 /// The `id` is not directly represented in `PlanEntry` but the ordering is preserved.
 pub fn acp_plan_update(output: &ToolOutput) -> Option<acp::Plan> {
     use crate::tools::todo::plan_entry_from_todo_item;
-    use xai_grok_tools::types::output::TodoWriteOutput;
+    use intelekt_tools::types::output::TodoWriteOutput;
     match output {
         ToolOutput::Todo(TodoWriteOutput::TodosUpdated(success)) => {
             let entries = success
@@ -749,7 +749,7 @@ fn build_apply_patch_edit_details(
 mod tests {
     use super::*;
     use std::path::PathBuf;
-    use xai_grok_tools::types::output::*;
+    use intelekt_tools::types::output::*;
 
     #[test]
     fn test_acp_tool_update_read_file_success() {
@@ -773,7 +773,7 @@ mod tests {
         let output = ToolOutput::Todo(TodoWriteOutput::TodosUpdated(TodoWriteSuccess {
             summary_for_prompt: "tasks".to_string(),
             todos: vec![],
-            state: xai_grok_tools::implementations::grok_build::todo::TodoState::default(),
+            state: intelekt_tools::implementations::grok_build::todo::TodoState::default(),
         }));
         let update = acp_tool_update(&output, "call-1", None, None).unwrap();
         assert_eq!(update.fields.status, Some(acp::ToolCallStatus::Completed));
@@ -782,7 +782,7 @@ mod tests {
     #[test]
     fn test_turn_end_plan_cleanup_preserves_semantics_and_priority() {
         use crate::tools::todo::plan_entry_from_todo_item;
-        use xai_grok_tools::implementations::grok_build::todo::{
+        use intelekt_tools::implementations::grok_build::todo::{
             TodoItem, TodoPriority, TodoStatus,
         };
 
@@ -853,16 +853,16 @@ mod tests {
         let output = ToolOutput::Todo(TodoWriteOutput::TodosUpdated(TodoWriteSuccess {
             summary_for_prompt: "tasks".to_string(),
             todos: vec![
-                xai_grok_tools::implementations::grok_build::todo::TodoItem {
+                intelekt_tools::implementations::grok_build::todo::TodoItem {
                     content: "Task 1".to_string(),
                     priority:
-                        xai_grok_tools::implementations::grok_build::todo::TodoPriority::Medium,
+                        intelekt_tools::implementations::grok_build::todo::TodoPriority::Medium,
                     status:
-                        xai_grok_tools::implementations::grok_build::todo::TodoStatus::Completed,
+                        intelekt_tools::implementations::grok_build::todo::TodoStatus::Completed,
                     meta: None,
                 },
             ],
-            state: xai_grok_tools::implementations::grok_build::todo::TodoState::default(),
+            state: intelekt_tools::implementations::grok_build::todo::TodoState::default(),
         }));
         let plan = acp_plan_update(&output).unwrap();
         assert_eq!(plan.entries.len(), 1);
@@ -970,7 +970,7 @@ mod tests {
     #[test]
     fn test_path_rewriter_new_returns_some_when_different() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/project/ab-123",
+            "/root/.intelekt/worktrees/project/ab-123",
             Some("/home/user/project"),
         );
         assert!(rw.is_some());
@@ -979,11 +979,11 @@ mod tests {
     #[test]
     fn test_path_rewriter_rewrite_text() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/myproject/ab-123",
+            "/root/.intelekt/worktrees/myproject/ab-123",
             Some("/testbed/myproject"),
         )
         .unwrap();
-        let input = "File at /root/.grok/worktrees/myproject/ab-123/src/main.rs";
+        let input = "File at /root/.intelekt/worktrees/myproject/ab-123/src/main.rs";
         let output = rw.rewrite(input);
         assert_eq!(output, "File at /testbed/myproject/src/main.rs");
     }
@@ -991,11 +991,11 @@ mod tests {
     #[test]
     fn test_path_rewriter_rewrite_path() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/myproject/ab-123",
+            "/root/.intelekt/worktrees/myproject/ab-123",
             Some("/testbed/myproject"),
         )
         .unwrap();
-        let path = Path::new("/root/.grok/worktrees/myproject/ab-123/src/lib.rs");
+        let path = Path::new("/root/.intelekt/worktrees/myproject/ab-123/src/lib.rs");
         let rewritten = rw.rewrite_path(path);
         assert_eq!(rewritten, PathBuf::from("/testbed/myproject/src/lib.rs"));
     }
@@ -1003,7 +1003,7 @@ mod tests {
     #[test]
     fn test_path_rewriter_rewrite_path_no_match() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/myproject/ab-123",
+            "/root/.intelekt/worktrees/myproject/ab-123",
             Some("/testbed/myproject"),
         )
         .unwrap();
@@ -1015,14 +1015,14 @@ mod tests {
     #[test]
     fn test_path_rewriter_rewrites_raw_output_json() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/myproject/ab-123",
+            "/root/.intelekt/worktrees/myproject/ab-123",
             Some("/testbed/myproject"),
         )
         .unwrap();
         let output = ToolOutput::ReadFile(ReadFileOutput::FileContent(FileContent {
             content: "content".to_string(),
             content_concise: None,
-            absolute_path: PathBuf::from("/root/.grok/worktrees/myproject/ab-123/src/main.rs"),
+            absolute_path: PathBuf::from("/root/.intelekt/worktrees/myproject/ab-123/src/main.rs"),
             offset: None,
             limit: None,
             raw_output: "content".to_string(),
@@ -1073,13 +1073,13 @@ mod tests {
     #[test]
     fn test_path_rewriter_rewrites_list_dir_raw_output() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/myproject/ab-123",
+            "/root/.intelekt/worktrees/myproject/ab-123",
             Some("/testbed/myproject"),
         )
         .unwrap();
         let output = ToolOutput::ListDir(ListDirOutput::Content(ListDirContent {
             content: "file1.rs\nfile2.rs".to_string(),
-            absolute_root_path: PathBuf::from("/root/.grok/worktrees/myproject/ab-123/src"),
+            absolute_root_path: PathBuf::from("/root/.intelekt/worktrees/myproject/ab-123/src"),
         }));
         let json = raw_output_json(&output, Some(&rw)).unwrap();
         let round_tripped: ToolOutput = serde_json::from_value(json).unwrap();
@@ -1097,20 +1097,20 @@ mod tests {
     #[test]
     fn test_path_rewriter_rewrites_bash_command_and_output() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/myproject/ab-123",
+            "/root/.intelekt/worktrees/myproject/ab-123",
             Some("/testbed/myproject"),
         )
         .unwrap();
         let output = ToolOutput::Bash(BashOutput {
-            output: b"listing /root/.grok/worktrees/myproject/ab-123/src".to_vec(),
+            output: b"listing /root/.intelekt/worktrees/myproject/ab-123/src".to_vec(),
             output_for_prompt: String::new(),
             exit_code: 0,
-            command: "ls /root/.grok/worktrees/myproject/ab-123/src".to_string(),
+            command: "ls /root/.intelekt/worktrees/myproject/ab-123/src".to_string(),
             truncated: false,
             signal: None,
             timed_out: false,
             description: None,
-            current_dir: "/root/.grok/worktrees/myproject/ab-123".to_string(),
+            current_dir: "/root/.intelekt/worktrees/myproject/ab-123".to_string(),
             output_file: "/tmp/output.txt".to_string(),
             output_delta: None,
             total_bytes: 0,
@@ -1130,7 +1130,7 @@ mod tests {
     #[test]
     fn test_path_rewriter_rewrites_search_replace_diff_path() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/myproject/ab-123",
+            "/root/.intelekt/worktrees/myproject/ab-123",
             Some("/testbed/myproject"),
         )
         .unwrap();
@@ -1140,7 +1140,7 @@ mod tests {
                 new_string: "new".to_string(),
                 tool_output_for_prompt: String::new(),
                 tool_output_for_prompt_concise: None,
-                absolute_path: PathBuf::from("/root/.grok/worktrees/myproject/ab-123/src/lib.rs"),
+                absolute_path: PathBuf::from("/root/.intelekt/worktrees/myproject/ab-123/src/lib.rs"),
                 edits: SearchReplaceEditContextInformation::default(),
                 patch: None,
                 unicode_normalized: false,
@@ -1158,7 +1158,7 @@ mod tests {
         let raw = update.fields.raw_output.unwrap();
         let raw_str = raw.to_string();
         assert!(
-            !raw_str.contains("/root/.grok/worktrees/myproject/ab-123"),
+            !raw_str.contains("/root/.intelekt/worktrees/myproject/ab-123"),
             "raw_output should not contain worktree path, got: {}",
             raw_str
         );
@@ -1170,14 +1170,14 @@ mod tests {
     #[test]
     fn test_rewrite_handles_url_encoded_paths() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/project/ab-123-a-overlay",
+            "/root/.intelekt/worktrees/project/ab-123-a-overlay",
             Some("/home/user/project"),
         )
         .unwrap();
         // Session directory paths use urlencoding::encode(&cwd)
-        let encoded_overlay = urlencoding::encode("/root/.grok/worktrees/project/ab-123-a-overlay");
+        let encoded_overlay = urlencoding::encode("/root/.intelekt/worktrees/project/ab-123-a-overlay");
         let input = format!(
-            "output-file: /root/.grok/sessions/{}/session-id/terminal/call.log",
+            "output-file: /root/.intelekt/sessions/{}/session-id/terminal/call.log",
             encoded_overlay
         );
         let result = rw.rewrite(&input);
@@ -1195,11 +1195,11 @@ mod tests {
     #[test]
     fn test_rewrite_handles_plain_paths() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/project/ab-123-a-overlay",
+            "/root/.intelekt/worktrees/project/ab-123-a-overlay",
             Some("/home/user/project"),
         )
         .unwrap();
-        let input = "file: /root/.grok/worktrees/project/ab-123-a-overlay/src/main.rs";
+        let input = "file: /root/.intelekt/worktrees/project/ab-123-a-overlay/src/main.rs";
         let result = rw.rewrite(input);
         assert_eq!(result, "file: /home/user/project/src/main.rs");
     }
@@ -1207,11 +1207,11 @@ mod tests {
     #[test]
     fn test_rewrite_json_handles_url_encoded_paths() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/project/ab-123",
+            "/root/.intelekt/worktrees/project/ab-123",
             Some("/testbed/project"),
         )
         .unwrap();
-        let encoded = urlencoding::encode("/root/.grok/worktrees/project/ab-123");
+        let encoded = urlencoding::encode("/root/.intelekt/worktrees/project/ab-123");
         let value = serde_json::json!({
             "output_file": format!("/sessions/{}/task.log", encoded),
             "status": "running",
@@ -1227,7 +1227,7 @@ mod tests {
     #[test]
     fn test_rewrite_noop_when_no_overlay_path_present() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/project/ab-123",
+            "/root/.intelekt/worktrees/project/ab-123",
             Some("/testbed/project"),
         )
         .unwrap();
@@ -1249,11 +1249,11 @@ mod tests {
     #[test]
     fn test_maybe_rewrite_with_rewriter_sanitizes_error_text() {
         let rw = PathRewriter::new(
-            "/root/.grok/worktrees/project/ab-999",
+            "/root/.intelekt/worktrees/project/ab-999",
             Some("/home/user/project"),
         )
         .unwrap();
-        let error_text = "Tool `read_file` failed: IO error reading /root/.grok/worktrees/project/ab-999/src/lib.rs".to_string();
+        let error_text = "Tool `read_file` failed: IO error reading /root/.intelekt/worktrees/project/ab-999/src/lib.rs".to_string();
         let result = maybe_rewrite(Some(&rw), error_text);
         assert!(
             !result.contains("ab-999"),
@@ -1270,7 +1270,7 @@ mod tests {
         let output = ToolOutput::ReadFile(ReadFileOutput::FileContent(FileContent {
             content: "content".to_string(),
             content_concise: None,
-            absolute_path: PathBuf::from("/root/.grok/worktrees/myproject/ab-123/src/main.rs"),
+            absolute_path: PathBuf::from("/root/.intelekt/worktrees/myproject/ab-123/src/main.rs"),
             offset: None,
             limit: None,
             raw_output: "content".to_string(),
@@ -1283,7 +1283,7 @@ mod tests {
             ToolOutput::ReadFile(ReadFileOutput::FileContent(fc)) => {
                 assert_eq!(
                     fc.absolute_path,
-                    PathBuf::from("/root/.grok/worktrees/myproject/ab-123/src/main.rs")
+                    PathBuf::from("/root/.intelekt/worktrees/myproject/ab-123/src/main.rs")
                 );
             }
             other => panic!("Expected ReadFile, got {:?}", other),

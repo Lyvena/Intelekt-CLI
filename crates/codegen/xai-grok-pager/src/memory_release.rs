@@ -8,7 +8,7 @@
 //! looks like it is "using" several times its live heap.
 //!
 //! The pager library cannot reference jemalloc (the allocator choice belongs
-//! to the composition-root binary — see `xai-grok-pager-bin/src/main.rs`), so
+//! to the composition-root binary — see `intelekt-pager-bin/src/main.rs`), so
 //! the binary installs a release hook here at startup, mirroring the
 //! `minimal_hook` IoC seam. The hook purges retained arena pages
 //! (`arena.<ALL>.purge`); calling it right after heavy transients drop returns

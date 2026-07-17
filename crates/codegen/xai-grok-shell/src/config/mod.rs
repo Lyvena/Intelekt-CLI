@@ -2,15 +2,15 @@ pub mod reloader;
 pub mod watcher;
 use crate::bundle;
 use serde::Deserialize;
-pub use xai_grok_config_types::{
+pub use intelekt_config_types::{
     DEFAULT_RECENCY_DECAY, MemoryDreamConfig, MemoryEmbeddingConfig, MemoryFlushConfig,
     MemoryGcConfig, MemoryIndexConfig, MemoryInitialInjectionConfig, MemorySearchConfig,
     MemorySessionConfig, MemoryWatcherConfig, MmrConfig, PruningConfig, TemporalDecayConfig,
 };
 /// Full configuration for the memory system.
 ///
-/// Parsed from the `[memory]` section of `~/.grok/config.toml` or
-/// `.grok/config.toml`. Disabled by default; enabled via
+/// Parsed from the `[memory]` section of `~/.intelekt/config.toml` or
+/// `.intelekt/config.toml`. Disabled by default; enabled via
 /// `--experimental-memory` CLI flag or `GROK_MEMORY=1` env var.
 /// Force-disabled via `GROK_MEMORY=0` (overrides TOML and remote settings).
 ///
@@ -50,7 +50,7 @@ pub struct MemoryConfig {
     /// not under `[memory]`. Pruning is a compaction behavior.
     #[serde(skip)]
     pub pruning: PruningConfig,
-    /// Per-agent memory root override (e.g. `~/.grok/agent-memory/<name>/`).
+    /// Per-agent memory root override (e.g. `~/.intelekt/agent-memory/<name>/`).
     #[serde(skip)]
     pub root_dir_override: Option<std::path::PathBuf>,
     /// When true, the root is already project-scoped so MemoryStorage should
@@ -215,8 +215,8 @@ impl MemoryConfig {
 }
 /// Configuration for subagent (task tool) support.
 ///
-/// Parsed from the `[subagents]` section of `~/.grok/config.toml` or
-/// `.grok/config.toml`. Enabled by default; can be disabled via
+/// Parsed from the `[subagents]` section of `~/.intelekt/config.toml` or
+/// `.intelekt/config.toml`. Enabled by default; can be disabled via
 /// `GROK_SUBAGENTS=0` env var or `[subagents] enabled = false`
 /// in config.toml.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
@@ -230,8 +230,8 @@ pub struct SubagentsConfig {
     ///
     /// ```toml
     /// [subagents.models]
-    /// explore = "grok-3-fast"
-    /// plan = "grok-3"
+    /// explore = "intelekt-3-fast"
+    /// plan = "intelekt-3"
     /// ```
     #[serde(default)]
     pub models: std::collections::HashMap<String, String>,
@@ -252,12 +252,12 @@ pub struct SubagentsConfig {
     /// [subagents.roles.researcher]
     /// description = "Deep research agent"
     /// default_capability_mode = "read-only"
-    /// model = "grok-3"
+    /// model = "intelekt-3"
     ///
     /// [subagents.roles.implementer]
     /// description = "Implementation agent with full access"
     /// default_capability_mode = "all"
-    /// prompt_file = ".grok/prompts/implementer.md"
+    /// prompt_file = ".intelekt/prompts/implementer.md"
     /// ```
     #[serde(default)]
     pub roles: std::collections::HashMap<String, SubagentRole>,
@@ -269,12 +269,12 @@ pub struct SubagentsConfig {
     ///
     /// [subagents.personas.concise]
     /// instructions = "Be extremely concise. No filler words."
-    /// instructions_file = ".grok/personas/concise.md"
+    /// instructions_file = ".intelekt/personas/concise.md"
     /// ```
     #[serde(default)]
     pub personas: std::collections::HashMap<String, SubagentPersona>,
 }
-use xai_grok_subagent_resolution::config::{SubagentPersona, SubagentRole};
+use intelekt_subagent_resolution::config::{SubagentPersona, SubagentRole};
 impl SubagentsConfig {
     fn discover_personas_in_dir(&mut self, dir: &std::path::Path) {
         if !dir.is_dir() {
@@ -382,13 +382,13 @@ impl SubagentsConfig {
     pub fn get_persona(&self, name: &str) -> Option<&SubagentPersona> {
         self.personas.get(name)
     }
-    /// Discover personas from `.grok/personas/` directory.
+    /// Discover personas from `.intelekt/personas/` directory.
     ///
-    /// File-based personas are loaded from `{cwd}/.grok/personas/*.toml`.
+    /// File-based personas are loaded from `{cwd}/.intelekt/personas/*.toml`.
     /// Each file defines a single `SubagentPersona`. The file stem becomes
     /// the persona name. Inline config takes precedence.
     pub fn discover_personas(&mut self, cwd: &std::path::Path) {
-        let dir = cwd.join(".grok").join("personas");
+        let dir = cwd.join(".intelekt").join("personas");
         self.discover_personas_in_dir(&dir);
     }
     /// Validate all role definitions. Returns a list of (role_name, error_message)
@@ -423,15 +423,15 @@ impl SubagentsConfig {
         }
         errors
     }
-    /// Discover roles from `.grok/roles/` directory and merge with inline config.
+    /// Discover roles from `.intelekt/roles/` directory and merge with inline config.
     ///
-    /// File-based roles are loaded from `{cwd}/.grok/roles/*.toml`. Each file
+    /// File-based roles are loaded from `{cwd}/.intelekt/roles/*.toml`. Each file
     /// defines a single `SubagentRole` (same schema as inline `[subagents.roles.*]`).
     /// The file stem becomes the role name.
     ///
     /// Precedence: inline config roles override file-based roles with the same name.
     pub fn discover_roles(&mut self, cwd: &std::path::Path) {
-        let roles_dir = cwd.join(".grok").join("roles");
+        let roles_dir = cwd.join(".intelekt").join("roles");
         self.discover_roles_in_dir(&roles_dir);
     }
     /// Resolve the final subagents config from all sources (in priority order):
@@ -445,7 +445,7 @@ impl SubagentsConfig {
     /// the default.
     ///
     /// When `cwd` is provided, file-based roles are discovered from
-    /// `{cwd}/.grok/roles/*.toml` and merged (inline config takes precedence).
+    /// `{cwd}/.intelekt/roles/*.toml` and merged (inline config takes precedence).
     pub fn resolve(cli_flag: bool, config: &toml::Value, cwd: Option<&std::path::Path>) -> Self {
         let mut result: Self = config
             .get("subagents")
@@ -537,7 +537,7 @@ pub struct ModelOverrideConfig {
     pub web_search: String,
     /// `None` = current model.
     pub session_summary: Option<String>,
-    /// Compiled default (`grok-build`) when unset locally, remotely, and via env.
+    /// Compiled default (`intelekt-cli`) when unset locally, remotely, and via env.
     pub image_description: Option<String>,
     /// Next-prompt suggestion model pin. Unlike the other overrides this does
     /// NOT fill a compiled default — see [`PromptSuggestModelPin`].
@@ -561,9 +561,9 @@ impl Default for ModelOverrideConfig {
 /// Unlike the other auxiliary overrides this does not collapse to a plain
 /// model string: the consumer (`handle_suggest_prompt`) must distinguish
 /// an explicit pin from "unpinned" (where the client hint and the built-in
-/// `grok-build-0.1` default apply), and whether the pin came from the env
+/// `intelekt-cli-0.1` default apply), and whether the pin came from the env
 /// escape hatch. Every effective model except an env pin is catalog-guarded —
-/// when the model is not in the shell's catalog (e.g. `grok-build-0.1` for
+/// when the model is not in the shell's catalog (e.g. `intelekt-cli-0.1` for
 /// OAuth users, whose catalogs exclude it) the per-turn suggestion request is
 /// skipped entirely rather than fired doomed. The env pin is deliberately
 /// exempt so `GROK_PROMPT_SUGGESTIONS_MODEL` keeps working for models a
@@ -596,7 +596,7 @@ fn non_empty_model_override(value: Option<&str>) -> Option<String> {
 impl ModelOverrideConfig {
     /// CLI flag > env var > config.toml > remote settings > compiled default.
     /// `image_description` and `session_summary` always resolve to `Some(_)`
-    /// (default `grok-build`), never the session model.
+    /// (default `intelekt-cli`), never the session model.
     /// `prompt_suggestion` resolves to a [`PromptSuggestModelPin`] instead of
     /// a model string (no CLI flag; the default and the catalog guard live at
     /// the consumer, `handle_suggest_prompt`).
@@ -696,7 +696,7 @@ pub struct ToolsConfig {
     pub respect_gitignore: bool,
     /// Drop tools whose xAI API requires server-side artifact storage
     /// (currently just `video_gen`). Intended for ZDR-bound teams via
-    /// `~/.grok/managed_config.toml`. Defaults to `false`.
+    /// `~/.intelekt/managed_config.toml`. Defaults to `false`.
     pub disable_zdr_incompatible_tools: bool,
     /// Optional S3 bucket config for ZDR video output. When present (and
     /// valid), video tools presign an upload URL and pass it to the API so
@@ -704,7 +704,7 @@ pub struct ToolsConfig {
     /// downloaded locally. Only effective when `disable_zdr_incompatible_tools`
     /// is `true`. Populated from `[tools.zdr_video_output_s3]` in config.
     pub zdr_video_output_s3:
-        Option<xai_grok_tools::implementations::grok_build::video_gen::ZdrVideoOutputS3Config>,
+        Option<intelekt_tools::implementations::grok_build::video_gen::ZdrVideoOutputS3Config>,
 }
 impl ToolsConfig {
     /// Resolve the final tools config, in priority order:
@@ -733,7 +733,7 @@ impl ToolsConfig {
                 .and_then(|s3_val| match s3_val
                     .clone()
                     .try_into::<
-                        xai_grok_tools::implementations::grok_build::video_gen::ZdrVideoOutputS3Config,
+                        intelekt_tools::implementations::grok_build::video_gen::ZdrVideoOutputS3Config,
                     >()
                 {
                     Ok(cfg) if cfg.is_valid() => Some(cfg),
@@ -814,8 +814,8 @@ impl StorageMode {
         matches!(self, Self::Writeback)
     }
 }
-pub use xai_grok_config::ConfigLayers;
-pub use xai_grok_config::{
+pub use intelekt_config::ConfigLayers;
+pub use intelekt_config::{
     MDM_REQUIREMENTS_SOURCE, RequirementsLayer, RequirementsSource, ServingIdentity, SyncMarker,
     claude_managed_settings_probe_path, confirmed_team_switch, confirmed_team_switch_at,
     fail_closed_flag_from_str, is_managed_config_hard_stale_for, is_managed_config_stale_for,
@@ -938,12 +938,12 @@ impl std::fmt::Display for EnforcedField {
 pub fn apply_managed_settings_features(
     config: &mut crate::agent::config::Config,
 ) -> Vec<EnforcedField> {
-    let ms = xai_grok_workspace::permission::resolution::managed_settings();
+    let ms = intelekt_workspace::permission::resolution::managed_settings();
     apply_managed_settings_features_inner(config, &ms.features)
 }
 fn apply_managed_settings_features_inner(
     config: &mut crate::agent::config::Config,
-    features: &xai_grok_workspace::permission::resolution::ManagedSettingsFeatures,
+    features: &intelekt_workspace::permission::resolution::ManagedSettingsFeatures,
 ) -> Vec<EnforcedField> {
     let Some(ref path) = features.source_path else {
         return Vec::new();
@@ -1267,19 +1267,19 @@ pub fn apply_sandbox(
         .as_ref()
         .and_then(|v| v.get("sandbox")?.get("auto_allow_bash")?.as_bool());
     let resolved = config.resolve_profile(cli_profile, profile_req);
-    xai_grok_sandbox::set_auto_allow_bash(config.resolve_auto_allow_bash(auto_allow_req).value);
-    let sandbox_profile: xai_grok_sandbox::ProfileName =
+    intelekt_sandbox::set_auto_allow_bash(config.resolve_auto_allow_bash(auto_allow_req).value);
+    let sandbox_profile: intelekt_sandbox::ProfileName =
         resolved.value.parse().unwrap_or_else(|e| {
             eprintln!("warning: {e}, defaulting to no sandbox");
-            xai_grok_sandbox::ProfileName::Off
+            intelekt_sandbox::ProfileName::Off
         });
-    xai_grok_sandbox::set_configured_profile(&resolved.value);
+    intelekt_sandbox::set_configured_profile(&resolved.value);
     let workspace = cwd
         .and_then(|p| dunce::canonicalize(p).ok())
         .or_else(|| std::env::current_dir().ok())
         .unwrap_or_else(|| std::path::PathBuf::from("."));
     #[cfg(target_os = "linux")]
-    let requires_read_deny = xai_grok_sandbox::requires_read_deny(&sandbox_profile, &workspace);
+    let requires_read_deny = intelekt_sandbox::requires_read_deny(&sandbox_profile, &workspace);
     #[cfg(target_os = "linux")]
     {
         let refuse_unprotected = |detail: &str| {
@@ -1291,7 +1291,7 @@ pub fn apply_sandbox(
                  paths unprotected.{detail}"
             );
         };
-        match xai_grok_sandbox::bwrap_reexec_for_profile(&sandbox_profile, &workspace) {
+        match intelekt_sandbox::bwrap_reexec_for_profile(&sandbox_profile, &workspace) {
             Some(mut cmd) => {
                 use std::os::unix::process::CommandExt;
                 let err = cmd.exec();
@@ -1305,17 +1305,17 @@ pub fn apply_sandbox(
                      Install bubblewrap: apt install -y bubblewrap"
                 );
             }
-            None if requires_read_deny && !xai_grok_sandbox::is_inside_bwrap() => {
+            None if requires_read_deny && !intelekt_sandbox::is_inside_bwrap() => {
                 refuse_unprotected("");
                 std::process::exit(1);
             }
             None => {}
         }
     }
-    if sandbox_profile != xai_grok_sandbox::ProfileName::Off {
+    if sandbox_profile != intelekt_sandbox::ProfileName::Off {
         #[cfg(any(target_os = "linux", target_os = "macos"))]
-        let is_custom = matches!(sandbox_profile, xai_grok_sandbox::ProfileName::Custom(_));
-        let mut sandbox = xai_grok_sandbox::SandboxManager::new(sandbox_profile, &workspace);
+        let is_custom = matches!(sandbox_profile, intelekt_sandbox::ProfileName::Custom(_));
+        let mut sandbox = intelekt_sandbox::SandboxManager::new(sandbox_profile, &workspace);
         if let Err(e) = sandbox.apply(&workspace) {
             eprintln!("warning: sandbox could not be applied: {e}");
         }
@@ -1325,7 +1325,7 @@ pub fn apply_sandbox(
             let unappliable_custom = is_custom && !sandbox.is_applied();
             #[cfg(target_os = "linux")]
             let unappliable_custom =
-                is_custom && !sandbox.is_applied() && !xai_grok_sandbox::is_inside_bwrap();
+                is_custom && !sandbox.is_applied() && !intelekt_sandbox::is_inside_bwrap();
             if unappliable_custom {
                 eprintln!(
                     "error: could not apply the '{}' sandbox profile; refusing to start rather than run unsandboxed.",
@@ -1337,15 +1337,15 @@ pub fn apply_sandbox(
         sandbox.install();
     }
 }
-/// Load `<cwd>/.grok/config.toml` (with this layer's `[[version_overrides]]`
+/// Load `<cwd>/.intelekt/config.toml` (with this layer's `[[version_overrides]]`
 /// applied). Empty table if the file is missing.
 pub fn load_project_config(cwd: &std::path::Path) -> std::io::Result<toml::Value> {
-    load_config_file(&cwd.join(".grok").join("config.toml"))
+    load_config_file(&cwd.join(".intelekt").join("config.toml"))
 }
-pub use xai_grok_workspace::project_config::find_project_configs;
+pub use intelekt_workspace::project_config::find_project_configs;
 /// Resolve the effective `[plugins]` config for a working directory the same
 /// way a session does at reload time: global/user config
-/// ([`load_effective_config`]) plus every ancestor project `.grok/config.toml`
+/// ([`load_effective_config`]) plus every ancestor project `.intelekt/config.toml`
 /// ([`find_project_configs`], extending `paths` and `disabled`) plus the
 /// imported `enabledPlugins` merge.
 ///
@@ -1379,8 +1379,8 @@ pub fn resolve_effective_plugins_config(
     plugins_cfg.merge_claude_enabled_plugins(Some(cwd));
     plugins_cfg
 }
-pub use xai_grok_config::{deep_merge_toml, expand_env_vars_in_string, expand_env_vars_in_toml};
-/// Add a plugin path to `[plugins].paths` in `~/.grok/config.toml`.
+pub use intelekt_config::{deep_merge_toml, expand_env_vars_in_string, expand_env_vars_in_toml};
+/// Add a plugin path to `[plugins].paths` in `~/.intelekt/config.toml`.
 ///
 /// Creates the `[plugins]` section and `paths` array if they don't exist.
 /// Deduplicates: if the path is already present, this is a no-op.
@@ -1422,7 +1422,7 @@ pub fn add_plugin_path(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     std::fs::write(&config_path, toml::to_string_pretty(&config)?)?;
     Ok(())
 }
-/// Remove a plugin path from `[plugins].paths` in `~/.grok/config.toml`.
+/// Remove a plugin path from `[plugins].paths` in `~/.intelekt/config.toml`.
 ///
 /// If the path is not found, this is a no-op (returns Ok).
 pub fn remove_plugin_path(path: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -1445,7 +1445,7 @@ pub fn remove_plugin_path(path: &str) -> Result<(), Box<dyn std::error::Error>> 
     std::fs::write(&config_path, toml::to_string_pretty(&config)?)?;
     Ok(())
 }
-/// Add a plugin to `[plugins].disabled` in `~/.grok/config.toml`.
+/// Add a plugin to `[plugins].disabled` in `~/.intelekt/config.toml`.
 ///
 /// Creates the `[plugins]` section and `disabled` array if they don't exist.
 /// Deduplicates: if already present, this is a no-op.
@@ -1489,7 +1489,7 @@ pub fn add_disabled_plugin(plugin_id: &str) -> Result<(), Box<dyn std::error::Er
     std::fs::write(&config_path, toml::to_string_pretty(&config)?)?;
     Ok(())
 }
-/// Remove a plugin from `[plugins].disabled` in `~/.grok/config.toml`.
+/// Remove a plugin from `[plugins].disabled` in `~/.intelekt/config.toml`.
 ///
 /// If the plugin is not in the disabled list, this is a no-op.
 pub fn remove_disabled_plugin(plugin_id: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -1512,7 +1512,7 @@ pub fn remove_disabled_plugin(plugin_id: &str) -> Result<(), Box<dyn std::error:
     std::fs::write(&config_path, toml::to_string_pretty(&config)?)?;
     Ok(())
 }
-/// Add a plugin to `[plugin_cta].dismissed` in `~/.grok/config.toml`.
+/// Add a plugin to `[plugin_cta].dismissed` in `~/.intelekt/config.toml`.
 ///
 /// Creates the `[plugin_cta]` section and `dismissed` array if they don't exist.
 /// Deduplicates: if already present, this is a no-op.
@@ -1564,7 +1564,7 @@ pub fn add_dismissed_plugin_cta_to_file(
     std::fs::write(config_path, toml::to_string_pretty(&config)?)?;
     Ok(())
 }
-/// All plugin ids listed in `[plugin_cta].dismissed` in `~/.grok/config.toml`.
+/// All plugin ids listed in `[plugin_cta].dismissed` in `~/.intelekt/config.toml`.
 ///
 /// Read once (e.g. on catalog load) and cached so the matched-debounce recompute
 /// doesn't parse the config from disk on the UI thread.
@@ -1596,9 +1596,9 @@ pub fn dismissed_plugin_ctas_in_file(
         })
         .unwrap_or_default()
 }
-/// Validate that a hook path is safe to add to `~/.grok/hooks-paths`.
+/// Validate that a hook path is safe to add to `~/.intelekt/hooks-paths`.
 ///
-/// CWE-427: Only paths under `~/.grok/` are allowed to prevent
+/// CWE-427: Only paths under `~/.intelekt/` are allowed to prevent
 /// arbitrary hook path injection that bypasses the project trust gate.
 /// Paths are canonicalized (resolving symlinks and `..`) before checking.
 pub fn validate_hooks_path(path: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -1629,7 +1629,7 @@ pub fn validate_hooks_path(path: &str) -> Result<(), Box<dyn std::error::Error>>
     let canonical_home = dunce::canonicalize(&grok_home).unwrap_or_else(|_| grok_home.clone());
     if !canonical.starts_with(&canonical_home) {
         return Err(format!(
-            "Hook path must be under ~/.grok/ ({}). Got: {}",
+            "Hook path must be under ~/.intelekt/ ({}). Got: {}",
             canonical_home.display(),
             canonical.display()
         )
@@ -1642,7 +1642,7 @@ pub fn validate_hooks_path(path: &str) -> Result<(), Box<dyn std::error::Error>>
 /// Auto-enables all plugins in the repo so they are active after the next reload.
 /// Returns `(plugin_names, warnings)` for status messaging.
 pub fn post_install_plugin(repo_key: &str) -> (Vec<String>, Vec<String>) {
-    let registry = xai_grok_agent::plugins::InstallRegistry::load();
+    let registry = intelekt_agent::plugins::InstallRegistry::load();
     let Some(repo) = registry.get_repo(repo_key) else {
         return (
             vec![],
@@ -1658,7 +1658,7 @@ pub fn post_install_plugin(repo_key: &str) -> (Vec<String>, Vec<String>) {
     }
     (names, warnings)
 }
-/// Add a plugin to `[plugins].enabled` in `~/.grok/config.toml`.
+/// Add a plugin to `[plugins].enabled` in `~/.intelekt/config.toml`.
 ///
 /// Used for project-scope plugins that are disabled by default.
 /// Deduplicates: if already present, this is a no-op.
@@ -1702,7 +1702,7 @@ pub fn add_enabled_plugin(plugin_id: &str) -> Result<(), Box<dyn std::error::Err
     std::fs::write(&config_path, toml::to_string_pretty(&config)?)?;
     Ok(())
 }
-/// Remove a plugin from `[plugins].enabled` in `~/.grok/config.toml`.
+/// Remove a plugin from `[plugins].enabled` in `~/.intelekt/config.toml`.
 pub fn remove_enabled_plugin(plugin_id: &str) -> Result<(), Box<dyn std::error::Error>> {
     let config_path = crate::util::grok_home::grok_home().join("config.toml");
     let content = match std::fs::read_to_string(&config_path) {
@@ -1723,10 +1723,10 @@ pub fn remove_enabled_plugin(plugin_id: &str) -> Result<(), Box<dyn std::error::
     std::fs::write(&config_path, toml::to_string_pretty(&config)?)?;
     Ok(())
 }
-/// Add a hook path to `~/.grok/hooks-paths` (one path per line).
+/// Add a hook path to `~/.intelekt/hooks-paths` (one path per line).
 ///
 /// If the path is already present (exact string match), this is a no-op.
-/// CWE-427: The path is validated to be under `~/.grok/` before writing.
+/// CWE-427: The path is validated to be under `~/.intelekt/` before writing.
 pub fn add_hooks_path(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     validate_hooks_path(path)?;
     add_hooks_path_to_file(
@@ -1754,7 +1754,7 @@ pub fn add_hooks_path_to_file(
     writeln!(file, "{}", path)?;
     Ok(())
 }
-/// Remove a hook path from `~/.grok/hooks-paths`.
+/// Remove a hook path from `~/.intelekt/hooks-paths`.
 ///
 /// If the path is not found (exact string match), this is a no-op.
 /// Matches the same exact-string behavior as `add_hooks_path`.

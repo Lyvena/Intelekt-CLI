@@ -18,8 +18,8 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 
 use crate::auth::ForceLoginTeam;
-use xai_grok_tools::types::config_source::ConfigSource;
-use xai_grok_tools::util::truncate::estimate_tokens;
+use intelekt_tools::types::config_source::ConfigSource;
+use intelekt_tools::util::truncate::estimate_tokens;
 
 const TREE: &str = "\u{2514}";
 
@@ -258,7 +258,7 @@ pub struct LspServerEntry {
 pub struct ConfigSources {
     /// Config layers (system + user managed, user + system requirements, user
     /// config.toml, the macOS MDM managed-preferences layer, and project
-    /// .grok/config.toml files). Driven from the same resolvers used at runtime
+    /// .intelekt/config.toml files). Driven from the same resolvers used at runtime
     /// (`ConfigLayers`, `requirements_layers`) so system + MDM layers and
     /// precedence are included, and emptiness reflects real contribution after
     /// stripping (version_overrides, fail_closed, etc).
@@ -318,7 +318,7 @@ async fn build_report(cwd: &Path) -> InspectReport {
     crate::agent::folder_trust::resolve_and_record(cwd, None, false);
     let project_trusted = crate::agent::folder_trust::project_scope_allowed(cwd);
 
-    let trust_store = xai_grok_agent::plugins::TrustStore::load();
+    let trust_store = intelekt_agent::plugins::TrustStore::load();
     let mut plugins_cfg: crate::agent::config::PluginsConfig = effective_config
         .get("plugins")
         .and_then(|v| v.clone().try_into().ok())
@@ -327,7 +327,7 @@ async fn build_report(cwd: &Path) -> InspectReport {
     let mut plugin_config = plugins_cfg.to_discovery_config();
     // Project plugins gate on the same folder-trust verdict as hooks and the live
     // session/doctor sites, so the listing's `enabled` flags match runtime gating.
-    let discovered_plugins = xai_grok_agent::plugins::discover_plugins(
+    let discovered_plugins = intelekt_agent::plugins::discover_plugins(
         Some(cwd),
         &plugin_config,
         &trust_store,
@@ -335,7 +335,7 @@ async fn build_report(cwd: &Path) -> InspectReport {
     );
     plugin_config.populate_plugin_lists(&discovered_plugins);
 
-    let plugin_registry = xai_grok_agent::plugins::PluginRegistry::from_discovered(
+    let plugin_registry = intelekt_agent::plugins::PluginRegistry::from_discovered(
         discovered_plugins.clone(),
         &plugin_config.disabled,
         &plugin_config.enabled,
@@ -386,7 +386,7 @@ async fn build_report(cwd: &Path) -> InspectReport {
         .unwrap_or_default();
 
     InspectReport {
-        grok_version: xai_grok_version::VERSION.to_string(),
+        grok_version: intelekt_version::VERSION.to_string(),
         channel: crate::util::config::channel_name_from_cache()
             .unwrap_or("unknown")
             .to_string(),
@@ -446,7 +446,7 @@ fn instruction_file_type(
     extra_rule_prefixes: &[PathBuf],
 ) -> &'static str {
     let path = Path::new(file_path);
-    if has_rules_directory(file_path, ".grok")
+    if has_rules_directory(file_path, ".intelekt")
         || has_rules_directory(file_path, ".cursor")
         || (!claude_imported && has_rules_directory(file_path, ".claude"))
         || extra_rule_prefixes
@@ -462,9 +462,9 @@ fn instruction_file_type(
 /// Wraps the production instruction discovery (`agents_md::read_agents_config_with_paths`).
 async fn list_instructions(cwd: &Path) -> Vec<InstructionFile> {
     // Discover with all vendors ON so inspect shows the full set.
-    let configs = xai_grok_agent::prompt::agents_md::read_agents_config_with_paths(
+    let configs = intelekt_agent::prompt::agents_md::read_agents_config_with_paths(
         &cwd.display().to_string(),
-        xai_grok_agent::prompt::skills::CompatConfig::default(),
+        intelekt_agent::prompt::skills::CompatConfig::default(),
     )
     .await;
 
@@ -479,7 +479,7 @@ async fn list_instructions(cwd: &Path) -> Vec<InstructionFile> {
     // through to a no-op match.
     //
     // TODO(phase-3): `extra_rule_dirs` only re-classifies files that
-    // `xai_grok_agent::prompt::agents_md::read_agents_config_with_paths`
+    // `intelekt_agent::prompt::agents_md::read_agents_config_with_paths`
     // has already discovered. Plumbing `extra_rule_dirs` through to that
     // discovery (so files in arbitrary user-configured dirs are surfaced as
     // rules instead of being missed entirely) is out of scope for this stack
@@ -522,7 +522,7 @@ async fn list_instructions(cwd: &Path) -> Vec<InstructionFile> {
 /// Calls the production permission resolver (`resolve_permissions_with_provenance`)
 /// which handles both Grok TOML and vendor settings fallback in one codepath.
 async fn list_permissions(cwd: &Path) -> PermissionsReport {
-    use xai_grok_workspace::permission::resolution;
+    use intelekt_workspace::permission::resolution;
 
     let ms = resolution::managed_settings();
     let format_entry = |e: &resolution::AllowedMcpServer| match e {
@@ -633,17 +633,17 @@ fn login_policy_report(config: Option<&crate::agent::config::Config>) -> LoginPo
 fn list_hooks(
     git_root: Option<&Path>,
     project_trusted: bool,
-    discovered_plugins: &[xai_grok_agent::plugins::DiscoveredPlugin],
+    discovered_plugins: &[intelekt_agent::plugins::DiscoveredPlugin],
 ) -> Vec<HookEntry> {
-    let all_on = xai_grok_tools::types::compat::CompatConfig::default();
+    let all_on = intelekt_tools::types::compat::CompatConfig::default();
     let source_paths = crate::util::hooks::discover_hook_source_paths(git_root, &all_on);
     let (global_sources, project_sources) = source_paths.as_sources(project_trusted);
 
     let (registry, _errors) =
-        xai_grok_hooks::discovery::load_hooks_from_sources(&global_sources, &project_sources);
+        intelekt_hooks::discovery::load_hooks_from_sources(&global_sources, &project_sources);
 
     let home_dir = dirs::home_dir();
-    let grok_home = xai_grok_config::grok_home();
+    let grok_home = intelekt_config::grok_home();
 
     let mut entries: Vec<HookEntry> = registry
         .all_hooks()
@@ -721,15 +721,15 @@ fn list_hooks(
 
 async fn list_skills(
     cwd: &Path,
-    plugin_registry: &xai_grok_agent::plugins::PluginRegistry,
-    skills_config: &xai_grok_agent::prompt::skills::SkillsConfig,
+    plugin_registry: &intelekt_agent::plugins::PluginRegistry,
+    skills_config: &intelekt_agent::prompt::skills::SkillsConfig,
 ) -> Vec<SkillEntry> {
     // Discover with all vendors ON so inspect shows the full set.
-    let skills = xai_grok_agent::prompt::skills::list_skills_with_plugins(
+    let skills = intelekt_agent::prompt::skills::list_skills_with_plugins(
         Some(&cwd.display().to_string()),
         skills_config,
         Some(plugin_registry),
-        xai_grok_agent::prompt::skills::CompatConfig::default(),
+        intelekt_agent::prompt::skills::CompatConfig::default(),
     )
     .await;
 
@@ -769,10 +769,10 @@ async fn list_skills(
 /// until clients without these variants have aged out. Until then this
 /// mapping is the single owner of the scope→source translation.
 fn skill_entry_source(
-    s: &xai_grok_agent::prompt::skills::SkillInfo,
+    s: &intelekt_agent::prompt::skills::SkillInfo,
     grok_home: &Path,
 ) -> ConfigSource {
-    use xai_grok_tools::implementations::skills::types::SkillScope;
+    use intelekt_tools::implementations::skills::types::SkillScope;
 
     if let Some(source) = s.config_source.clone() {
         return source;
@@ -798,9 +798,9 @@ fn skill_entry_source(
 
 fn list_agents(
     cwd: &Path,
-    plugin_registry: &xai_grok_agent::plugins::PluginRegistry,
+    plugin_registry: &intelekt_agent::plugins::PluginRegistry,
 ) -> Vec<AgentEntry> {
-    let agents = xai_grok_agent::discovery::all_subagents_with_plugins(
+    let agents = intelekt_agent::discovery::all_subagents_with_plugins(
         cwd,
         &HashMap::new(),
         Some(plugin_registry),
@@ -817,15 +817,15 @@ fn list_agents(
 }
 
 /// Maps pre-discovered plugins (from `discover_plugins`) to inspect entries.
-fn list_plugins(discovered: &[xai_grok_agent::plugins::DiscoveredPlugin]) -> Vec<PluginEntry> {
+fn list_plugins(discovered: &[intelekt_agent::plugins::DiscoveredPlugin]) -> Vec<PluginEntry> {
     discovered
         .iter()
         .map(|p| {
             let scope = match p.scope {
-                xai_grok_agent::plugins::PluginScope::CliOverride => Scope::Cli,
-                xai_grok_agent::plugins::PluginScope::Project => Scope::Project,
-                xai_grok_agent::plugins::PluginScope::User => Scope::User,
-                xai_grok_agent::plugins::PluginScope::ConfigPath => Scope::Config,
+                intelekt_agent::plugins::PluginScope::CliOverride => Scope::Cli,
+                intelekt_agent::plugins::PluginScope::Project => Scope::Project,
+                intelekt_agent::plugins::PluginScope::User => Scope::User,
+                intelekt_agent::plugins::PluginScope::ConfigPath => Scope::Config,
             };
             PluginEntry {
                 name: p.manifest.name.clone(),
@@ -836,7 +836,7 @@ fn list_plugins(discovered: &[xai_grok_agent::plugins::DiscoveredPlugin]) -> Vec
                     // Count actual SKILL.md files discovered (root-level or in
                     // subdirs), not the number of configured skill dirs, so the
                     // reported count matches what the skills registry loads.
-                    skills: xai_grok_agent::plugins::registry::skill_md_paths(&p.skill_dirs).len(),
+                    skills: intelekt_agent::plugins::registry::skill_md_paths(&p.skill_dirs).len(),
                     agents: p.agent_dirs.len(),
                     hooks: p.hooks_path.is_some(),
                     mcp_servers: if p.mcp_config_path.is_some() { 1 } else { 0 },
@@ -851,7 +851,7 @@ fn list_marketplaces(git_root: Option<&Path>) -> Vec<MarketplaceEntry> {
     let Some(root) = git_root else {
         return vec![];
     };
-    xai_grok_agent::plugins::marketplace::resolve(root)
+    intelekt_agent::plugins::marketplace::resolve(root)
         .into_iter()
         .map(|m| MarketplaceEntry {
             name: m.name,
@@ -864,11 +864,11 @@ fn list_marketplaces(git_root: Option<&Path>) -> Vec<MarketplaceEntry> {
 /// Discovers MCPs with every vendor enabled so compatibility can be annotated later.
 fn list_mcp_servers(
     cwd: &Path,
-    plugin_registry: &xai_grok_agent::plugins::PluginRegistry,
+    plugin_registry: &intelekt_agent::plugins::PluginRegistry,
 ) -> Vec<McpServerEntry> {
-    use xai_grok_workspace::permission::resolution;
+    use intelekt_workspace::permission::resolution;
 
-    let all_on = xai_grok_tools::types::compat::CompatConfig::default();
+    let all_on = intelekt_tools::types::compat::CompatConfig::default();
     let sourced = crate::session::managed_mcp::merge_managed_mcp_servers_sourced(
         cwd,
         Some(plugin_registry),
@@ -923,7 +923,7 @@ fn list_mcp_servers(
 /// Wraps the production LSP loader (`load_servers_with_plugins_sourced`).
 fn list_lsp_servers(
     cwd: &Path,
-    discovered_plugins: &[xai_grok_agent::plugins::DiscoveredPlugin],
+    discovered_plugins: &[intelekt_agent::plugins::DiscoveredPlugin],
 ) -> Vec<LspServerEntry> {
     let trusted: Vec<_> = discovered_plugins.iter().filter(|p| p.trusted).collect();
     let plugin_lsp_paths: Vec<std::path::PathBuf> = trusted
@@ -947,7 +947,7 @@ fn list_lsp_servers(
         plugin_inline_lsp.iter().map(|(v, _)| *v).collect();
     let inline_names: Vec<&str> = plugin_inline_lsp.iter().map(|(_, n)| *n).collect();
 
-    let servers = xai_grok_tools::implementations::lsp::config::load_servers_with_plugins_sourced(
+    let servers = intelekt_tools::implementations::lsp::config::load_servers_with_plugins_sourced(
         cwd,
         &plugin_lsp_paths,
         &inline_values,
@@ -982,7 +982,7 @@ fn list_lsp_servers(
 /// probing the canonical locations used by `ConfigLayers::load` and
 /// `requirements_layers`: system + user `managed_config.toml`, user
 /// `config.toml`, user + system `requirements.toml`, and project
-/// `.grok/config.toml` files (via `find_project_configs`). The macOS MDM
+/// `.intelekt/config.toml` files (via `find_project_configs`). The macOS MDM
 /// managed-preferences layer has no file on disk, so it is sourced directly
 /// from `requirements_layers()` rather than a path probe.
 ///
@@ -1528,8 +1528,8 @@ fn print_human(r: &InspectReport) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_agent::prompt::skills::{SkillInfo, SkillsConfig};
-    use xai_grok_tools::implementations::skills::types::SkillScope;
+    use intelekt_agent::prompt::skills::{SkillInfo, SkillsConfig};
+    use intelekt_tools::implementations::skills::types::SkillScope;
 
     #[test]
     fn harness_compatibility_human_output_stays_compact() {
@@ -1612,7 +1612,7 @@ mod tests {
             );
         }
 
-        for path in ["/repo/.grok/rules/team.md", r"C:\repo\.grok\rules\team.md"] {
+        for path in ["/repo/.intelekt/rules/team.md", r"C:\repo\.grok\rules\team.md"] {
             assert_eq!(instruction_file_type(path, false, &[]), "rules");
         }
         for path in [
@@ -1687,7 +1687,7 @@ mod tests {
     fn requirements_layer_contributes_requires_non_empty_post_strip_table() {
         // A `fail_closed`-only file is kept by the loader but with an empty
         // post-strip table, so it must not count as contributing.
-        let path = "/home/u/.grok/requirements.toml";
+        let path = "/home/u/.intelekt/requirements.toml";
         let layer = |v| crate::config::RequirementsLayer {
             value: v,
             source: crate::config::RequirementsSource::File(std::path::PathBuf::from(path)),
@@ -1728,8 +1728,8 @@ mod tests {
     fn model_override_warnings_inspect_smoke() {
         let effective: toml::Value = toml::from_str(
             r#"
-            [model."grok-4.5"]
-            model = "grok-4.5"
+            [model."intelekt-4.5"]
+            model = "intelekt-4.5"
             env_key = "ANTHROPIC_AUTH_TOKEN"
             compactions_remaining = 1
             send_compactions_remaining = true
@@ -1751,16 +1751,16 @@ mod tests {
                 .any(|w| w.field.as_deref() == Some("reasoning_effort")),
             "invalid enum should warn: {warnings:?}"
         );
-        assert!(cfg.config_models.contains_key("grok-4.5"));
+        assert!(cfg.config_models.contains_key("intelekt-4.5"));
 
         let human = render_model_override_warnings(&warnings);
         assert!(human.contains("Model Overrides"), "{human}");
         assert!(
-            human.contains("[model.\"grok-4.5\"] send_compactions_remaining"),
+            human.contains("[model.\"intelekt-4.5\"] send_compactions_remaining"),
             "{human}"
         );
         assert!(
-            human.contains("[model.\"grok-4.5\"] reasoning_effort"),
+            human.contains("[model.\"intelekt-4.5\"] reasoning_effort"),
             "{human}"
         );
         assert_eq!(render_model_override_warnings(&[]), "");
@@ -1772,7 +1772,7 @@ mod tests {
             .iter()
             .find(|w| w["field"] == "send_compactions_remaining")
             .expect("alias warning present in JSON");
-        assert_eq!(alias_warning["modelKey"], "grok-4.5");
+        assert_eq!(alias_warning["modelKey"], "intelekt-4.5");
         assert_eq!(alias_warning["kind"], "duplicate-alias");
         assert!(
             alias_warning["reason"]
@@ -1795,21 +1795,21 @@ mod tests {
 
     #[test]
     fn skill_entry_source_maps_scopes() {
-        let home = Path::new("/home/u/.grok");
+        let home = Path::new("/home/u/.intelekt");
 
-        let s = skill_fixture("a", "/repo/.grok/skills/a/SKILL.md", SkillScope::Local);
+        let s = skill_fixture("a", "/repo/.intelekt/skills/a/SKILL.md", SkillScope::Local);
         assert!(matches!(
             skill_entry_source(&s, home),
             ConfigSource::Project { .. }
         ));
 
-        let s = skill_fixture("b", "/repo/.grok/skills/b/SKILL.md", SkillScope::Repo);
+        let s = skill_fixture("b", "/repo/.intelekt/skills/b/SKILL.md", SkillScope::Repo);
         assert!(matches!(
             skill_entry_source(&s, home),
             ConfigSource::Project { .. }
         ));
 
-        let s = skill_fixture("c", "/home/u/.grok/skills/c/SKILL.md", SkillScope::User);
+        let s = skill_fixture("c", "/home/u/.intelekt/skills/c/SKILL.md", SkillScope::User);
         assert!(matches!(
             skill_entry_source(&s, home),
             ConfigSource::User { .. }
@@ -1817,7 +1817,7 @@ mod tests {
 
         let s = skill_fixture(
             "d",
-            "/home/u/.grok/server-skills/d/SKILL.md",
+            "/home/u/.intelekt/server-skills/d/SKILL.md",
             SkillScope::Server,
         );
         assert!(matches!(
@@ -1825,7 +1825,7 @@ mod tests {
             ConfigSource::Server { .. }
         ));
 
-        let s = skill_fixture("e", "/home/u/.grok/bundled/e/SKILL.md", SkillScope::Bundled);
+        let s = skill_fixture("e", "/home/u/.intelekt/bundled/e/SKILL.md", SkillScope::Bundled);
         assert!(matches!(
             skill_entry_source(&s, home),
             ConfigSource::Bundled { .. }
@@ -1837,11 +1837,11 @@ mod tests {
     /// else keeps its real source.
     #[test]
     fn skill_entry_source_relabels_extracted_bundled_skills() {
-        let home = Path::new("/home/u/.grok");
+        let home = Path::new("/home/u/.intelekt");
 
         let s = skill_fixture(
             "help",
-            "/home/u/.grok/skills/help/SKILL.md",
+            "/home/u/.intelekt/skills/help/SKILL.md",
             SkillScope::User,
         );
         assert!(matches!(
@@ -1850,7 +1850,7 @@ mod tests {
         ));
 
         // Bundled name in a project dir: stays project.
-        let s = skill_fixture("help", "/repo/.grok/skills/help/SKILL.md", SkillScope::Repo);
+        let s = skill_fixture("help", "/repo/.intelekt/skills/help/SKILL.md", SkillScope::Repo);
         assert!(matches!(
             skill_entry_source(&s, home),
             ConfigSource::Project { .. }
@@ -1871,7 +1871,7 @@ mod tests {
         // not the extracted copy — stays user.
         let s = skill_fixture(
             "help",
-            "/home/u/.grok/skills/my-tools/SKILL.md",
+            "/home/u/.intelekt/skills/my-tools/SKILL.md",
             SkillScope::User,
         );
         assert!(matches!(
@@ -1882,7 +1882,7 @@ mod tests {
         // Non-bundled name under <grok_home>/skills: stays user.
         let s = skill_fixture(
             "my-skill",
-            "/home/u/.grok/skills/my-skill/SKILL.md",
+            "/home/u/.intelekt/skills/my-skill/SKILL.md",
             SkillScope::User,
         );
         assert!(matches!(
@@ -1895,7 +1895,7 @@ mod tests {
     /// over the scope fallback.
     #[test]
     fn skill_entry_source_prefers_stamped_config_source() {
-        let home = Path::new("/home/u/.grok");
+        let home = Path::new("/home/u/.intelekt");
         let mut s = skill_fixture("cfg", "/team/skills/cfg/SKILL.md", SkillScope::User);
         s.config_source = Some(ConfigSource::ConfigToml {
             path: PathBuf::from("/team/skills/cfg/SKILL.md"),
@@ -1919,7 +1919,7 @@ mod tests {
             )
             .unwrap();
         };
-        // Test-unique names: discovery also reads this machine's real ~/.grok dirs.
+        // Test-unique names: discovery also reads this machine's real ~/.intelekt dirs.
         let extra = tempfile::tempdir().unwrap();
         write(&extra.path().join("inspect-cfg-extra"), "inspect-cfg-extra");
         write(
@@ -1940,7 +1940,7 @@ mod tests {
             disabled: vec!["inspect-cfg-extra".to_string()],
             ..Default::default()
         };
-        let registry = xai_grok_agent::plugins::PluginRegistry::from_discovered(vec![], &[], &[]);
+        let registry = intelekt_agent::plugins::PluginRegistry::from_discovered(vec![], &[], &[]);
 
         let entries = list_skills(cwd.path(), &registry, &config).await;
 

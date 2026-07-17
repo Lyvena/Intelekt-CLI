@@ -1,4 +1,4 @@
-//! Bridges xai-grok-tools LspBackend trait to LspManager.
+//! Bridges intelekt-tools LspBackend trait to LspManager.
 //!
 //! `dispatch_on_sockets` is a thin router; each LSP operation has its own helper.
 

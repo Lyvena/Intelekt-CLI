@@ -8,7 +8,7 @@
 //! invoked in isolation:
 //!
 //! ```bash
-//! cargo test -p xai-grok-pager --test leader_pty_e2e -- --ignored --test-threads=1 --nocapture
+//! cargo test -p intelekt-pager --test leader_pty_e2e -- --ignored --test-threads=1 --nocapture
 //! ```
 //!
 //! Binary resolution and harness plumbing are identical to `pty_e2e` (see

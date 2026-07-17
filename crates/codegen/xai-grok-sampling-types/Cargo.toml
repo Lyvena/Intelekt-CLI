@@ -1,6 +1,6 @@
 [package]
 license = "Apache-2.0"
-name = "xai-grok-sampling-types"
+name = "intelekt-sampling-types"
 version = "0.1.0"
 edition.workspace = true
 description = "Pure data types for the xAI sampling / chat-completion API layer"
@@ -13,8 +13,8 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["preserve_order"] }
 thiserror = { workspace = true }
 tracing = { workspace = true }
-xai-grok-compaction = { path = "../../common/xai-grok-compaction" }
-xai-grok-tools = { path = "../xai-grok-tools" }
+intelekt-compaction = { path = "../../common/intelekt-compaction" }
+intelekt-tools = { path = "../intelekt-tools" }
 
 [dev-dependencies]
 assert_matches = { workspace = true }

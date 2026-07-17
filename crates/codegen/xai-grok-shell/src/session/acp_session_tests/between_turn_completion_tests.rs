@@ -1,5 +1,5 @@
-use xai_grok_tools::implementations::grok_build::task::types::SubagentCompletionSummary;
-use xai_grok_tools::reminders::task_completion::format_between_turn_completions;
+use intelekt_tools::implementations::grok_build::task::types::SubagentCompletionSummary;
+use intelekt_tools::reminders::task_completion::format_between_turn_completions;
 
 fn summary(
     id: &str,

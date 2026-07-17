@@ -14,7 +14,7 @@
 //! process, so filesystem and JSON work uses a warm OS page cache. Fixed
 //! year-2100 timestamps pass the pager cutoff, though pager stages are excluded.
 //!
-//! Run: `cargo bench -p xai-grok-shell --bench session_list`
+//! Run: `cargo bench -p intelekt-shell --bench session_list`
 //! Allow roughly 4-8 minutes after compilation for the configured samples.
 
 use std::collections::HashSet;
@@ -31,10 +31,10 @@ use criterion::{
 use filetime::{FileTime, set_file_mtime};
 use tempfile::TempDir;
 use xai_fast_worktree::{ListFilter, WorktreeDb, WorktreeKind, WorktreeRecord, WorktreeStatus};
-use xai_grok_shell::session::info::Info;
-use xai_grok_shell::session::persistence::Summary;
-use xai_grok_shell::session::storage::{JsonlStorageAdapter, StorageAdapter};
-use xai_grok_shell::session::unified_list::{ListReq, UnifiedListResult, build_unified_list};
+use intelekt_shell::session::info::Info;
+use intelekt_shell::session::persistence::Summary;
+use intelekt_shell::session::storage::{JsonlStorageAdapter, StorageAdapter};
+use intelekt_shell::session::unified_list::{ListReq, UnifiedListResult, build_unified_list};
 
 const WORKSPACE_COUNT: usize = 3_000;
 // Bump whenever workload semantics change, even if aggregate counts do not.
@@ -107,7 +107,7 @@ impl Fixture {
             } else {
                 benchmark_unrelated_cwd(workspace_index - SAME_REPO_CANDIDATE_COUNT)
             };
-            let encoded = xai_grok_shell::util::grok_home::encode_cwd_dirname(&cwd);
+            let encoded = intelekt_shell::util::grok_home::encode_cwd_dirname(&cwd);
             let cwd_dir = sessions_root.join(encoded);
             fs::create_dir(&cwd_dir).expect("create encoded cwd directory");
             let session_count = if same_repo {
@@ -196,7 +196,7 @@ impl Fixture {
     }
 
     fn assert_correct(&self, runtime: &tokio::runtime::Runtime) {
-        let discovered = xai_grok_shell::session::worktree::candidate_worktree_cwds_for_same_repo(
+        let discovered = intelekt_shell::session::worktree::candidate_worktree_cwds_for_same_repo(
             Path::new(&self.picker_cwd),
         )
         .expect("discover same-repo candidate cwd paths");
@@ -315,7 +315,7 @@ fn create_same_repo_cwds(home: &Path) -> SameRepoTopology {
         .expect("create initial git commit");
 
     let main = dunce::canonicalize(&repo_dir).expect("canonicalize main checkout");
-    let worktree_base = xai_grok_shell::session::worktree::worktree_base_dir(&main);
+    let worktree_base = intelekt_shell::session::worktree::worktree_base_dir(&main);
     fs::create_dir_all(&worktree_base).expect("create worktree base");
     let canonical_worktree_base =
         dunce::canonicalize(&worktree_base).expect("canonicalize worktree base");
@@ -356,7 +356,7 @@ fn create_same_repo_cwds(home: &Path) -> SameRepoTopology {
             created_at: index as i64 + 1,
             last_accessed_at: None,
             status: WorktreeStatus::Alive,
-            metadata: Some(xai_grok_shell::session::worktree::build_label_metadata(
+            metadata: Some(intelekt_shell::session::worktree::build_label_metadata(
                 label, false,
             )),
         })
@@ -376,7 +376,7 @@ fn create_same_repo_cwds(home: &Path) -> SameRepoTopology {
         created_at: DB_TRACKED_WORKTREE_COUNT as i64,
         last_accessed_at: None,
         status: WorktreeStatus::Dead,
-        metadata: Some(xai_grok_shell::session::worktree::build_label_metadata(
+        metadata: Some(intelekt_shell::session::worktree::build_label_metadata(
             &db_only_label,
             false,
         )),
@@ -555,9 +555,9 @@ fn bench_session_list(c: &mut Criterion) {
     let home = TempDir::new().expect("create fixture root");
     // SAFETY: no runtime or benchmark worker activity exists during setup.
     unsafe {
-        std::env::set_var("GROK_HOME", home.path());
+        std::env::set_var("INTELEKT_HOME", home.path());
     }
-    assert_eq!(xai_grok_shell::util::grok_home::grok_home(), home.path());
+    assert_eq!(intelekt_shell::util::grok_home::grok_home(), home.path());
     let fixture = Fixture::new(home);
 
     let runtime = tokio::runtime::Builder::new_current_thread()

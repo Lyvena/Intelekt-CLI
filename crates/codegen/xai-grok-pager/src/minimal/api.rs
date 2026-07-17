@@ -1,4 +1,4 @@
-//! Read/render surface consumed by the `xai-grok-pager-minimal` crate.
+//! Read/render surface consumed by the `intelekt-pager-minimal` crate.
 //!
 //! **If you don't work on the minimal (scrollback-native) render mode, you can
 //! ignore this file.** It is the *single* seam through which `minimal` reaches
@@ -64,7 +64,7 @@ use crate::views::suggestion_controller::SuggestionController;
 /// block model is `!Send` (syntect's resumable highlighter state lives inside
 /// markdown blocks) so it cannot move to a worker. Instead the minimal draw
 /// loop renders a **time-budgeted slice per frame**
-/// (`xai-grok-pager-minimal::full_view::pump_transcript`) — the same
+/// (`intelekt-pager-minimal::full_view::pump_transcript`) — the same
 /// amortization the reference scrollback TUIs use for transcript-scale work —
 /// and arms `pending_pager_path` when done.
 pub struct TranscriptBuild {

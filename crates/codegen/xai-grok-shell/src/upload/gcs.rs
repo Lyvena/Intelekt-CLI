@@ -32,7 +32,7 @@ use std::sync::Arc;
 use xai_file_utils::gcs::StorageConfig;
 use xai_file_utils::storage_client::Auth401AttributionCallback;
 use xai_file_utils::{TraceExportConfig, UploadMethod};
-use xai_grok_auth::AuthCredentialProvider;
+use intelekt_auth::AuthCredentialProvider;
 /// Owned wrapper that pairs a `TraceExportConfig` with an optional live
 /// `AuthManager`. See module docs for why this exists; in short, it's the
 /// shell-side adapter that lets `xai_file_utils::gcs::*` helpers wire
@@ -150,7 +150,7 @@ pub(crate) async fn upload_to_auth_diagnostics(
 ) {
     let user_id = user_id.replace('/', "_");
     let ts = chrono::Utc::now().timestamp_millis();
-    let version = xai_grok_version::VERSION;
+    let version = intelekt_version::VERSION;
     let object_path = format!("auth-diagnostics/{version}/{user_id}/{ts}.jsonl");
     let config = crate::session::repo_changes::TraceExportConfig {
         bucket_url: None,

@@ -1,4 +1,4 @@
-//! # xai-grok-hooks
+//! # intelekt-hooks
 //!
 //! Runtime hook system for Grok — file-based discovery, command execution,
 //! and policy enforcement.
@@ -6,7 +6,7 @@
 //! ## Overview
 //!
 //! This crate provides a minimal hooks system for Grok. Hooks are discovered
-//! from dedicated directories (`~/.grok/hooks/` and `<git-worktree-root>/.grok/hooks/`),
+//! from dedicated directories (`~/.intelekt/hooks/` and `<git-worktree-root>/.intelekt/hooks/`),
 //! defined in JSON files (compatible settings format), and executed as child processes.
 //!
 //! ## v0 scope
@@ -20,12 +20,12 @@
 //!
 //! ```rust,no_run
 //! use std::path::Path;
-//! use xai_grok_hooks::discovery::load_hooks;
-//! use xai_grok_hooks::event::HookEventName;
+//! use intelekt_hooks::discovery::load_hooks;
+//! use intelekt_hooks::event::HookEventName;
 //!
 //! let (registry, errors) = load_hooks(
-//!     Some(Path::new("/home/user/.grok/hooks")),
-//!     Some(Path::new("/project/.grok/hooks")),
+//!     Some(Path::new("/home/user/.intelekt/hooks")),
+//!     Some(Path::new("/project/.intelekt/hooks")),
 //! );
 //!
 //! for err in &errors {

@@ -86,7 +86,7 @@ impl MvpAgent {
                 if self.is_session_based_auth() {
                     let auth = self.auth_manager.expired_auth();
                     if auth.is_some() {
-                        xai_grok_telemetry::unified_log::info(
+                        intelekt_telemetry::unified_log::info(
                             "auth buffered token fallback",
                             None,
                             None,
@@ -434,14 +434,14 @@ impl MvpAgent {
             } else {
                 (None, auth.team_id)
             };
-            xai_grok_telemetry::client::init_if_needed(
+            intelekt_telemetry::client::init_if_needed(
                 cfg.telemetry.clone(),
                 mode,
                 user_id,
                 team_id,
                 cfg.endpoints.deployment_key.clone(),
                 self.origin_client_info_from_meta(None),
-                xai_grok_version::VERSION.to_owned(),
+                intelekt_version::VERSION.to_owned(),
                 subscription_tier,
                 crate::http::shared_client(),
             );
@@ -574,7 +574,7 @@ impl MvpAgent {
     /// Shared plugin registry handle used by extensions for snapshot/reload.
     pub(crate) fn plugin_registry_handle(
         &self,
-    ) -> &xai_grok_agent::plugins::SharedPluginRegistryHandle {
+    ) -> &intelekt_agent::plugins::SharedPluginRegistryHandle {
         &self.plugin_registry_handle
     }
     /// `true` when the agent runs in writeback storage mode.
@@ -596,7 +596,7 @@ impl MvpAgent {
     /// discovery on grok-desktop Windows).
     fn ensure_local_workspace_ops(
         &self,
-    ) -> Result<xai_grok_workspace::WorkspaceOps, acp::Error> {
+    ) -> Result<intelekt_workspace::WorkspaceOps, acp::Error> {
         if let Some(ops) = self.workspace_ops.borrow().clone() {
             return Ok(ops);
         }
@@ -606,10 +606,10 @@ impl MvpAgent {
             .current_or_expired()
             .map(|a| match a.team_id.filter(|t| !t.is_empty()) {
                 Some(team) => {
-                    xai_grok_workspace::WorkspaceIdentity::team(a.user_id, team)
+                    intelekt_workspace::WorkspaceIdentity::team(a.user_id, team)
                 }
                 None => {
-                    xai_grok_workspace::WorkspaceIdentity::new(
+                    intelekt_workspace::WorkspaceIdentity::new(
                         a.user_id,
                         a.principal_type,
                         a.principal_id,
@@ -617,12 +617,12 @@ impl MvpAgent {
                 }
             })
             .unwrap_or_default();
-        let ops = match xai_grok_workspace::handle::WorkspaceHandle::new_minimal(
+        let ops = match intelekt_workspace::handle::WorkspaceHandle::new_minimal(
             cwd.to_path_buf(),
             workspace_identity,
             project_lsp_trusted,
         ) {
-            Ok(handle) => xai_grok_workspace::WorkspaceOps::local(handle),
+            Ok(handle) => intelekt_workspace::WorkspaceOps::local(handle),
             Err(e) => {
                 tracing::error!(error = % e, "failed to create local WorkspaceHandle");
                 return Err(
@@ -641,7 +641,7 @@ impl MvpAgent {
     /// resolved `&WorkspaceOps` directly.
     pub(crate) fn resolve_workspace_ops(
         &self,
-    ) -> Result<xai_grok_workspace::WorkspaceOps, acp::Error> {
+    ) -> Result<intelekt_workspace::WorkspaceOps, acp::Error> {
         let ops = self.ensure_local_workspace_ops()?;
         if let Some(handle) = ops.workspace_handle() && !handle.has_client_ext_sink() {
             let gw = self.gateway.clone();
@@ -717,7 +717,7 @@ impl MvpAgent {
             tracing::info!(
                 % msg, "cached_token unavailable; preferred_method forbids fallthrough"
             );
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 "auth cached_token fallthrough blocked by preferred_method",
                 None,
                 Some(
@@ -734,7 +734,7 @@ impl MvpAgent {
             arguments.meta
         };
         tracing::info!(fallback = % method_id.0, "cached_token fallthrough");
-        xai_grok_telemetry::unified_log::warn(
+        intelekt_telemetry::unified_log::warn(
             "auth cached_token fallthrough",
             None,
             Some(serde_json::json!({ "fallback" : method_id.0.as_ref() })),
@@ -819,14 +819,14 @@ impl MvpAgent {
             subscription_tier,
             self.auth_manager.current_or_expired().as_ref(),
         );
-        xai_grok_telemetry::client::init(
+        intelekt_telemetry::client::init(
             telemetry_config,
             telemetry_mode,
             grok_user_id,
             grok_team_id,
             deployment_key,
             self.origin_client_info_from_meta(None),
-            xai_grok_version::VERSION.to_owned(),
+            intelekt_version::VERSION.to_owned(),
             subscription_tier,
             crate::http::shared_client(),
         );
@@ -932,7 +932,7 @@ impl MvpAgent {
     pub(super) fn apply_polled_announcements(
         &self,
         fresh: crate::util::config::RemoteSettings,
-        pre_fetch: Option<Vec<xai_grok_announcements::RemoteAnnouncement>>,
+        pre_fetch: Option<Vec<intelekt_announcements::RemoteAnnouncement>>,
     ) {
         let mut cfg = self.cfg.borrow_mut();
         let Some(stored) = cfg.remote_settings.as_mut() else {
@@ -1121,7 +1121,7 @@ impl MvpAgent {
                 model = model.info().model.as_str(),
                 "auth: overriding auth_type to SessionToken (session-based auth method)",
             );
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "auth auth_type override to SessionToken",
                 None,
                 Some(serde_json::json!({ "model" : model.info().model.as_str() })),
@@ -1134,7 +1134,7 @@ impl MvpAgent {
                 .is_expired(), auth_type = ? credentials.auth_type,
                 "auth: prepare_sampling_config has no session key",
             );
-            xai_grok_telemetry::unified_log::warn(
+            intelekt_telemetry::unified_log::warn(
                 "auth: prepare_sampling_config has no session key",
                 None,
                 Some(
@@ -1249,8 +1249,8 @@ impl MvpAgent {
     /// meters Imagine usage per-user.
     pub(super) fn prepare_image_gen_config(
         &self,
-    ) -> xai_grok_tools::implementations::grok_build::image_gen::ImageGenConfig {
-        use xai_grok_tools::implementations::grok_build::image_gen::ImageGenConfig;
+    ) -> intelekt_tools::implementations::grok_build::image_gen::ImageGenConfig {
+        use intelekt_tools::implementations::grok_build::image_gen::ImageGenConfig;
         let sampling_config = self.sampling_config.borrow();
         let Some(ref api_key) = sampling_config.api_key else {
             return ImageGenConfig::Disabled;
@@ -1261,10 +1261,10 @@ impl MvpAgent {
         let version = cfg
             .client_version
             .clone()
-            .unwrap_or_else(|| xai_grok_version::VERSION.to_string());
+            .unwrap_or_else(|| intelekt_version::VERSION.to_string());
         let alpha_test_key = cfg.endpoints.alpha_test_key.clone();
         let mut headers = indexmap::IndexMap::new();
-        headers.insert("user-agent".to_string(), format!("xai-grok-build/{version}"));
+        headers.insert("user-agent".to_string(), format!("xai-intelekt-cli/{version}"));
         inject_proxy_headers(
             &mut headers,
             cfg.client_version.as_deref(),
@@ -1284,15 +1284,15 @@ impl MvpAgent {
     /// Build deploy-service config. The tool talks directly to the deployer service.
     pub(super) fn prepare_app_builder_deployer_config(
         &self,
-    ) -> xai_grok_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig {
-        use xai_grok_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig;
+    ) -> intelekt_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig {
+        use intelekt_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig;
         AppBuilderDeployerConfig::Disabled
     }
     /// Build video generation config. Video tools call the xAI API directly.
     pub(super) fn prepare_video_gen_config(
         &self,
-    ) -> xai_grok_tools::implementations::grok_build::video_gen::VideoGenConfig {
-        use xai_grok_tools::implementations::grok_build::video_gen::VideoGenConfig;
+    ) -> intelekt_tools::implementations::grok_build::video_gen::VideoGenConfig {
+        use intelekt_tools::implementations::grok_build::video_gen::VideoGenConfig;
         let Some(api_key) = self.sampling_config.borrow().api_key.clone() else {
             return VideoGenConfig::Disabled;
         };
@@ -1311,10 +1311,10 @@ impl MvpAgent {
         let version = cfg
             .client_version
             .clone()
-            .unwrap_or_else(|| xai_grok_version::VERSION.to_string());
+            .unwrap_or_else(|| intelekt_version::VERSION.to_string());
         let alpha_test_key = cfg.endpoints.alpha_test_key.clone();
         let mut headers = indexmap::IndexMap::new();
-        headers.insert("user-agent".to_string(), format!("xai-grok-build/{version}"));
+        headers.insert("user-agent".to_string(), format!("xai-intelekt-cli/{version}"));
         inject_proxy_headers(
             &mut headers,
             cfg.client_version.as_deref(),
@@ -1377,8 +1377,8 @@ impl MvpAgent {
     /// - `allowed_domains`: `[toolset.web_fetch] allowed_domains` > remote settings > built-in defaults
     pub(super) fn prepare_web_fetch_config(
         &self,
-    ) -> xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig {
-        use xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig;
+    ) -> intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig {
+        use intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig;
         let cfg = self.cfg.borrow();
         if cfg.disable_web_search {
             return WebFetchConfig::Disabled;
@@ -1480,7 +1480,7 @@ impl MvpAgent {
             launch_cwd: std::env::current_dir()
                 .unwrap_or_else(|_| std::path::PathBuf::from(".")),
             launch_dir_trust: std::cell::OnceCell::new(),
-            plugin_registry_handle: xai_grok_agent::plugins::SharedPluginRegistryHandle::new(
+            plugin_registry_handle: intelekt_agent::plugins::SharedPluginRegistryHandle::new(
                 None,
                 cfg.plugins.cli_plugin_dirs.clone(),
             ),
@@ -1543,7 +1543,7 @@ impl MvpAgent {
             subagent_event_tx,
             subagent_event_rx: RefCell::new(Some(subagent_event_rx)),
             subagent_coordinator: RefCell::new(subagent_coordinator),
-            monitor_event_buffer: xai_grok_tools::implementations::grok_build::task::types::MonitorEventBuffer::default(),
+            monitor_event_buffer: intelekt_tools::implementations::grok_build::task::types::MonitorEventBuffer::default(),
             bundle_sync_in_flight: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             post_unblock_jwt_retry_in_flight: Arc::new(
                 std::sync::atomic::AtomicBool::new(false),
@@ -1810,7 +1810,7 @@ impl MvpAgent {
         &self,
         session_id: &str,
         task_id: &str,
-    ) -> Result<xai_grok_tools::types::KillOutcome, String> {
+    ) -> Result<intelekt_tools::types::KillOutcome, String> {
         let sid = acp::SessionId::new(session_id);
         if let Some(handle) = self.get_session_handle(&sid) {
             handle.kill_background_task(task_id).await
@@ -1836,7 +1836,7 @@ impl MvpAgent {
     pub fn cancel_subagent(
         &self,
         subagent_id: &str,
-    ) -> xai_grok_tools::implementations::grok_build::task::types::SubagentCancelOutcome {
+    ) -> intelekt_tools::implementations::grok_build::task::types::SubagentCancelOutcome {
         self.subagent_coordinator.borrow_mut().cancel_with_outcome(subagent_id)
     }
     /// List running subagent seeds for a given parent session.
@@ -1879,7 +1879,7 @@ impl MvpAgent {
     pub async fn list_tasks(
         &self,
         session_id: &str,
-    ) -> Option<Vec<xai_grok_tools::types::TaskSnapshot>> {
+    ) -> Option<Vec<intelekt_tools::types::TaskSnapshot>> {
         let sid = acp::SessionId::new(session_id);
         if let Some(handle) = self.get_session_handle(&sid) {
             handle.list_tasks().await
@@ -2038,7 +2038,7 @@ impl MvpAgent {
         {
             self.interactive_trust_prompted
                 .borrow_mut()
-                .remove(&xai_grok_workspace::trust::workspace_key(&cwd));
+                .remove(&intelekt_workspace::trust::workspace_key(&cwd));
         }
         let handle = self.get_session_handle(session_id)?;
         handle.execute_hooks_action(action).await
@@ -2064,7 +2064,7 @@ impl MvpAgent {
     /// Get a snapshot of the shared plugin registry (for `x.ai/plugins/list`).
     pub fn plugin_registry_snapshot(
         &self,
-    ) -> Option<std::sync::Arc<xai_grok_agent::plugins::PluginRegistry>> {
+    ) -> Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>> {
         self.plugin_registry_handle.snapshot()
     }
     /// Run content search at agent level.
@@ -2358,7 +2358,7 @@ impl MvpAgent {
             if let Some(auth) = self.auth_manager.current_or_expired() {
                 sampling_config.api_key = Some(auth.key);
                 tracing::debug!("auth: seed_client_config set auth (SessionToken)");
-                xai_grok_telemetry::unified_log::debug(
+                intelekt_telemetry::unified_log::debug(
                     "auth: seed_client_config set auth (SessionToken)",
                     None,
                     None,
@@ -2372,7 +2372,7 @@ impl MvpAgent {
                 tracing::warn!(
                     "No credentials found: no login token and no model api_key/env_key"
                 );
-                xai_grok_telemetry::unified_log::warn(
+                intelekt_telemetry::unified_log::warn(
                     "No credentials found: no login token and no model api_key/env_key",
                     None,
                     None,
@@ -2463,7 +2463,7 @@ impl MvpAgent {
         info: &crate::session::info::Info,
         cmd_tx: &tokio::sync::mpsc::UnboundedSender<crate::session::SessionCommand>,
         model: &str,
-        turns: Vec<Vec<xai_grok_sampling_types::conversation::ConversationItem>>,
+        turns: Vec<Vec<intelekt_sampling_types::conversation::ConversationItem>>,
     ) {
         use crate::upload::manifest::{
             build_manifest, resolve_upload_method, write_upload_manifest,
@@ -2516,7 +2516,7 @@ impl MvpAgent {
         info: &crate::session::info::Info,
         model: &str,
         base: u64,
-        turns: Vec<Vec<xai_grok_sampling_types::conversation::ConversationItem>>,
+        turns: Vec<Vec<intelekt_sampling_types::conversation::ConversationItem>>,
     ) -> Vec<(PromptTraceContext, PromptMetadata, xai_chat_state::TurnCapture)> {
         let mut uploads = Vec::with_capacity(turns.len());
         for (offset, items) in turns.into_iter().enumerate() {
@@ -2557,7 +2557,7 @@ impl MvpAgent {
                 prompt_verbatim: Some(true),
                 cwd: Some(info.cwd.clone()),
                 agent_type: None,
-                shell_version: Some(xai_grok_version::VERSION.to_string()),
+                shell_version: Some(intelekt_version::VERSION.to_string()),
                 workspace_type: None,
                 sandbox: local_sandbox_telemetry(),
             };
@@ -2596,7 +2596,7 @@ impl MvpAgent {
                 );
                 obj.insert("turn_number".into(), serde_json::json!(turn_number));
             }
-            xai_grok_telemetry::unified_log::info(
+            intelekt_telemetry::unified_log::info(
                 "trace.upload.decision",
                 Some(session_info.id.0.as_ref()),
                 Some(decision),
@@ -2609,7 +2609,7 @@ impl MvpAgent {
             }
             None => {
                 tracing::Span::current().record("uploads_enabled", false);
-                xai_grok_telemetry::session_ctx::log_session_event(crate::agent::session_metrics::TraceUploadSkipped {
+                intelekt_telemetry::session_ctx::log_session_event(crate::agent::session_metrics::TraceUploadSkipped {
                     session_id: session_info.id.0.to_string(),
                     turn_number,
                     reason: upload_reason.as_str().to_owned(),
@@ -2625,7 +2625,7 @@ impl MvpAgent {
                         Some(resolved) => Some(resolved.value),
                         None => {
                             tracing::Span::current().record("uploads_enabled", false);
-                            xai_grok_telemetry::session_ctx::log_session_event(crate::agent::session_metrics::TraceUploadSkipped {
+                            intelekt_telemetry::session_ctx::log_session_event(crate::agent::session_metrics::TraceUploadSkipped {
                                 session_id: session_info.id.0.to_string(),
                                 turn_number,
                                 reason: "no_trace_bucket_configured".to_owned(),
@@ -2668,7 +2668,7 @@ impl MvpAgent {
                 let queue = crate::upload::trace::spawn_upload_queue(
                     &grok_home,
                     &gcs_config,
-                    Some(xai_grok_version::VERSION),
+                    Some(intelekt_version::VERSION),
                     self.auth_manager.clone(),
                 );
                 crate::upload::trace::spawn_startup_spill_reconcile(
@@ -2705,7 +2705,7 @@ impl MvpAgent {
     ///
     /// `GROK_AGENT` and an explicit `[agent] name` bypass step 1.
     /// Strict-harness classification is structural — see
-    /// [`xai_grok_agent::config::is_strict_harness_agent_type`].
+    /// [`intelekt_agent::config::is_strict_harness_agent_type`].
     ///
     /// Harness inheritance for a profile that pins its own model is applied by
     /// the caller via [`inherited_harness_template`], not here.
@@ -2713,19 +2713,19 @@ impl MvpAgent {
         cwd: &std::path::Path,
         agent_profile_path: Option<&std::path::Path>,
         agent_config: &config::AgentSelectionConfig,
-        acp_agent_profile: Option<xai_grok_agent::AgentDefinition>,
+        acp_agent_profile: Option<intelekt_agent::AgentDefinition>,
         model_agent_type: Option<&str>,
-    ) -> xai_grok_agent::AgentDefinition {
-        use xai_grok_agent::AgentDefinition;
+    ) -> intelekt_agent::AgentDefinition {
+        use intelekt_agent::AgentDefinition;
         let grok_agent_env_set = std::env::var("GROK_AGENT")
             .ok()
             .is_some_and(|s| !s.trim().is_empty());
         let config_agent_explicitly_set = agent_config.name.is_some();
         let model_requires_strict_harness = model_agent_type
-            .is_some_and(xai_grok_agent::config::is_strict_harness_agent_type);
+            .is_some_and(intelekt_agent::config::is_strict_harness_agent_type);
         if !grok_agent_env_set && !config_agent_explicitly_set
             && model_requires_strict_harness && let Some(required) = model_agent_type
-            && let Some(def) = xai_grok_agent::discovery::by_name_in_cwd(required, cwd)
+            && let Some(def) = intelekt_agent::discovery::by_name_in_cwd(required, cwd)
         {
             tracing::info!(
                 agent_name = % def.name, "Using agent definition from model agent_type"
@@ -2777,7 +2777,7 @@ impl MvpAgent {
                 agent_name = % name,
                 "Resolving agent definition from config.toml [agent] name"
             );
-            if let Some(def) = xai_grok_agent::discovery::by_name_in_cwd(name, cwd) {
+            if let Some(def) = intelekt_agent::discovery::by_name_in_cwd(name, cwd) {
                 return def;
             }
             tracing::warn!(
@@ -2789,7 +2789,7 @@ impl MvpAgent {
         let agent_name = std::env::var("GROK_AGENT").ok();
         let resolved = match agent_name.as_deref() {
             Some("browser-use") | Some("browser_use") => AgentDefinition::browser_use(),
-            Some("grok-build-concise") | Some("grok_build_concise") => {
+            Some("intelekt-cli-concise") | Some("grok_build_concise") => {
                 AgentDefinition::grok_build_concise()
             }
             Some(path) if std::path::Path::new(path).is_absolute() => {
@@ -2805,7 +2805,7 @@ impl MvpAgent {
                 }
             }
             Some(name) => {
-                xai_grok_agent::discovery::by_name_in_cwd(name, cwd)
+                intelekt_agent::discovery::by_name_in_cwd(name, cwd)
                     .unwrap_or_else(AgentDefinition::grok_build_plan)
             }
             None => AgentDefinition::grok_build_plan(),
@@ -2818,7 +2818,7 @@ impl MvpAgent {
                 resolved_agent = % resolved.name, model_agent_type = % required,
                 "resolve_agent_definition: model requires different agent, re-resolving"
             );
-            if let Some(def) = xai_grok_agent::discovery::by_name_in_cwd(required, cwd) {
+            if let Some(def) = intelekt_agent::discovery::by_name_in_cwd(required, cwd) {
                 return def;
             }
             tracing::warn!(
@@ -2929,7 +2929,7 @@ impl MvpAgent {
                 }
                 Some(ClientFsConfig { fs, mode })
             });
-        let fs: Arc<dyn xai_grok_workspace::file_system::AsyncFileSystem> = if use_acp_fs {
+        let fs: Arc<dyn intelekt_workspace::file_system::AsyncFileSystem> = if use_acp_fs {
             let mut acp_fs = AcpSessionFs::new(
                 cwd.to_path_buf(),
                 session_info.id.clone(),
@@ -3055,14 +3055,14 @@ impl MvpAgent {
             _ => None,
         };
         let project_env_trusted = folder_trust::project_scope_allowed(cwd.as_path());
-        let mut session_env = xai_grok_workspace::permission::claude_settings::load_claude_env_with_project(
+        let mut session_env = intelekt_workspace::permission::claude_settings::load_claude_env_with_project(
             cwd.as_path(),
             project_env_trusted,
         );
         let envrc = match preloaded_envrc {
             Some(env) => env,
             None => {
-                xai_grok_workspace::envrc::load_envrc_or_empty_when_trusted(
+                intelekt_workspace::envrc::load_envrc_or_empty_when_trusted(
                     cwd.as_path(),
                     load_envrc && project_env_trusted,
                 )
@@ -3199,7 +3199,7 @@ impl MvpAgent {
         let pinned_model: Option<(acp::ModelId, ModelEntry)> = match &agent_definition
             .model
         {
-            xai_grok_agent::config::ModelOverride::Override(id) => {
+            intelekt_agent::config::ModelOverride::Override(id) => {
                 let mid = acp::ModelId::new(Arc::from(id.as_str()));
                 match self.resolve_model_id(&mid) {
                     Ok(entry) => Some((mid, entry)),
@@ -3212,7 +3212,7 @@ impl MvpAgent {
                     }
                 }
             }
-            xai_grok_agent::config::ModelOverride::Inherit => None,
+            intelekt_agent::config::ModelOverride::Inherit => None,
         };
         if let Some(template) = inherited_harness_template(
             &agent_definition.user_message_template,
@@ -3276,7 +3276,7 @@ impl MvpAgent {
                     p.inline_lsp_servers.as_ref().map(|v| (v, p.name.as_str()))
                 })
                 .unzip();
-            let sourced = xai_grok_tools::implementations::lsp::config::load_servers_with_plugins_sourced(
+            let sourced = intelekt_tools::implementations::lsp::config::load_servers_with_plugins_sourced(
                 tool_ctx.cwd.as_path(),
                 &plugin_lsp_paths,
                 &plugin_inline_lsp,
@@ -3289,16 +3289,16 @@ impl MvpAgent {
             );
             tool_ctx.lsp_server_names = servers.keys().cloned().collect();
             if servers.is_empty() {
-                let user_path = xai_grok_tools::util::grok_home::grok_home()
+                let user_path = intelekt_tools::util::grok_home::grok_home()
                     .join("lsp.json");
-                let project_path = tool_ctx.cwd.as_path().join(".grok").join("lsp.json");
+                let project_path = tool_ctx.cwd.as_path().join(".intelekt").join("lsp.json");
                 tracing::warn!(
                     cwd = % tool_ctx.cwd, user_lsp_path = % user_path.display(),
                     project_lsp_path = % project_path.display(),
                     "LSP tools enabled, but no language servers are configured"
                 );
             } else {
-                use xai_grok_tools::implementations::lsp::{
+                use intelekt_tools::implementations::lsp::{
                     LspBackend, LspBackendAdapter, LspManager,
                 };
                 let mgr = std::sync::Arc::new(
@@ -3307,7 +3307,7 @@ impl MvpAgent {
                             servers,
                             tool_ctx.cwd.as_path().to_path_buf(),
                             true,
-                            xai_grok_tools::notification::ToolNotificationHandle::noop(),
+                            intelekt_tools::notification::ToolNotificationHandle::noop(),
                         ),
                     ),
                 );
@@ -3426,7 +3426,7 @@ impl MvpAgent {
                 client_version: sampling_config.client_version.clone(),
             };
             let attribution_callback: Option<
-                xai_grok_sampler::SharedAttributionCallback,
+                intelekt_sampler::SharedAttributionCallback,
             > = Some(
                 crate::auth::attribution::ShellAttribution::new(
                     self.auth_manager.clone(),
@@ -3438,7 +3438,7 @@ impl MvpAgent {
                 .as_ref()
                 .and_then(|hooks_config| {
                     let hooks_val = hooks_config.as_value();
-                    let (specs, errors) = xai_grok_hooks::config::parse_hooks_from_value_with_dir(
+                    let (specs, errors) = intelekt_hooks::config::parse_hooks_from_value_with_dir(
                         &hooks_val,
                         &format!("agent:{}", agent_definition.name),
                         std::path::Path::new(&session_info.cwd),
@@ -3454,7 +3454,7 @@ impl MvpAgent {
                     }
                     let cwd = std::path::Path::new(&session_info.cwd);
                     let hooks_trusted = folder_trust::project_scope_allowed(cwd);
-                    let git_root = xai_grok_workspace::session::git::find_git_root_from_path(
+                    let git_root = intelekt_workspace::session::git::find_git_root_from_path(
                             cwd,
                         )
                         .ok();
@@ -3576,7 +3576,7 @@ impl MvpAgent {
                     prompt_display_cwd,
                     subagent_toggle,
                     self.persona_io_summaries.clone(),
-                    xai_grok_agent::prompt::context::PromptAudience::Primary,
+                    intelekt_agent::prompt::context::PromptAudience::Primary,
                     None,
                     None,
                     disable_web_search,

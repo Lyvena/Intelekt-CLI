@@ -82,7 +82,7 @@ pub(crate) fn run_wrapped_command(program: &str, args: &[String]) -> Result<i32>
     // Advertise to the wrapped program — and anything it spawns, e.g. a remote
     // `grok` reached over SSH — that its OSC 52 clipboard writes are being
     // intercepted here and copied to the real local clipboard. The inner grok
-    // reads this (see `xai_grok_pager_render::clipboard::osc52_sink_active`) to
+    // reads this (see `intelekt_pager_render::clipboard::osc52_sink_active`) to
     // *trust* OSC 52 even when it can't detect an OSC-52-capable terminal,
     // which is the usual SSH case (only `TERM` propagates, so Apple Terminal /
     // unknown brands look incapable and the inner grok would otherwise report
@@ -537,7 +537,7 @@ fn strip_osc_terminator(body: &[u8]) -> &[u8] {
 
 /// Write decoded clipboard payload to the local system clipboard.
 ///
-/// Delegates to [`xai_grok_shell::util::clipboard::set_text`] which uses
+/// Delegates to [`intelekt_shell::util::clipboard::set_text`] which uses
 /// `pbcopy` on macOS and `arboard` elsewhere. Failures are logged but do
 /// not propagate -- clipboard access is best-effort.
 fn set_local_clipboard(data: &[u8]) {
@@ -548,14 +548,14 @@ fn set_local_clipboard(data: &[u8]) {
             return;
         }
     };
-    if let Err(e) = xai_grok_shell::util::clipboard::set_text(text) {
+    if let Err(e) = intelekt_shell::util::clipboard::set_text(text) {
         tracing::warn!("clipboard copy failed: {e}");
     }
 }
 
 /// Encode a host clipboard image (or NONE) as a bracketed-paste frame.
 fn host_clipboard_image_frame() -> Vec<u8> {
-    let image = xai_grok_pager_render::clipboard::system_clipboard_get_image();
+    let image = intelekt_pager_render::clipboard::system_clipboard_get_image();
     crate::wrap_clipboard_image::encode_wrap_image_response(image.as_ref())
 }
 

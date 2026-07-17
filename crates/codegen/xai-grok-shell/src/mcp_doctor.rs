@@ -5,7 +5,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use serde::Serialize;
-use xai_grok_tools::types::config_source::ConfigSource;
+use intelekt_tools::types::config_source::ConfigSource;
 
 use crate::auth::GrokComConfig;
 use crate::session::managed_mcp;
@@ -94,7 +94,7 @@ struct DiscoveredServer {
 }
 
 fn discover_servers(cwd: &Path) -> (Vec<ConfigSourceStatus>, Vec<DiscoveredServer>) {
-    let trust_store = xai_grok_agent::plugins::TrustStore::load();
+    let trust_store = intelekt_agent::plugins::TrustStore::load();
     let mut plugins_cfg: crate::agent::config::PluginsConfig =
         crate::config::load_effective_config()
             .ok()
@@ -107,14 +107,14 @@ fn discover_servers(cwd: &Path) -> (Vec<ConfigSourceStatus>, Vec<DiscoveredServe
     // MCP as blocked; no session resolve has run for a one-shot doctor. Resolve
     // and record the verdict, then gate plugins on it.
     let project_trusted = crate::agent::folder_trust::resolve_and_record(cwd, None, false);
-    let discovered_plugins = xai_grok_agent::plugins::discover_plugins(
+    let discovered_plugins = intelekt_agent::plugins::discover_plugins(
         Some(cwd),
         &plugin_config,
         &trust_store,
         project_trusted,
     );
     plugin_config.populate_plugin_lists(&discovered_plugins);
-    let plugin_registry = xai_grok_agent::plugins::PluginRegistry::from_discovered(
+    let plugin_registry = intelekt_agent::plugins::PluginRegistry::from_discovered(
         discovered_plugins,
         &plugin_config.disabled,
         &plugin_config.enabled,
@@ -124,7 +124,7 @@ fn discover_servers(cwd: &Path) -> (Vec<ConfigSourceStatus>, Vec<DiscoveredServe
     let sourced = crate::session::managed_mcp::merge_managed_mcp_servers_sourced(
         cwd,
         Some(&plugin_registry),
-        &xai_grok_tools::types::compat::CompatConfig::default(),
+        &intelekt_tools::types::compat::CompatConfig::default(),
     );
 
     let mut config_count = 0usize;
@@ -147,18 +147,18 @@ fn discover_servers(cwd: &Path) -> (Vec<ConfigSourceStatus>, Vec<DiscoveredServe
 
     let mut sources = Vec::new();
 
-    let grok_home = xai_grok_tools::util::grok_home::grok_home();
+    let grok_home = intelekt_tools::util::grok_home::grok_home();
     let user_config = grok_home.join("config.toml");
     if user_config.is_file() {
         sources.push(ConfigSourceStatus {
-            path: "~/.grok/config.toml".to_string(),
+            path: "~/.intelekt/config.toml".to_string(),
             status: ConfigSourceState::Found {
                 server_count: config_count,
             },
         });
     } else {
         sources.push(ConfigSourceStatus {
-            path: "~/.grok/config.toml".to_string(),
+            path: "~/.intelekt/config.toml".to_string(),
             status: ConfigSourceState::NotFound,
         });
     }
@@ -271,7 +271,7 @@ fn managed_found(
 
 /// Discover managed `grok_com_*` servers if the user has xAI auth on disk.
 async fn try_discover_managed_servers() -> (ConfigSourceStatus, Vec<DiscoveredServer>) {
-    let grok_home = xai_grok_tools::util::grok_home::grok_home();
+    let grok_home = intelekt_tools::util::grok_home::grok_home();
     let grok_com_config = GrokComConfig::default();
     let auth_manager = Arc::new(crate::auth::AuthManager::new(&grok_home, grok_com_config));
 
@@ -335,7 +335,7 @@ fn resolve_command(command: &str) -> Option<String> {
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::null());
-    xai_grok_tools::util::detach_std_command(&mut cmd);
+    intelekt_tools::util::detach_std_command(&mut cmd);
     cmd.output()
         .ok()
         .filter(|o| o.status.success())
@@ -401,7 +401,7 @@ async fn check_handshake(
 }
 
 async fn check_tools_list(service: &mcp_servers::McpService) -> Check {
-    use xai_grok_mcp::rmcp::model::PaginatedRequestParams;
+    use intelekt_mcp::rmcp::model::PaginatedRequestParams;
     match service
         .list_tools(Some(PaginatedRequestParams::default()))
         .await
@@ -520,7 +520,7 @@ pub async fn run_doctor(cwd: &Path, name_filter: Option<&str>) -> DoctorReport {
     sources.push(managed_source);
     discovered.extend(managed_servers);
 
-    let allowlist = &xai_grok_workspace::permission::resolution::managed_settings().mcp_allowlist;
+    let allowlist = &intelekt_workspace::permission::resolution::managed_settings().mcp_allowlist;
     if allowlist.is_restricted() {
         let path = allowlist
             .source_path

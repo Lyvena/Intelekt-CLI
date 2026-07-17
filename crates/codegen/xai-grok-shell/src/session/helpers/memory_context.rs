@@ -5,8 +5,8 @@
 //! - Post-compaction: recover relevant memory after context is lost
 
 use xai_chat_state::{MEMORY_CONTEXT_CLOSE_TAG, MEMORY_CONTEXT_OPEN_TAG};
-use xai_grok_sampling_types::ConversationItem;
-use xai_grok_tools::types::memory_backend::{MemorySearchResult, format_staleness_note};
+use intelekt_sampling_types::ConversationItem;
+use intelekt_tools::types::memory_backend::{MemorySearchResult, format_staleness_note};
 
 /// Maximum characters to include per snippet in the injection.
 const SNIPPET_MAX_CHARS: usize = 500;
@@ -322,7 +322,7 @@ mod tests {
     /// overcounting attempts where memory search found nothing to inject.
     #[test]
     fn test_format_memory_reminder_empty_results_is_none() {
-        use xai_grok_tools::types::memory_backend::MemorySearchResult;
+        use intelekt_tools::types::memory_backend::MemorySearchResult;
         let results: Vec<MemorySearchResult> = vec![];
         let reminder = format_memory_reminder(&results);
         assert!(
@@ -337,7 +337,7 @@ mod tests {
     /// are actual results to inject.
     #[test]
     fn test_format_memory_reminder_with_results_is_some() {
-        use xai_grok_tools::types::memory_backend::MemorySearchResult;
+        use intelekt_tools::types::memory_backend::MemorySearchResult;
         let results = vec![MemorySearchResult {
             chunk_id: "test:0".into(),
             path: "/mem/MEMORY.md".into(),

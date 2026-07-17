@@ -794,13 +794,13 @@ mod tests {
     #[test]
     fn model_unavailable_with_switch() {
         let event = SessionEvent::ModelUnavailable {
-            previous_model_id: "grok-4.5".into(),
-            new_model_id: "grok-build".into(),
-            reason: "Model \"grok-4.5\" is no longer available.".into(),
+            previous_model_id: "intelekt-4.5".into(),
+            new_model_id: "intelekt-cli".into(),
+            reason: "Model \"intelekt-4.5\" is no longer available.".into(),
         };
         assert_eq!(
             event.message(),
-            "Model \"grok-4.5\" is no longer available. Switched to \"grok-build\"."
+            "Model \"intelekt-4.5\" is no longer available. Switched to \"intelekt-cli\"."
         );
     }
 

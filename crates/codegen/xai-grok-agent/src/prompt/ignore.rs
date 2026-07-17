@@ -26,7 +26,7 @@ pub fn is_ignored(path: &Path, gitignore: Option<&Gitignore>, repo_root: Option<
     let Some(gi) = gitignore else {
         return false;
     };
-    xai_grok_tools::gitignore::is_ignored(gi, path, repo_root)
+    intelekt_tools::gitignore::is_ignored(gi, path, repo_root)
 }
 
 fn get_global_gitignore_path() -> Option<PathBuf> {

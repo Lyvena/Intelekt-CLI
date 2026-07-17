@@ -221,7 +221,7 @@ pub struct AskUserQuestionInput {
 /// Blocks inside `run()` until the user responds or the configured wait
 /// budget elapses for the whole questionnaire (default [`RESPONSE_TIMEOUT`],
 /// 30 minutes). Sends a request over an in-process mpsc channel to a
-/// session-owned coordinator (in xai-grok-shell), which performs an ACP
+/// session-owned coordinator (in intelekt-shell), which performs an ACP
 /// `ext_method` round-trip to the client/pager. The response is sent back
 /// over a oneshot channel and formatted into the model-visible tool result.
 ///

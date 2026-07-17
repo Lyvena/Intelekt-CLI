@@ -1,5 +1,5 @@
 use agent_client_protocol as acp;
-use xai_grok_tools::implementations::grok_build::{
+use intelekt_tools::implementations::grok_build::{
     SCHEDULER_CREATE_TOOL_NAME, loop_schedule_instruction, loop_usage_message,
 };
 
@@ -7,7 +7,7 @@ use crate::slash::command::{CommandExecCtx, CommandResult, ScheduledTaskPreview,
 
 /// Pre-built slice for `LoopCommand::required_tools()`. Lifted to a
 /// module-level constant so the trait method can return a `'static`
-/// slice; the constant pulls the canonical name from `xai-grok-tools`
+/// slice; the constant pulls the canonical name from `intelekt-tools`
 /// so a tool rename surfaces here at compile time.
 const LOOP_REQUIRED_TOOLS: &[&str] = &[SCHEDULER_CREATE_TOOL_NAME];
 

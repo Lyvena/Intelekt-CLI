@@ -28,7 +28,7 @@ pub enum DeferredSessionStartup {
     },
     /// Fresh plain Grok session whose first prompt resumes a foreign tool session.
     ForeignResume {
-        tool: xai_grok_workspace::foreign_sessions::ForeignSessionTool,
+        tool: intelekt_workspace::foreign_sessions::ForeignSessionTool,
         native_id: String,
     },
 }
@@ -64,7 +64,7 @@ pub fn fork_session_params(
     parent_is_worktree: bool,
 ) -> serde_json::Value {
     let parent_cwd_str = parent_cwd.to_string_lossy().into_owned();
-    let source_cwd = xai_grok_shell::session::resolve_local_session_any_cwd(parent_session_id)
+    let source_cwd = intelekt_shell::session::resolve_local_session_any_cwd(parent_session_id)
         .unwrap_or_else(|| parent_cwd_str.clone());
     let mut payload = serde_json::json!(
         { "sourceSessionId" : parent_session_id, "sourceCwd" : source_cwd, "newCwd" :
@@ -82,8 +82,8 @@ pub fn fork_session_params(
 /// Mirrors in-session `/fork` reading `agent.session.is_worktree`.
 pub fn parent_session_is_worktree(session_id: &str, cwd: &Path) -> bool {
     let cwd_str = cwd.to_string_lossy();
-    let sessions_root = xai_grok_shell::util::grok_home::grok_home().join("sessions");
-    let encoded = xai_grok_shell::util::grok_home::encode_cwd_dirname(&cwd_str);
+    let sessions_root = intelekt_shell::util::grok_home::grok_home().join("sessions");
+    let encoded = intelekt_shell::util::grok_home::encode_cwd_dirname(&cwd_str);
     let summary_path = sessions_root
         .join(encoded)
         .join(session_id)
@@ -316,7 +316,7 @@ pub fn valid_conversation_id_shape(id: &str) -> bool {
 /// false-refuse CLI resume / non-entry loads under `--chat`.
 pub fn local_build_session_on_disk(session_id: &str, cwd: &Path) -> bool {
     let cwd_str = cwd.to_string_lossy();
-    xai_grok_shell::session::resolve_local_session(session_id, &cwd_str).is_some()
+    intelekt_shell::session::resolve_local_session(session_id, &cwd_str).is_some()
 }
 /// Pure policy: process-wide `--chat` refuses a local Build disk row unless the
 /// caller marked an explicit conversation entry (picker `source == "conversation"`).
@@ -400,7 +400,7 @@ pub fn effective_fork_new_cwd(process_cwd: &str, parent_cwd: Option<&Path>) -> S
 }
 /// Resolve most-recent session id for cwd, or error.
 async fn most_recent_session_id(cwd: &str) -> anyhow::Result<(String, Option<String>)> {
-    let summaries = xai_grok_shell::session::persistence::list_summaries(Some(cwd)).await?;
+    let summaries = intelekt_shell::session::persistence::list_summaries(Some(cwd)).await?;
     let first = summaries.first().ok_or_else(|| {
         anyhow::anyhow!(
             "No session found for current directory. \
@@ -414,10 +414,10 @@ async fn most_recent_session_id(cwd: &str) -> anyhow::Result<(String, Option<Str
 /// auth-provider refresher before the first `auth()`: without it, environments
 /// that mint credentials via `auth_provider_command` report `NoOauth`.
 pub(crate) fn pre_acp_auth_manager(
-    agent_config: &xai_grok_shell::agent::config::Config,
-) -> std::sync::Arc<xai_grok_shell::auth::AuthManager> {
-    let auth = std::sync::Arc::new(xai_grok_shell::auth::AuthManager::new(
-        &xai_grok_shell::util::grok_home::grok_home(),
+    agent_config: &intelekt_shell::agent::config::Config,
+) -> std::sync::Arc<intelekt_shell::auth::AuthManager> {
+    let auth = std::sync::Arc::new(intelekt_shell::auth::AuthManager::new(
+        &intelekt_shell::util::grok_home::grok_home(),
         agent_config.grok_com_config.clone(),
     ));
     auth.configure_refresher(
@@ -434,7 +434,7 @@ pub fn ensure_session_id_available(session_id: &str, cwd: &str) -> anyhow::Resul
     if uuid::Uuid::try_parse(session_id).is_err() {
         anyhow::bail!("Error: --session-id must be a valid UUID (got '{session_id}').");
     }
-    if xai_grok_shell::session::persistence::session_exists_for_cwd(session_id, cwd) {
+    if intelekt_shell::session::persistence::session_exists_for_cwd(session_id, cwd) {
         anyhow::bail!("Error: Session ID {session_id} is already in use.");
     }
     Ok(())
@@ -567,7 +567,7 @@ async fn resolve_existing_session(
     session_id: &str,
     cwd: &str,
 ) -> anyhow::Result<ResolvedExisting> {
-    if let Some(local_id) = xai_grok_shell::session::resolve_local_session(session_id, cwd) {
+    if let Some(local_id) = intelekt_shell::session::resolve_local_session(session_id, cwd) {
         tracing::info!(
             session_id = % session_id, local_id = % local_id, "Session found locally"
         );
@@ -577,7 +577,7 @@ async fn resolve_existing_session(
             title: None,
         });
     }
-    if let Some(original_cwd) = xai_grok_shell::session::resolve_local_session_any_cwd(session_id) {
+    if let Some(original_cwd) = intelekt_shell::session::resolve_local_session_any_cwd(session_id) {
         tracing::info!(
             session_id = % session_id, original_cwd = % original_cwd,
             "Session found locally under different CWD"
@@ -614,14 +614,14 @@ async fn resolve_existing_session(
         "Session {} not found locally, restoring from remote...",
         session_id
     );
-    let raw_config = xai_grok_shell::config::load_effective_config()
+    let raw_config = intelekt_shell::config::load_effective_config()
         .map_err(|e| anyhow::anyhow!("Failed to load config: {}", e))?;
-    let agent_config = xai_grok_shell::agent::config::Config::new_from_toml_cfg(&raw_config)
+    let agent_config = intelekt_shell::agent::config::Config::new_from_toml_cfg(&raw_config)
         .map_err(|e| anyhow::anyhow!("Failed to create agent config: {}", e))?;
-    use xai_grok_shell::agent::session_registry_client::SessionRegistryClient;
-    use xai_grok_shell::auth::{AuthManager, ensure_authenticated_or_noninteractive};
-    use xai_grok_shell::session::restore::restore_session_with_storage;
-    use xai_grok_shell::util::grok_home::grok_home;
+    use intelekt_shell::agent::session_registry_client::SessionRegistryClient;
+    use intelekt_shell::auth::{AuthManager, ensure_authenticated_or_noninteractive};
+    use intelekt_shell::session::restore::restore_session_with_storage;
+    use intelekt_shell::util::grok_home::grok_home;
     let deployment_key = agent_config.endpoints.deployment_key.clone();
     ensure_authenticated_or_noninteractive(
         &agent_config.grok_com_config,
@@ -639,7 +639,7 @@ async fn resolve_existing_session(
             .with_deployment_key(deployment_key.clone())
             .with_alpha_test_key(agent_config.endpoints.alpha_test_key.clone())
             .with_auth(auth_manager.clone());
-    let storage_client = xai_grok_shell::auth::credential_provider::build_storage_client_for_proxy(
+    let storage_client = intelekt_shell::auth::credential_provider::build_storage_client_for_proxy(
         &agent_config.endpoints.proxy_url(),
         deployment_key,
         agent_config.endpoints.alpha_test_key.clone(),
@@ -648,7 +648,7 @@ async fn resolve_existing_session(
         None,
         "grok-pager",
     );
-    let progress: xai_grok_shell::session::restore::ProgressCallback =
+    let progress: intelekt_shell::session::restore::ProgressCallback =
         Box::new(|event| eprintln!("  {}", event.display_line()));
     let result = restore_session_with_storage(
         &registry_client,
@@ -683,7 +683,7 @@ mod tests {
     fn deferred_startup_owner_take_is_atomic() {
         let mut actions = DeferredStartupActions {
             session: Some(DeferredSessionStartup::ForeignResume {
-                tool: xai_grok_workspace::foreign_sessions::ForeignSessionTool::Cursor,
+                tool: intelekt_workspace::foreign_sessions::ForeignSessionTool::Cursor,
                 native_id: "cursor-id".into(),
             }),
             prompt: Some("prompt".into()),
@@ -707,14 +707,14 @@ mod tests {
     #[test]
     fn intent_default_is_new_auto() {
         assert_eq!(
-            parse(&["grok"]).session_startup_intent().unwrap(),
+            parse(&["intelekt"]).session_startup_intent().unwrap(),
             SessionStartupIntent::NewAuto
         );
     }
     #[test]
     fn intent_resume_id() {
         assert_eq!(
-            parse(&["grok", "--resume", "abc"])
+            parse(&["intelekt", "--resume", "abc"])
                 .session_startup_intent()
                 .unwrap(),
             SessionStartupIntent::Resume {
@@ -726,7 +726,7 @@ mod tests {
     #[test]
     fn intent_resume_empty_is_most_recent() {
         assert_eq!(
-            parse(&["grok", "--resume"])
+            parse(&["intelekt", "--resume"])
                 .session_startup_intent()
                 .unwrap(),
             SessionStartupIntent::Resume {
@@ -738,7 +738,7 @@ mod tests {
     #[test]
     fn intent_continue() {
         assert_eq!(
-            parse(&["grok", "-c"]).session_startup_intent().unwrap(),
+            parse(&["intelekt", "-c"]).session_startup_intent().unwrap(),
             SessionStartupIntent::Resume {
                 session_id: None,
                 most_recent_for_cwd: true,
@@ -748,7 +748,7 @@ mod tests {
     #[test]
     fn intent_session_id_alone_is_new_with_id() {
         assert_eq!(
-            parse(&["grok", "--session-id", "my-id"])
+            parse(&["intelekt", "--session-id", "my-id"])
                 .session_startup_intent()
                 .unwrap(),
             SessionStartupIntent::NewWithId {
@@ -758,7 +758,7 @@ mod tests {
     }
     #[test]
     fn intent_session_id_with_resume_without_fork_errors() {
-        let err = parse(&["grok", "-r", "a", "-s", "b"])
+        let err = parse(&["intelekt", "-r", "a", "-s", "b"])
             .session_startup_intent()
             .unwrap_err();
         assert_eq!(err, StartupFlagError::SessionIdRequiresFork);
@@ -766,7 +766,7 @@ mod tests {
     #[test]
     fn intent_fork_with_resume() {
         assert_eq!(
-            parse(&["grok", "-r", "old", "--fork-session"])
+            parse(&["intelekt", "-r", "old", "--fork-session"])
                 .session_startup_intent()
                 .unwrap(),
             SessionStartupIntent::ForkFrom {
@@ -779,7 +779,7 @@ mod tests {
     #[test]
     fn intent_fork_with_resume_and_new_id() {
         assert_eq!(
-            parse(&["grok", "-r", "old", "--fork-session", "-s", "new"])
+            parse(&["intelekt", "-r", "old", "--fork-session", "-s", "new"])
                 .session_startup_intent()
                 .unwrap(),
             SessionStartupIntent::ForkFrom {
@@ -791,21 +791,21 @@ mod tests {
     }
     #[test]
     fn intent_fork_alone_errors() {
-        let err = parse(&["grok", "--fork-session"])
+        let err = parse(&["intelekt", "--fork-session"])
             .session_startup_intent()
             .unwrap_err();
         assert_eq!(err, StartupFlagError::ForkRequiresResumeOrContinue);
     }
     #[test]
     fn intent_fork_with_worktree_errors() {
-        let err = parse(&["grok", "-r", "a", "--fork-session", "-w"])
+        let err = parse(&["intelekt", "-r", "a", "--fork-session", "-w"])
             .session_startup_intent()
             .unwrap_err();
         assert_eq!(err, StartupFlagError::ForkWithWorktree);
     }
     #[test]
     fn intent_from_flags_matches_pager_args() {
-        let args = parse(&["grok", "-r", "old", "--fork-session", "-s", "new"]);
+        let args = parse(&["intelekt", "-r", "old", "--fork-session", "-s", "new"]);
         let from_flags = session_startup_intent_from_flags(SessionStartupFlags {
             session_id: Some("new"),
             resume_session_id: Some("old"),
@@ -906,7 +906,7 @@ mod tests {
     }
     #[test]
     fn materialize_ctx_chat_mode_from_args() {
-        assert!(!MaterializeCtx::from_pager_args(&parse(&["grok"])).chat_mode);
+        assert!(!MaterializeCtx::from_pager_args(&parse(&["intelekt"])).chat_mode);
     }
     /// Explicit-id resume under `--chat` passes the id through untouched:
     /// no disk resolution, no GCS restore (the cwd does not even exist).
@@ -1022,16 +1022,16 @@ mod tests {
     }
     /// The chat passthrough does not bypass the cwd-collision refusal that
     /// `app/mod.rs` runs on the materialized id.
-    #[serial_test::serial(GROK_HOME)]
+    #[serial_test::serial(INTELEKT_HOME)]
     #[tokio::test]
     async fn chat_resume_passthrough_keeps_cwd_collision_refusal() {
         let home = tempfile::tempdir().expect("home tempdir");
-        unsafe { std::env::set_var("GROK_HOME", home.path()) };
+        unsafe { std::env::set_var("INTELEKT_HOME", home.path()) };
         let cwd = tempfile::tempdir().expect("cwd tempdir");
         let cwd_str = cwd.path().to_string_lossy().to_string();
         let id = "aaaaaaaa-1111-2222-3333-444444444444";
-        let encoded = xai_grok_shell::util::grok_home::encode_cwd_dirname(&cwd_str);
-        let sessions_cwd_dir = xai_grok_shell::util::grok_home::grok_home()
+        let encoded = intelekt_shell::util::grok_home::encode_cwd_dirname(&cwd_str);
+        let sessions_cwd_dir = intelekt_shell::util::grok_home::grok_home()
             .join("sessions")
             .join(&encoded);
         struct RmDirOnDrop(std::path::PathBuf);

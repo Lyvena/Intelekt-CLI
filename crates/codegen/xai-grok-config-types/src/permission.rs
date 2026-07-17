@@ -1,4 +1,4 @@
-//! Permission-policy config value types, extracted from xai-grok-shell
+//! Permission-policy config value types, extracted from intelekt-shell
 //! (config dependency inversion).
 
 use serde::{Deserialize, Serialize};

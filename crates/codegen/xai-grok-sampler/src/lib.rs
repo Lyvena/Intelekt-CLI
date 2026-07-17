@@ -1,7 +1,7 @@
-//! xai-grok-sampler - Actor-based sampling layer for xAI grok.
+//! intelekt-sampler - Actor-based sampling layer for xAI grok.
 //!
 //! This crate extracts the HTTP streaming + retry logic out of
-//! `xai-grok-shell`'s session actor into a standalone, reusable
+//! `intelekt-shell`'s session actor into a standalone, reusable
 //! component built on the same actor pattern as `xai-hunk-tracker`.
 //!
 //! ## Layered API

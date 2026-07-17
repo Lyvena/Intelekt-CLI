@@ -13,7 +13,7 @@ use toml::Value as TomlValue;
 /// | requirement  | `[features] mcp_liveness_watchers` in `requirements.toml`       |
 /// | cli          | (none — no CLI flag)                                            |
 /// | env          | `GROK_MCP_LIVENESS_WATCHERS` (handled by `BoolFlag::env`)       |
-/// | config       | `[features] mcp_liveness_watchers` in `~/.grok/config.toml`     |
+/// | config       | `[features] mcp_liveness_watchers` in `~/.intelekt/config.toml`     |
 /// | managed      | `[features] mcp_liveness_watchers` in `managed_config.toml`     |
 /// | feature_flag | (none yet — remote settings plumbing TBD)                            |
 /// | default      | `true`                                                          |
@@ -51,7 +51,7 @@ pub fn resolve_mcp_liveness_watchers(
 /// | requirement  | `[features] mcp_auto_restart` in `requirements.toml`            |
 /// | cli          | (none — no CLI flag)                                            |
 /// | env          | `GROK_MCP_AUTO_RESTART` (handled by `BoolFlag::env`)            |
-/// | config       | `[features] mcp_auto_restart` in `~/.grok/config.toml`          |
+/// | config       | `[features] mcp_auto_restart` in `~/.intelekt/config.toml`          |
 /// | managed      | `[features] mcp_auto_restart` in `managed_config.toml`          |
 /// | feature_flag | (none yet — remote settings plumbing TBD)                            |
 /// | default      | `true`                                                          |
@@ -89,7 +89,7 @@ pub fn resolve_mcp_auto_restart(
 /// | requirement  | `[features] mcp_push_server_status` in `requirements.toml`      |
 /// | cli          | (none — no CLI flag)                                            |
 /// | env          | `GROK_MCP_PUSH_SERVER_STATUS` (handled by `BoolFlag::env`)      |
-/// | config       | `[features] mcp_push_server_status` in `~/.grok/config.toml`    |
+/// | config       | `[features] mcp_push_server_status` in `~/.intelekt/config.toml`    |
 /// | managed      | `[features] mcp_push_server_status` in `managed_config.toml`    |
 /// | feature_flag | (none yet — remote settings plumbing TBD)                            |
 /// | default      | `true`                                                          |
@@ -128,7 +128,7 @@ pub fn resolve_mcp_push_server_status(
 /// | requirement  | `[features] mcp_recursive_config_watch` in `requirements.toml`      |
 /// | cli          | (none — no CLI flag)                                                |
 /// | env          | `GROK_MCP_RECURSIVE_CONFIG_WATCH` (handled by `BoolFlag::env`)      |
-/// | config       | `[features] mcp_recursive_config_watch` in `~/.grok/config.toml`    |
+/// | config       | `[features] mcp_recursive_config_watch` in `~/.intelekt/config.toml`    |
 /// | managed      | `[features] mcp_recursive_config_watch` in `managed_config.toml`    |
 /// | feature_flag | (none yet — remote settings plumbing TBD)                                |
 /// | default      | `true`                                                              |
@@ -157,7 +157,7 @@ pub fn resolve_mcp_recursive_config_watch(
 }
 
 /// Default MCP startup-handshake timeout (seconds) when nothing overrides it.
-/// Kept in sync with `xai_grok_mcp::servers`'s standalone fallback.
+/// Kept in sync with `intelekt_mcp::servers`'s standalone fallback.
 pub const DEFAULT_MCP_STARTUP_TIMEOUT_SECS: u64 = 30;
 
 /// Env override for the MCP startup timeout, in milliseconds (shared with
@@ -272,7 +272,7 @@ mod mcp_startup_timeout_tests {
 // result via `set_mcp_max_output_bytes` so free-function truncation sees it.
 
 /// Default MCP tool-result inline cap (bytes).
-pub const DEFAULT_MAX_MCP_OUTPUT_BYTES: usize = xai_grok_tools::MCP_MAX_OUTPUT_BYTES;
+pub const DEFAULT_MAX_MCP_OUTPUT_BYTES: usize = intelekt_tools::MCP_MAX_OUTPUT_BYTES;
 
 /// Resolve the full stack for `remote` and seed the tools-crate effective limit.
 ///
@@ -282,7 +282,7 @@ pub const DEFAULT_MAX_MCP_OUTPUT_BYTES: usize = xai_grok_tools::MCP_MAX_OUTPUT_B
 /// this pushes the *fully resolved* value into tools (tools cannot re-read
 /// config/requirements on every use).
 pub fn cache_remote_max_mcp_output_bytes(remote: Option<u64>) {
-    xai_grok_tools::set_mcp_max_output_bytes(resolve_max_mcp_output_bytes(remote));
+    intelekt_tools::set_mcp_max_output_bytes(resolve_max_mcp_output_bytes(remote));
 }
 
 /// Extract `[mcp] max_output_bytes` from one TOML root. Positive integers only.
@@ -317,7 +317,7 @@ pub fn resolve_max_mcp_output_bytes(remote: Option<u64>) -> usize {
         .and_then(max_mcp_output_bytes_from_toml);
     resolve_max_mcp_output_bytes_precedence(
         requirements,
-        xai_grok_tools::mcp_max_output_bytes_from_env(),
+        intelekt_tools::mcp_max_output_bytes_from_env(),
         None, // project tier needs a cwd — see resolve_max_mcp_output_bytes_for_cwd
         config,
         remote_usize,
@@ -325,7 +325,7 @@ pub fn resolve_max_mcp_output_bytes(remote: Option<u64>) -> usize {
 }
 
 /// Project tier of the MCP output cap: `[mcp] max_output_bytes` from the
-/// `.grok/config.toml` chain (`cwd` → git root), deepest file wins.
+/// `.intelekt/config.toml` chain (`cwd` → git root), deepest file wins.
 ///
 /// Folder-trust-gated: an untrusted checkout must not raise (context-stuffing
 /// / cost vector) or lower the cap, matching how project plugin paths and
@@ -337,7 +337,7 @@ fn project_max_mcp_output_bytes(cwd: &std::path::Path) -> Option<usize> {
     let mut value = None;
     // Repo-root-first → cwd-last: later (deeper) files overwrite.
     for config_path in crate::config::find_project_configs(cwd) {
-        if let Ok(toml_val) = xai_grok_config::load_config_file(&config_path)
+        if let Ok(toml_val) = intelekt_config::load_config_file(&config_path)
             && let Some(v) = max_mcp_output_bytes_from_toml(&toml_val)
         {
             value = Some(v);
@@ -362,7 +362,7 @@ pub fn resolve_max_mcp_output_bytes_for_cwd(cwd: &std::path::Path) -> Option<usi
     let requirements = crate::config::load_merged_requirements()
         .as_ref()
         .and_then(max_mcp_output_bytes_from_toml);
-    if requirements.is_some() || xai_grok_tools::mcp_max_output_bytes_from_env().is_some() {
+    if requirements.is_some() || intelekt_tools::mcp_max_output_bytes_from_env().is_some() {
         return None;
     }
     project_max_mcp_output_bytes(cwd)
@@ -436,10 +436,10 @@ mod max_mcp_output_bytes_tests {
         // Make it a git repo so the chain walks subdir → root.
         git2::Repository::init(root).unwrap();
         let sub = root.join("crates").join("thing");
-        std::fs::create_dir_all(sub.join(".grok")).unwrap();
-        std::fs::create_dir_all(root.join(".grok")).unwrap();
+        std::fs::create_dir_all(sub.join(".intelekt")).unwrap();
+        std::fs::create_dir_all(root.join(".intelekt")).unwrap();
         std::fs::write(
-            root.join(".grok/config.toml"),
+            root.join(".intelekt/config.toml"),
             "[mcp]\nmax_output_bytes = 30000\n",
         )
         .unwrap();
@@ -449,18 +449,18 @@ mod max_mcp_output_bytes_tests {
 
         // The subdir sets it too → deeper file wins.
         std::fs::write(
-            sub.join(".grok/config.toml"),
+            sub.join(".intelekt/config.toml"),
             "[mcp]\nmax_output_bytes = 50000\n",
         )
         .unwrap();
         assert_eq!(super::project_max_mcp_output_bytes(&sub), Some(50_000));
 
         // A deeper file *without* the key does not mask the root value.
-        std::fs::write(sub.join(".grok/config.toml"), "[ui]\nvim_mode = true\n").unwrap();
+        std::fs::write(sub.join(".intelekt/config.toml"), "[ui]\nvim_mode = true\n").unwrap();
         assert_eq!(super::project_max_mcp_output_bytes(&sub), Some(30_000));
 
         // No .grok files with the key anywhere → None.
-        std::fs::remove_file(root.join(".grok/config.toml")).unwrap();
+        std::fs::remove_file(root.join(".intelekt/config.toml")).unwrap();
         assert_eq!(super::project_max_mcp_output_bytes(&sub), None);
     }
 }

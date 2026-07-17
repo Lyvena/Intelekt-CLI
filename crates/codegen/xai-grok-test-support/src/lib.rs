@@ -5,7 +5,7 @@
     unreachable_code,
     dead_code
 )]
-//! Shared test utilities for grok-build crates: mock inference server, SSE
+//! Shared test utilities for intelekt-cli crates: mock inference server, SSE
 //! generators, ACP stdio client, headless runner, env sandbox.
 //!
 //! Provides:

@@ -4,7 +4,7 @@ use xai_chat_state::conversation_util::replace_or_insert_system_head;
 impl SessionActor {
     pub(super) async fn handle_set_session_model(
         &self,
-        sampling_config: xai_grok_sampler::SamplerConfig,
+        sampling_config: intelekt_sampler::SamplerConfig,
         use_concise: bool,
         apply_prompt_override: bool,
         skip_prompt_rewrite: bool,
@@ -35,7 +35,7 @@ impl SessionActor {
             .set(sampling_config.compactions_remaining);
         self.compaction_at_tokens
             .set(sampling_config.compaction_at_tokens);
-        xai_grok_telemetry::unified_log::info(
+        intelekt_telemetry::unified_log::info(
             "backend_search: model switch",
             Some(self.session_info.id.0.as_ref()),
             Some(serde_json::json!(
@@ -46,7 +46,7 @@ impl SessionActor {
             )),
         );
         self.chat_state_handle
-            .update_sampling_config(xai_grok_sampling_types::SamplingConfig {
+            .update_sampling_config(intelekt_sampling_types::SamplingConfig {
                 base_url: sampling_config.base_url.clone(),
                 model: sampling_config.model.clone(),
                 max_completion_tokens: sampling_config.max_completion_tokens,
@@ -83,7 +83,7 @@ impl SessionActor {
                 if let ConversationItem::System(sys) = item {
                     if use_concise {
                         sys.content = std::sync::Arc::<str>::from(
-                            xai_grok_agent::prompt::template::COMPACT_SYSTEM_PROMPT,
+                            intelekt_agent::prompt::template::COMPACT_SYSTEM_PROMPT,
                         );
                     } else {
                         sys.content =
@@ -117,9 +117,9 @@ impl SessionActor {
     }
     /// Handle [`SessionCommand::RebuildAgentForDefinition`].
     ///
-    /// Builds a fresh [`xai_grok_agent::Agent`] from the cached
+    /// Builds a fresh [`intelekt_agent::Agent`] from the cached
     /// [`crate::session::agent_rebuild::AgentRebuildSpec`] + the supplied
-    /// [`xai_grok_agent::AgentDefinition`], replaces `self.agent`,
+    /// [`intelekt_agent::AgentDefinition`], replaces `self.agent`,
     /// rewrites the system message in the conversation, persists the
     /// new prompt artifacts, and updates `active_agent_type`.
     ///
@@ -129,7 +129,7 @@ impl SessionActor {
     /// been sent yet). Defense-in-depth: rejects if a turn is in flight.
     pub(super) async fn handle_rebuild_agent_for_definition(
         &self,
-        definition: xai_grok_agent::AgentDefinition,
+        definition: intelekt_agent::AgentDefinition,
     ) -> Result<(), acp::Error> {
         {
             let state = self.state.lock().await;
@@ -193,7 +193,7 @@ impl SessionActor {
             let snapshot = self.tool_metadata_snapshot.clone();
             let tool_index = crate::session::tool_index::Bm25ToolSearchIndex::new(snapshot);
             bridge
-                .update_resource(xai_grok_tools::types::tool_index::ToolIndex(
+                .update_resource(intelekt_tools::types::tool_index::ToolIndex(
                     std::sync::Arc::new(tool_index),
                 ))
                 .await;
@@ -202,7 +202,7 @@ impl SessionActor {
             }
             let plan_path = self.plan_mode.lock().plan_file_path().to_path_buf();
             bridge
-                .update_resource(xai_grok_tools::types::resources::PlanFilePath(plan_path))
+                .update_resource(intelekt_tools::types::resources::PlanFilePath(plan_path))
                 .await;
             if let Some(display_cwd) = self.display_cwd.get() {
                 bridge
@@ -211,7 +211,7 @@ impl SessionActor {
             }
             bridge
                 .update_resource(
-                    xai_grok_tools::implementations::grok_build::update_goal::GoalUpdateHandle(
+                    intelekt_tools::implementations::grok_build::update_goal::GoalUpdateHandle(
                         self.goal_update_tx.clone(),
                     ),
                 )

@@ -105,7 +105,7 @@ pub fn open_url(url: &str) -> bool {
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null());
-    xai_grok_tools::util::detach_std_command(&mut command);
+    intelekt_tools::util::detach_std_command(&mut command);
     match command.spawn() {
         Ok(_) => true,
         Err(e) => {
@@ -291,7 +291,7 @@ pub fn try_open_url(url: &str, filter: SchemeFilter) -> OpenUrlResult {
 /// failure, the original string is returned unchanged so this is safe to apply
 /// to opener input from untrusted sources.
 ///
-/// Used by the SuperGrok upsell flow to attribute clicks to `referrer=grok-build`,
+/// Used by the SuperGrok upsell flow to attribute clicks to `referrer=intelekt-cli`,
 /// matching the OAuth consent screen and x.ai/cli marketing links regardless of
 /// what the remote settings `gate_url` value happens to be.
 pub fn ensure_query_param(url: &str, key: &str, value: &str) -> String {
@@ -459,8 +459,8 @@ mod tests {
 
     #[test]
     fn ensure_query_param_appends_when_missing() {
-        let out = ensure_query_param("https://grok.com/supergrok", "referrer", "grok-build");
-        assert_eq!(out, "https://grok.com/supergrok?referrer=grok-build");
+        let out = ensure_query_param("https://grok.com/supergrok", "referrer", "intelekt-cli");
+        assert_eq!(out, "https://grok.com/supergrok?referrer=intelekt-cli");
     }
 
     #[test]
@@ -468,7 +468,7 @@ mod tests {
         let out = ensure_query_param(
             "https://grok.com/supergrok?referrer=other",
             "referrer",
-            "grok-build",
+            "intelekt-cli",
         );
         assert_eq!(out, "https://grok.com/supergrok?referrer=other");
     }
@@ -478,11 +478,11 @@ mod tests {
         let out = ensure_query_param(
             "https://grok.com/supergrok?heavy=1",
             "referrer",
-            "grok-build",
+            "intelekt-cli",
         );
         assert_eq!(
             out,
-            "https://grok.com/supergrok?heavy=1&referrer=grok-build"
+            "https://grok.com/supergrok?heavy=1&referrer=intelekt-cli"
         );
     }
 
@@ -490,19 +490,19 @@ mod tests {
     fn ensure_query_param_preserves_fragment() {
         // The current remote settings value uses a hash fragment for client-side
         // routing (`grok.com/#supergrok`); we still want the referrer attached.
-        let out = ensure_query_param("https://grok.com/#supergrok", "referrer", "grok-build");
-        assert_eq!(out, "https://grok.com/?referrer=grok-build#supergrok");
+        let out = ensure_query_param("https://grok.com/#supergrok", "referrer", "intelekt-cli");
+        assert_eq!(out, "https://grok.com/?referrer=intelekt-cli#supergrok");
     }
 
     #[test]
     fn ensure_query_param_returns_unchanged_on_parse_failure() {
-        let out = ensure_query_param("not a url", "referrer", "grok-build");
+        let out = ensure_query_param("not a url", "referrer", "intelekt-cli");
         assert_eq!(out, "not a url");
     }
 
     #[test]
     fn ensure_query_param_url_encodes_value() {
-        let out = ensure_query_param("https://grok.com/supergrok", "referrer", "grok build");
+        let out = ensure_query_param("https://grok.com/supergrok", "referrer", "intelekt cli");
         assert_eq!(out, "https://grok.com/supergrok?referrer=grok+build");
     }
 
@@ -568,7 +568,7 @@ mod tests {
 
     #[test]
     fn browser_unavailable_message_includes_full_url() {
-        let url = "https://grok.com/supergrok?referrer=grok-build";
+        let url = "https://grok.com/supergrok?referrer=intelekt-cli";
         let msg = browser_unavailable_message(url);
         assert!(msg.contains("Could not open a browser"));
         assert!(msg.contains(url));

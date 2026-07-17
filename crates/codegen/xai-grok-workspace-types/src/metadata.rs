@@ -6,7 +6,7 @@
 //!
 //! `Extensions` (the typed in-process map) is
 //! deliberately **not** defined here -- it is in-process only and not
-//! serialized, so it lives in the runtime `xai-grok-workspace` crate
+//! serialized, so it lives in the runtime `intelekt-workspace` crate
 //! alongside the transport implementations.
 //!
 //! # Implementation notes

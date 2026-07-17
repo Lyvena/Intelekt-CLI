@@ -142,7 +142,7 @@
 
     #[test]
     fn retry_exhausted_rate_limited_message_is_auth_aware() {
-        use xai_grok_shell::sampling::error::{
+        use intelekt_shell::sampling::error::{
             RATE_LIMITED_USER_MESSAGE_API_KEY, RATE_LIMITED_USER_MESSAGE_OAUTH,
         };
 
@@ -312,7 +312,7 @@
             &RetryState::Failed {
                 error_type: "proxy_error".into(),
                 message:
-                    "API error (status 402 Payment Required): Grok Build usage balance exhausted"
+                    "API error (status 402 Payment Required): Intelekt CLI usage balance exhausted"
                         .into(),
             },
             &mut session,
@@ -728,7 +728,7 @@
             .subagent_sessions
             .insert(child_sid.into(), make_subagent_info(child_sid));
         let mut child_view = make_agent(Some(child_sid));
-        child_view.context_state = Some(xai_grok_shell::session::ContextInfo::from_notification(
+        child_view.context_state = Some(intelekt_shell::session::ContextInfo::from_notification(
             90_000, 131_072,
         ));
         agent
@@ -800,7 +800,7 @@
 
     #[test]
     fn retry_failed_encrypted_content_sets_model_incompatible() {
-        use xai_grok_shell::extensions::notification::RetryState;
+        use intelekt_shell::extensions::notification::RetryState;
         let mut session = make_session(Some("s1"));
         let mut scrollback = ScrollbackState::new();
 
@@ -822,7 +822,7 @@
 
     #[test]
     fn retry_failed_other_type_does_not_set_model_incompatible() {
-        use xai_grok_shell::extensions::notification::RetryState;
+        use intelekt_shell::extensions::notification::RetryState;
         let mut session = make_session(Some("s1"));
         let mut scrollback = ScrollbackState::new();
 

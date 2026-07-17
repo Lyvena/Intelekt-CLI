@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use xai_grok_config_types::DisplayRefreshSettings;
+use intelekt_config_types::DisplayRefreshSettings;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
@@ -229,7 +229,7 @@ impl Default for UiConfig {
         Self {
             max_thoughts_width: DEFAULT_MAX_THOUGHTS_WIDTH,
             theme: None,
-            fork_secondary_model: xai_grok_models::default_model().to_string(),
+            fork_secondary_model: intelekt_models::default_model().to_string(),
             yolo: false,
             ui_theme: None,
             compact_mode: false,

@@ -4,7 +4,7 @@ use crate::hub::HubConfig;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
-use xai_grok_tools::registry::types::{SessionContext, ToolRegistryBuilder, ToolServerConfig};
+use intelekt_tools::registry::types::{SessionContext, ToolRegistryBuilder, ToolServerConfig};
 /// Default capacity for the workspace event broadcast channel.
 pub const DEFAULT_EVENT_BUFFER_CAPACITY: usize = 64;
 /// A session-lifetime terminal backend paired with its explicit shutdown hook.
@@ -18,7 +18,7 @@ pub const DEFAULT_EVENT_BUFFER_CAPACITY: usize = 64;
 /// of the last `Arc` drop.
 #[derive(Clone)]
 pub struct SessionTerminalBackend {
-    backend: Arc<dyn xai_grok_tools::computer::types::TerminalBackend>,
+    backend: Arc<dyn intelekt_tools::computer::types::TerminalBackend>,
     shutdown: Arc<dyn Fn() + Send + Sync>,
 }
 impl SessionTerminalBackend {
@@ -29,7 +29,7 @@ impl SessionTerminalBackend {
     /// this is the only way to satisfy `build_terminal_backend` for other
     /// backend types); in-repo factories use [`Self::local`].
     pub fn new(
-        backend: Arc<dyn xai_grok_tools::computer::types::TerminalBackend>,
+        backend: Arc<dyn intelekt_tools::computer::types::TerminalBackend>,
         shutdown: Arc<dyn Fn() + Send + Sync>,
     ) -> Self {
         Self { backend, shutdown }
@@ -37,8 +37,8 @@ impl SessionTerminalBackend {
     /// Wrap a [`LocalTerminalBackend`], wiring the shutdown hook to its
     /// cancel token.
     ///
-    /// [`LocalTerminalBackend`]: xai_grok_tools::computer::local::LocalTerminalBackend
-    pub fn local(backend: xai_grok_tools::computer::local::LocalTerminalBackend) -> Self {
+    /// [`LocalTerminalBackend`]: intelekt_tools::computer::local::LocalTerminalBackend
+    pub fn local(backend: intelekt_tools::computer::local::LocalTerminalBackend) -> Self {
         let canceller = backend.clone();
         Self {
             backend: Arc::new(backend),
@@ -46,7 +46,7 @@ impl SessionTerminalBackend {
         }
     }
     /// The type-erased backend, as injected into toolset resolves.
-    pub fn backend(&self) -> &Arc<dyn xai_grok_tools::computer::types::TerminalBackend> {
+    pub fn backend(&self) -> &Arc<dyn intelekt_tools::computer::types::TerminalBackend> {
         &self.backend
     }
     /// Explicitly shut the backend down: kills all of its child process
@@ -80,7 +80,7 @@ pub trait SessionContextFactory: Send + Sync {
         session_id: &str,
         cwd: PathBuf,
         session_env: Arc<HashMap<String, String>>,
-        backend: Arc<dyn xai_grok_tools::computer::types::TerminalBackend>,
+        backend: Arc<dyn intelekt_tools::computer::types::TerminalBackend>,
     ) -> SessionContext;
     /// Build the session-lifetime terminal backend for a new session.
     /// Called once per session create/fork; toolset re-resolves reuse the
@@ -118,7 +118,7 @@ pub struct WorkspaceBindConfig {
     pub yolo_mode: Option<bool>,
     /// Plane-configured toolset in the gRPC wire shape. An empty list is
     /// treated as unset (proto3 repeated default).
-    pub tools: Option<Vec<xai_grok_tools_api::ToolConfigEntry>>,
+    pub tools: Option<Vec<intelekt_tools_api::ToolConfigEntry>>,
     pub manifest_version: Option<String>,
     pub manifest_hash: Option<String>,
     /// Opt-in: forward `BackgroundTaskCompleted` system notifications for this session.
@@ -139,7 +139,7 @@ pub enum ResolvedToolset {
     /// (sandbox-launched standalone servers) — fail closed.
     MissingToolConfig,
     /// `tools` entries were specified but at least one failed to convert.
-    InvalidToolConfig(xai_grok_tools::registry::proto_convert::ToolConfigEntryError),
+    InvalidToolConfig(intelekt_tools::registry::proto_convert::ToolConfigEntryError),
 }
 /// A resolved toolset plus the pinned entries this binary could not serve.
 #[derive(Debug)]
@@ -204,7 +204,7 @@ impl WorkspaceBindConfig {
     ) -> ResolvedToolset {
         if let Some(cfg) = &self.tool_config {
             for (idx, tool) in cfg.tools.iter().enumerate() {
-                if let Err(err) = xai_grok_tools_api::config_validation::validate_name_override(
+                if let Err(err) = intelekt_tools_api::config_validation::validate_name_override(
                     idx,
                     &tool.id,
                     tool.name_override.as_deref(),
@@ -222,7 +222,7 @@ impl WorkspaceBindConfig {
                     unserved_tool_ids.push(entry.id.clone());
                     continue;
                 }
-                match xai_grok_tools::registry::proto_convert::tool_config_from_entry(
+                match intelekt_tools::registry::proto_convert::tool_config_from_entry(
                     idx,
                     entry.clone(),
                 ) {
@@ -234,7 +234,7 @@ impl WorkspaceBindConfig {
             if !unserved_tool_ids.is_empty() {
                 tracing::warn!(
                     unserved = ? unserved_tool_ids, config_manifest_version = ? self
-                    .manifest_version, running_version = xai_grok_version::VERSION,
+                    .manifest_version, running_version = intelekt_version::VERSION,
                     "session.bind: serving known subset of pinned tools"
                 );
             }
@@ -713,9 +713,9 @@ pub struct WorkspaceConfig {
     pub event_buffer_capacity: usize,
     /// Pluggable [`SessionContext`] / [`ToolRegistryBuilder`] producer.
     pub session_factory: Arc<dyn SessionContextFactory>,
-    /// Global hook sources (e.g. `~/.claude/settings.json`, `~/.grok/hooks/`).
+    /// Global hook sources (e.g. `~/.claude/settings.json`, `~/.intelekt/hooks/`).
     pub hook_global_sources: Vec<HookSourceConfig>,
-    /// Project-scoped hook sources (e.g. `<project>/.grok/hooks/`).
+    /// Project-scoped hook sources (e.g. `<project>/.intelekt/hooks/`).
     pub hook_project_sources: Vec<HookSourceConfig>,
     /// Skill discovery configuration: additional skill paths and
     /// path-prefix ignore list. Stored on `WorkspaceShared` for
@@ -741,7 +741,7 @@ pub struct WorkspaceConfig {
     /// Runtime-tunable timing/threshold config for the tool server.
     pub status_config: crate::status_config::StatusConfig,
     /// Folder-trust verdict for repo-local (project-scoped) LSP servers from
-    /// `<cwd>/.grok/lsp.json`: `false` drops them at load, `true` keeps them. The
+    /// `<cwd>/.intelekt/lsp.json`: `false` drops them at load, `true` keeps them. The
     /// shell caller resolves the verdict and threads it in; callers without a
     /// folder-trust decision pass `true`.
     pub project_lsp_trusted: bool,
@@ -908,13 +908,13 @@ impl std::fmt::Debug for AgentSessionConfig {
     }
 }
 /// A single hook source: either a JSON settings file or a directory of
-/// `*.json` hook files. Maps 1:1 to [`xai_grok_hooks::discovery::HookSource`]
+/// `*.json` hook files. Maps 1:1 to [`intelekt_hooks::discovery::HookSource`]
 /// but uses owned `PathBuf` so the config struct is `'static`.
 #[derive(Debug, Clone)]
 pub enum HookSourceConfig {
     /// A single JSON settings file (e.g. `~/.claude/settings.json`).
     SettingsFile(PathBuf),
-    /// A directory of `*.json` hook files (e.g. `~/.grok/hooks/`).
+    /// A directory of `*.json` hook files (e.g. `~/.intelekt/hooks/`).
     Directory(PathBuf),
 }
 /// Filesystem isolation strategy for a forked session.

@@ -303,8 +303,8 @@ fn sentinel_session_harness() -> events::SessionHarness {
     events::SessionHarness {
         session_id: "sess-1".into(),
         client_identifier: Some("grok-pager".into()),
-        model_id: "grok-4".into(),
-        agent_name: "grok-build-plan".into(),
+        model_id: "intelekt-4".into(),
+        agent_name: "intelekt-cli-plan".into(),
         permission_mode: crate::enums::PermissionMode::Ask,
         mcp_server_names: vec!["secret-server".into(), "other".into()],
         plugin_names: vec!["p1".into()],
@@ -376,7 +376,7 @@ fn api_request_snapshot_and_token_usage() {
     emit_event_into(
         &stream,
         &events::ModelResponseReceived {
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             duration_ms: 1200,
             stop_reason: Some("stop".into()),
             prompt_tokens: Some(100),
@@ -410,7 +410,7 @@ fn one_failed_turn_increments_error_count_exactly_once() {
     emit_event_into(
         &stream,
         &events::RateLimitHit {
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             attempts: 3,
         },
     );
@@ -418,7 +418,7 @@ fn one_failed_turn_increments_error_count_exactly_once() {
         &stream,
         &events::ApiError {
             error_category: "rate_limit".into(),
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             status_code: Some(429),
             duration_ms: Some(10),
         },
@@ -429,7 +429,7 @@ fn one_failed_turn_increments_error_count_exactly_once() {
             outcome: events::Outcome::Error,
             duration_ms: 10,
             tool_call_count: 0,
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             cancellation_category: None,
             error_category: Some("rate_limit".into()),
         },
@@ -471,7 +471,7 @@ fn turn_error_increments_error_count() {
             outcome: events::Outcome::Error,
             duration_ms: 10,
             tool_call_count: 0,
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             cancellation_category: None,
             error_category: Some("server_error".into()),
         },
@@ -560,7 +560,7 @@ fn user_prompt_gates_off_drops_text() {
         &stream,
         &events::PromptSubmitted {
             prompt_length: 26,
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             client_identifier: None,
             screen_mode: Some("minimal".into()),
             prompt_text: Some("CANARY_PROMPT secret user text".into()),
@@ -590,7 +590,7 @@ fn user_prompt_screen_mode_sanitized_and_optional() {
         &stream,
         &events::PromptSubmitted {
             prompt_length: 5,
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             client_identifier: None,
             screen_mode: Some("Evil Free Text".into()),
             prompt_text: None,
@@ -600,7 +600,7 @@ fn user_prompt_screen_mode_sanitized_and_optional() {
         &stream,
         &events::PromptSubmitted {
             prompt_length: 5,
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             client_identifier: None,
             screen_mode: None,
             prompt_text: None,
@@ -618,7 +618,7 @@ fn user_prompt_gate_on_exports_scrubbed_text() {
         &stream,
         &events::PromptSubmitted {
             prompt_length: 10,
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             client_identifier: None,
             screen_mode: None,
             prompt_text: Some("fix the bug; token sk-CANARYabcdefghij1234567890".into()),
@@ -745,7 +745,7 @@ fn unmapped_events_produce_nothing() {
 /// `EmitterOrigin::Workspace` (`log_session_event_with_origin`) must not carry
 /// an external mapping — the fan-out hook deliberately lives only in the
 /// Shell-origin wrappers. The workspace-only surface today is the
-/// xai-grok-workspace sampler events, which live outside this crate and have
+/// intelekt-workspace sampler events, which live outside this crate and have
 /// no `telemetry_event!` binding here; this pin guards the in-crate set.
 #[test]
 fn workspace_only_events_have_no_external_mapping() {

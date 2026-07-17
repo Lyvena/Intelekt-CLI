@@ -15,7 +15,7 @@ fn voice_final_appends_to_dashboard_dispatch() {
     };
     crate::voice::handle_voice_event(
         &mut app,
-        xai_grok_voice::VoiceEvent::UtteranceFinal {
+        intelekt_voice::VoiceEvent::UtteranceFinal {
             text: "the build".into(),
         },
     );
@@ -58,7 +58,7 @@ fn voice_final_appends_to_peek_reply_when_peek_open() {
     };
     crate::voice::handle_voice_event(
         &mut app,
-        xai_grok_voice::VoiceEvent::UtteranceFinal {
+        intelekt_voice::VoiceEvent::UtteranceFinal {
             text: "with voice".into(),
         },
     );
@@ -113,7 +113,7 @@ fn voice_final_discarded_when_peek_row_changed_after_stop() {
 
     crate::voice::handle_voice_event(
         &mut app,
-        xai_grok_voice::VoiceEvent::UtteranceFinal {
+        intelekt_voice::VoiceEvent::UtteranceFinal {
             text: "late words".into(),
         },
     );
@@ -150,13 +150,13 @@ fn voice_dashboard_dispatch_submit_tears_down_voice() {
     assert!(app.voice_interim().is_none());
     assert!(matches!(
         rx.try_recv(),
-        Ok(xai_grok_voice::VoiceCommand::PttRelease)
+        Ok(intelekt_voice::VoiceCommand::PttRelease)
     ));
 
     // A late final after submit must NOT refill the dispatch box.
     crate::voice::handle_voice_event(
         &mut app,
-        xai_grok_voice::VoiceEvent::UtteranceFinal {
+        intelekt_voice::VoiceEvent::UtteranceFinal {
             text: "late words".into(),
         },
     );
@@ -224,13 +224,13 @@ fn voice_dashboard_peek_reply_submit_tears_down_voice() {
     );
     assert!(matches!(
         rx.try_recv(),
-        Ok(xai_grok_voice::VoiceCommand::PttRelease)
+        Ok(intelekt_voice::VoiceCommand::PttRelease)
     ));
 }
 
 #[test]
 fn voice_target_bound_at_start_dispatch_vs_peek() {
-    if !xai_grok_voice::AUDIO_SUPPORTED {
+    if !intelekt_voice::AUDIO_SUPPORTED {
         return;
     }
     use crate::views::dashboard::DashboardRowId;
@@ -325,7 +325,7 @@ fn voice_auto_stops_when_peek_row_changes() {
 /// must not bind there: starting is a no-op and an active capture auto-stops.
 #[test]
 fn voice_suppressed_while_dashboard_popup_open() {
-    if !xai_grok_voice::AUDIO_SUPPORTED {
+    if !intelekt_voice::AUDIO_SUPPORTED {
         return;
     }
     let mut app = test_app_with_agent();
@@ -957,14 +957,14 @@ fn dashboard_confirm_worktree_without_git_repo_creates_nothing() {
 #[test]
 fn dashboard_confirm_worktree_applies_pending_model_and_plan() {
     let mut app = test_app();
-    seed_model(&mut app, "grok-4.5", "Grok 4.5");
+    seed_model(&mut app, "intelekt-4.5", "Grok 4.5");
     open_dashboard(&mut app);
     app.cwd_has_git_ancestor = true;
-    let model_id = acp::ModelId::new(std::sync::Arc::from("grok-4.5"));
+    let model_id = acp::ModelId::new(std::sync::Arc::from("intelekt-4.5"));
     if let Some(d) = app.dashboard.as_mut() {
         d.pending_model = Some(crate::views::dashboard::PendingDispatchModel {
             id: model_id.clone(),
-            effort: Some(xai_grok_shell::sampling::types::ReasoningEffort::High),
+            effort: Some(intelekt_shell::sampling::types::ReasoningEffort::High),
             display: "Grok 4.5".to_string(),
         });
         d.pending_mode = crate::views::dashboard::DashboardDispatchMode::Plan;
@@ -993,13 +993,13 @@ fn dashboard_confirm_worktree_applies_pending_model_and_plan() {
         agent.session.deferred_model_switch,
         Some((
             model_id,
-            Some(xai_grok_shell::sampling::types::ReasoningEffort::High)
+            Some(intelekt_shell::sampling::types::ReasoningEffort::High)
         )),
         "effort must be stashed for the shell",
     );
     assert_eq!(
         agent.deferred_session_mode,
-        Some(xai_grok_tools::types::SessionMode::Plan),
+        Some(intelekt_tools::types::SessionMode::Plan),
     );
     assert_eq!(agent.plan_mode_pending, Some(true));
 }
@@ -1619,7 +1619,7 @@ fn seed_model(app: &mut AppView, id: &str, name: &str) {
 #[test]
 fn dashboard_slash_model_stages_pending_model() {
     let mut app = test_app();
-    seed_model(&mut app, "grok-4.5", "Grok 4.5");
+    seed_model(&mut app, "intelekt-4.5", "Grok 4.5");
     open_dashboard(&mut app);
     let effects = dispatch_dashboard_dispatch_slash(&mut app, "/model grok-4.5".into());
     assert!(
@@ -1634,7 +1634,7 @@ fn dashboard_slash_model_stages_pending_model() {
         .pending_model
         .as_ref()
         .expect("pending_model must be set");
-    assert_eq!(pending.id.0.as_ref(), "grok-4.5");
+    assert_eq!(pending.id.0.as_ref(), "intelekt-4.5");
     assert_eq!(pending.display, "Grok 4.5");
     assert!(pending.effort.is_none());
     // The catalog snapshot's `current` tracks the staged model so the
@@ -1647,7 +1647,7 @@ fn dashboard_slash_model_stages_pending_model() {
             .current
             .as_ref()
             .map(|id| id.0.as_ref()),
-        Some("grok-4.5"),
+        Some("intelekt-4.5"),
         "staging must update the snapshot's current selection",
     );
 }
@@ -1692,7 +1692,7 @@ fn dashboard_slash_restricted_command_upsells_via_toast() {
 #[test]
 fn dashboard_slash_command_error_gets_error_glyph_prefix() {
     let mut app = test_app();
-    seed_model(&mut app, "grok-4.5", "Grok 4.5");
+    seed_model(&mut app, "intelekt-4.5", "Grok 4.5");
     open_dashboard(&mut app);
     let effects = dispatch_dashboard_dispatch_slash(&mut app, "/model nonexistent".into());
     assert!(effects.is_empty(), "a failed command must not dispatch");
@@ -1775,7 +1775,7 @@ fn dashboard_plan_description_transforms_snapshot_and_chip_ranges() {
     );
     assert_eq!(
         agent.deferred_session_mode,
-        Some(xai_grok_tools::types::SessionMode::Plan)
+        Some(intelekt_tools::types::SessionMode::Plan)
     );
 }
 
@@ -1925,12 +1925,12 @@ fn dashboard_cycle_mode_skips_always_approve_under_policy_pin() {
 fn dashboard_open_reseeds_pending_model_and_mode() {
     use crate::views::dashboard::DashboardDispatchMode;
     let mut app = test_app();
-    seed_model(&mut app, "grok-4.5", "Grok 4.5");
+    seed_model(&mut app, "intelekt-4.5", "Grok 4.5");
     open_dashboard(&mut app);
     // Stage a model + non-default mode as if from a previous session.
     if let Some(d) = app.dashboard.as_mut() {
         d.pending_model = Some(crate::views::dashboard::PendingDispatchModel {
-            id: acp::ModelId::new(std::sync::Arc::from("grok-4.5")),
+            id: acp::ModelId::new(std::sync::Arc::from("intelekt-4.5")),
             effort: None,
             display: "Grok 4.5".to_string(),
         });
@@ -2140,13 +2140,13 @@ fn dashboard_dispatch_new_agent_is_working_with_prompt_title() {
 #[test]
 fn dashboard_dispatch_applies_pending_model_and_plan() {
     let mut app = test_app();
-    seed_model(&mut app, "grok-4.5", "Grok 4.5");
+    seed_model(&mut app, "intelekt-4.5", "Grok 4.5");
     open_dashboard(&mut app);
-    let model_id = acp::ModelId::new(std::sync::Arc::from("grok-4.5"));
+    let model_id = acp::ModelId::new(std::sync::Arc::from("intelekt-4.5"));
     if let Some(d) = app.dashboard.as_mut() {
         d.pending_model = Some(crate::views::dashboard::PendingDispatchModel {
             id: model_id.clone(),
-            effort: Some(xai_grok_shell::sampling::types::ReasoningEffort::High),
+            effort: Some(intelekt_shell::sampling::types::ReasoningEffort::High),
             display: "Grok 4.5".to_string(),
         });
         d.pending_mode = crate::views::dashboard::DashboardDispatchMode::Plan;
@@ -2164,13 +2164,13 @@ fn dashboard_dispatch_applies_pending_model_and_plan() {
         agent.session.deferred_model_switch,
         Some((
             model_id,
-            Some(xai_grok_shell::sampling::types::ReasoningEffort::High)
+            Some(intelekt_shell::sampling::types::ReasoningEffort::High)
         )),
         "effort must be stashed for the shell"
     );
     assert_eq!(
         agent.deferred_session_mode,
-        Some(xai_grok_tools::types::SessionMode::Plan),
+        Some(intelekt_tools::types::SessionMode::Plan),
     );
     assert_eq!(agent.plan_mode_pending, Some(true));
 }
@@ -2183,13 +2183,13 @@ fn dashboard_dispatch_applies_pending_model_and_plan() {
 #[test]
 fn dashboard_new_agent_button_applies_pending_model_and_plan() {
     let mut app = test_app();
-    seed_model(&mut app, "grok-4.5", "Grok 4.5");
+    seed_model(&mut app, "intelekt-4.5", "Grok 4.5");
     open_dashboard(&mut app);
-    let model_id = acp::ModelId::new(std::sync::Arc::from("grok-4.5"));
+    let model_id = acp::ModelId::new(std::sync::Arc::from("intelekt-4.5"));
     if let Some(d) = app.dashboard.as_mut() {
         d.pending_model = Some(crate::views::dashboard::PendingDispatchModel {
             id: model_id.clone(),
-            effort: Some(xai_grok_shell::sampling::types::ReasoningEffort::High),
+            effort: Some(intelekt_shell::sampling::types::ReasoningEffort::High),
             display: "Grok 4.5".to_string(),
         });
         d.pending_mode = crate::views::dashboard::DashboardDispatchMode::Plan;
@@ -2207,13 +2207,13 @@ fn dashboard_new_agent_button_applies_pending_model_and_plan() {
         agent.session.deferred_model_switch,
         Some((
             model_id,
-            Some(xai_grok_shell::sampling::types::ReasoningEffort::High)
+            Some(intelekt_shell::sampling::types::ReasoningEffort::High)
         )),
         "effort must be stashed for the shell"
     );
     assert_eq!(
         agent.deferred_session_mode,
-        Some(xai_grok_tools::types::SessionMode::Plan),
+        Some(intelekt_tools::types::SessionMode::Plan),
     );
     assert_eq!(agent.plan_mode_pending, Some(true));
 }
@@ -2228,7 +2228,7 @@ fn dashboard_deferred_plan_mode_applied_on_session_created() {
     let session_id: acp::SessionId = "new-session".into();
     app.agents.get_mut(&id).unwrap().session.session_id = None;
     app.agents.get_mut(&id).unwrap().deferred_session_mode =
-        Some(xai_grok_tools::types::SessionMode::Plan);
+        Some(intelekt_tools::types::SessionMode::Plan);
 
     let effects = dispatch(
         Action::TaskComplete(TaskResult::SessionCreated {
@@ -3905,7 +3905,7 @@ fn dashboard_upgrade_cta_paints_arms_rect_and_ctrl_o_override() {
     };
     use ratatui::buffer::Buffer;
     use ratatui::layout::Rect;
-    use xai_grok_telemetry::events::AnnouncementCtaSurface;
+    use intelekt_telemetry::events::AnnouncementCtaSurface;
 
     let registry = ActionRegistry::defaults();
     let agents: indexmap::IndexMap<AgentId, crate::app::agent_view::AgentView> =
@@ -5214,7 +5214,7 @@ fn dashboard_permission_followup_rejects_with_message() {
 fn dashboard_question_answer_sends_and_clears() {
     use crate::views::prompt_widget::StashedPrompt;
     use crate::views::question_view::QuestionViewState;
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         AskUserQuestionMode, Question, QuestionOption,
     };
 
@@ -5263,7 +5263,7 @@ fn dashboard_question_answer_walks_multiple_questions() {
     use crate::views::dashboard::peek::{PeekPanelState, compute_peek_fields};
     use crate::views::prompt_widget::StashedPrompt;
     use crate::views::question_view::QuestionViewState;
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         AskUserQuestionMode, Question, QuestionOption,
     };
 

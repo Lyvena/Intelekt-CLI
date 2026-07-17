@@ -5,17 +5,17 @@
 //!
 //! ```bash
 //! # Test workspace profile (should allow writes to CWD, block ~/Desktop)
-//! cargo run -p xai-grok-sandbox --example sandbox_smoke_test
+//! cargo run -p intelekt-sandbox --example sandbox_smoke_test
 //!
 //! # Test strict profile
-//! cargo run -p xai-grok-sandbox --example sandbox_smoke_test -- strict
+//! cargo run -p intelekt-sandbox --example sandbox_smoke_test -- strict
 //!
 //! # Test read-only profile
-//! cargo run -p xai-grok-sandbox --example sandbox_smoke_test -- read-only
+//! cargo run -p intelekt-sandbox --example sandbox_smoke_test -- read-only
 //! ```
 
 use std::path::Path;
-use xai_grok_sandbox::{ProfileName, SandboxManager};
+use intelekt_sandbox::{ProfileName, SandboxManager};
 
 fn main() {
     // Parse profile from args (default: workspace).

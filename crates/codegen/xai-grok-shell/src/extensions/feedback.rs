@@ -22,7 +22,7 @@ use crate::session::{
 };
 use crate::upload::gcs::WithAuth as _;
 use xai_file_utils::gcs::upload_bytes;
-use xai_grok_telemetry::id::agent_id;
+use intelekt_telemetry::id::agent_id;
 
 #[tracing::instrument(skip_all, fields(method = %args.method))]
 pub async fn handle(agent: &MvpAgent, args: &acp::ExtRequest) -> ExtResult {

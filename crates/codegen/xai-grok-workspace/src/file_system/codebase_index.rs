@@ -15,11 +15,11 @@ use std::sync::{Arc, Weak};
 
 use xai_codebase_graph::{IndexManager, IndexManagerConfig, IndexManagerHandle};
 
-use xai_grok_tools::util::grok_home::grok_home;
+use intelekt_tools::util::grok_home::grok_home;
 
 /// Get the cache path for a cwd's index.
 ///
-/// Cache is stored in: `~/.grok/indexes/{url_encoded_cwd}/goto_index.bin`
+/// Cache is stored in: `~/.intelekt/indexes/{url_encoded_cwd}/goto_index.bin`
 pub fn get_index_cache_path(cwd: &Path) -> PathBuf {
     let encoded = urlencoding::encode(&cwd.to_string_lossy()).into_owned();
     grok_home()

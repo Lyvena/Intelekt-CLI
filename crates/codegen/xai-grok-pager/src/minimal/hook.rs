@@ -1,14 +1,14 @@
 //! Inversion-of-control seam for the optional minimal (scrollback-native)
 //! render mode.
 //!
-//! `xai-grok-pager` cannot depend on `xai-grok-pager-minimal`: that crate reads
+//! `intelekt-pager` cannot depend on `intelekt-pager-minimal`: that crate reads
 //! this crate's view model (`AppView`, the `views::*` widgets, `scrollback`),
 //! so a direct dependency would form a cargo cycle. Instead the minimal crate
 //! registers its entry points here via [`install`], and this crate dispatches
 //! into them through the stored function pointers.
 //!
-//! The composition-root binary (`xai-grok-pager-bin`) wires it up once at
-//! startup by calling `xai_grok_pager_minimal::install()`. When nothing has
+//! The composition-root binary (`intelekt-pager-bin`) wires it up once at
+//! startup by calling `intelekt_pager_minimal::install()`. When nothing has
 //! installed the seam, the pager's `ScreenMode::Minimal` branches are inert
 //! (`draw` is a no-op, `/transcript` falls back to the empty case) — the
 //! default full-screen and inline render paths never touch this module.
@@ -19,7 +19,7 @@ use crate::app::PagerTerminal;
 use crate::app::app_view::AppView;
 
 /// Per-frame minimal render entry point
-/// (`xai_grok_pager_minimal::draw`).
+/// (`intelekt_pager_minimal::draw`).
 pub type MinimalDrawFn = fn(&mut AppView, &mut PagerTerminal);
 
 /// The set of hooks the minimal crate installs.

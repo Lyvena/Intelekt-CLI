@@ -3,10 +3,10 @@ use std::sync::Arc;
 
 use serde::Deserialize;
 use serde_json::json;
-// rmcp is quarantined in xai-grok-mcp; see that crate's docs.
-use xai_grok_mcp::rmcp;
-use xai_grok_mcp::rmcp::ServerHandler;
-use xai_grok_mcp::rmcp::model::{
+// rmcp is quarantined in intelekt-mcp; see that crate's docs.
+use intelekt_mcp::rmcp;
+use intelekt_mcp::rmcp::ServerHandler;
+use intelekt_mcp::rmcp::model::{
     CallToolRequestParams, CallToolResult, ContentBlock, ErrorData as McpError, JsonObject,
     ListToolsResult, PaginatedRequestParams, ServerCapabilities, ServerInfo, Tool,
 };
@@ -222,8 +222,8 @@ mod unit_tests {
         use serde_json::json;
         use std::borrow::Cow;
         use std::sync::Arc;
-        use xai_grok_mcp::rmcp;
-        use xai_grok_mcp::rmcp::model::Tool as RmcpTool;
+        use intelekt_mcp::rmcp;
+        use intelekt_mcp::rmcp::model::Tool as RmcpTool;
 
         // Simulate an MCP tool schema like browser_goto would have
         let schema_json = json!({
@@ -267,8 +267,8 @@ mod unit_tests {
         use serde_json::json;
         use std::borrow::Cow;
         use std::sync::Arc;
-        use xai_grok_mcp::rmcp;
-        use xai_grok_mcp::rmcp::model::Tool as RmcpTool;
+        use intelekt_mcp::rmcp;
+        use intelekt_mcp::rmcp::model::Tool as RmcpTool;
 
         // Build an rmcp Tool with a real schema (properties, required, etc.)
         let server_schema = json!({

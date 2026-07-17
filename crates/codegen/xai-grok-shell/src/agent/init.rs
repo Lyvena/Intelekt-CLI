@@ -184,14 +184,14 @@ pub fn update_telemetry_config(config: &AgentConfig, auth_manager: &AuthManager)
             .and_then(|rs| rs.subscription_tier_display.clone()),
         auth_manager.current_or_expired().as_ref(),
     );
-    xai_grok_telemetry::client::init(
+    intelekt_telemetry::client::init(
         config.telemetry.clone(),
         config.resolve_telemetry_mode().value,
         user_id,
         team_id,
         config.endpoints.deployment_key.clone(),
         crate::http::origin_client_info_from_env(),
-        xai_grok_version::VERSION.to_owned(),
+        intelekt_version::VERSION.to_owned(),
         subscription_tier,
         crate::http::shared_client(),
     );

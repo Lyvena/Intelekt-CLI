@@ -498,7 +498,7 @@ impl WorkspaceHandle {
         };
         let (events, _drop_rx) = tokio::sync::broadcast::channel(capacity);
         let (hook_registry, hook_load_errors) = {
-            use xai_grok_hooks::discovery::{HookSource, load_hooks_from_sources};
+            use intelekt_hooks::discovery::{HookSource, load_hooks_from_sources};
             fn to_hook_source(s: &HookSourceConfig) -> HookSource<'_> {
                 match s {
                     HookSourceConfig::SettingsFile(p) => HookSource::SettingsFile(p.as_path()),
@@ -526,9 +526,9 @@ impl WorkspaceHandle {
             );
             (registry, errors)
         };
-        let lsp: Option<Arc<dyn xai_grok_tools::implementations::lsp::LspBackend>> = {
+        let lsp: Option<Arc<dyn intelekt_tools::implementations::lsp::LspBackend>> = {
             let sourced =
-                xai_grok_tools::implementations::lsp::config::load_servers_with_plugins_sourced(
+                intelekt_tools::implementations::lsp::config::load_servers_with_plugins_sourced(
                     &config.root_cwd,
                     &[],
                     &[],
@@ -536,21 +536,21 @@ impl WorkspaceHandle {
                     &[],
                 );
             let servers =
-                xai_grok_tools::implementations::lsp::config::filter_project_lsp_when_untrusted(
+                intelekt_tools::implementations::lsp::config::filter_project_lsp_when_untrusted(
                     sourced,
                     config.project_lsp_trusted,
                 );
             if servers.is_empty() {
                 None
             } else {
-                use xai_grok_tools::implementations::lsp::{
+                use intelekt_tools::implementations::lsp::{
                     LspBackend, LspBackendAdapter, LspManager,
                 };
                 let mgr = Arc::new(tokio::sync::Mutex::new(LspManager::new(
                     servers,
                     config.root_cwd.clone(),
                     true,
-                    xai_grok_tools::notification::ToolNotificationHandle::noop(),
+                    intelekt_tools::notification::ToolNotificationHandle::noop(),
                 )));
                 let adapter = Arc::new(LspBackendAdapter::new(mgr));
                 adapter.ensure_started_background();
@@ -686,7 +686,7 @@ impl WorkspaceHandle {
         &self,
         session_id: impl Into<String>,
         cwd: Option<std::path::PathBuf>,
-        tool_config: Option<xai_grok_tools::registry::types::ToolServerConfig>,
+        tool_config: Option<intelekt_tools::registry::types::ToolServerConfig>,
         capability: CapabilityMode,
         viewer_ctx: Option<xai_tool_runtime::WorkspaceViewerContext>,
         system_notifications: bool,
@@ -724,7 +724,7 @@ impl WorkspaceHandle {
         session_id: impl Into<String>,
         cwd: std::path::PathBuf,
         hunk_tracker: HunkTrackerHandle,
-        tool_config: Option<xai_grok_tools::registry::types::ToolServerConfig>,
+        tool_config: Option<intelekt_tools::registry::types::ToolServerConfig>,
         capability: CapabilityMode,
     ) -> WorkspaceResult<Arc<WorkspaceSession>> {
         self.create_session_with_tracker_and_viewer_ctx(
@@ -744,7 +744,7 @@ impl WorkspaceHandle {
         session_id: impl Into<String>,
         cwd: std::path::PathBuf,
         hunk_tracker: HunkTrackerHandle,
-        tool_config: Option<xai_grok_tools::registry::types::ToolServerConfig>,
+        tool_config: Option<intelekt_tools::registry::types::ToolServerConfig>,
         capability: CapabilityMode,
         viewer_ctx: Option<xai_tool_runtime::WorkspaceViewerContext>,
         system_notifications: bool,
@@ -765,7 +765,7 @@ impl WorkspaceHandle {
         let mcp_snapshot = self.shared.mcp_tools_snapshot.load_full();
         let hub_snapshot = self.shared.hub_tools_snapshot.load_full();
         let system_notify_channel = system_notifications
-            .then(xai_grok_tools::notification::types::ToolNotificationHandle::channel);
+            .then(intelekt_tools::notification::types::ToolNotificationHandle::channel);
         let system_notify_handle = system_notify_channel.as_ref().map(|(h, _)| h.clone());
         let (effective, toolset, terminal_backend) = {
             let _span = LocalSpan::enter_with_local_parent("tool_server.toolset_resolve")
@@ -817,7 +817,7 @@ impl WorkspaceHandle {
         &self,
         caller_session_id: &str,
         session_id: &str,
-        new_config: xai_grok_tools::registry::types::ToolServerConfig,
+        new_config: intelekt_tools::registry::types::ToolServerConfig,
     ) -> crate::error::WorkspaceResult<()> {
         let session = self
             .session(session_id)
@@ -844,7 +844,7 @@ impl WorkspaceHandle {
     pub(crate) async fn resolve_and_swap_session_toolset(
         &self,
         session: &Arc<crate::session::WorkspaceSession>,
-        new_config: xai_grok_tools::registry::types::ToolServerConfig,
+        new_config: intelekt_tools::registry::types::ToolServerConfig,
         trigger: SwapTrigger,
     ) -> crate::error::WorkspaceResult<SwapOutcome> {
         let _update_guard = session.update_lock.lock().await;
@@ -911,7 +911,7 @@ impl WorkspaceHandle {
     async fn resolve_and_swap_session_toolset_locked(
         &self,
         session: &Arc<crate::session::WorkspaceSession>,
-        new_config: xai_grok_tools::registry::types::ToolServerConfig,
+        new_config: intelekt_tools::registry::types::ToolServerConfig,
         new_fingerprint: Option<serde_json::Value>,
         trigger: SwapTrigger,
     ) -> crate::error::WorkspaceResult<SwapOutcome> {
@@ -1021,7 +1021,7 @@ impl WorkspaceHandle {
         let _ = self
             .shared
             .events
-            .send(xai_grok_workspace_types::WorkspaceEvent::ToolsChanged {
+            .send(intelekt_workspace_types::WorkspaceEvent::ToolsChanged {
                 session_id: session_id.to_owned(),
             });
         Ok(SwapOutcome::Swapped)
@@ -1032,7 +1032,7 @@ impl WorkspaceHandle {
     pub(crate) async fn rebind_existing_hub_session(
         &self,
         session_id: &str,
-        explicit_cfg: Option<xai_grok_tools::registry::types::ToolServerConfig>,
+        explicit_cfg: Option<intelekt_tools::registry::types::ToolServerConfig>,
         bind_fingerprint: Option<serde_json::Value>,
     ) -> Option<(Arc<crate::session::WorkspaceSession>, RebindOutcome)> {
         let session = self.session(session_id)?;
@@ -1627,7 +1627,7 @@ impl WorkspaceHandle {
     /// reloads (e.g. plugin hook appending) mutate the live registry
     /// in place via the `RwLock` on `WorkspaceShared`. The returned
     /// clone is not affected by subsequent mutations.
-    pub fn hook_registry(&self) -> xai_grok_hooks::discovery::HookRegistry {
+    pub fn hook_registry(&self) -> intelekt_hooks::discovery::HookRegistry {
         self.shared.hook_registry.read().clone()
     }
     /// Non-fatal errors from the initial hook discovery pass at
@@ -1635,7 +1635,7 @@ impl WorkspaceHandle {
     ///
     /// Empty when all hook files parsed cleanly. Not updated on
     /// mid-session hook mutations (e.g. plugin hook appending).
-    pub fn hook_load_errors(&self) -> &[xai_grok_hooks::error::HookError] {
+    pub fn hook_load_errors(&self) -> &[intelekt_hooks::error::HookError] {
         &self.shared.hook_load_errors
     }
     /// Canonicalize the workspace root directory.
@@ -2260,7 +2260,7 @@ impl WorkspaceHandle {
             let mut rx = shared.events.subscribe();
             loop {
                 match rx.recv().await {
-                    Ok(xai_grok_workspace_types::WorkspaceEvent::FsChanged { ref path, kind }) => {
+                    Ok(intelekt_workspace_types::WorkspaceEvent::FsChanged { ref path, kind }) => {
                         if let Some(idx) = shared.codebase_indexes.lock().get(&index_root) {
                             let event =
                                 crate::fs_notify::ws_event_to_codebase_graph_event(path, kind);
@@ -2271,7 +2271,7 @@ impl WorkspaceHandle {
                             }
                         }
                     }
-                    Ok(xai_grok_workspace_types::WorkspaceEvent::GitHeadChanged { .. }) => {
+                    Ok(intelekt_workspace_types::WorkspaceEvent::GitHeadChanged { .. }) => {
                         let idx_opt = shared.codebase_indexes.lock().get(&index_root);
                         if let Some(idx) = idx_opt {
                             crate::fs_notify::refresh_codebase_graph_after_head_change(
@@ -2307,7 +2307,7 @@ impl WorkspaceHandle {
             let mut rx = handle.shared.events.subscribe();
             loop {
                 match rx.recv().await {
-                    Ok(xai_grok_workspace_types::WorkspaceEvent::ToolsChanged { session_id }) => {
+                    Ok(intelekt_workspace_types::WorkspaceEvent::ToolsChanged { session_id }) => {
                         if tool_defs_reemit_gate(
                             handle.shared.tool_defs_enabled,
                             &handle.shared.tool_defs_last_emit,
@@ -2484,7 +2484,7 @@ impl WorkspaceHandle {
         };
         use xai_computer_hub_mcp_adapter::McpBridge;
         use xai_computer_hub_sdk::ToolServerHandler as _;
-        use xai_grok_mcp::servers::MCP_TOOL_NAME_DELIMITER;
+        use intelekt_mcp::servers::MCP_TOOL_NAME_DELIMITER;
         use xai_tool_protocol::SessionId;
         let tool_server = {
             let hub_guard = self.shared.hub_handle.lock().await;
@@ -2512,22 +2512,22 @@ impl WorkspaceHandle {
         let event_writer = self.shared.session_event_writer(session_id);
         let rt_handle = tokio::runtime::Handle::current();
         let mcp_results: Vec<
-            Result<xai_grok_mcp::servers::McpClient, xai_grok_mcp::servers::McpError>,
+            Result<intelekt_mcp::servers::McpClient, intelekt_mcp::servers::McpError>,
         > = tokio::task::spawn_blocking(move || {
             use std::collections::HashMap;
-            use xai_grok_mcp::oauth_config::McpOAuthConfigMap;
-            use xai_grok_mcp::servers::{McpClientTimeoutOverrides, McpMetaConfigMap};
+            use intelekt_mcp::oauth_config::McpOAuthConfigMap;
+            use intelekt_mcp::servers::{McpClientTimeoutOverrides, McpMetaConfigMap};
             let overrides_map: HashMap<String, McpClientTimeoutOverrides> = HashMap::new();
             let meta_config_map = McpMetaConfigMap::new();
             let oauth_config_map = McpOAuthConfigMap::new();
-            rt_handle.block_on(xai_grok_mcp::servers::start_mcp_servers(
+            rt_handle.block_on(intelekt_mcp::servers::start_mcp_servers(
                 configs,
                 Some(&session_id_owned),
                 &overrides_map,
                 &meta_config_map,
                 &oauth_config_map,
                 &event_writer,
-                xai_grok_mcp::servers::OauthInteractivity::Interactive,
+                intelekt_mcp::servers::OauthInteractivity::Interactive,
             ))
         })
         .await
@@ -2628,7 +2628,7 @@ impl WorkspaceHandle {
             let _ =
                 self.shared
                     .events
-                    .send(xai_grok_workspace_types::WorkspaceEvent::ToolsChanged {
+                    .send(intelekt_workspace_types::WorkspaceEvent::ToolsChanged {
                         session_id: session_id.to_owned(),
                     });
         }
@@ -2792,7 +2792,7 @@ impl WorkspaceHandle {
     /// emit one `WorkspaceEvent::ToolsChanged` per session.
     pub fn on_mcp_snapshot_changed(
         &self,
-        new_snapshot: Vec<xai_grok_tools::registry::types::ToolConfig>,
+        new_snapshot: Vec<intelekt_tools::registry::types::ToolConfig>,
     ) -> usize {
         self.shared.mcp_tools_snapshot.store(Arc::new(new_snapshot));
         tokio::task::block_in_place(|| {
@@ -2805,7 +2805,7 @@ impl WorkspaceHandle {
     /// Bulk-replace hub tool configs and re-resolve every session.
     pub fn on_hub_tools_changed(
         &self,
-        new_hub_tools: Vec<xai_grok_tools::registry::types::ToolConfig>,
+        new_hub_tools: Vec<intelekt_tools::registry::types::ToolConfig>,
     ) -> usize {
         self.shared
             .hub_tools_snapshot
@@ -2868,7 +2868,7 @@ impl WorkspaceHandle {
                         .pointer("/metadata")
                         .map(crate::config::WorkspaceBindConfig::from_metadata)
                         .unwrap_or_default();
-                    let empty_toolset = || xai_grok_tools::registry::types::ToolServerConfig {
+                    let empty_toolset = || intelekt_tools::registry::types::ToolServerConfig {
                         tools: vec![],
                         behavior_preset: None,
                     };
@@ -2907,7 +2907,7 @@ impl WorkspaceHandle {
                                  on session.bind (absent, or dropped as malformed — see \
                                  server logs) and this workspace requires one (presets are \
                                  not supported; server version {})",
-                                    xai_grok_version::VERSION
+                                    intelekt_version::VERSION
                                 ),
                             );
                             Some(empty_toolset())
@@ -2921,7 +2921,7 @@ impl WorkspaceHandle {
                             resolve_error = Some(
                                 format!(
                                     "invalid_tool_config: {err} (server version {})",
-                                    xai_grok_version::VERSION
+                                    intelekt_version::VERSION
                                 ),
                             );
                             Some(empty_toolset())
@@ -3171,7 +3171,7 @@ impl WorkspaceHandle {
         )?;
         tracing::info!("WorkspaceHandle::connect_hub — connected, starting server + listeners");
         let (activity_notify_handle, activity_notify_rx) =
-            xai_grok_tools::notification::types::ToolNotificationHandle::channel();
+            intelekt_tools::notification::types::ToolNotificationHandle::channel();
         let activity_feed_task = tokio::spawn(run_activity_feed(
             self.shared.activity_tracker.clone(),
             activity_notify_rx,
@@ -3443,7 +3443,7 @@ impl WorkspaceHandle {
 /// with the same `tool_id` (which would duplicate the bind response and
 /// silently first-win at dispatch).
 fn build_session_routed_handlers(
-    toolset: &xai_grok_tools::registry::types::FinalizedToolset,
+    toolset: &intelekt_tools::registry::types::FinalizedToolset,
     ws: &WorkspaceHandle,
 ) -> Vec<Arc<dyn xai_computer_hub_sdk::ToolServerHandler>> {
     let tool_kinds = toolset.tool_kinds();
@@ -3487,9 +3487,9 @@ fn build_session_routed_handlers(
 /// strands the count.
 pub(crate) fn apply_background_task_notification(
     tracker: &crate::activity::ActivityTracker,
-    notification: &xai_grok_tools::notification::types::ToolNotification,
+    notification: &intelekt_tools::notification::types::ToolNotification,
 ) {
-    use xai_grok_tools::notification::types::ToolNotification;
+    use intelekt_tools::notification::types::ToolNotification;
     match notification {
         ToolNotification::BashExecutionBackgrounded(bg) => {
             tracker.background_task_started(&bg.task_id);
@@ -3506,7 +3506,7 @@ pub(crate) fn apply_background_task_notification(
 pub(crate) async fn run_activity_feed(
     tracker: Arc<crate::activity::ActivityTracker>,
     mut rx: tokio::sync::mpsc::UnboundedReceiver<
-        xai_grok_tools::notification::types::ToolNotification,
+        intelekt_tools::notification::types::ToolNotification,
     >,
 ) {
     while let Some(notification) = rx.recv().await {
@@ -3753,7 +3753,7 @@ pub async fn connect_local_workspace(
         allow_insecure_ws,
         diag,
     };
-    let tool_config = xai_grok_agent::workspace_grok_build_toolset();
+    let tool_config = intelekt_agent::workspace_grok_build_toolset();
     let mut ws_config = WorkspaceConfig::new_for_proxy(
         cwd,
         Arc::new(factory),
@@ -3831,15 +3831,15 @@ pub async fn connect_local_workspace(
 ///
 /// Precedence:
 /// 1. `$GROK_WORKSPACE_HOME` (operator override).
-/// 2. `<grok_home>/workspace`, where `<grok_home>` honours `$GROK_HOME` and
-///    otherwise falls back to `~/.grok` (see [`xai_grok_config::grok_home`]).
+/// 2. `<grok_home>/workspace`, where `<grok_home>` honours `$INTELEKT_HOME` and
+///    otherwise falls back to `~/.intelekt` (see [`intelekt_config::grok_home`]).
 pub fn resolve_workspace_home() -> std::path::PathBuf {
     if let Ok(p) = std::env::var("GROK_WORKSPACE_HOME")
         && !p.trim().is_empty()
     {
         return std::path::PathBuf::from(p);
     }
-    xai_grok_config::grok_home().join("workspace")
+    intelekt_config::grok_home().join("workspace")
 }
 /// Skill `ignore` entries for the allow-list: subdirs of `dir` not in the
 /// comma-separated list (`bundled__` prefix optional). Blank list → none;
@@ -4095,7 +4095,7 @@ fn ephemeral_workspace_home() -> std::path::PathBuf {
 }
 /// Resolve `workspace_rewind_all_outcomes` from `GROK_WORKSPACE_REWIND_ALL_OUTCOMES` (default off).
 fn rewind_all_outcomes_from_env() -> bool {
-    xai_grok_config::env_bool("GROK_WORKSPACE_REWIND_ALL_OUTCOMES").unwrap_or(false)
+    intelekt_config::env_bool("GROK_WORKSPACE_REWIND_ALL_OUTCOMES").unwrap_or(false)
 }
 /// Flush the session toolset's `ResourcesPersistence` to disk (a fresh
 /// snapshot, waiting for the atomic-rename write to land), then read the bytes
@@ -4265,7 +4265,7 @@ impl WorkspaceHandle {
         use crate::session::tool_config::WorkspaceSessionContextFactory;
         let config = WorkspaceConfig {
             root_cwd: cwd,
-            default_tool_config: xai_grok_tools::registry::types::ToolServerConfig {
+            default_tool_config: intelekt_tools::registry::types::ToolServerConfig {
                 tools: vec![],
                 behavior_preset: None,
             },
@@ -4355,9 +4355,9 @@ pub(crate) mod tests {
         TestSessionContextFactory, baseline_config, tc,
     };
     use std::sync::Arc;
-    use xai_grok_tools::registry::types::ToolServerConfig;
-    use xai_grok_tools::types::tool::ToolKind;
-    use xai_grok_workspace_types::WorkspaceEvent;
+    use intelekt_tools::registry::types::ToolServerConfig;
+    use intelekt_tools::types::tool::ToolKind;
+    use intelekt_workspace_types::WorkspaceEvent;
     /// Create a test workspace handle with a "main" session pre-created.
     pub(crate) fn make_handle() -> WorkspaceHandle {
         make_handle_with_rewind_all_outcomes(false)
@@ -4435,12 +4435,12 @@ pub(crate) mod tests {
     pub(crate) const BASH_CCO_STUB_STDOUT: &str = "cco-stdout";
     #[derive(Debug)]
     pub(crate) struct BashCcoStub;
-    impl xai_grok_tools::types::tool_metadata::ToolMetadata for BashCcoStub {
+    impl intelekt_tools::types::tool_metadata::ToolMetadata for BashCcoStub {
         fn kind(&self) -> ToolKind {
             ToolKind::Execute
         }
-        fn tool_namespace(&self) -> xai_grok_tools::types::tool::ToolNamespace {
-            xai_grok_tools::types::tool::ToolNamespace::MCP
+        fn tool_namespace(&self) -> intelekt_tools::types::tool::ToolNamespace {
+            intelekt_tools::types::tool::ToolNamespace::MCP
         }
         fn description_template(&self) -> &str {
             "bash cco stub"
@@ -4448,7 +4448,7 @@ pub(crate) mod tests {
     }
     impl xai_tool_runtime::Tool for BashCcoStub {
         type Args = serde_json::Value;
-        type Output = xai_grok_tools::types::output::ToolOutput;
+        type Output = intelekt_tools::types::output::ToolOutput;
         fn id(&self) -> xai_tool_protocol::ToolId {
             xai_tool_protocol::ToolId::new(BASH_CCO_STUB_NAME).expect("valid tool id")
         }
@@ -4462,14 +4462,14 @@ pub(crate) mod tests {
             &self,
             _ctx: xai_tool_runtime::ToolCallContext,
             _input: serde_json::Value,
-        ) -> Result<xai_grok_tools::types::output::ToolOutput, xai_tool_runtime::ToolError>
+        ) -> Result<intelekt_tools::types::output::ToolOutput, xai_tool_runtime::ToolError>
         {
             let output = BASH_CCO_STUB_STDOUT.as_bytes();
-            Ok(xai_grok_tools::types::output::ToolOutput::Bash(
-                xai_grok_tools::types::output::BashOutput {
+            Ok(intelekt_tools::types::output::ToolOutput::Bash(
+                intelekt_tools::types::output::BashOutput {
                     output: output.to_vec(),
                     output_for_prompt:
-                        xai_grok_tools::types::output::BashOutput::make_output_for_prompt(
+                        intelekt_tools::types::output::BashOutput::make_output_for_prompt(
                             BASH_CCO_STUB_STDOUT,
                         ),
                     exit_code: 0,
@@ -4659,9 +4659,9 @@ pub(crate) mod tests {
     /// `session.bind` resolver tail's composition — `build_session_routed_handlers`
     /// for the session toolset, plus the single RPC handler filtered from the
     /// connect-time catalog — and proves a session tool whose client name is
-    /// ABSENT from that (grok-build) catalog is still advertised. The old
+    /// ABSENT from that (intelekt-cli) catalog is still advertised. The old
     /// `catalog ∩ session-names` filter silently dropped exactly such tools
-    /// (grok-build renames → 6/11).
+    /// (intelekt-cli renames → 6/11).
     #[tokio::test]
     async fn resolver_advertises_tool_absent_from_connect_catalog() {
         let handle = make_handle();
@@ -5196,10 +5196,10 @@ pub(crate) mod tests {
     }
     /// The `Terminal` resource of a session's current toolset.
     async fn toolset_terminal(
-        toolset: &Arc<xai_grok_tools::registry::types::FinalizedToolset>,
-    ) -> Arc<dyn xai_grok_tools::computer::types::TerminalBackend> {
+        toolset: &Arc<intelekt_tools::registry::types::FinalizedToolset>,
+    ) -> Arc<dyn intelekt_tools::computer::types::TerminalBackend> {
         let res = toolset.resources.lock().await;
-        res.get::<xai_grok_tools::types::resources::Terminal>()
+        res.get::<intelekt_tools::types::resources::Terminal>()
             .map(|t| t.0.clone())
             .expect("toolset must carry a Terminal resource")
     }
@@ -5235,25 +5235,25 @@ pub(crate) mod tests {
     /// A minimal bash-kind [`TerminalRunRequest`] for `command`, writing
     /// output under `out_dir`.
     ///
-    /// [`TerminalRunRequest`]: xai_grok_tools::computer::types::TerminalRunRequest
+    /// [`TerminalRunRequest`]: intelekt_tools::computer::types::TerminalRunRequest
     pub(crate) fn terminal_run_request(
         command: &str,
         out_dir: &std::path::Path,
         tool_call_id: &str,
-    ) -> xai_grok_tools::computer::types::TerminalRunRequest {
-        xai_grok_tools::computer::types::TerminalRunRequest {
+    ) -> intelekt_tools::computer::types::TerminalRunRequest {
+        intelekt_tools::computer::types::TerminalRunRequest {
             command: command.to_string(),
             working_directory: out_dir.to_path_buf(),
             env: std::collections::HashMap::new(),
             timeout: std::time::Duration::from_secs(60),
             output_byte_limit: 4096,
             output_file: out_dir.join(format!("{tool_call_id}.out")),
-            notification_handle: xai_grok_tools::notification::ToolNotificationHandle::noop(),
+            notification_handle: intelekt_tools::notification::ToolNotificationHandle::noop(),
             tool_call_id: tool_call_id.to_string(),
             display_command: None,
             auto_background_on_timeout: false,
             foreground_block_budget: None,
-            kind: xai_grok_tools::computer::types::TaskKind::Bash,
+            kind: intelekt_tools::computer::types::TaskKind::Bash,
             owner_session_id: None,
         }
     }
@@ -5264,7 +5264,7 @@ pub(crate) mod tests {
         session: &Arc<crate::session::WorkspaceSession>,
         out_dir: &std::path::Path,
         tool_call_id: &str,
-    ) -> xai_grok_tools::computer::types::BackgroundHandle {
+    ) -> intelekt_tools::computer::types::BackgroundHandle {
         session
             .terminal_backend()
             .run_background(terminal_run_request("sleep 30", out_dir, tool_call_id))
@@ -5545,17 +5545,17 @@ pub(crate) mod tests {
             session_id: &str,
             cwd: std::path::PathBuf,
             session_env: Arc<std::collections::HashMap<String, String>>,
-            backend: Arc<dyn xai_grok_tools::computer::types::TerminalBackend>,
-        ) -> xai_grok_tools::registry::types::SessionContext {
+            backend: Arc<dyn intelekt_tools::computer::types::TerminalBackend>,
+        ) -> intelekt_tools::registry::types::SessionContext {
             self.inner
                 .build_session_context(session_id, cwd, session_env, backend)
         }
         fn build_terminal_backend(&self) -> crate::config::SessionTerminalBackend {
             crate::config::SessionTerminalBackend::local(
-                xai_grok_tools::computer::local::LocalTerminalBackend::with_persistent_shell(),
+                intelekt_tools::computer::local::LocalTerminalBackend::with_persistent_shell(),
             )
         }
-        fn registry_builder(&self) -> xai_grok_tools::registry::types::ToolRegistryBuilder {
+        fn registry_builder(&self) -> intelekt_tools::registry::types::ToolRegistryBuilder {
             self.inner.registry_builder()
         }
     }
@@ -5694,7 +5694,7 @@ pub(crate) mod tests {
     /// proving an explicit shutdown, since callers still hold live `Arc`s.
     /// Shared by the `drop_session` and hub-evict teardown tests.
     pub(crate) async fn assert_backend_stops(
-        backend: &Arc<dyn xai_grok_tools::computer::types::TerminalBackend>,
+        backend: &Arc<dyn intelekt_tools::computer::types::TerminalBackend>,
     ) {
         let out_dir = tempfile::tempdir().expect("temp dir");
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
@@ -5779,7 +5779,7 @@ pub(crate) mod tests {
             )
             .await
             .expect("get_task_output must answer, not error");
-        let xai_grok_tools::types::output::ToolOutput::TaskOutput(
+        let intelekt_tools::types::output::ToolOutput::TaskOutput(
             xai_tool_types::TaskOutputOutput::TaskNotFound(msg),
         ) = &result.output
         else {
@@ -5969,7 +5969,7 @@ pub(crate) mod tests {
                 sid,
                 &BeforeTurnPayload {
                     turn_number: 7,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     yolo_mode: false,
                     conversation_message_count: 5,
                     session_relationship: "subagent".to_owned(),
@@ -5998,7 +5998,7 @@ pub(crate) mod tests {
                     outcome: TurnHookOutcome::Completed,
                     duration_ms: 1234,
                     tool_call_count: 1,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     written_repo_paths: Vec::new(),
                     cancellation_category: None,
                     cancellation_context: None,
@@ -6021,7 +6021,7 @@ pub(crate) mod tests {
         let ts = by_type("turn_started");
         assert_eq!(ts["session_id"], sid);
         assert_eq!(ts["turn_number"], 7);
-        assert_eq!(ts["model_id"], "grok-4");
+        assert_eq!(ts["model_id"], "intelekt-4");
         assert_eq!(ts["yolo_mode"], false);
         assert_eq!(ts["conversation_message_count"], 5);
         assert_eq!(ts["session_relationship"], "subagent");
@@ -6060,7 +6060,7 @@ pub(crate) mod tests {
                 "main",
                 &BeforeTurnPayload {
                     turn_number: 1,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     yolo_mode: true,
                     ..Default::default()
                 },
@@ -6072,7 +6072,7 @@ pub(crate) mod tests {
                 "main",
                 &TurnHookRequest::Before(BeforeTurnPayload {
                     turn_number: 2,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     yolo_mode: false,
                     ..Default::default()
                 }),
@@ -6092,7 +6092,7 @@ pub(crate) mod tests {
                 "never-bound",
                 &TurnHookRequest::Before(BeforeTurnPayload {
                     turn_number: 1,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     yolo_mode: true,
                     ..Default::default()
                 }),
@@ -6114,7 +6114,7 @@ pub(crate) mod tests {
                     sid,
                     &BeforeTurnPayload {
                         turn_number: turn,
-                        model_id: "grok-4".to_owned(),
+                        model_id: "intelekt-4".to_owned(),
                         yolo_mode: yolo,
                         ..Default::default()
                     },
@@ -6166,7 +6166,7 @@ pub(crate) mod tests {
                 sid,
                 &BeforeTurnPayload {
                     turn_number: 1,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     yolo_mode: false,
                     conversation_message_count: 0,
                     session_relationship: "primary".to_owned(),
@@ -6187,7 +6187,7 @@ pub(crate) mod tests {
                     outcome: TurnHookOutcome::Completed,
                     duration_ms: 1,
                     tool_call_count: 1,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     written_repo_paths: Vec::new(),
                     cancellation_category: None,
                     cancellation_context: None,
@@ -6217,7 +6217,7 @@ pub(crate) mod tests {
                 sid,
                 &BeforeTurnPayload {
                     turn_number: 1,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     yolo_mode: false,
                     conversation_message_count: 0,
                     session_relationship: "primary".to_owned(),
@@ -7090,7 +7090,7 @@ pub(crate) mod tests {
     #[tokio::test]
     async fn fork_session_cwd_override_used_when_set() {
         let handle = make_handle();
-        let alt = std::env::temp_dir().join("xai-grok-workspace-test-cwd-override");
+        let alt = std::env::temp_dir().join("intelekt-workspace-test-cwd-override");
         std::fs::create_dir_all(&alt).expect("create alt cwd");
         let mut cfg = AgentSessionConfig::new("cwdchild");
         cfg.cwd_override = Some(alt.clone());
@@ -7278,9 +7278,9 @@ pub(crate) mod tests {
         let snap1 = handle.hook_registry();
         assert!(snap1.is_empty());
         {
-            let spec = xai_grok_hooks::config::HookSpec {
+            let spec = intelekt_hooks::config::HookSpec {
                 name: "injected".into(),
-                event: xai_grok_hooks::event::HookEventName::SessionStart,
+                event: intelekt_hooks::event::HookEventName::SessionStart,
                 handler_type: "command".into(),
                 configured_matcher: None,
                 matcher: None,
@@ -7978,7 +7978,7 @@ pub(crate) mod tests {
             "reason must name the fail-closed cause: {reason}"
         );
         assert!(
-            reason.contains(xai_grok_version::VERSION),
+            reason.contains(intelekt_version::VERSION),
             "reason must carry the server version: {reason}"
         );
     }
@@ -8619,7 +8619,7 @@ pub(crate) mod tests {
                 "main",
                 &BeforeTurnPayload {
                     turn_number: 1,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     yolo_mode: false,
                     conversation_message_count: 0,
                     session_relationship: "primary".to_owned(),
@@ -8652,7 +8652,7 @@ pub(crate) mod tests {
                     outcome: TurnHookOutcome::Completed,
                     duration_ms: 10,
                     tool_call_count: 0,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     written_repo_paths: Vec::new(),
                     cancellation_category: None,
                     cancellation_context: None,
@@ -8682,7 +8682,7 @@ pub(crate) mod tests {
                     outcome: TurnHookOutcome::Completed,
                     duration_ms: 10,
                     tool_call_count: 0,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     written_repo_paths: Vec::new(),
                     cancellation_category: None,
                     cancellation_context: None,
@@ -8734,7 +8734,7 @@ pub(crate) mod tests {
                 sid,
                 &BeforeTurnPayload {
                     turn_number: 2,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     yolo_mode: false,
                     conversation_message_count: 0,
                     session_relationship: "primary".to_owned(),
@@ -8750,7 +8750,7 @@ pub(crate) mod tests {
                     outcome: TurnHookOutcome::Cancelled,
                     duration_ms: 10,
                     tool_call_count: 0,
-                    model_id: "grok-4".to_owned(),
+                    model_id: "intelekt-4".to_owned(),
                     written_repo_paths: Vec::new(),
                     cancellation_category: Some("permission_rejected".to_owned()),
                     cancellation_context: Some(serde_json::json!({ "recovery" : false })),
@@ -8964,7 +8964,7 @@ pub(crate) mod tests {
         let got = bundled_allowlist_ignore_dirs("/nonexistent/bundled-skills", Some("pdf"));
         assert_eq!(got, vec!["/nonexistent/bundled-skills".to_string()]);
     }
-    /// Unique skill names: discovery also reads the dev machine's `~/.grok`.
+    /// Unique skill names: discovery also reads the dev machine's `~/.intelekt`.
     #[tokio::test]
     async fn bundled_allowlist_filters_discovery() {
         let tmp = tempfile::tempdir().expect("tempdir");

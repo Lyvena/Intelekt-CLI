@@ -9,7 +9,7 @@ mod otlp_collector;
 use std::sync::Arc;
 
 use otlp_collector as col;
-use xai_grok_telemetry::external;
+use intelekt_telemetry::external;
 
 #[test]
 fn ambient_ctx_injects_session_turn_and_prompt_id() {
@@ -39,24 +39,24 @@ fn ambient_ctx_injects_session_turn_and_prompt_id() {
     // Emit inside a session ctx (turn_number = 3) so the ambient snapshot is
     // populated. `log_event` is synchronous and runs within the task-local
     // scope of `with_session_ctx`.
-    let ctx = xai_grok_telemetry::TelemetryCtx::new(
+    let ctx = intelekt_telemetry::TelemetryCtx::new(
         "sess-ctx".to_owned(),
         Arc::new(tokio::sync::Mutex::new(3usize)),
     );
     let rt = tokio::runtime::Builder::new_current_thread()
         .build()
         .expect("current-thread runtime");
-    rt.block_on(xai_grok_telemetry::with_session_ctx(ctx, async {
-        xai_grok_telemetry::session_ctx::begin_prompt_id();
-        xai_grok_telemetry::log_event(xai_grok_telemetry::events::PromptSubmitted {
+    rt.block_on(intelekt_telemetry::with_session_ctx(ctx, async {
+        intelekt_telemetry::session_ctx::begin_prompt_id();
+        intelekt_telemetry::log_event(intelekt_telemetry::events::PromptSubmitted {
             prompt_length: 42,
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             client_identifier: None,
             screen_mode: None,
             prompt_text: None,
         });
-        xai_grok_telemetry::log_event(xai_grok_telemetry::events::ModelResponseReceived {
-            model_id: "grok-4".into(),
+        intelekt_telemetry::log_event(intelekt_telemetry::events::ModelResponseReceived {
+            model_id: "intelekt-4".into(),
             duration_ms: 5,
             stop_reason: Some("stop".into()),
             prompt_tokens: Some(11),

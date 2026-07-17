@@ -20,11 +20,11 @@ use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use common::{FakeBinGuard, reset_home, set_test_version, test_home};
-use xai_grok_update::UpdateConfig;
-use xai_grok_update::auto_update::{
+use intelekt_update::UpdateConfig;
+use intelekt_update::auto_update::{
     auto_update_target, check_update_status, ensure_latest_on_disk, install_internal_from_base,
 };
-use xai_grok_update::version::installed_on_disk_version;
+use intelekt_update::version::installed_on_disk_version;
 
 fn host_platform() -> String {
     let os = if cfg!(target_os = "macos") {
@@ -111,10 +111,10 @@ async fn internal_install_stable_rollback_0_2_7_to_0_2_5() {
     let home = test_home();
     let downloaded = home
         .join("downloads")
-        .join(format!("grok-0.2.5-{platform}"));
+        .join(format!("intelekt-0.2.5-{platform}"));
     assert!(downloaded.exists(), "rolled-back binary must be downloaded");
 
-    let symlink = home.join("bin").join("grok");
+    let symlink = home.join("bin").join("intelekt");
     let target = std::fs::read_link(&symlink).unwrap();
     assert!(
         target.to_string_lossy().contains("0.2.5"),
@@ -136,7 +136,7 @@ async fn internal_install_stable_upgrade_0_2_5_to_0_2_7() {
         .await
         .unwrap();
 
-    let symlink = test_home().join("bin").join("grok");
+    let symlink = test_home().join("bin").join("intelekt");
     let target = std::fs::read_link(&symlink).unwrap();
     assert!(target.to_string_lossy().contains("0.2.7"));
 }
@@ -163,7 +163,7 @@ async fn internal_install_rollback_then_upgrade_sequence() {
             .unwrap();
     }
 
-    let target = std::fs::read_link(test_home().join("bin").join("grok")).unwrap();
+    let target = std::fs::read_link(test_home().join("bin").join("intelekt")).unwrap();
     assert!(
         target.to_string_lossy().contains("0.2.8"),
         "final symlink must point to 0.2.8: {target:?}"
@@ -172,15 +172,15 @@ async fn internal_install_rollback_then_upgrade_sequence() {
     // Cleanup retains current + highest-semver non-current (N-1 by version, not install order).
     let downloads = test_home().join("downloads");
     assert!(
-        downloads.join(format!("grok-0.2.8-{platform}")).exists(),
+        downloads.join(format!("intelekt-0.2.8-{platform}")).exists(),
         "current"
     );
     assert!(
-        downloads.join(format!("grok-0.2.7-{platform}")).exists(),
+        downloads.join(format!("intelekt-0.2.7-{platform}")).exists(),
         "N-1 by semver"
     );
     assert!(
-        !downloads.join(format!("grok-0.2.5-{platform}")).exists(),
+        !downloads.join(format!("intelekt-0.2.5-{platform}")).exists(),
         "lowest cleaned up"
     );
 }
@@ -220,7 +220,7 @@ async fn internal_install_alpha_rollback_pointer_resolves_correctly() {
 
     let downloaded = test_home()
         .join("downloads")
-        .join(format!("grok-0.2.8-alpha.1-{platform}"));
+        .join(format!("intelekt-0.2.8-alpha.1-{platform}"));
     assert!(
         downloaded.exists(),
         "alpha rollback target must be installed"
@@ -261,7 +261,7 @@ async fn internal_install_alpha_user_gets_newer_stable_after_stable_passes_alpha
     assert!(
         test_home()
             .join("downloads")
-            .join(format!("grok-0.2.7-{platform}"))
+            .join(format!("intelekt-0.2.7-{platform}"))
             .exists(),
         "alpha user should get the newer stable"
     );
@@ -451,7 +451,7 @@ async fn auto_update_target_npm_rollback_returns_none() {
 // the relaunch signal.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Lay down a managed-install layout in the test GROK_HOME:
+/// Lay down a managed-install layout in the test INTELEKT_HOME:
 /// `bin/grok -> ../downloads/grok-<version>-<platform>` (what
 /// `install_internal_from_base` produces).
 fn fake_managed_install(version: &str) {
@@ -464,7 +464,7 @@ fn fake_managed_install(version: &str) {
     std::fs::write(downloads.join(&name), b"#!/bin/sh\nexit 0\n").unwrap();
     std::os::unix::fs::symlink(
         std::path::Path::new("../downloads").join(&name),
-        bin.join("grok"),
+        bin.join("intelekt"),
     )
     .unwrap();
 }
@@ -602,7 +602,7 @@ async fn internal_install_double_rollback() {
             .await
             .unwrap();
 
-        let target = std::fs::read_link(test_home().join("bin").join("grok")).unwrap();
+        let target = std::fs::read_link(test_home().join("bin").join("intelekt")).unwrap();
         assert!(
             target.to_string_lossy().contains(version),
             "symlink must point to {version} after install: {target:?}"

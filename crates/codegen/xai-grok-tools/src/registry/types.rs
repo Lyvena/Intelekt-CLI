@@ -29,7 +29,7 @@ use std::sync::{Arc, OnceLock};
 /// [`ToolRegistryBuilder::new`].
 ///
 /// This inverts the dependency for harness code that must live outside
-/// this crate: instead of `xai-grok-tools` referencing an out-of-tree tool
+/// this crate: instead of `intelekt-tools` referencing an out-of-tree tool
 /// pack, the pack calls
 /// [`register_tool_pack`] at startup and registers itself here.
 ///
@@ -3339,7 +3339,7 @@ mod tests {
         assert!(task_def.is_some(), "task tool should be in definitions");
     }
     /// Verify that the task tool description renders correctly with the default
-    /// grok-build agent config (all tools present) and that the new examples
+    /// intelekt-cli agent config (all tools present) and that the new examples
     /// section is included with no unresolved template placeholders.
     #[tokio::test]
     async fn bash_definition_hides_is_background_when_disabled() {
@@ -3881,7 +3881,7 @@ mod tests {
         let ctx = test_session_context(&tmp);
         let toolset = builder
             .finalize(config, ctx)
-            .expect("finalize should succeed with default grok-build tools");
+            .expect("finalize should succeed with default intelekt-cli tools");
         let defs = toolset.tool_definitions();
         let task_def = defs
             .iter()

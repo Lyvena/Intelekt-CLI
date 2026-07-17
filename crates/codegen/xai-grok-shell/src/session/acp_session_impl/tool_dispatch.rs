@@ -11,7 +11,7 @@ const BASH_MODE_FINAL_OUTPUT_LINES: usize = 10;
 ///
 /// Agent sessions always use local workspace ops (in-process toolset).
 pub(super) async fn dispatch_tool(
-    workspace_ops: &xai_grok_workspace::WorkspaceOps,
+    workspace_ops: &intelekt_workspace::WorkspaceOps,
     prepared: &PreparedToolCall,
     session_id: &str,
 ) -> Result<ToolRunResult, xai_tool_runtime::ToolError> {
@@ -121,7 +121,7 @@ pub(super) fn resolve_session_shell() -> String {
 
     #[cfg(not(unix))]
     {
-        xai_grok_config::shell::detect_windows_shell()
+        intelekt_config::shell::detect_windows_shell()
             .name()
             .to_string()
     }
@@ -190,10 +190,10 @@ impl SessionActor {
 
         // Send initial ToolCall to register with TUI
 
-        use xai_grok_tools::types::ToolInput;
+        use intelekt_tools::types::ToolInput;
         // Use the stripped command as description so pager chrome shows the
         // real command (not a generic label) while still satisfying the required field.
-        let title_command = xai_grok_tools::util::strip_redundant_session_cd(
+        let title_command = intelekt_tools::util::strip_redundant_session_cd(
             &command,
             self.tool_context.cwd.as_path(),
         );
@@ -211,7 +211,7 @@ impl SessionActor {
             agent
                 .tool_bridge()
                 .toolset()
-                .tool_name_for_kind(xai_grok_tools::types::tool::ToolKind::Execute)
+                .tool_name_for_kind(intelekt_tools::types::tool::ToolKind::Execute)
         };
         let bash_meta = match exec_wire {
             Some(wire) => self.stamp_tool_meta(bash_marker.clone(), &wire, Some(&tool_input)),
@@ -343,7 +343,7 @@ impl SessionActor {
 
 // ── Tool argument error formatting ─────────────────────────────────────
 
-// Re-use the UTF-8-safe truncation helper from xai-grok-sampling-types rather
+// Re-use the UTF-8-safe truncation helper from intelekt-sampling-types rather
 // than duplicating it here (R3).
 
 /// Maximum bytes of `raw_arguments` included in a parse-error tool_result.

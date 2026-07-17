@@ -13,7 +13,7 @@ use serde::Serialize;
 
 use crate::agent::session_registry_client::{SessionRecord, SessionRegistryClient};
 use crate::session::persistence::{Summary, list_summaries};
-use xai_grok_workspace::session::git::normalize_repo_url;
+use intelekt_workspace::session::git::normalize_repo_url;
 
 pub const REMOTE_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -108,7 +108,7 @@ pub async fn fetch_merged(
 
     let repo_urls_fut = async {
         cwd.map(|c| {
-            xai_grok_workspace::session::git::resolve_normalized_remote_urls(std::path::Path::new(
+            intelekt_workspace::session::git::resolve_normalized_remote_urls(std::path::Path::new(
                 c,
             ))
         })

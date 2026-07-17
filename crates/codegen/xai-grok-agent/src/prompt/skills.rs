@@ -2,19 +2,19 @@
 //!
 //! Orchestrates priority-based discovery across local, repo, optional
 //! workspace-user, user, bundled, config-path, and plugin sources. Parsing primitives
-//! live in `xai_grok_tools::implementations::skills::discovery`.
+//! live in `intelekt_tools::implementations::skills::discovery`.
 
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use crate::plugins::discovery::PluginScope;
-use xai_grok_tools::implementations::skills::types::skill_name_from_path;
-pub use xai_grok_tools::implementations::skills::types::{SkillInfo, SkillScope};
+use intelekt_tools::implementations::skills::types::skill_name_from_path;
+pub use intelekt_tools::implementations::skills::types::{SkillInfo, SkillScope};
 /// Re-export so agent-side discovery (and the shell) can name the resolved
-/// vendor-compat config without reaching into `xai_grok_tools` directly.
-pub use xai_grok_tools::types::compat::CompatConfig;
+/// vendor-compat config without reaching into `intelekt_tools` directly.
+pub use intelekt_tools::types::compat::CompatConfig;
 
-use xai_grok_tools::implementations::skills::discovery::{
+use intelekt_tools::implementations::skills::discovery::{
     find_command_paths, find_skill_md_paths, find_skill_paths, is_valid_skill_name,
     normalize_skill_name, parse_skill_files, scan_md_files, walk_for_skill_md,
 };
@@ -48,11 +48,11 @@ pub struct SkillsConfig {
 
 /// List all discovered skills with their metadata.
 ///
-/// Priority order: Local (cwd/.grok/skills, cwd/.agents/skills, cwd/.claude/skills) → Intermediate dirs →
-/// Repo (repo_root/.grok/skills, repo_root/.agents/skills, repo_root/.claude/skills) → User (~/.grok/skills, ~/.agents/skills, ~/.claude/skills)
+/// Priority order: Local (cwd/.intelekt/skills, cwd/.agents/skills, cwd/.claude/skills) → Intermediate dirs →
+/// Repo (repo_root/.intelekt/skills, repo_root/.agents/skills, repo_root/.claude/skills) → User (~/.intelekt/skills, ~/.agents/skills, ~/.claude/skills)
 /// → additional paths from `config.paths`
 /// → Server (injected `config.server_skill_dirs`)
-/// → Bundled (injected `config.bundled_skill_dirs` + `~/.grok/bundled`; lowest precedence).
+/// → Bundled (injected `config.bundled_skill_dirs` + `~/.intelekt/bundled`; lowest precedence).
 ///
 /// `config.ignore` globs are applied across all sources after collection.
 /// Skills with the same name from higher-priority sources override lower-priority ones.
@@ -73,7 +73,7 @@ pub async fn list_skills(
 ///
 /// When `plugins` is `Some`, skills from enabled plugins are appended with
 /// `plugin_name: Some(...)` and `scope` set to the plugin's origin
-/// (e.g. `Repo` for `.grok/plugins/`). Native skills always win bare-name
+/// (e.g. `Repo` for `.intelekt/plugins/`). Native skills always win bare-name
 /// resolution, but qualified plugin entries (`my-plugin:hello`) are
 /// preserved even on collision.
 pub async fn list_skills_with_plugins(
@@ -88,7 +88,7 @@ pub async fn list_skills_with_plugins(
     let mut skills = list_skills_with_options(
         working_directory,
         workspace_user_dir.as_deref(),
-        &xai_grok_tools::util::grok_home::grok_home(),
+        &intelekt_tools::util::grok_home::grok_home(),
         compat,
     )
     .await;
@@ -169,7 +169,7 @@ pub fn collect_skill_config_dirs(
 
     // Vendor dirs (`.claude`/`.cursor`) are gated by the resolved compat
     // config; `.grok` and `.agents` are always present. When all cells are on
-    // this list equals the historical `[".grok", ".agents", ".claude", ".cursor"]`.
+    // this list equals the historical `[".intelekt", ".agents", ".claude", ".cursor"]`.
     let config_dir_names = compat.skill_config_dirs();
 
     // Priority 1 & 2: Walk from cwd up to the git root.
@@ -232,7 +232,7 @@ pub fn collect_skill_config_dirs(
 /// Determine the skill scope for a config directory based on its location
 /// relative to `cwd`, `git_root`, and the user's home directory.
 fn scope_for_config_dir(dir: &Path, cwd: Option<&Path>, git_root: Option<&Path>) -> SkillScope {
-    // Home-level dirs (e.g. ~/.grok/, ~/.agents/, ~/.claude/) are User scope.
+    // Home-level dirs (e.g. ~/.intelekt/, ~/.agents/, ~/.claude/) are User scope.
     #[allow(deprecated)]
     if let Some(home) = std::env::home_dir()
         && dir.parent() == Some(home.as_path())
@@ -381,7 +381,7 @@ fn collect_config_skills(config_paths: &[String], git_root: Option<&Path>) -> Ve
     // and UIs distinguish `[skills].paths` entries from plain user/repo skills.
     for skill in &mut skills {
         skill.config_source = Some(
-            xai_grok_tools::types::config_source::ConfigSource::ConfigToml {
+            intelekt_tools::types::config_source::ConfigSource::ConfigToml {
                 path: PathBuf::from(&skill.path),
             },
         );
@@ -555,7 +555,7 @@ fn stamp_plugin_fields(skills: &mut [SkillInfo], plugin: &crate::plugins::Loaded
                 skill.display_name = Some(std::mem::replace(&mut skill.name, dir));
             }
         }
-        skill.config_source = Some(xai_grok_tools::types::config_source::ConfigSource::Plugin {
+        skill.config_source = Some(intelekt_tools::types::config_source::ConfigSource::Plugin {
             plugin_name: plugin.name.clone(),
             path: PathBuf::from(&skill.path),
         });
@@ -649,7 +649,7 @@ pub fn filter_skills(skills: Vec<SkillInfo>, ignore_paths: &[String]) -> Vec<Ski
 /// Injects plain markdown body — no XML envelope.
 pub(crate) fn format_skill_for_injection(skill: &SkillInfo) -> Option<String> {
     skill.body.as_ref().filter(|b| !b.is_empty()).map(|body| {
-        xai_grok_tools::implementations::skills::skill::build_skill_message(skill, body)
+        intelekt_tools::implementations::skills::skill::build_skill_message(skill, body)
     })
 }
 
@@ -679,7 +679,7 @@ pub(crate) async fn resolve_preloaded_skills(
         // Find matching skill (case-insensitive name match, also try qualified name)
         let skill = discovered.iter().find(|s| {
             s.name.eq_ignore_ascii_case(name)
-                || xai_grok_tools::implementations::skills::skill::format_skill_name(s)
+                || intelekt_tools::implementations::skills::skill::format_skill_name(s)
                     .eq_ignore_ascii_case(name)
         });
 
@@ -692,7 +692,7 @@ pub(crate) async fn resolve_preloaded_skills(
         };
 
         // Load the skill with body content
-        match xai_grok_tools::implementations::skills::skill::load_skill_with_body(skill).await {
+        match intelekt_tools::implementations::skills::skill::load_skill_with_body(skill).await {
             Ok(loaded) => result.push(loaded),
             Err(e) => {
                 tracing::warn!(
@@ -712,7 +712,7 @@ pub(crate) async fn resolve_preloaded_skills(
 mod tests {
     use super::*;
     use std::fs;
-    use xai_grok_tools::implementations::skills::discovery::{
+    use intelekt_tools::implementations::skills::discovery::{
         MAX_BODY_PEEK_BYTES, MAX_SKILL_WALK_DEPTH, SkillParseError, extract_first_paragraph,
         is_valid_skill_name, normalize_skill_name, parse_skill_frontmatter,
     };
@@ -735,7 +735,7 @@ mod tests {
         write_skill_md(&server.path().join("dup"), "dup");
 
         let cwd = tempfile::tempdir().unwrap();
-        write_skill_md(&cwd.path().join(".grok").join("skills").join("dup"), "dup");
+        write_skill_md(&cwd.path().join(".intelekt").join("skills").join("dup"), "dup");
 
         let config = SkillsConfig {
             server_skill_dirs: vec![server.path().to_string_lossy().into_owned()],
@@ -771,7 +771,7 @@ mod tests {
         write_skill_md(&bundled.path().join("dup"), "dup");
 
         let cwd = tempfile::tempdir().unwrap();
-        write_skill_md(&cwd.path().join(".grok").join("skills").join("dup"), "dup");
+        write_skill_md(&cwd.path().join(".intelekt").join("skills").join("dup"), "dup");
 
         let config = SkillsConfig {
             bundled_skill_dirs: vec![bundled.path().to_string_lossy().into_owned()],
@@ -832,7 +832,7 @@ mod tests {
     fn find_skill_paths_flat_layout() {
         // Traditional flat layout: skills/<name>/SKILL.md
         let tmp = tempfile::tempdir().unwrap();
-        let grok_dir = tmp.path().join(".grok");
+        let grok_dir = tmp.path().join(".intelekt");
 
         write_skill_md(&grok_dir.join("skills").join("alpha"), "alpha");
         write_skill_md(&grok_dir.join("skills").join("beta"), "beta");
@@ -846,7 +846,7 @@ mod tests {
     fn find_skill_paths_nested_layout() {
         // Nested: skills/team/infra/SKILL.md, skills/team/training/SKILL.md
         let tmp = tempfile::tempdir().unwrap();
-        let grok_dir = tmp.path().join(".grok");
+        let grok_dir = tmp.path().join(".intelekt");
         let skills = grok_dir.join("skills");
 
         write_skill_md(&skills.join("team").join("infra"), "infra");
@@ -864,7 +864,7 @@ mod tests {
     fn find_skill_paths_mixed_flat_and_nested() {
         // Mix of flat and nested skills
         let tmp = tempfile::tempdir().unwrap();
-        let grok_dir = tmp.path().join(".grok");
+        let grok_dir = tmp.path().join(".intelekt");
         let skills = grok_dir.join("skills");
 
         // Flat
@@ -882,7 +882,7 @@ mod tests {
     fn find_skill_paths_dir_without_skill_md_is_skipped() {
         // A subdirectory exists but has no SKILL.md — should not appear
         let tmp = tempfile::tempdir().unwrap();
-        let grok_dir = tmp.path().join(".grok");
+        let grok_dir = tmp.path().join(".intelekt");
         let skills = grok_dir.join("skills");
 
         write_skill_md(&skills.join("valid"), "valid");
@@ -902,7 +902,7 @@ mod tests {
     fn find_skill_paths_no_skills_dir() {
         // .grok exists but no skills/ subdirectory
         let tmp = tempfile::tempdir().unwrap();
-        let grok_dir = tmp.path().join(".grok");
+        let grok_dir = tmp.path().join(".intelekt");
         fs::create_dir_all(&grok_dir).unwrap();
 
         let paths = find_skill_paths(&grok_dir);
@@ -944,7 +944,7 @@ mod tests {
     fn find_skill_paths_parent_and_child_both_have_skill_md() {
         // A directory has SKILL.md and also has subdirectories with SKILL.md
         let tmp = tempfile::tempdir().unwrap();
-        let grok_dir = tmp.path().join(".grok");
+        let grok_dir = tmp.path().join(".intelekt");
         let skills = grok_dir.join("skills");
 
         // Parent skill
@@ -1110,7 +1110,7 @@ mod tests {
     fn parse_model_and_effort() {
         let content = "---\nname: my-skill\ndescription: test\nmodel: grok-3\neffort: high\n---\n";
         let parsed = parse_skill_frontmatter(content, None).unwrap();
-        assert_eq!(parsed.model.as_deref(), Some("grok-3"));
+        assert_eq!(parsed.model.as_deref(), Some("intelekt-3"));
         assert_eq!(parsed.effort.as_deref(), Some("high"));
     }
 
@@ -1263,7 +1263,7 @@ mod tests {
             Some(["bash".to_string(), "read_file".to_string()].as_slice())
         );
         assert_eq!(parsed.argument_hint.as_deref(), Some("file path"));
-        assert_eq!(parsed.model.as_deref(), Some("grok-3"));
+        assert_eq!(parsed.model.as_deref(), Some("intelekt-3"));
         assert_eq!(parsed.effort.as_deref(), Some("high"));
         assert!(parsed.user_invocable);
         assert!(!parsed.disable_model_invocation);
@@ -1313,7 +1313,7 @@ mod tests {
         // Create workspace user dir with a skill
         let user_dir = repo_root.join("x").join("testuser");
         write_skill_md(
-            &user_dir.join(".grok").join("skills").join("my-tool"),
+            &user_dir.join(".intelekt").join("skills").join("my-tool"),
             "my-tool",
         );
 
@@ -1343,7 +1343,7 @@ mod tests {
         // User dir with a skill
         let user_dir = repo_root.join("x").join("testuser");
         write_skill_md(
-            &user_dir.join(".grok").join("skills").join("dedup-skill"),
+            &user_dir.join(".intelekt").join("skills").join("dedup-skill"),
             "dedup-skill",
         );
 
@@ -1371,7 +1371,7 @@ mod tests {
         // Create a skill that would only be found via workspace user path
         let user_dir = repo_root.join("x").join("ghost");
         write_skill_md(
-            &user_dir.join(".grok").join("skills").join("ghost-skill"),
+            &user_dir.join(".intelekt").join("skills").join("ghost-skill"),
             "ghost-skill",
         );
 
@@ -1400,7 +1400,7 @@ mod tests {
 
         // User dir with nested skills
         let user_dir = repo_root.join("x").join("nested-user");
-        let skills_base = user_dir.join(".grok").join("skills");
+        let skills_base = user_dir.join(".intelekt").join("skills");
         write_skill_md(&skills_base.join("flat-skill"), "flat-skill");
         write_skill_md(&skills_base.join("team").join("deep-skill"), "deep-skill");
 
@@ -1523,7 +1523,7 @@ mod tests {
 
         assert_eq!(skills.len(), 1);
         match &skills[0].config_source {
-            Some(xai_grok_tools::types::config_source::ConfigSource::ConfigToml { path }) => {
+            Some(intelekt_tools::types::config_source::ConfigSource::ConfigToml { path }) => {
                 assert_eq!(path, Path::new(&skills[0].path));
             }
             other => panic!("expected ConfigToml source, got {other:?}"),
@@ -1844,14 +1844,14 @@ mod tests {
         fs::create_dir_all(&repo_root).unwrap();
         init_git_repo(&repo_root);
 
-        let auto_dir = repo_root.join(".grok").join("skills").join("dup-skill");
+        let auto_dir = repo_root.join(".intelekt").join("skills").join("dup-skill");
         write_skill_md(&auto_dir, "dup-skill");
 
         // Add the same auto-discovered skills root as a config path.
         let config = SkillsConfig {
             paths: vec![
                 repo_root
-                    .join(".grok")
+                    .join(".intelekt")
                     .join("skills")
                     .to_str()
                     .unwrap()
@@ -1884,13 +1884,13 @@ mod tests {
         fs::create_dir_all(&repo_root).unwrap();
         init_git_repo(&repo_root);
 
-        let auto_dir = repo_root.join(".grok").join("skills").join("overlap-skill");
+        let auto_dir = repo_root.join(".intelekt").join("skills").join("overlap-skill");
         write_skill_md(&auto_dir, "overlap-skill");
 
         let config = SkillsConfig {
             paths: vec![
                 repo_root
-                    .join(".grok")
+                    .join(".intelekt")
                     .join("skills")
                     .to_str()
                     .unwrap()
@@ -1923,7 +1923,7 @@ mod tests {
         assert!(
             matches!(
                 overlaps[0].config_source,
-                Some(xai_grok_tools::types::config_source::ConfigSource::ConfigToml { .. })
+                Some(intelekt_tools::types::config_source::ConfigSource::ConfigToml { .. })
             ),
             "ConfigToml stamp should survive path-dedupe: {:?}",
             overlaps[0].config_source
@@ -1937,7 +1937,7 @@ mod tests {
         let winner = make_skill("same-name", "/some/path/a/SKILL.md");
         let mut loser = make_skill("same-name", "/some/path/b/SKILL.md");
         loser.config_source = Some(
-            xai_grok_tools::types::config_source::ConfigSource::ConfigToml {
+            intelekt_tools::types::config_source::ConfigSource::ConfigToml {
                 path: PathBuf::from("/some/path/b/SKILL.md"),
             },
         );
@@ -1967,15 +1967,15 @@ mod tests {
         init_git_repo(&repo_root);
 
         // Same skill name in local (higher-priority) and repo (lower-priority) sources.
-        write_skill_md(&cwd.join(".grok").join("skills").join("same"), "same");
-        let repo_skill_dir = repo_root.join(".grok").join("skills").join("same");
+        write_skill_md(&cwd.join(".intelekt").join("skills").join("same"), "same");
+        let repo_skill_dir = repo_root.join(".intelekt").join("skills").join("same");
         write_skill_md(&repo_skill_dir, "same");
 
         // Ignore the local skill path. Repo fallback should remain visible.
         let config = SkillsConfig {
             paths: vec![],
             ignore: vec![
-                cwd.join(".grok")
+                cwd.join(".intelekt")
                     .join("skills")
                     .to_str()
                     .unwrap()
@@ -2009,8 +2009,8 @@ mod tests {
     }
 
     // discover_skills_for_paths and dedup_by_canonical_path tests removed --
-    // these functions now live in xai-grok-tools::implementations::skills::discovery
-    // and xai-grok-tools::types::skill_discovery_tracker, tested there.
+    // these functions now live in intelekt-tools::implementations::skills::discovery
+    // and intelekt-tools::types::skill_discovery_tracker, tested there.
 
     // ── Disabled skills marking ─────────────────────────────────────
 
@@ -2022,11 +2022,11 @@ mod tests {
         init_git_repo(&repo_root);
 
         write_skill_md(
-            &repo_root.join(".grok").join("skills").join("commit"),
+            &repo_root.join(".intelekt").join("skills").join("commit"),
             "commit",
         );
         write_skill_md(
-            &repo_root.join(".grok").join("skills").join("review"),
+            &repo_root.join(".intelekt").join("skills").join("review"),
             "review",
         );
 
@@ -2070,7 +2070,7 @@ mod tests {
         init_git_repo(&repo_root);
 
         write_skill_md(
-            &repo_root.join(".grok").join("skills").join("deploy"),
+            &repo_root.join(".intelekt").join("skills").join("deploy"),
             "deploy",
         );
 
@@ -2439,7 +2439,7 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let cwd = tmp.path();
         // Not a git repo → falls to the cwd-only branch (no upward walk).
-        for name in [".grok", ".agents", ".claude", ".cursor"] {
+        for name in [".intelekt", ".agents", ".claude", ".cursor"] {
             fs::create_dir_all(cwd.join(name)).unwrap();
         }
 
@@ -2460,7 +2460,7 @@ mod tests {
             "cursor must be gated off: {dirs:?}"
         );
         assert!(ends_with(&dirs, ".claude"), "claude must remain: {dirs:?}");
-        assert!(ends_with(&dirs, ".grok"), "grok must remain: {dirs:?}");
+        assert!(ends_with(&dirs, ".intelekt"), "grok must remain: {dirs:?}");
     }
 
     // ── Same-scope frontmatter-name collisions (copied skill dirs) ──────
@@ -2567,7 +2567,7 @@ mod tests {
         let out = dedupe_skills(vec![
             named_skill(
                 "review",
-                "/u/.grok/skills/review/SKILL.md",
+                "/u/.intelekt/skills/review/SKILL.md",
                 SkillScope::User,
             ),
             named_skill(
@@ -2587,12 +2587,12 @@ mod tests {
         let out = dedupe_skills(vec![
             named_skill(
                 "japandi",
-                "/u/.grok/skills/japandi/SKILL.md",
+                "/u/.intelekt/skills/japandi/SKILL.md",
                 SkillScope::User,
             ),
             named_skill(
                 "japandi",
-                "/u/.grok/skills/japandi2/SKILL.md",
+                "/u/.intelekt/skills/japandi2/SKILL.md",
                 SkillScope::User,
             ),
             named_skill(
@@ -2615,7 +2615,7 @@ mod tests {
         let out = dedupe_skills(vec![
             named_skill(
                 "japandi",
-                "/repo/.grok/skills/japandi/SKILL.md",
+                "/repo/.intelekt/skills/japandi/SKILL.md",
                 SkillScope::Repo,
             ),
             named_skill("japandi", "/u/skills/japandi2/SKILL.md", SkillScope::User),
@@ -2627,11 +2627,11 @@ mod tests {
     #[test]
     fn dedupe_same_scope_same_basename_still_drops() {
         // Same name AND same dir basename across two same-scope roots
-        // (e.g. ~/.grok/skills and ~/.agents/skills): first-seen wins.
+        // (e.g. ~/.intelekt/skills and ~/.agents/skills): first-seen wins.
         let out = dedupe_skills(vec![
             named_skill(
                 "japandi",
-                "/u/.grok/skills/japandi/SKILL.md",
+                "/u/.intelekt/skills/japandi/SKILL.md",
                 SkillScope::User,
             ),
             named_skill(
@@ -2641,7 +2641,7 @@ mod tests {
             ),
         ]);
         assert_eq!(out.len(), 1);
-        assert!(out[0].path.contains(".grok"));
+        assert!(out[0].path.contains(".intelekt"));
     }
 
     #[tokio::test]
@@ -2655,7 +2655,7 @@ mod tests {
         fs::create_dir_all(&repo_root).unwrap();
         init_git_repo(&repo_root);
 
-        let skills_dir = repo_root.join(".grok").join("skills");
+        let skills_dir = repo_root.join(".intelekt").join("skills");
         write_skill_md(&skills_dir.join("zz-copyfix-japandi"), "zz-copyfix-japandi");
         // The copy keeps the original's frontmatter name.
         write_skill_md(

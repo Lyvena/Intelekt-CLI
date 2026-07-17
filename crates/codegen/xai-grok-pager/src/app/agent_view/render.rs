@@ -650,7 +650,7 @@ impl AgentView {
         pending_hint: Option<PendingHint>,
         overlay_focused: bool,
         banner_height: u16,
-        banner_announcements: &[xai_grok_announcements::RemoteAnnouncement],
+        banner_announcements: &[intelekt_announcements::RemoteAnnouncement],
         hidden_announcement_ids: &std::collections::BTreeSet<String>,
         tip: Option<&str>,
         bundle_state: &crate::app::bundle::BundleState,
@@ -698,7 +698,7 @@ impl AgentView {
                 || self.active_modal.is_some())
         {
             self.inline_media_active = false;
-            xai_grok_shell::util::with_locked_stderr(|stderr| {
+            intelekt_shell::util::with_locked_stderr(|stderr| {
                 for &id in self.inline_media_ids.values() {
                     let clear = crate::terminal::image::clear_kitty_image(id);
                     let _ = std::io::Write::write_all(stderr, clear.as_bytes());
@@ -709,7 +709,7 @@ impl AgentView {
         }
         if let Some(ref child_sid) = self.active_subagent.clone() {
             if let Some(esc) = self.take_own_inline_media_clear_escapes() {
-                xai_grok_shell::util::with_locked_stderr(|stderr| {
+                intelekt_shell::util::with_locked_stderr(|stderr| {
                     let _ = std::io::Write::write_all(stderr, esc.as_bytes());
                 });
             }
@@ -727,7 +727,7 @@ impl AgentView {
             );
         }
         if let Some(esc) = self.take_subagent_inline_media_clear_escapes() {
-            xai_grok_shell::util::with_locked_stderr(|stderr| {
+            intelekt_shell::util::with_locked_stderr(|stderr| {
                 let _ = std::io::Write::write_all(stderr, esc.as_bytes());
             });
         }
@@ -1382,7 +1382,7 @@ impl AgentView {
             path_offset += "worktree ".width() as u16;
             parts.push(Span::styled("worktree ", label_style));
         }
-        if let Some(profile) = xai_grok_sandbox::profile_name() {
+        if let Some(profile) = intelekt_sandbox::profile_name() {
             let sandbox_text = format!("sandbox:{profile} ");
             let sandbox_style = Style::default().fg(theme.warning).bg(theme.bg_base);
             path_offset += sandbox_text.width() as u16;

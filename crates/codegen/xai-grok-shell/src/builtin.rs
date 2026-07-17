@@ -1,4 +1,4 @@
-//! Built-in files extracted to `~/.grok/` on startup.
+//! Built-in files extracted to `~/.intelekt/` on startup.
 
 const BUNDLED_FILES: &[(&str, &str)] = &[("README.md", include_str!("../README.md"))];
 
@@ -14,7 +14,7 @@ pub const BEST_OF_N_SKILL_MD: &str = include_str!("../skills/best-of-n/SKILL.md"
 
 /// Legacy bundled skill names (renamed or removed).
 ///
-/// These directories under `~/.grok/skills/` will be deleted on startup
+/// These directories under `~/.intelekt/skills/` will be deleted on startup
 /// (during bundled file extraction). This ensures that when a bundled
 /// skill is renamed (e.g. `check` → `check-work`), the old slash command
 /// does not linger on users' machines after an upgrade.
@@ -81,13 +81,13 @@ fn resolve_skill_content(name: &str, raw: &str, grok_home: &std::path::Path) -> 
         // Help skill needs path substitution so absolute paths work.
         "help" => {
             let grok_home_str = format!("{}/", grok_home.to_string_lossy());
-            raw.replace("~/.grok/", &grok_home_str)
+            raw.replace("~/.intelekt/", &grok_home_str)
         }
         _ => raw.to_string(),
     }
 }
 
-/// Extract bundled files to `~/.grok/` on startup.
+/// Extract bundled files to `~/.intelekt/` on startup.
 ///
 /// Full extraction runs on every version bump. On same-version startups,
 /// a lightweight check ensures all expected skill files exist on disk —
@@ -103,7 +103,7 @@ pub fn extract_bundled_files(grok_home: &std::path::Path) {
     // version-bump marker change.
     remove_legacy_bundled_skills(grok_home);
 
-    let version = xai_grok_version::VERSION;
+    let version = intelekt_version::VERSION;
     let marker = grok_home.join(".metadata_version");
 
     if let Ok(existing) = std::fs::read_to_string(&marker)
@@ -280,17 +280,17 @@ mod tests {
         extract_bundled_files(home);
 
         let workspace = tmp.path().join("workspace");
-        std::fs::create_dir_all(workspace.join(".grok").join("skills").join("help")).unwrap();
+        std::fs::create_dir_all(workspace.join(".intelekt").join("skills").join("help")).unwrap();
         std::fs::copy(
             home.join("skills/help/SKILL.md"),
-            workspace.join(".grok/skills/help/SKILL.md"),
+            workspace.join(".intelekt/skills/help/SKILL.md"),
         )
         .unwrap();
 
-        let skills = xai_grok_agent::prompt::skills::list_skills(
+        let skills = intelekt_agent::prompt::skills::list_skills(
             Some(workspace.to_str().unwrap()),
             &Default::default(),
-            xai_grok_agent::prompt::skills::CompatConfig::default(),
+            intelekt_agent::prompt::skills::CompatConfig::default(),
         )
         .await;
 
@@ -405,7 +405,7 @@ mod tests {
         std::fs::write(legacy_dir.join("SKILL.md"), "stale").unwrap();
 
         // Force the "same version" fast path by writing the current version marker
-        let version = xai_grok_version::VERSION;
+        let version = intelekt_version::VERSION;
         std::fs::write(home.join(".metadata_version"), version).unwrap();
 
         // This should still run legacy cleanup even though we're in fast path

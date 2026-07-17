@@ -2,7 +2,7 @@
 //! for the shell's `x.ai/fs/*` ACP extension methods.
 //!
 //! These mirror the pure functions that previously lived only in the
-//! shell (`xai-grok-shell/src/session/file_system.rs`) so that, in proxy
+//! shell (`intelekt-shell/src/session/file_system.rs`) so that, in proxy
 //! mode, a `x.ai/fs/*` request executes on the *remote* workspace server
 //! instead of the agent host. Each request type implements
 //! [`WorkspaceOp`], so it runs in-process for local sessions and routes
@@ -23,9 +23,9 @@ use crate::error::{WorkspaceError, WorkspaceResult};
 use crate::handle::WorkspaceHandle;
 use crate::workspace_ops::WorkspaceOp;
 
-// Canonical in xai-grok-workspace-types; re-exported for existing paths.
-use xai_grok_workspace_types::rpc::fs::FsReadEncoding;
-pub use xai_grok_workspace_types::rpc::fs::{
+// Canonical in intelekt-workspace-types; re-exported for existing paths.
+use intelekt_workspace_types::rpc::fs::FsReadEncoding;
+pub use intelekt_workspace_types::rpc::fs::{
     FsDeleteFileReq, FsExistsData, FsExistsReq, FsListData, FsListNode, FsListReq, FsReadFileData,
     FsReadFileReq, FsWriteFileReq,
 };

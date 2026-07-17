@@ -29,22 +29,22 @@ use anyhow::Result;
 use std::env;
 use std::net::SocketAddr;
 use tokio_util::sync::CancellationToken;
-use xai_grok_pager::app::{
+use intelekt_pager::app::{
     AgentCmd, Command, HeadlessArgs, LeaderMgmtArgs, LeaderMgmtCommand, LeaderTargetArgs,
     PagerArgs, join_early_prefetch, resolve_use_leader,
 };
-use xai_grok_pager::app::{WorkspaceMgmtArgs, WorkspaceMgmtCommand, WorkspaceStartArgs};
-use xai_grok_pager::client_identity::PAGER_CLIENT_VERSION;
-use xai_grok_shell::agent::app::{run_headless, run_leader, run_stdio_agent};
-use xai_grok_shell::agent::config::Config as AgentConfig;
-use xai_grok_shell::leader::{
+use intelekt_pager::app::{WorkspaceMgmtArgs, WorkspaceMgmtCommand, WorkspaceStartArgs};
+use intelekt_pager::client_identity::PAGER_CLIENT_VERSION;
+use intelekt_shell::agent::app::{run_headless, run_leader, run_stdio_agent};
+use intelekt_shell::agent::config::Config as AgentConfig;
+use intelekt_shell::leader::{
     ClientCapabilities, ClientMode, ControlCommand, LeaderCapabilities, LeaderDescriptor,
     LeaderRegistration, LeaderTarget, leader_is_older_than,
 };
-use xai_grok_shell::leader::{
+use intelekt_shell::leader::{
     ControlPayload, LeaderClient, LeaderEnvUrls, connect_or_spawn, socket_path_for_ws_url,
 };
-use xai_grok_update::{UpdateConfig, auto_update, enforce_minimum_version_or_exit};
+use intelekt_update::{UpdateConfig, auto_update, enforce_minimum_version_or_exit};
 /// Apply headless args to an existing config, only overriding values that are
 /// explicitly set. This allows environment defaults to be preserved when
 /// specific args are not provided.
@@ -58,7 +58,7 @@ fn apply_headless_args_to_config(args: &HeadlessArgs, config: &mut AgentConfig) 
 }
 /// Apply global endpoint CLI args to an existing config.
 fn apply_agent_endpoint_args(
-    agent_args: &xai_grok_pager::app::AgentArgs,
+    agent_args: &intelekt_pager::app::AgentArgs,
     config: &mut AgentConfig,
 ) {
     if let Some(v) = &agent_args.cli_chat_proxy_base_url {
@@ -104,7 +104,7 @@ const HEADLESS_ENTRYPOINT: &str = "headless";
 /// Initialize simple tracing for non-TUI agent modes.
 fn init_tracing_simple(app_entrypoint: &'static str) {
     use tracing_subscriber::{EnvFilter, Layer as _, fmt, layer::SubscriberExt as _};
-    use xai_grok_telemetry::debug_log::RMCP_SSE_NOISE_TARGET;
+    use intelekt_telemetry::debug_log::RMCP_SSE_NOISE_TARGET;
     let default_filter = if app_entrypoint == HEADLESS_ENTRYPOINT {
         "off"
     } else {
@@ -124,33 +124,33 @@ fn init_tracing_simple(app_entrypoint: &'static str) {
         .with_writer(std::io::stderr);
     let registry = tracing_subscriber::registry()
         .with(fmt_layer.with_filter(env_filter))
-        .with(xai_grok_telemetry::sampling_log::layer())
-        .with(xai_grok_telemetry::instrumentation::layer())
-        .with(xai_grok_telemetry::hooks_log::layer())
-        .with(xai_grok_telemetry::otel_layer::build_otel_layer(
-            xai_grok_telemetry::otel_layer::OtelClientInfo {
+        .with(intelekt_telemetry::sampling_log::layer())
+        .with(intelekt_telemetry::instrumentation::layer())
+        .with(intelekt_telemetry::hooks_log::layer())
+        .with(intelekt_telemetry::otel_layer::build_otel_layer(
+            intelekt_telemetry::otel_layer::OtelClientInfo {
                 client_name: "grok-pager",
-                client_version: xai_grok_version::VERSION,
+                client_version: intelekt_version::VERSION,
                 service_version: env!("VERSION_WITH_COMMIT"),
                 app_entrypoint,
             },
-            xai_grok_shell::auth::credential_provider::build_default_otel_layer_config(),
+            intelekt_shell::auth::credential_provider::build_default_otel_layer_config(),
         ));
-    xai_grok_telemetry::debug_log::install_firehose(registry, app_entrypoint);
-    xai_grok_telemetry::external::init(
-        xai_grok_shell::agent::config::resolve_external_otel_config(
-            xai_grok_telemetry::external::config::ExternalClientInfo {
+    intelekt_telemetry::debug_log::install_firehose(registry, app_entrypoint);
+    intelekt_telemetry::external::init(
+        intelekt_shell::agent::config::resolve_external_otel_config(
+            intelekt_telemetry::external::config::ExternalClientInfo {
                 service_version: env!("VERSION_WITH_COMMIT").to_owned(),
-                client_version: xai_grok_version::VERSION.to_owned(),
+                client_version: intelekt_version::VERSION.to_owned(),
                 app_entrypoint: app_entrypoint.to_owned(),
             },
         ),
     );
 }
-/// `grok setup`: rendering + exit codes only; fetch logic lives in `xai_grok_shell::managed_config`.
+/// `grok setup`: rendering + exit codes only; fetch logic lives in `intelekt_shell::managed_config`.
 /// `json` prints the served configuration instead of installing it.
 async fn run_setup_command(json: bool) {
-    use xai_grok_shell::managed_config::{self, SetupOutcome};
+    use intelekt_shell::managed_config::{self, SetupOutcome};
     if !managed_config::has_principal() {
         eprintln!("No deployment key or team sign-in found.");
         eprintln!();
@@ -158,13 +158,13 @@ async fn run_setup_command(json: bool) {
         eprintln!("or set a deployment key:");
         eprintln!();
         if cfg!(unix) {
-            eprintln!("  export GROK_DEPLOYMENT_KEY=<your-key>");
+            eprintln!("  export INTELEKT_DEPLOYMENT_KEY=<your-key>");
         } else {
-            eprintln!("  $env:GROK_DEPLOYMENT_KEY=\"<your-key>\"");
+            eprintln!("  $env:INTELEKT_DEPLOYMENT_KEY=\"<your-key>\"");
         }
         eprintln!("  grok setup");
         eprintln!();
-        eprintln!("Or add the key to ~/.grok/config.toml:");
+        eprintln!("Or add the key to ~/.intelekt/config.toml:");
         eprintln!();
         eprintln!("  [endpoints]");
         eprintln!("  deployment_key = \"<your-key>\"");
@@ -215,7 +215,7 @@ async fn run_leader_mgmt(args: LeaderMgmtArgs) -> Result<()> {
     match args.command {
         LeaderMgmtCommand::Kill => kill_leaders().await,
         LeaderMgmtCommand::List { json } => {
-            let leaders = xai_grok_shell::leader::discover_leaders().await;
+            let leaders = intelekt_shell::leader::discover_leaders().await;
             if json {
                 let payload: Vec<_> = leaders.iter().map(leader_descriptor_json).collect();
                 println!(
@@ -258,7 +258,7 @@ async fn run_leader_mgmt(args: LeaderMgmtArgs) -> Result<()> {
     }
 }
 async fn kill_leaders() -> Result<()> {
-    let leaders = xai_grok_shell::leader::discover_leaders().await;
+    let leaders = intelekt_shell::leader::discover_leaders().await;
     if leaders.is_empty() {
         eprintln!("No leader candidates found.");
         return Ok(());
@@ -269,7 +269,7 @@ async fn kill_leaders() -> Result<()> {
         let Some(pid) = leader_pid(d) else {
             continue;
         };
-        if !xai_grok_shell::util::is_grok_process(pid) {
+        if !intelekt_shell::util::is_grok_process(pid) {
             if let Some(ref lock) = d.lock_path {
                 eprintln!("  PID {pid} is not a grok process, removing stale lock");
                 let _ = std::fs::remove_file(lock);
@@ -281,7 +281,7 @@ async fn kill_leaders() -> Result<()> {
             continue;
         }
         eprintln!("  Killing leader PID {pid}");
-        if let Err(e) = xai_grok_shell::util::kill_process_by_pid(pid) {
+        if let Err(e) = intelekt_shell::util::kill_process_by_pid(pid) {
             eprintln!("  warning: failed to terminate PID {pid}: {e}");
             continue;
         }
@@ -299,20 +299,20 @@ async fn kill_leaders() -> Result<()> {
 fn resolve_target(args: &LeaderTargetArgs) -> LeaderTarget {
     match args.pid {
         Some(pid) => LeaderTarget::Pid(pid),
-        None => LeaderTarget::Environment(xai_grok_shell::env::GrokBuildEnvironment::Production),
+        None => LeaderTarget::Environment(intelekt_shell::env::GrokBuildEnvironment::Production),
     }
 }
 async fn connect_to_leader(
     args: &LeaderTargetArgs,
-) -> Result<(LeaderDescriptor, xai_grok_shell::leader::LeaderClient)> {
+) -> Result<(LeaderDescriptor, intelekt_shell::leader::LeaderClient)> {
     let target = resolve_target(args);
-    let selection = xai_grok_shell::leader::resolve_leader_target(target)
+    let selection = intelekt_shell::leader::resolve_leader_target(target)
         .await
         .map_err(|e| anyhow::anyhow!("{}", e.message))?;
     let socket_path = selection
         .socket_path()
         .ok_or_else(|| anyhow::anyhow!("resolved leader target did not include a socket path"))?;
-    let client = xai_grok_shell::leader::LeaderClient::connect(
+    let client = intelekt_shell::leader::LeaderClient::connect(
         socket_path.to_path_buf(),
         "grok-pager-leader-cli",
         ClientMode::Stdio,
@@ -349,7 +349,7 @@ fn leader_descriptor_json(d: &LeaderDescriptor) -> serde_json::Value {
 fn leader_info_json(
     d: &LeaderDescriptor,
     reg: &LeaderRegistration,
-    info: Option<&xai_grok_shell::leader::ControlPayload>,
+    info: Option<&intelekt_shell::leader::ControlPayload>,
 ) -> Result<serde_json::Value> {
     let mut val = leader_descriptor_json(d);
     val["clientId"] = serde_json::json!(reg.client_id);
@@ -386,7 +386,7 @@ fn workspace_command_env_override() -> Option<bool> {
 /// loaded-but-off (`Disabled`) > settings-not-loaded (`Unknown`).
 fn workspace_command_gate(
     env_override: Option<bool>,
-    remote_settings: Option<&xai_grok_shell::util::config::RemoteSettings>,
+    remote_settings: Option<&intelekt_shell::util::config::RemoteSettings>,
 ) -> WorkspaceGate {
     if let Some(enabled) = env_override {
         return if enabled {
@@ -410,8 +410,8 @@ fn env_flag_enabled(value: &str) -> bool {
     )
 }
 /// Blocking fetch of remote settings via the startup prefetch path.
-fn fetch_remote_settings() -> Option<xai_grok_shell::util::config::RemoteSettings> {
-    join_early_prefetch(xai_grok_shell::agent::models::start_early_prefetch(None))
+fn fetch_remote_settings() -> Option<intelekt_shell::util::config::RemoteSettings> {
+    join_early_prefetch(intelekt_shell::agent::models::start_early_prefetch(None))
 }
 async fn run_workspace_mgmt(args: WorkspaceMgmtArgs) -> Result<()> {
     let env_override = workspace_command_env_override();
@@ -496,7 +496,7 @@ async fn workspace_control(
     json: bool,
     command: ControlCommand,
 ) -> Result<()> {
-    let raw_config = xai_grok_shell::config::load_effective_config_disk_only()
+    let raw_config = intelekt_shell::config::load_effective_config_disk_only()
         .map_err(|e| anyhow::anyhow!("Failed to load config: {e}"))?;
     let agent_config = AgentConfig::new_from_toml_cfg(&raw_config)
         .map_err(|e| anyhow::anyhow!("Failed to create agent config: {e}"))?;
@@ -510,11 +510,11 @@ async fn workspace_control(
 async fn workspace_start(
     args: WorkspaceStartArgs,
     restart: bool,
-    remote_settings: Option<xai_grok_shell::util::config::RemoteSettings>,
+    remote_settings: Option<intelekt_shell::util::config::RemoteSettings>,
 ) -> Result<()> {
-    use xai_grok_shell::auth::ensure_authenticated;
-    xai_grok_shell::util::config::set_remote_campaigns_from_settings(remote_settings.as_ref());
-    let raw_config = xai_grok_shell::config::load_effective_config()
+    use intelekt_shell::auth::ensure_authenticated;
+    intelekt_shell::util::config::set_remote_campaigns_from_settings(remote_settings.as_ref());
+    let raw_config = intelekt_shell::config::load_effective_config()
         .map_err(|e| anyhow::anyhow!("Failed to load config: {e}"))?;
     let agent_config = AgentConfig::new_from_toml_cfg(&raw_config)
         .map_err(|e| anyhow::anyhow!("Failed to create agent config: {e}"))?;
@@ -528,7 +528,7 @@ async fn workspace_start(
     if !use_leader {
         anyhow::bail!(
             "`grok workspace` requires leader mode (the workspace is shared via the leader).\n\
-             Enable it with `[cli] use_leader = true` in ~/.grok/config.toml, or pass --leader."
+             Enable it with `[cli] use_leader = true` in ~/.intelekt/config.toml, or pass --leader."
         );
     }
     ensure_authenticated(
@@ -945,9 +945,9 @@ async fn replay_acp_state_after_reconnect(
 /// The TUI has its own signal handler (`app::signal_handler`) that does the
 /// full crossterm teardown.
 fn shutdown_and_flush_telemetry(exit_code: i32) -> ! {
-    xai_grok_telemetry::sentry::flush_on_shutdown();
-    xai_grok_telemetry::otel_layer::shutdown_otel();
-    xai_grok_telemetry::debug_log::flush();
+    intelekt_telemetry::sentry::flush_on_shutdown();
+    intelekt_telemetry::otel_layer::shutdown_otel();
+    intelekt_telemetry::debug_log::flush();
     std::process::exit(exit_code);
 }
 /// Emitted by both leader guards (server mode and leader-connect) so the two sites
@@ -956,7 +956,7 @@ const PLUGIN_DIR_LEADER_WARNING: &str = "grok: --plugin-dir is ignored in leader
      load per-process plugins";
 /// Run the `agent` subcommand, dispatching to the appropriate mode.
 async fn run_agent_command(
-    agent_args: Box<xai_grok_pager::app::AgentArgs>,
+    agent_args: Box<intelekt_pager::app::AgentArgs>,
     permission_mode_flag: Option<String>,
     trust: bool,
     no_auto_update: bool,
@@ -986,11 +986,11 @@ async fn run_agent_command(
         }
     });
     init_tracing_simple("agent");
-    let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
-    xai_grok_telemetry::instrumentation::install_panic_hook();
+    let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
+    intelekt_telemetry::instrumentation::install_panic_hook();
     if trust {
         match std::env::current_dir() {
-            Ok(cwd) => xai_grok_shell::agent::folder_trust::grant_folder_trust(&cwd),
+            Ok(cwd) => intelekt_shell::agent::folder_trust::grant_folder_trust(&cwd),
             Err(e) => {
                 tracing::warn!(
                     error = % e, "--trust: failed to resolve cwd; folder not trusted"
@@ -998,17 +998,17 @@ async fn run_agent_command(
             }
         }
     }
-    let early_prefetch = xai_grok_shell::agent::models::start_early_prefetch(None);
-    xai_grok_shell::agent::mvp_agent::warm_async_http_client();
+    let early_prefetch = intelekt_shell::agent::models::start_early_prefetch(None);
+    intelekt_shell::agent::mvp_agent::warm_async_http_client();
     tokio::task::spawn_blocking(|| {});
     let is_stdio = matches!(agent_args.mode, Some(AgentCmd::Stdio));
     let is_leader = matches!(agent_args.mode, Some(AgentCmd::Leader(_)));
     if !is_stdio && !is_leader {
         eprintln!(
-            "Grok Build (pager) - v{}",
-            xai_grok_version::display_version_with_commit(
+            "Intelekt CLI (pager) - v{}",
+            intelekt_version::display_version_with_commit(
                 env!("VERSION_WITH_COMMIT"),
-                xai_grok_update::channel_label(),
+                intelekt_update::channel_label(),
             )
         );
         if should_check_for_updates(no_auto_update) {
@@ -1022,8 +1022,8 @@ async fn run_agent_command(
         }
     }
     let remote_settings = join_early_prefetch(early_prefetch);
-    xai_grok_shell::util::config::set_remote_campaigns_from_settings(remote_settings.as_ref());
-    let raw_config = xai_grok_shell::config::load_effective_config()
+    intelekt_shell::util::config::set_remote_campaigns_from_settings(remote_settings.as_ref());
+    let raw_config = intelekt_shell::config::load_effective_config()
         .map_err(|e| anyhow::anyhow!("Failed to load config: {}", e))?;
     let mut agent_config = AgentConfig::new_from_toml_cfg(&raw_config)
         .map_err(|e| anyhow::anyhow!("Failed to create agent config: {}", e))?;
@@ -1031,8 +1031,8 @@ async fn run_agent_command(
     agent_config.reasoning_effort_override = agent_args
         .reasoning_effort
         .as_deref()
-        .and_then(xai_grok_shell::sampling::types::parse_canonical_effort_token);
-    let launch_yolo = xai_grok_shell::util::config::effective_yolo_for_launch(
+        .and_then(intelekt_shell::sampling::types::parse_canonical_effort_token);
+    let launch_yolo = intelekt_shell::util::config::effective_yolo_for_launch(
         agent_args.yolo,
         permission_mode_flag.as_deref(),
         None,
@@ -1041,7 +1041,7 @@ async fn run_agent_command(
         eprintln!("grok: {warning}");
     }
     agent_config.default_yolo_mode = launch_yolo.yolo;
-    agent_config.default_auto_mode = xai_grok_shell::util::config::effective_auto_for_launch(
+    agent_config.default_auto_mode = intelekt_shell::util::config::effective_auto_for_launch(
         agent_args.yolo,
         permission_mode_flag.as_deref(),
         None,
@@ -1058,7 +1058,7 @@ async fn run_agent_command(
     }
     apply_agent_endpoint_args(&agent_args, &mut agent_config);
     agent_config.remote_settings = remote_settings.clone();
-    agent_config.resolve_runtime_fields(&xai_grok_shell::agent::config::RuntimeResolutionContext {
+    agent_config.resolve_runtime_fields(&intelekt_shell::agent::config::RuntimeResolutionContext {
         raw_config: &raw_config,
         remote_settings: remote_settings.as_ref(),
         cwd: None,
@@ -1088,7 +1088,7 @@ async fn run_agent_command(
     tracing::info!(use_leader, ?policy_disable_reason, "leader mode resolved");
     let managed_install = is_managed_install(
         std::env::current_exe().ok(),
-        &xai_grok_shell::util::grok_home::grok_home(),
+        &intelekt_shell::util::grok_home::grok_home(),
     );
     if stdio_auto_update_enabled(
         is_stdio,
@@ -1116,7 +1116,7 @@ async fn run_agent_command(
         use std::sync::Arc;
         use tokio::io::AsyncWriteExt;
         use tokio::sync::Mutex as TokioMutex;
-        use xai_grok_shell::leader::{
+        use intelekt_shell::leader::{
             ClientCapabilities, ClientMode, LeaderReconnector, ReconnectPolicy, connect_or_spawn,
         };
         let mode = match &agent_args.mode {
@@ -1124,7 +1124,7 @@ async fn run_agent_command(
             Some(AgentCmd::Headless(_)) | None => ClientMode::Headless,
             _ => ClientMode::Stdio,
         };
-        let env_urls = xai_grok_shell::leader::LeaderEnvUrls::from(&agent_config.grok_com_config);
+        let env_urls = intelekt_shell::leader::LeaderEnvUrls::from(&agent_config.grok_com_config);
         let default_model = agent_config
             .default_model_override
             .clone()
@@ -1307,12 +1307,12 @@ async fn run_agent_command(
             let mut agent_config = agent_config.clone();
             apply_headless_args_to_config(&a.headless, &mut agent_config);
             let secret = a.get_secret();
-            let server_config = xai_grok_shell::agent::ServerConfig {
+            let server_config = intelekt_shell::agent::ServerConfig {
                 bind_addr: a.bind,
                 secret: secret.clone(),
             };
             print_serve_startup_info(a.bind, &secret);
-            xai_grok_shell::agent::run_agent_server(server_config, agent_config).await
+            intelekt_shell::agent::run_agent_server(server_config, agent_config).await
         }
         Some(AgentCmd::Leader(a)) => {
             let mut agent_config = agent_config.clone();
@@ -1324,19 +1324,19 @@ async fn run_agent_command(
                 None
             } else {
                 let update_config_for_leader = update_config.clone();
-                Some(xai_grok_shell::agent::app::LeaderAutoUpdateConfig {
+                Some(intelekt_shell::agent::app::LeaderAutoUpdateConfig {
                     check_interval: std::time::Duration::from_secs(60 * 60),
                     check_fn: Box::new(move || {
                         let uc = update_config_for_leader.clone();
                         Box::pin(async move {
-                            let current_config = xai_grok_shell::util::config::load_config().await;
+                            let current_config = intelekt_shell::util::config::load_config().await;
                             if current_config.cli.auto_update == Some(false) {
                                 return false;
                             }
                             match auto_update::ensure_latest_on_disk(&uc).await {
                                 Ok(outcome) => {
                                     if let Some(v) = &outcome.installed {
-                                        if let Err(e) = xai_grok_shell::managed_config::sync().await
+                                        if let Err(e) = intelekt_shell::managed_config::sync().await
                                         {
                                             tracing::warn!(
                                                 "Leader auto-update: managed config refresh failed: {e}"
@@ -1444,10 +1444,10 @@ fn flag_dashboard_at_startup_if_requested(args: &mut PagerArgs) -> Result<()> {
     if !matches!(args.command, Some(Command::Dashboard)) {
         return Ok(());
     }
-    if !xai_grok_pager::views::dashboard::dashboard_enabled() {
+    if !intelekt_pager::views::dashboard::dashboard_enabled() {
         anyhow::bail!(
             "the Agent Dashboard is disabled. Enable it by removing \
-             `[dashboard] enabled = false` from ~/.grok/config.toml and \
+             `[dashboard] enabled = false` from ~/.intelekt/config.toml and \
              unsetting GROK_AGENT_DASHBOARD=0."
         );
     }
@@ -1503,7 +1503,7 @@ fn purge_jemalloc_retained_pages() {
 /// the `tikv-jemalloc-ctl` raw helpers (introduced by the heap-profile
 /// hooks below) instead of hand-rolled mallctl.
 #[cfg(all(feature = "jemalloc", unix))]
-fn jemalloc_allocator_stats() -> Option<xai_grok_pager::memory_trace::AllocatorStats> {
+fn jemalloc_allocator_stats() -> Option<intelekt_pager::memory_trace::AllocatorStats> {
     /// SAFETY: callers pass fixed NUL-terminated `stats.*` size_t ctl names.
     unsafe fn gauge(name: &[u8]) -> Option<u64> {
         unsafe {
@@ -1514,7 +1514,7 @@ fn jemalloc_allocator_stats() -> Option<xai_grok_pager::memory_trace::AllocatorS
     }
     unsafe {
         tikv_jemalloc_ctl::raw::write(b"epoch\0", 1u64).ok()?;
-        Some(xai_grok_pager::memory_trace::AllocatorStats {
+        Some(intelekt_pager::memory_trace::AllocatorStats {
             allocated: gauge(b"stats.allocated\0")?,
             active: gauge(b"stats.active\0")?,
             resident: gauge(b"stats.resident\0")?,
@@ -1548,12 +1548,12 @@ fn jemalloc_stats_dump() -> String {
     out
 }
 #[cfg(all(feature = "jemalloc", unix))]
-fn jemalloc_heap_stats() -> Option<xai_grok_shell::heap_profile::JemallocStats> {
+fn jemalloc_heap_stats() -> Option<intelekt_shell::heap_profile::JemallocStats> {
     unsafe {
         tikv_jemalloc_ctl::raw::write(b"epoch\0", 1u64).ok()?;
         let allocated = tikv_jemalloc_ctl::raw::read::<usize>(b"stats.allocated\0").ok()? as u64;
         let resident = tikv_jemalloc_ctl::raw::read::<usize>(b"stats.resident\0").ok()? as u64;
-        Some(xai_grok_shell::heap_profile::JemallocStats {
+        Some(intelekt_shell::heap_profile::JemallocStats {
             allocated,
             resident,
         })
@@ -1582,7 +1582,7 @@ fn jemalloc_dump_to_path(path: &std::path::Path) -> Result<(), String> {
 }
 #[cfg(all(feature = "jemalloc", unix))]
 fn install_heap_profile_hooks() {
-    xai_grok_shell::heap_profile::install(xai_grok_shell::heap_profile::HeapProfileHooks {
+    intelekt_shell::heap_profile::install(intelekt_shell::heap_profile::HeapProfileHooks {
         stats: jemalloc_heap_stats,
         set_prof_active: jemalloc_set_prof_active,
         dump_to_path: jemalloc_dump_to_path,
@@ -1590,24 +1590,24 @@ fn install_heap_profile_hooks() {
     });
 }
 fn main() {
-    xai_grok_pager_minimal::install();
+    intelekt_pager_minimal::install();
     #[cfg(all(feature = "jemalloc", unix))]
-    xai_grok_pager::memory_release::install_release_hook(purge_jemalloc_retained_pages);
+    intelekt_pager::memory_release::install_release_hook(purge_jemalloc_retained_pages);
     #[cfg(all(feature = "jemalloc", unix))]
     {
-        xai_grok_pager::memory_trace::install_allocator_stats_provider(jemalloc_allocator_stats);
-        xai_grok_pager::memory_trace::install_allocator_dump_provider(jemalloc_stats_dump);
+        intelekt_pager::memory_trace::install_allocator_stats_provider(jemalloc_allocator_stats);
+        intelekt_pager::memory_trace::install_allocator_dump_provider(jemalloc_stats_dump);
     }
     #[cfg(all(feature = "jemalloc", unix))]
     install_heap_profile_hooks();
-    if let Some(code) = xai_grok_pager::app::mermaid_worker::maybe_run_render_subprocess() {
+    if let Some(code) = intelekt_pager::app::mermaid_worker::maybe_run_render_subprocess() {
         std::process::exit(code);
     }
-    xai_grok_pager::memory_trace::start(
-        xai_grok_shell::util::grok_home::grok_home().join("memtrace"),
+    intelekt_pager::memory_trace::start(
+        intelekt_shell::util::grok_home::grok_home().join("memtrace"),
     );
     raise_fd_limit();
-    if let Err(e) = xai_grok_config::validate_requirements() {
+    if let Err(e) = intelekt_config::validate_requirements() {
         eprintln!("Couldn't start Grok: {e}");
         eprintln!();
         eprintln!(
@@ -1616,16 +1616,16 @@ fn main() {
         );
         std::process::exit(2);
     }
-    let _sentry_guard = xai_grok_telemetry::sentry::init(xai_grok_telemetry::sentry::Config {
+    let _sentry_guard = intelekt_telemetry::sentry::init(intelekt_telemetry::sentry::Config {
         client: "grok-pager",
         client_version: PAGER_CLIENT_VERSION,
         release: env!("VERSION_WITH_COMMIT"),
-        disabled: xai_grok_shell::agent::config::is_error_reporting_disabled_sync(),
+        disabled: intelekt_shell::agent::config::is_error_reporting_disabled_sync(),
     });
-    xai_grok_pager::docs::extract_user_guide_docs(&xai_grok_shell::util::grok_home::grok_home());
+    intelekt_pager::docs::extract_user_guide_docs(&intelekt_shell::util::grok_home::grok_home());
     xai_crash_handler::install_terminal_restore_only();
-    if xai_grok_shell::util::config::load_crash_handler_enabled_sync() {
-        let crash_dir = xai_grok_shell::util::grok_home::grok_home().join("crash");
+    if intelekt_shell::util::config::load_crash_handler_enabled_sync() {
+        let crash_dir = intelekt_shell::util::grok_home::grok_home().join("crash");
         if let Some(report) = xai_crash_handler::check_previous_crash(&crash_dir) {
             eprintln!("Grok crashed during your last session.");
             eprintln!("  Signal:  {}", report.signal_name);
@@ -1643,7 +1643,7 @@ fn main() {
             );
         }
     }
-    let crashed = xai_grok_shell::active_sessions::collect_crashed().unwrap_or_default();
+    let crashed = intelekt_shell::active_sessions::collect_crashed().unwrap_or_default();
     if !crashed.is_empty() {
         tracing::info!(
             count = crashed.len(),
@@ -1655,7 +1655,7 @@ fn main() {
         .build()
         .unwrap_or_else(|e| panic!("failed to start tokio runtime: {e}"));
     let result = run_and_shutdown(runtime, async_main(), RUNTIME_SHUTDOWN_GRACE);
-    xai_grok_telemetry::debug_log::flush();
+    intelekt_telemetry::debug_log::flush();
     if let Err(e) = result {
         xai_tty_utils::restore_native_stderr();
         eprintln!("Error: {e:#}");
@@ -1674,16 +1674,16 @@ async fn async_main() -> Result<()> {
     }
     if args.chat() {
         unsafe {
-            std::env::set_var(xai_grok_shell::agent::chat_modes::GROK_CHAT_MODE_ENV, "1");
+            std::env::set_var(intelekt_shell::agent::chat_modes::GROK_CHAT_MODE_ENV, "1");
         }
     }
     if let Some(ref socket) = args.leader_socket {
-        unsafe { std::env::set_var(xai_grok_shell::leader::LEADER_SOCKET_ENV, socket) };
+        unsafe { std::env::set_var(intelekt_shell::leader::LEADER_SOCKET_ENV, socket) };
     }
     if let Some(ref path) = args.debug_file {
         unsafe {
             std::env::set_var("GROK_DEBUG_LOG", path);
-            std::env::remove_var("GROK_LOG_FILE");
+            std::env::remove_var("INTELEKT_LOG_FILE");
         }
     }
     if args.debug || args.debug_file.is_some() {
@@ -1693,19 +1693,19 @@ async fn async_main() -> Result<()> {
             }
         };
         set_if_unset("GROK_DEBUG_LOG", "1");
-        set_if_unset("GROK_HOOKS_LOG", "1");
+        set_if_unset("INTELEKT_HOOKS_LOG", "1");
     }
     if let Some(Command::Completions { shell }) = &args.command {
-        xai_grok_pager::completions_cmd::run(*shell);
+        intelekt_pager::completions_cmd::run(*shell);
         return Ok(());
     }
     if let Some(Command::Wrap(ref wrap_args)) = args.command {
-        return xai_grok_pager::wrap_cmd::run(wrap_args);
+        return intelekt_pager::wrap_cmd::run(wrap_args);
     }
     let saved_profile = args.saved_resume_profile();
     let sandbox_profile_arg = match args.startup_sandbox_profile(saved_profile.as_deref()) {
-        xai_grok_pager::app::cli::SandboxStartup::Apply(profile) => profile,
-        xai_grok_pager::app::cli::SandboxStartup::Conflict { requested, saved } => {
+        intelekt_pager::app::cli::SandboxStartup::Apply(profile) => profile,
+        intelekt_pager::app::cli::SandboxStartup::Conflict { requested, saved } => {
             eprintln!(
                 "error: cannot resume this session under sandbox profile '{requested}' — \
                  it was created with '{saved}'. Omit --sandbox to resume with '{saved}', \
@@ -1714,7 +1714,7 @@ async fn async_main() -> Result<()> {
             std::process::exit(1);
         }
     };
-    xai_grok_shell::config::apply_sandbox(
+    intelekt_shell::config::apply_sandbox(
         None,
         sandbox_profile_arg.as_deref(),
         args.cwd.as_deref(),
@@ -1724,10 +1724,10 @@ async fn async_main() -> Result<()> {
         && args.single.is_none()
         && args.prompt_json.is_none()
         && args.prompt_file.is_none();
-    xai_grok_shell::http::set_client_name(if is_interactive {
-        xai_grok_workspace::permission::ClientType::GrokPager
+    intelekt_shell::http::set_client_name(if is_interactive {
+        intelekt_workspace::permission::ClientType::GrokPager
     } else {
-        xai_grok_workspace::permission::ClientType::Generic
+        intelekt_workspace::permission::ClientType::Generic
     });
     let update_config = build_update_config();
     if let Some(command) = args.command.take() {
@@ -1736,15 +1736,15 @@ async fn async_main() -> Result<()> {
                 if json {
                     let payload = serde_json::json!(
                         { "currentVersion" : env!("VERSION_WITH_COMMIT"), "channel" :
-                        xai_grok_update::channel_name().unwrap_or("unknown"), }
+                        intelekt_update::channel_name().unwrap_or("unknown"), }
                     );
                     println!("{}", serde_json::to_string(&payload)?);
                 } else {
                     println!(
                         "grok {}",
-                        xai_grok_version::display_version_with_commit(
+                        intelekt_version::display_version_with_commit(
                             env!("VERSION_WITH_COMMIT"),
-                            xai_grok_update::channel_label(),
+                            intelekt_update::channel_label(),
                         )
                     );
                 }
@@ -1775,85 +1775,85 @@ async fn async_main() -> Result<()> {
             }
             Command::Inspect { json } => {
                 let cwd = std::env::current_dir().unwrap_or_default();
-                xai_grok_shell::inspect::inspect(&cwd, json).await?;
+                intelekt_shell::inspect::inspect(&cwd, json).await?;
                 return Ok(());
             }
             Command::Setup { json } => {
                 init_tracing_simple("cli");
-                let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
+                let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
                 run_setup_command(json).await;
                 return Ok(());
             }
             Command::Mcp(mcp_args) => {
                 init_tracing_simple("cli");
-                return xai_grok_pager::mcp_cmd::run(mcp_args).await;
+                return intelekt_pager::mcp_cmd::run(mcp_args).await;
             }
             Command::Plugin(plugin_args) => {
                 init_tracing_simple("cli");
-                let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
-                return xai_grok_pager::plugin_cmd::run(plugin_args).await;
+                let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
+                return intelekt_pager::plugin_cmd::run(plugin_args).await;
             }
             Command::Models => {
                 init_tracing_simple("cli");
-                let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
-                let config = xai_grok_shell::config::load_effective_config_disk_only()
+                let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
+                let config = intelekt_shell::config::load_effective_config_disk_only()
                     .map_err(|e| anyhow::anyhow!("Failed to load config: {e}"))?;
                 let agent_config = AgentConfig::new_from_toml_cfg(&config)
                     .map_err(|e| anyhow::anyhow!("Failed to create agent config: {e}"))?;
-                return xai_grok_pager::models::list_available_models(&agent_config).await;
+                return intelekt_pager::models::list_available_models(&agent_config).await;
             }
             Command::Leader(leader_args) => {
                 init_tracing_simple("cli");
-                let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
+                let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
                 return run_leader_mgmt(leader_args).await;
             }
             Command::Worktree(worktree_args) => {
                 init_tracing_simple("cli");
-                let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
-                let config = xai_grok_shell::config::load_effective_config_disk_only()
+                let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
+                let config = intelekt_shell::config::load_effective_config_disk_only()
                     .map_err(|e| anyhow::anyhow!("Failed to load config: {e}"))?;
                 let agent_config = AgentConfig::new_from_toml_cfg(&config)
                     .map_err(|e| anyhow::anyhow!("Failed to create agent config: {e}"))?;
-                return xai_grok_pager::worktree_cmd::run(worktree_args, &agent_config).await;
+                return intelekt_pager::worktree_cmd::run(worktree_args, &agent_config).await;
             }
             Command::Workspace(workspace_args) => {
                 init_tracing_simple("cli");
-                let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
+                let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
                 return run_workspace_mgmt(workspace_args).await;
             }
             Command::Sessions(sessions_args) => {
                 init_tracing_simple("cli");
-                let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
-                let config = xai_grok_shell::config::load_effective_config_disk_only()
+                let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
+                let config = intelekt_shell::config::load_effective_config_disk_only()
                     .map_err(|e| anyhow::anyhow!("Failed to load config: {e}"))?;
                 let agent_config = AgentConfig::new_from_toml_cfg(&config)
                     .map_err(|e| anyhow::anyhow!("Failed to create agent config: {e}"))?;
-                return xai_grok_pager::sessions_cmd::run(sessions_args, &agent_config).await;
+                return intelekt_pager::sessions_cmd::run(sessions_args, &agent_config).await;
             }
             Command::Share(ref share_args) => {
                 init_tracing_simple("cli");
-                let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
-                let config = xai_grok_shell::config::load_effective_config_disk_only()
+                let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
+                let config = intelekt_shell::config::load_effective_config_disk_only()
                     .map_err(|e| anyhow::anyhow!("Failed to load config: {e}"))?;
                 let agent_config = AgentConfig::new_from_toml_cfg(&config)
                     .map_err(|e| anyhow::anyhow!("Failed to create agent config: {e}"))?;
-                return xai_grok_pager::share_cmd::run(share_args, &agent_config).await;
+                return intelekt_pager::share_cmd::run(share_args, &agent_config).await;
             }
             Command::Export(export_args) => {
                 init_tracing_simple("cli");
-                return xai_grok_pager::export_cmd::run(export_args);
+                return intelekt_pager::export_cmd::run(export_args);
             }
             Command::Trace(trace_args) => {
                 init_tracing_simple("cli");
-                let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
-                let config = xai_grok_shell::config::load_effective_config_disk_only()
+                let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
+                let config = intelekt_shell::config::load_effective_config_disk_only()
                     .map_err(|e| anyhow::anyhow!("Failed to load config: {e}"))?;
                 let agent_config = AgentConfig::new_from_toml_cfg(&config)
                     .map_err(|e| anyhow::anyhow!("Failed to create agent config: {e}"))?;
-                return xai_grok_pager::trace_cmd::run(trace_args, &agent_config).await;
+                return intelekt_pager::trace_cmd::run(trace_args, &agent_config).await;
             }
             Command::Memory(memory_args) => {
-                return xai_grok_pager::memory_cmd::run(memory_args);
+                return intelekt_pager::memory_cmd::run(memory_args);
             }
             Command::Update {
                 check,
@@ -1865,7 +1865,7 @@ async fn async_main() -> Result<()> {
                 enterprise,
             } => {
                 init_tracing_simple("cli");
-                let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
+                let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
                 let channel_switch = get_channel_switch(alpha, stable, enterprise);
                 return run_update_command(
                     check,
@@ -1884,29 +1884,29 @@ async fn async_main() -> Result<()> {
                 devbox,
             } => {
                 init_tracing_simple("cli");
-                let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
-                let config = xai_grok_shell::config::load_effective_config_disk_only()
+                let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
+                let config = intelekt_shell::config::load_effective_config_disk_only()
                     .map_err(|e| anyhow::anyhow!("Failed to load config: {e}"))?;
                 let config = AgentConfig::new_from_toml_cfg(&config)
                     .map_err(|e| anyhow::anyhow!("Failed to create agent config: {e}"))?;
-                xai_grok_shell::auth::run_cli_login(&config, oauth, device_auth, devbox).await?;
+                intelekt_shell::auth::run_cli_login(&config, oauth, device_auth, devbox).await?;
                 println!();
-                xai_grok_shell::instrumentation::finalize_and_exit(0);
+                intelekt_shell::instrumentation::finalize_and_exit(0);
             }
             Command::Logout => {
                 init_tracing_simple("cli");
-                let config = xai_grok_shell::config::load_effective_config_disk_only()
+                let config = intelekt_shell::config::load_effective_config_disk_only()
                     .map_err(|e| anyhow::anyhow!("Failed to load config: {e}"))?;
                 let config = AgentConfig::new_from_toml_cfg(&config)
                     .map_err(|e| anyhow::anyhow!("Failed to create agent config: {e}"))?;
-                xai_grok_shell::auth::run_cli_logout(&config)?;
-                xai_grok_shell::instrumentation::finalize_and_exit(0);
+                intelekt_shell::auth::run_cli_logout(&config)?;
+                intelekt_shell::instrumentation::finalize_and_exit(0);
             }
             Command::Wrap(ref wrap_args) => {
-                return xai_grok_pager::wrap_cmd::run(wrap_args);
+                return intelekt_pager::wrap_cmd::run(wrap_args);
             }
             Command::Completions { shell } => {
-                xai_grok_pager::completions_cmd::run(shell);
+                intelekt_pager::completions_cmd::run(shell);
                 return Ok(());
             }
             Command::Dashboard => {
@@ -1915,16 +1915,16 @@ async fn async_main() -> Result<()> {
             }
         }
     }
-    let headless_prompt = xai_grok_pager::headless::HeadlessPrompt::from_args(
+    let headless_prompt = intelekt_pager::headless::HeadlessPrompt::from_args(
         args.single.as_deref(),
         args.prompt_json.as_deref(),
         args.prompt_file.as_deref(),
     )?;
     if let Some(prompt) = headless_prompt {
         init_tracing_simple(HEADLESS_ENTRYPOINT);
-        let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
+        let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
         enforce_minimum_version_or_exit(&update_config).await;
-        let launch_yolo = xai_grok_shell::util::config::effective_yolo_for_launch(
+        let launch_yolo = intelekt_shell::util::config::effective_yolo_for_launch(
             args.yolo,
             args.permission_mode_flag.as_deref(),
             None,
@@ -1935,11 +1935,11 @@ async fn async_main() -> Result<()> {
         let json_schema = args
             .json_schema
             .as_deref()
-            .map(xai_grok_pager::headless::parse_json_schema)
+            .map(intelekt_pager::headless::parse_json_schema)
             .transpose()?;
         if json_schema.is_some() {
-            if args.output_format == xai_grok_pager::headless::OutputFormat::Plain {
-                args.output_format = xai_grok_pager::headless::OutputFormat::Json;
+            if args.output_format == intelekt_pager::headless::OutputFormat::Plain {
+                args.output_format = intelekt_pager::headless::OutputFormat::Json;
             }
             if args.self_verify {
                 anyhow::bail!(
@@ -1948,10 +1948,10 @@ async fn async_main() -> Result<()> {
                 );
             }
         }
-        return xai_grok_pager::headless::run_single_turn(
+        return intelekt_pager::headless::run_single_turn(
             prompt,
             args.verbatim,
-            xai_grok_pager::headless::HeadlessOptions {
+            intelekt_pager::headless::HeadlessOptions {
                 session_id: args.session_id.clone(),
                 resume: args.resume_session.or(args.load_session),
                 cwd: args.cwd,
@@ -1987,7 +1987,7 @@ async fn async_main() -> Result<()> {
         .await;
     }
     enforce_minimum_version_or_exit(&update_config).await;
-    let _otel_guard = xai_grok_telemetry::otel_layer::otel_guard();
+    let _otel_guard = intelekt_telemetry::otel_layer::otel_guard();
     type UpdateWaitHandle = tokio::task::JoinHandle<std::io::Result<std::process::ExitStatus>>;
     let bg_update_wait: std::sync::Arc<tokio::sync::Mutex<Option<UpdateWaitHandle>>> =
         std::sync::Arc::new(tokio::sync::Mutex::new(None));
@@ -2007,8 +2007,8 @@ async fn async_main() -> Result<()> {
         } else {
             None
         };
-    let result = xai_grok_pager::app::run(args, bg_update_rx).await;
-    xai_grok_sandbox::flush();
+    let result = intelekt_pager::app::run(args, bg_update_rx).await;
+    intelekt_sandbox::flush();
     match result {
         Ok(true) => {
             let adopted = bg_update_wait.lock().await.take();
@@ -2078,19 +2078,19 @@ async fn finish_update_on_exit(
 }
 /// Build an [`UpdateConfig`] from the current environment and config files.
 fn build_update_config() -> UpdateConfig {
-    let environment = xai_grok_shell::env::GrokBuildEnvironment::from_flags(false, false);
+    let environment = intelekt_shell::env::GrokBuildEnvironment::from_flags(false, false);
     let mut config = UpdateConfig::from_environment(&environment);
     cryptify::flow_stmt!({
         {
             config.deployment_key =
-                xai_grok_shell::agent::config::EndpointsConfig::default().deployment_key;
+                intelekt_shell::agent::config::EndpointsConfig::default().deployment_key;
         }
     });
     config.npm_registry = std::env::var(obfstr::obfstr!("GROK_NPM_REGISTRY"))
         .ok()
-        .or_else(xai_grok_shell::util::config::load_npm_registry_sync);
-    if let Ok(root) = xai_grok_shell::config::load_effective_config_disk_only()
-        && let Some(ch) = xai_grok_shell::util::config::channel_from_toml_opt(&root)
+        .or_else(intelekt_shell::util::config::load_npm_registry_sync);
+    if let Ok(root) = intelekt_shell::config::load_effective_config_disk_only()
+        && let Some(ch) = intelekt_shell::util::config::channel_from_toml_opt(&root)
     {
         config.channel = ch;
     }
@@ -2121,7 +2121,7 @@ fn stdio_auto_update_enabled(
 /// True when `exe` is the binary `<grok_home>/bin/grok` resolves to, the
 /// install that adopts a staged update on respawn. Both sides are
 /// canonicalized; any failure reports unmanaged and skips the update. The
-/// npm shim hardcodes `~/.grok`, so a custom `GROK_HOME` skips here too.
+/// npm shim hardcodes `~/.intelekt`, so a custom `INTELEKT_HOME` skips here too.
 fn is_managed_install(exe: Option<std::path::PathBuf>, grok_home: &std::path::Path) -> bool {
     if grok_home.as_os_str().is_empty() {
         return false;
@@ -2129,7 +2129,7 @@ fn is_managed_install(exe: Option<std::path::PathBuf>, grok_home: &std::path::Pa
     let Some(exe) = exe else {
         return false;
     };
-    let managed = xai_grok_config::grok_application_in(grok_home);
+    let managed = intelekt_config::grok_application_in(grok_home);
     match (dunce::canonicalize(&exe), dunce::canonicalize(&managed)) {
         (Ok(exe), Ok(managed)) => exe == managed,
         _ => false,
@@ -2198,8 +2198,8 @@ async fn run_update_command(
 /// skipped. The leader re-checks the directional version guard authoritatively;
 /// the pager-side `live_info` check just avoids connecting to newer leaders.
 async fn signal_leaders_to_relaunch(installed_version: &str) {
-    for d in xai_grok_shell::leader::discover_leaders().await {
-        if d.classification != xai_grok_shell::leader::LeaderDiscoveryState::Reachable {
+    for d in intelekt_shell::leader::discover_leaders().await {
+        if d.classification != intelekt_shell::leader::LeaderDiscoveryState::Reachable {
             continue;
         }
         let Some(socket_path) = d.socket_path.clone() else {
@@ -2210,7 +2210,7 @@ async fn signal_leaders_to_relaunch(installed_version: &str) {
         {
             continue;
         }
-        let client = match xai_grok_shell::leader::LeaderClient::connect(
+        let client = match intelekt_shell::leader::LeaderClient::connect(
             socket_path,
             "grok-pager-update",
             ClientMode::Stdio,
@@ -2236,14 +2236,14 @@ async fn signal_leaders_to_relaunch(installed_version: &str) {
             })
             .await
         {
-            Ok(Ok(xai_grok_shell::leader::ControlPayload::Relaunching {
+            Ok(Ok(intelekt_shell::leader::ControlPayload::Relaunching {
                 from_version,
                 to_version,
                 ..
             })) => {
                 eprintln!("  ↻ Relaunching shared session (leader {from_version} → {to_version})…");
             }
-            Ok(Ok(xai_grok_shell::leader::ControlPayload::RelaunchDeclined { reason })) => {
+            Ok(Ok(intelekt_shell::leader::ControlPayload::RelaunchDeclined { reason })) => {
                 tracing::debug!(% reason, "Leader declined relaunch");
             }
             Ok(Ok(_)) => {}
@@ -2300,7 +2300,7 @@ mod tests {
         eprintln!(
             "skip jemalloc prof checks: opt.prof false \
              (release-dist static conf, or MALLOC_CONF=prof:true,prof_active:false,lg_prof_sample={})",
-            xai_grok_shell::heap_profile::LG_PROF_SAMPLE
+            intelekt_shell::heap_profile::LG_PROF_SAMPLE
         );
         false
     }
@@ -2331,7 +2331,7 @@ mod tests {
         }
     }
     #[cfg(all(feature = "jemalloc", unix))]
-    fn assert_stats_sane(stats: xai_grok_shell::heap_profile::JemallocStats) {
+    fn assert_stats_sane(stats: intelekt_shell::heap_profile::JemallocStats) {
         assert!(stats.allocated > 0, "allocated={}", stats.allocated);
         assert!(stats.resident > 0, "resident={}", stats.resident);
         assert!(
@@ -2387,53 +2387,53 @@ mod tests {
     fn install_heap_profile_hooks_wires_shell_apis() {
         install_heap_profile_hooks();
         assert_stats_sane(
-            xai_grok_shell::heap_profile::stats().expect("shell stats after install"),
+            intelekt_shell::heap_profile::stats().expect("shell stats after install"),
         );
         if !require_opt_prof() {
-            assert!(!xai_grok_shell::heap_profile::prof_available());
+            assert!(!intelekt_shell::heap_profile::prof_available());
             return;
         }
-        assert!(xai_grok_shell::heap_profile::prof_available());
+        assert!(intelekt_shell::heap_profile::prof_available());
         assert_prof_active(false);
         {
             let _guard = ProfActiveGuard::set(true);
             assert_prof_active(true);
-            assert!(xai_grok_shell::heap_profile::set_prof_active(true));
+            assert!(intelekt_shell::heap_profile::set_prof_active(true));
             assert_prof_active(true);
         }
         assert_prof_active(false);
-        assert!(xai_grok_shell::heap_profile::set_prof_active(false));
+        assert!(intelekt_shell::heap_profile::set_prof_active(false));
         assert_prof_active(false);
         let dump = TempHeapDump::new("shell");
-        xai_grok_shell::heap_profile::dump_to_path(dump.path()).expect("shell dump");
+        intelekt_shell::heap_profile::dump_to_path(dump.path()).expect("shell dump");
         dump.assert_nonempty_dump();
     }
     #[cfg(unix)]
     #[test]
     fn is_managed_install_matches_only_the_bin_grok_target() {
         let home =
-            std::env::temp_dir().join(format!("grok-pager-managed-install-{}", std::process::id()));
+            std::env::temp_dir().join(format!("intelekt-pager-managed-install-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         std::fs::create_dir_all(home.join("bin")).unwrap();
         std::fs::create_dir_all(home.join("downloads")).unwrap();
         assert!(!is_managed_install(
-            Some(home.join("bin").join("grok")),
+            Some(home.join("bin").join("intelekt")),
             &home
         ));
         assert!(!is_managed_install(None, &home));
         assert!(!is_managed_install(
-            Some(home.join("bin").join("grok")),
+            Some(home.join("bin").join("intelekt")),
             std::path::Path::new("")
         ));
-        let target = home.join("downloads").join("grok-1.2.3");
+        let target = home.join("downloads").join("intelekt-1.2.3");
         std::fs::write(&target, b"binary").unwrap();
-        std::os::unix::fs::symlink(&target, home.join("bin").join("grok")).unwrap();
+        std::os::unix::fs::symlink(&target, home.join("bin").join("intelekt")).unwrap();
         assert!(is_managed_install(
-            Some(home.join("bin").join("grok")),
+            Some(home.join("bin").join("intelekt")),
             &home
         ));
         assert!(is_managed_install(Some(target.clone()), &home));
-        let pinned = home.join("bin").join("grok-9.9.9");
+        let pinned = home.join("bin").join("intelekt-9.9.9");
         std::fs::write(&pinned, b"binary").unwrap();
         assert!(!is_managed_install(Some(pinned), &home));
         let _ = std::fs::remove_dir_all(&home);
@@ -2466,7 +2466,7 @@ mod tests {
     #[serial_test::serial(GROK_AGENT_DASHBOARD)]
     #[test]
     fn dashboard_subcommand_flags_startup_without_forcing_leader() {
-        let mut args = PagerArgs::try_parse_from(["grok", "dashboard"]).unwrap();
+        let mut args = PagerArgs::try_parse_from(["intelekt", "dashboard"]).unwrap();
         assert!(!args.leader, "fixture: no explicit --leader");
         flag_dashboard_at_startup_if_requested(&mut args).unwrap();
         assert!(!args.leader, "dashboard must NOT force leader mode");
@@ -2487,7 +2487,7 @@ mod tests {
     #[serial_test::serial(GROK_AGENT_DASHBOARD)]
     #[test]
     fn dashboard_subcommand_allows_no_leader() {
-        let mut args = PagerArgs::try_parse_from(["grok", "--no-leader", "dashboard"]).unwrap();
+        let mut args = PagerArgs::try_parse_from(["intelekt", "--no-leader", "dashboard"]).unwrap();
         flag_dashboard_at_startup_if_requested(&mut args)
             .expect("--no-leader + dashboard must be allowed");
         assert!(args.no_leader, "--no-leader must be preserved");
@@ -2509,7 +2509,7 @@ mod tests {
     #[test]
     fn dashboard_subcommand_errors_when_disabled() {
         unsafe { std::env::set_var("GROK_AGENT_DASHBOARD", "0") };
-        let mut args = PagerArgs::try_parse_from(["grok", "dashboard"]).unwrap();
+        let mut args = PagerArgs::try_parse_from(["intelekt", "dashboard"]).unwrap();
         let result = flag_dashboard_at_startup_if_requested(&mut args);
         unsafe { std::env::remove_var("GROK_AGENT_DASHBOARD") };
         let err = result.expect_err("disabled dashboard must error");
@@ -2521,7 +2521,7 @@ mod tests {
     }
     #[test]
     fn workspace_command_gate_resolution() {
-        use xai_grok_shell::util::config::RemoteSettings;
+        use intelekt_shell::util::config::RemoteSettings;
         let on = RemoteSettings {
             workspace_command_enabled: Some(true),
             ..RemoteSettings::default()

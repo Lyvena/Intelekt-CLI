@@ -3,11 +3,11 @@
 //! This crate is the `compaction-core`: shared policy, prompts, selection,
 //! and assembly. Host-specific trigger wiring, transport, persistence /
 //! replay / rewind, state commit, metrics backends, and prompt-variant forks
-//! stay in each product host (for example `xai-grok-shell`).
+//! stay in each product host (for example `intelekt-shell`).
 //!
 //! The crate depends on **neither** a conversation-type crate nor
-//! `xai-grok-sampling-types`. It is decoupled from both Grok chat and
-//! grok-build hosts through a small set of trait seams:
+//! `intelekt-sampling-types`. It is decoupled from both Grok chat and
+//! intelekt-cli hosts through a small set of trait seams:
 //!
 //! - [`CompactionItem`] / [`CompactionRole`] / [`CompactionItemBuilder`] —
 //!   abstracts a single turn and its reconstruction.
@@ -21,7 +21,7 @@
 //!
 //! Compaction styles live in their own modules:
 //!
-//! - [`code_compaction`] — grok-build's whole-session **full-replace**
+//! - [`code_compaction`] — intelekt-cli's whole-session **full-replace**
 //!   subsystem (prompt/summary/failure/config, assemble, orchestration).
 //! - [`intra_compaction`] — Grok chat's tail-keep, per-step pass.
 //! - [`inter_compaction`] — Grok chat's chunked, between-turn pass.
@@ -35,7 +35,7 @@
 //! selection — shared by the intra `Steps` and `History` targets, so it stays
 //! neutral at the crate root rather than under `steps`), and [`reminder`]
 //! (active-agent-state `<system-reminder>` formatting shared by Grok chat and
-//! grok-build; hosts still own snapshotting and host-only sections).
+//! intelekt-cli; hosts still own snapshotting and host-only sections).
 
 pub mod code_compaction;
 pub mod history;
@@ -57,7 +57,7 @@ pub mod token;
 /// 3. this constant
 pub use intra_compaction::DEFAULT_COMPACTION_MODEL_NAME;
 
-// grok-build's full-replace subsystem now lives under `code_compaction`;
+// intelekt-cli's full-replace subsystem now lives under `code_compaction`;
 // re-exported at the crate root so consumers keep a stable public API.
 pub use code_compaction::{
     CompactedHistoryParts, DEFAULT_AUTO_COMPACT_THRESHOLD_PERCENT, FailureKind,

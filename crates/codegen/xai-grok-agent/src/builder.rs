@@ -10,16 +10,16 @@ use crate::system_reminder::ReminderPolicy;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
-use xai_grok_tools::bridge::ToolBridge;
-use xai_grok_tools::computer::types::{AsyncFileSystem, TerminalBackend};
-use xai_grok_tools::notification::ToolNotificationHandle;
-use xai_grok_tools::registry::types::SessionContext;
-use xai_grok_tools::types::tool::ToolKind;
+use intelekt_tools::bridge::ToolBridge;
+use intelekt_tools::computer::types::{AsyncFileSystem, TerminalBackend};
+use intelekt_tools::notification::ToolNotificationHandle;
+use intelekt_tools::registry::types::SessionContext;
+use intelekt_tools::types::tool::ToolKind;
 /// The Grok [`ToolKind`] a vendor-compat `tools:` allowlist entry resolves to, so
 /// a plugin's upstream allowlist still binds. Backed by the shared vendor-to-Grok
-/// tool registry in `xai-grok-tools` (also used by the hook matcher).
+/// tool registry in `intelekt-tools` (also used by the hook matcher).
 fn claude_tool_kind(name: &str) -> Option<ToolKind> {
-    xai_grok_tools::types::kind_for(name)
+    intelekt_tools::types::kind_for(name)
 }
 /// Builds an Agent from an AgentDefinition + session context.
 ///
@@ -44,7 +44,7 @@ pub struct AgentBuilder {
     /// Model-facing working directory for the system prompt `<user_info>` block.
     ///
     /// In forked sessions, the real `working_directory` is an overlay/worktree
-    /// path (e.g., `~/.grok/worktrees/project/fork-...-overlay`) that must stay
+    /// path (e.g., `~/.intelekt/worktrees/project/fork-...-overlay`) that must stay
     /// hidden from the model. When set, `PromptContext.working_directory` uses
     /// this value instead of `self.working_directory`, so the system prompt
     /// shows the original project path. Tool execution (`ToolContext.cwd`,
@@ -55,7 +55,7 @@ pub struct AgentBuilder {
     notification_handle: ToolNotificationHandle,
     owner_session_id: Option<String>,
     parent_scheduler_handle:
-        Option<xai_grok_tools::implementations::grok_build::scheduler::types::SchedulerHandle>,
+        Option<intelekt_tools::implementations::grok_build::scheduler::types::SchedulerHandle>,
     /// The agent definition — set via from_definition() or built up
     /// via individual with_*() calls.
     definition: Option<AgentDefinition>,
@@ -85,18 +85,18 @@ pub struct AgentBuilder {
     system_prompt_label: String,
     session_env: Option<Arc<HashMap<String, String>>>,
     state_path: Option<PathBuf>,
-    memory_backend: Option<Arc<dyn xai_grok_tools::types::memory_backend::MemoryBackend>>,
-    web_search_config: xai_grok_tools::implementations::web_search::WebSearchConfig,
+    memory_backend: Option<Arc<dyn intelekt_tools::types::memory_backend::MemoryBackend>>,
+    web_search_config: intelekt_tools::implementations::web_search::WebSearchConfig,
     /// When true, web search and X search are sent as native server-side
     /// tools for execution by the agentic sampler, instead of being
     /// registered as local Function tools.
     backend_search: bool,
-    web_fetch_config: xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig,
-    lsp: Option<std::sync::Arc<dyn xai_grok_tools::implementations::lsp::LspBackend>>,
-    image_gen_config: xai_grok_tools::implementations::grok_build::image_gen::ImageGenConfig,
-    video_gen_config: xai_grok_tools::implementations::grok_build::video_gen::VideoGenConfig,
+    web_fetch_config: intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig,
+    lsp: Option<std::sync::Arc<dyn intelekt_tools::implementations::lsp::LspBackend>>,
+    image_gen_config: intelekt_tools::implementations::grok_build::image_gen::ImageGenConfig,
+    video_gen_config: intelekt_tools::implementations::grok_build::video_gen::VideoGenConfig,
     app_builder_deployer_config:
-        xai_grok_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig,
+        intelekt_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig,
     write_file_enabled: bool,
     subagents_enabled: bool,
     ask_user_question_enabled: bool,
@@ -106,19 +106,19 @@ pub struct AgentBuilder {
     /// Resolved vendor-compat config governing which vendor (`.claude`/`.cursor`)
     /// dirs are scanned for skills / rules / AGENTS.md. Defaults to all-on,
     /// which reproduces the historical behavior.
-    compat: xai_grok_tools::types::compat::CompatConfig,
+    compat: intelekt_tools::types::compat::CompatConfig,
     bash_params_json: Option<serde_json::Map<String, serde_json::Value>>,
     ask_user_question_params_json: Option<serde_json::Map<String, serde_json::Value>>,
     plugin_registry: Option<std::sync::Arc<crate::plugins::PluginRegistry>>,
     context_window_tokens: Option<u64>,
-    api_key_provider: Option<xai_grok_tools::types::SharedApiKeyProvider>,
-    attribution_callback: Option<xai_grok_tools::SharedAttributionCallback>,
+    api_key_provider: Option<intelekt_tools::types::SharedApiKeyProvider>,
+    attribution_callback: Option<intelekt_tools::SharedAttributionCallback>,
     /// Session-scoped MCP tool-result inline cap (bytes). When `Some`, seeded
     /// into the toolset's `TruncationCfg` resource after finalize, where the
     /// MCP truncation path consults it before the process-global cap. The
     /// shell passes the winning repo-level `[mcp] max_output_bytes` here (and
     /// only when that tier wins the precedence stack — see
-    /// `resolve_max_mcp_output_bytes_for_cwd` in xai-grok-shell).
+    /// `resolve_max_mcp_output_bytes_for_cwd` in intelekt-shell).
     mcp_max_output_bytes: Option<usize>,
     /// System-reminder tag name for tool result text. Defaults to `"system-reminder"`.
     /// IDE-compat agent_type should set this to `"system_reminder"`.
@@ -132,12 +132,12 @@ pub struct AgentBuilder {
     /// Pre-discovered skills inherited from a parent session.
     /// When set, `build()` uses these directly instead of running
     /// `list_skills_with_plugins()`.
-    preloaded_skills: Option<Vec<xai_grok_tools::implementations::skills::types::SkillInfo>>,
+    preloaded_skills: Option<Vec<intelekt_tools::implementations::skills::types::SkillInfo>>,
 }
 /// Ensure plan mode tools (`enter_plan_mode`, `exit_plan_mode`,
 /// `ask_user_question`) are present in the tool config.
-fn ensure_plan_mode_tools(tool_config: &mut xai_grok_tools::registry::types::ToolServerConfig) {
-    use xai_grok_tools::implementations::grok_build;
+fn ensure_plan_mode_tools(tool_config: &mut intelekt_tools::registry::types::ToolServerConfig) {
+    use intelekt_tools::implementations::grok_build;
     let existing: std::collections::HashSet<&str> =
         tool_config.tools.iter().map(|tc| tc.id.as_str()).collect();
     let missing_enter = !existing.contains("GrokBuild:enter_plan_mode");
@@ -163,7 +163,7 @@ fn ensure_plan_mode_tools(tool_config: &mut xai_grok_tools::registry::types::Too
 /// Merge a shell-resolved params map into every matching tool's
 /// `ToolConfig.params` (single copy of the loop the per-tool injections share).
 fn merge_tool_params(
-    tool_config: &mut xai_grok_tools::registry::types::ToolServerConfig,
+    tool_config: &mut intelekt_tools::registry::types::ToolServerConfig,
     ids: &[&str],
     map: &serde_json::Map<String, serde_json::Value>,
 ) {
@@ -186,7 +186,7 @@ impl AgentBuilder {
             working_directory,
             prompt_working_directory: None,
             terminal_backend,
-            fs_backend: Arc::new(xai_grok_tools::computer::local::LocalFs),
+            fs_backend: Arc::new(intelekt_tools::computer::local::LocalFs),
             notification_handle,
             owner_session_id: None,
             parent_scheduler_handle: None,
@@ -235,7 +235,7 @@ impl AgentBuilder {
             api_key_provider: None,
             attribution_callback: None,
             mcp_max_output_bytes: None,
-            system_reminder_tag: xai_grok_tools::reminders::DEFAULT_REMINDER_TAG,
+            system_reminder_tag: intelekt_tools::reminders::DEFAULT_REMINDER_TAG,
             persisted_announced_skill_names: None,
             preloaded_skills: None,
         }
@@ -258,7 +258,7 @@ impl AgentBuilder {
     /// `list_skills_with_plugins()` and uses the snapshot directly.
     pub fn with_preloaded_skills(
         mut self,
-        skills: Vec<xai_grok_tools::implementations::skills::types::SkillInfo>,
+        skills: Vec<intelekt_tools::implementations::skills::types::SkillInfo>,
     ) -> Self {
         self.preloaded_skills = Some(skills);
         self
@@ -383,7 +383,7 @@ impl AgentBuilder {
     /// return "Memory is not enabled".
     pub fn with_memory_backend(
         mut self,
-        backend: Arc<dyn xai_grok_tools::types::memory_backend::MemoryBackend>,
+        backend: Arc<dyn intelekt_tools::types::memory_backend::MemoryBackend>,
     ) -> Self {
         self.memory_backend = Some(backend);
         self
@@ -405,7 +405,7 @@ impl AgentBuilder {
     /// Share the parent's scheduler handle so scheduled tasks survive subagent exit.
     pub fn with_parent_scheduler_handle(
         mut self,
-        handle: xai_grok_tools::implementations::grok_build::scheduler::types::SchedulerHandle,
+        handle: intelekt_tools::implementations::grok_build::scheduler::types::SchedulerHandle,
     ) -> Self {
         self.parent_scheduler_handle = Some(handle);
         self
@@ -418,7 +418,7 @@ impl AgentBuilder {
     /// graceful error if invoked.
     pub fn with_web_search_config(
         mut self,
-        config: xai_grok_tools::implementations::web_search::WebSearchConfig,
+        config: intelekt_tools::implementations::web_search::WebSearchConfig,
     ) -> Self {
         self.web_search_config = config;
         self
@@ -439,14 +439,14 @@ impl AgentBuilder {
     /// `GROK_WEB_FETCH` env var.
     pub fn with_web_fetch_config(
         mut self,
-        config: xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig,
+        config: intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig,
     ) -> Self {
         self.web_fetch_config = config;
         self
     }
     pub fn with_lsp(
         mut self,
-        handle: std::sync::Arc<dyn xai_grok_tools::implementations::lsp::LspBackend>,
+        handle: std::sync::Arc<dyn intelekt_tools::implementations::lsp::LspBackend>,
     ) -> Self {
         self.lsp = Some(handle);
         self
@@ -459,7 +459,7 @@ impl AgentBuilder {
     /// credentials. When `Disabled` (default), the tool is not registered.
     pub fn with_image_gen_config(
         mut self,
-        config: xai_grok_tools::implementations::grok_build::image_gen::ImageGenConfig,
+        config: intelekt_tools::implementations::grok_build::image_gen::ImageGenConfig,
     ) -> Self {
         self.image_gen_config = config;
         self
@@ -473,7 +473,7 @@ impl AgentBuilder {
     /// registered.
     pub fn with_video_gen_config(
         mut self,
-        config: xai_grok_tools::implementations::grok_build::video_gen::VideoGenConfig,
+        config: intelekt_tools::implementations::grok_build::video_gen::VideoGenConfig,
     ) -> Self {
         self.video_gen_config = config;
         self
@@ -481,7 +481,7 @@ impl AgentBuilder {
     /// Set the deploy service configuration.
     pub fn with_app_builder_deployer_config(
         mut self,
-        config: xai_grok_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig,
+        config: intelekt_tools::implementations::grok_build::deploy_app::AppBuilderDeployerConfig,
     ) -> Self {
         self.app_builder_deployer_config = config;
         self
@@ -489,7 +489,7 @@ impl AgentBuilder {
     /// Set the dynamic API key provider for tool HTTP clients.
     pub fn with_api_key_provider(
         mut self,
-        provider: xai_grok_tools::types::SharedApiKeyProvider,
+        provider: intelekt_tools::types::SharedApiKeyProvider,
     ) -> Self {
         self.api_key_provider = Some(provider);
         self
@@ -500,12 +500,12 @@ impl AgentBuilder {
     /// event with `consumer` of `"ImageGen"` / `"VideoGen.start"` /
     /// `"VideoGen.poll"` / `"WebSearch"`. Callers should pass the
     /// same `ShellAttribution` instance they wire into
-    /// `xai_grok_sampler::SamplerConfig::attribution_callback` so
+    /// `intelekt_sampler::SamplerConfig::attribution_callback` so
     /// all 401s share the same `AuthManager` reference and land in
     /// the same Axiom dataset.
     pub fn with_attribution_callback(
         mut self,
-        callback: xai_grok_tools::SharedAttributionCallback,
+        callback: intelekt_tools::SharedAttributionCallback,
     ) -> Self {
         self.attribution_callback = Some(callback);
         self
@@ -565,13 +565,13 @@ impl AgentBuilder {
     /// and the dynamic-discovery seeds (`SkillManager` / `AgentsMdTracker`).
     pub fn with_compat_config(
         mut self,
-        compat: xai_grok_tools::types::compat::CompatConfig,
+        compat: intelekt_tools::types::compat::CompatConfig,
     ) -> Self {
         self.compat = compat;
         self
     }
     /// Set the skills config (custom paths, ignore globs) from config.toml.
-    /// Without this, only auto-discovered skills (cwd/.grok/skills, ~/.grok/skills)
+    /// Without this, only auto-discovered skills (cwd/.intelekt/skills, ~/.intelekt/skills)
     /// are included — custom paths added via `x.ai/skills/add` would be ignored.
     pub fn with_skills_config(mut self, config: crate::prompt::skills::SkillsConfig) -> Self {
         self.skills_config = config;
@@ -694,7 +694,7 @@ impl AgentBuilder {
         }
         if definition.inject_default_tools {
             if self.memory_backend.is_some() {
-                use xai_grok_tools::implementations::memory;
+                use intelekt_tools::implementations::memory;
                 tool_config
                     .tools
                     .push((&memory::search_tool::MemorySearchImpl).into());
@@ -703,34 +703,34 @@ impl AgentBuilder {
                     .push((&memory::get_tool::MemoryGetImpl).into());
             }
             if self.web_search_config.is_enabled() {
-                use xai_grok_tools::implementations::grok_build;
+                use intelekt_tools::implementations::grok_build;
                 tool_config.tools.push((&grok_build::WebSearchTool).into());
             }
             if self.web_fetch_config.is_enabled() {
-                use xai_grok_tools::implementations::grok_build;
+                use intelekt_tools::implementations::grok_build;
                 tool_config.tools.push((&grok_build::WebFetchTool).into());
             }
             if self.lsp.is_some() {
                 tool_config
                     .tools
-                    .push((&xai_grok_tools::implementations::grok_build::LspTool).into());
+                    .push((&intelekt_tools::implementations::grok_build::LspTool).into());
             }
             if self.image_gen_config.image_gen_enabled() {
                 tool_config
                     .tools
-                    .push((&xai_grok_tools::implementations::grok_build::ImageGenTool).into());
+                    .push((&intelekt_tools::implementations::grok_build::ImageGenTool).into());
             }
             if self.image_gen_config.image_edit_enabled() {
                 tool_config
                     .tools
-                    .push((&xai_grok_tools::implementations::grok_build::ImageEditTool).into());
+                    .push((&intelekt_tools::implementations::grok_build::ImageEditTool).into());
             }
             if self.video_gen_config.is_enabled() {
                 tool_config
                     .tools
-                    .push((&xai_grok_tools::implementations::grok_build::ImageToVideoTool).into());
+                    .push((&intelekt_tools::implementations::grok_build::ImageToVideoTool).into());
                 tool_config.tools.push(
-                    (&xai_grok_tools::implementations::grok_build::ReferenceToVideoTool).into(),
+                    (&intelekt_tools::implementations::grok_build::ReferenceToVideoTool).into(),
                 );
             }
             let has_write_tool = tool_config
@@ -740,19 +740,19 @@ impl AgentBuilder {
             if self.write_file_enabled && !has_write_tool {
                 tool_config
                     .tools
-                    .push((&xai_grok_tools::implementations::opencode::OpenCodeWriteTool).into());
+                    .push((&intelekt_tools::implementations::opencode::OpenCodeWriteTool).into());
             }
             ensure_plan_mode_tools(&mut tool_config);
         }
         if self.memory_backend.is_none() {
-            let grok_build_ns = xai_grok_tools::types::tool::ToolNamespace::GrokBuild.to_string();
+            let grok_build_ns = intelekt_tools::types::tool::ToolNamespace::GrokBuild.to_string();
             let mem_search_id = format!(
                 "{grok_build_ns}:{}",
-                xai_grok_tools::implementations::memory::MEMORY_SEARCH_TOOL_NAME
+                intelekt_tools::implementations::memory::MEMORY_SEARCH_TOOL_NAME
             );
             let mem_get_id = format!(
                 "{grok_build_ns}:{}",
-                xai_grok_tools::implementations::memory::MEMORY_GET_TOOL_NAME
+                intelekt_tools::implementations::memory::MEMORY_GET_TOOL_NAME
             );
             tool_config
                 .tools
@@ -761,13 +761,13 @@ impl AgentBuilder {
         if !self.ask_user_question_enabled {
             let ask_user_id = format!(
                 "{}:ask_user_question",
-                xai_grok_tools::types::tool::ToolNamespace::GrokBuild,
+                intelekt_tools::types::tool::ToolNamespace::GrokBuild,
             );
             tool_config.tools.retain(|tc| tc.id != ask_user_id);
         }
         let task_tool_id = format!(
             "{}:{}",
-            xai_grok_tools::types::tool::ToolNamespace::GrokBuild,
+            intelekt_tools::types::tool::ToolNamespace::GrokBuild,
             "task"
         );
         let mut task_stripped = false;
@@ -801,7 +801,7 @@ impl AgentBuilder {
             }
         }
         if task_stripped {
-            use xai_grok_tools::types::tool::ToolNamespace;
+            use intelekt_tools::types::tool::ToolNamespace;
             let has_satisfier = |ns: ToolNamespace, id: &str, needs_bg: bool| {
                 let fq = format!("{ns}:{id}");
                 tool_config.tools.iter().any(|tc| {
@@ -825,7 +825,7 @@ impl AgentBuilder {
                     .retain(|tc| !lifecycle.contains(&short_tool_name(&tc.id)));
             }
         }
-        if let xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig::Enabled {
+        if let intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig::Enabled {
             ref params,
         } = self.web_fetch_config
             && let Ok(params_value) = serde_json::to_value(params)
@@ -1040,8 +1040,8 @@ impl AgentBuilder {
         .map_err(|e| AgentBuildError::ToolError(e.to_string()))?;
         if let Some(bytes) = self.mcp_max_output_bytes {
             tool_bridge.toolset().resources.lock().await.insert(
-                xai_grok_tools::types::resources::TruncationCfg(
-                    xai_grok_tools::types::context::TruncationConfig {
+                intelekt_tools::types::resources::TruncationCfg(
+                    intelekt_tools::types::context::TruncationConfig {
                         mcp_max_output_bytes: Some(bytes),
                         ..Default::default()
                     },
@@ -1173,12 +1173,12 @@ impl AgentBuilder {
         let mut hosted_tools = Vec::new();
         if use_backend_search {
             if web_search_enabled && definition.hosted_tool_allowed("web_search") {
-                hosted_tools.push(xai_grok_sampling_types::HostedTool::WebSearch {
+                hosted_tools.push(intelekt_sampling_types::HostedTool::WebSearch {
                     allowed_domains: None,
                 });
             }
             if definition.hosted_tool_allowed("x_search") {
-                hosted_tools.push(xai_grok_sampling_types::HostedTool::XSearch);
+                hosted_tools.push(intelekt_sampling_types::HostedTool::XSearch);
             }
         }
         #[allow(clippy::arc_with_non_send_sync)]
@@ -1310,7 +1310,7 @@ fn resolve_shell_for_prompt() -> String {
     }
     #[cfg(not(unix))]
     {
-        xai_grok_config::shell::detect_windows_shell()
+        intelekt_config::shell::detect_windows_shell()
             .name()
             .to_string()
     }
@@ -1325,7 +1325,7 @@ mod tests {
             description: desc.to_string(),
             source,
             shadows_builtin: None,
-            config_source: xai_grok_tools::types::config_source::ConfigSource::Builtin,
+            config_source: intelekt_tools::types::config_source::ConfigSource::Builtin,
         }
     }
     #[test]
@@ -1396,7 +1396,7 @@ mod tests {
                 scope: AgentScope::Project,
             },
             shadows_builtin: Some(BuiltinAgentName::Explore),
-            config_source: xai_grok_tools::types::config_source::ConfigSource::Project {
+            config_source: intelekt_tools::types::config_source::ConfigSource::Project {
                 path: std::path::PathBuf::new(),
             },
         }];
@@ -1474,7 +1474,7 @@ mod tests {
             .contains("If the user does not explicitly request a model, omit `${{ params.task.model }}` to inherit the parent model.")
         );
         assert!(!desc.contains("Available model slugs:"));
-        assert!(!desc.contains(concat!("grok", " models")));
+        assert!(!desc.contains(concat!("intelekt", " models")));
     }
     #[test]
     fn build_task_description_handles_empty_model_catalog() {
@@ -1486,12 +1486,12 @@ mod tests {
         let desc = build_task_description(&subagents, &[]);
         assert!(desc.contains("No explicit model slugs are currently available."));
         assert!(desc.contains("Omit `${{ params.task.model }}` to inherit the parent model."));
-        assert!(!desc.contains(concat!("grok", " models")));
+        assert!(!desc.contains(concat!("intelekt", " models")));
     }
     #[test]
     fn task_model_guidance_resolves_model_param_override() {
-        use xai_grok_tools::types::template_renderer::TemplateRenderer;
-        use xai_grok_tools::types::tool::ToolKind;
+        use intelekt_tools::types::template_renderer::TemplateRenderer;
+        use intelekt_tools::types::tool::ToolKind;
         let renderer = TemplateRenderer::new(
             Default::default(),
             std::collections::HashMap::from([(
@@ -1555,8 +1555,8 @@ mod tests {
         subagents_enabled: bool,
         ask_user_question_enabled: bool,
     ) -> crate::agent::Agent {
-        use xai_grok_tools::computer::local::LocalTerminalBackend;
-        use xai_grok_tools::notification::ToolNotificationHandle;
+        use intelekt_tools::computer::local::LocalTerminalBackend;
+        use intelekt_tools::notification::ToolNotificationHandle;
         AgentBuilder::new(
             std::env::temp_dir(),
             Arc::new(LocalTerminalBackend::new()),
@@ -1580,61 +1580,61 @@ mod tests {
         }
         let cases: &[PagerFlagCase] = &[
             PagerFlagCase {
-                label: "grok-build / subagents+ask_user",
+                label: "intelekt-cli / subagents+ask_user",
                 profile: AgentDefinition::default_grok_build,
                 subagents: true,
                 ask_user: true,
             },
             PagerFlagCase {
-                label: "grok-build / subagents / no-ask-user",
+                label: "intelekt-cli / subagents / no-ask-user",
                 profile: AgentDefinition::default_grok_build,
                 subagents: true,
                 ask_user: false,
             },
             PagerFlagCase {
-                label: "grok-build / no-subagents / ask_user",
+                label: "intelekt-cli / no-subagents / ask_user",
                 profile: AgentDefinition::default_grok_build,
                 subagents: false,
                 ask_user: true,
             },
             PagerFlagCase {
-                label: "grok-build / no-subagents / no-ask-user",
+                label: "intelekt-cli / no-subagents / no-ask-user",
                 profile: AgentDefinition::default_grok_build,
                 subagents: false,
                 ask_user: false,
             },
             PagerFlagCase {
-                label: "grok-build-ask-user / subagents",
+                label: "intelekt-cli-ask-user / subagents",
                 profile: AgentDefinition::grok_build_ask_user,
                 subagents: true,
                 ask_user: true,
             },
             PagerFlagCase {
-                label: "grok-build-ask-user / no-subagents",
+                label: "intelekt-cli-ask-user / no-subagents",
                 profile: AgentDefinition::grok_build_ask_user,
                 subagents: false,
                 ask_user: true,
             },
             PagerFlagCase {
-                label: "grok-build-plan",
+                label: "intelekt-cli-plan",
                 profile: AgentDefinition::grok_build_plan,
                 subagents: true,
                 ask_user: true,
             },
             PagerFlagCase {
-                label: "grok-build-plan / no-ask-user",
+                label: "intelekt-cli-plan / no-ask-user",
                 profile: AgentDefinition::grok_build_plan,
                 subagents: true,
                 ask_user: false,
             },
             PagerFlagCase {
-                label: "grok-build-plan-no-subagents",
+                label: "intelekt-cli-plan-no-subagents",
                 profile: AgentDefinition::grok_build_plan_no_subagents,
                 subagents: false,
                 ask_user: true,
             },
             PagerFlagCase {
-                label: "grok-build-plan-no-subagents / no-ask-user",
+                label: "intelekt-cli-plan-no-subagents / no-ask-user",
                 profile: AgentDefinition::grok_build_plan_no_subagents,
                 subagents: false,
                 ask_user: false,
@@ -1682,8 +1682,8 @@ mod tests {
     }
     #[tokio::test]
     async fn curated_empty_toolset_fails_agent_build() {
-        use xai_grok_tools::computer::local::LocalTerminalBackend;
-        use xai_grok_tools::notification::ToolNotificationHandle;
+        use intelekt_tools::computer::local::LocalTerminalBackend;
+        use intelekt_tools::notification::ToolNotificationHandle;
         let mut profile = crate::config::AgentDefinition::default_grok_build();
         profile.tool_config = Default::default();
         profile.inject_default_tools = false;
@@ -1711,10 +1711,10 @@ mod tests {
     /// hoisted above the injection.
     #[tokio::test]
     async fn plan_mode_injected_ask_user_question_receives_params() {
-        use xai_grok_tools::computer::local::LocalTerminalBackend;
-        use xai_grok_tools::implementations::grok_build::ask_user_question::AskUserQuestionParams;
-        use xai_grok_tools::notification::ToolNotificationHandle;
-        use xai_grok_tools::types::resources::Params;
+        use intelekt_tools::computer::local::LocalTerminalBackend;
+        use intelekt_tools::implementations::grok_build::ask_user_question::AskUserQuestionParams;
+        use intelekt_tools::notification::ToolNotificationHandle;
+        use intelekt_tools::types::resources::Params;
         let profile = crate::config::AgentDefinition::default_grok_build();
         assert!(
             !profile
@@ -1746,8 +1746,8 @@ mod tests {
         assert_eq!(applied.0.timeout_secs, Some(5));
     }
     async fn build_with_tools(tools: Vec<String>, disallowed: Vec<String>) -> crate::agent::Agent {
-        use xai_grok_tools::computer::local::LocalTerminalBackend;
-        use xai_grok_tools::notification::ToolNotificationHandle;
+        use intelekt_tools::computer::local::LocalTerminalBackend;
+        use intelekt_tools::notification::ToolNotificationHandle;
         let mut def = crate::config::AgentDefinition::default_grok_build();
         def.tools = tools;
         def.disallowed_tools = disallowed;
@@ -1767,8 +1767,8 @@ mod tests {
         own_tools: Vec<String>,
         session_allow: Vec<String>,
     ) -> Vec<String> {
-        use xai_grok_tools::computer::local::LocalTerminalBackend;
-        use xai_grok_tools::notification::ToolNotificationHandle;
+        use intelekt_tools::computer::local::LocalTerminalBackend;
+        use intelekt_tools::notification::ToolNotificationHandle;
         let mut def = crate::config::AgentDefinition::default_grok_build();
         def.tools = own_tools;
         def.session_tools_allowlist = Some(session_allow);
@@ -1901,8 +1901,8 @@ mod tests {
         assert_eq!(agent.definition().allowed_subagent_types, Some(vec![]));
         let agent = build_with_tools(vec![], vec![]).await;
         assert_eq!(agent.definition().allowed_subagent_types, None);
-        use xai_grok_tools::computer::local::LocalTerminalBackend;
-        use xai_grok_tools::notification::ToolNotificationHandle;
+        use intelekt_tools::computer::local::LocalTerminalBackend;
+        use intelekt_tools::notification::ToolNotificationHandle;
         let mut def = crate::config::AgentDefinition::default_grok_build();
         def.disallowed_tools = vec!["Agent".into()];
         let agent = AgentBuilder::new(
@@ -1918,10 +1918,10 @@ mod tests {
     }
     #[tokio::test]
     async fn spawning_blocked_disables_all_background_bash_modes() {
-        use xai_grok_tools::computer::local::LocalTerminalBackend;
-        use xai_grok_tools::implementations::grok_build::bash::BashParams;
-        use xai_grok_tools::notification::ToolNotificationHandle;
-        use xai_grok_tools::types::resources::Params;
+        use intelekt_tools::computer::local::LocalTerminalBackend;
+        use intelekt_tools::implementations::grok_build::bash::BashParams;
+        use intelekt_tools::notification::ToolNotificationHandle;
+        use intelekt_tools::types::resources::Params;
         let mut definition = crate::config::AgentDefinition::default_grok_build();
         definition.tools = vec!["run_terminal_cmd".into()];
         let bash_params = serde_json::json!(
@@ -2051,8 +2051,8 @@ mod tests {
     /// with a compat-style `tools:` allowlist gets the mapped toolset (not 0 tools).
     #[tokio::test]
     async fn plugin_style_agent_file_maps_claude_tools() {
-        use xai_grok_tools::computer::local::LocalTerminalBackend;
-        use xai_grok_tools::notification::ToolNotificationHandle;
+        use intelekt_tools::computer::local::LocalTerminalBackend;
+        use intelekt_tools::notification::ToolNotificationHandle;
         const MD: &str = "---\n\
             name: test\n\
             description: test agent\n\
@@ -2152,10 +2152,10 @@ mod tests {
     }
     #[tokio::test]
     async fn requested_enabled_web_tools_survive_allowlist() {
-        use xai_grok_tools::computer::local::LocalTerminalBackend;
-        use xai_grok_tools::implementations::grok_build::web_fetch::WebFetchConfig;
-        use xai_grok_tools::implementations::web_search::WebSearchConfig;
-        use xai_grok_tools::notification::ToolNotificationHandle;
+        use intelekt_tools::computer::local::LocalTerminalBackend;
+        use intelekt_tools::implementations::grok_build::web_fetch::WebFetchConfig;
+        use intelekt_tools::implementations::web_search::WebSearchConfig;
+        use intelekt_tools::notification::ToolNotificationHandle;
         let mut definition = crate::config::AgentDefinition::default_grok_build();
         definition.tools = vec![
             "read_file".into(),
@@ -2196,7 +2196,7 @@ mod tests {
             assert!(!names.contains(&excluded.to_string()), "got: {names:?}");
         }
     }
-    /// grok-build toolsets have no Skill tool — skills are read from
+    /// intelekt-cli toolsets have no Skill tool — skills are read from
     /// `SKILL.md` via `read_file` — so a compat `Skill` allowlist entry grants
     /// toolset.
     #[tokio::test]
@@ -2292,9 +2292,9 @@ mod tests {
         backend_search_enabled: bool,
         disallowed_tools: &[&str],
     ) -> crate::agent::Agent {
-        use xai_grok_tools::computer::local::LocalTerminalBackend;
-        use xai_grok_tools::implementations::web_search::WebSearchConfig;
-        use xai_grok_tools::notification::ToolNotificationHandle;
+        use intelekt_tools::computer::local::LocalTerminalBackend;
+        use intelekt_tools::implementations::web_search::WebSearchConfig;
+        use intelekt_tools::notification::ToolNotificationHandle;
         let web_search_config = if web_search_enabled {
             WebSearchConfig::Enabled {
                 api_key: "test-key".into(),
@@ -2327,13 +2327,13 @@ mod tests {
         assert!(
             !hosted
                 .iter()
-                .any(|t| matches!(t, xai_grok_sampling_types::HostedTool::WebSearch { .. })),
+                .any(|t| matches!(t, intelekt_sampling_types::HostedTool::WebSearch { .. })),
             "hosted WebSearch must be removed when web_search is disallowed, got: {hosted:?}"
         );
         assert!(
             hosted
                 .iter()
-                .any(|t| matches!(t, xai_grok_sampling_types::HostedTool::XSearch)),
+                .any(|t| matches!(t, intelekt_sampling_types::HostedTool::XSearch)),
             "XSearch must remain when only web_search is disallowed, got: {hosted:?}"
         );
         let has_web_search_fn = agent
@@ -2356,13 +2356,13 @@ mod tests {
         assert!(
             hosted
                 .iter()
-                .any(|t| matches!(t, xai_grok_sampling_types::HostedTool::WebSearch { .. })),
+                .any(|t| matches!(t, intelekt_sampling_types::HostedTool::WebSearch { .. })),
             "expected WebSearch hosted tool, got: {hosted:?}"
         );
         assert!(
             hosted
                 .iter()
-                .any(|t| matches!(t, xai_grok_sampling_types::HostedTool::XSearch)),
+                .any(|t| matches!(t, intelekt_sampling_types::HostedTool::XSearch)),
             "expected XSearch hosted tool, got: {hosted:?}"
         );
     }
@@ -2375,13 +2375,13 @@ mod tests {
         assert!(
             !hosted
                 .iter()
-                .any(|t| matches!(t, xai_grok_sampling_types::HostedTool::WebSearch { .. })),
+                .any(|t| matches!(t, intelekt_sampling_types::HostedTool::WebSearch { .. })),
             "WebSearch must NOT appear when web_search is disabled, got: {hosted:?}"
         );
         assert!(
             hosted
                 .iter()
-                .any(|t| matches!(t, xai_grok_sampling_types::HostedTool::XSearch)),
+                .any(|t| matches!(t, intelekt_sampling_types::HostedTool::XSearch)),
             "expected XSearch hosted tool, got: {hosted:?}"
         );
     }

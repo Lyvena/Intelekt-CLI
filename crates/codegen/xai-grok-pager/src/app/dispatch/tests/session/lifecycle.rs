@@ -3,11 +3,11 @@ use super::*;
 /// Simulate a release-stamped build so folder-trust is active (a local/dev
 /// build auto-trusts and persists nothing). Mirrors this module's raw env idiom.
 fn simulate_release_build() {
-    unsafe { std::env::set_var(xai_grok_version::TEST_VERSION_ENV, "0.0.0-sim") };
+    unsafe { std::env::set_var(intelekt_version::TEST_VERSION_ENV, "0.0.0-sim") };
 }
 #[test]
 fn voice_on_welcome_creates_session_and_records() {
-    if !xai_grok_voice::AUDIO_SUPPORTED {
+    if !intelekt_voice::AUDIO_SUPPORTED {
         return;
     }
     let mut app = test_app();
@@ -23,7 +23,7 @@ fn voice_on_welcome_creates_session_and_records() {
     assert_eq!(app.voice_recording_target(), Some(VoiceTarget::Agent(id)));
     assert!(matches!(
         rx.try_recv(),
-        Ok(xai_grok_voice::VoiceCommand::PttPress)
+        Ok(intelekt_voice::VoiceCommand::PttPress)
     ));
 }
 #[test]
@@ -41,7 +41,7 @@ fn voice_final_routes_to_recording_session_not_active_view() {
     };
     crate::voice::handle_voice_event(
         &mut app,
-        xai_grok_voice::VoiceEvent::UtteranceFinal {
+        intelekt_voice::VoiceEvent::UtteranceFinal {
             text: "hello".into(),
         },
     );
@@ -55,7 +55,7 @@ fn voice_final_dropped_after_recording_session_cleared() {
     app.voice_state = VoiceState::Idle;
     crate::voice::handle_voice_event(
         &mut app,
-        xai_grok_voice::VoiceEvent::UtteranceFinal {
+        intelekt_voice::VoiceEvent::UtteranceFinal {
             text: "late".into(),
         },
     );
@@ -86,7 +86,7 @@ fn voice_auto_stops_when_leaving_recording_session() {
     );
     assert!(matches!(
         rx.try_recv(),
-        Ok(xai_grok_voice::VoiceCommand::PttRelease)
+        Ok(intelekt_voice::VoiceCommand::PttRelease)
     ));
 }
 #[test]
@@ -338,7 +338,7 @@ fn worktree_session_created_sets_session_and_cwd() {
 #[test]
 fn worktree_session_preserves_subdirectory_offset() {
     let mut app = test_app();
-    app.cwd = PathBuf::from("/repo/crates/codegen/xai-grok-pager");
+    app.cwd = PathBuf::from("/repo/crates/codegen/intelekt-pager");
     app.cwd_has_git_ancestor = true;
     dispatch(
         Action::NewWorktreeSession {
@@ -349,8 +349,8 @@ fn worktree_session_preserves_subdirectory_offset() {
         &mut app,
     );
     let id = AgentId(0);
-    let worktree_root = PathBuf::from("/home/user/.grok/worktrees/repo/pager-123");
-    let session_cwd = worktree_root.join("crates/codegen/xai-grok-pager");
+    let worktree_root = PathBuf::from("/home/user/.intelekt/worktrees/repo/pager-123");
+    let session_cwd = worktree_root.join("crates/codegen/intelekt-pager");
     let effects = dispatch(
         Action::TaskComplete(TaskResult::WorktreeSessionCreated {
             agent_id: id,
@@ -609,7 +609,7 @@ fn switch_model_without_session_does_nothing() {
     let mut app = test_app_with_agent();
     let id = AgentId(0);
     app.agents.get_mut(&id).unwrap().session.session_id = None;
-    let model_id = acp::ModelId::new(std::sync::Arc::from("grok-4.5"));
+    let model_id = acp::ModelId::new(std::sync::Arc::from("intelekt-4.5"));
     let effects = dispatch(
         Action::SwitchModel {
             model_id,
@@ -783,7 +783,7 @@ fn new_session_starts_with_prompt_focused() {
 fn switch_model_deferred_when_no_session_id() {
     let mut app = test_app_with_agent();
     let id = AgentId(0);
-    let model_id = acp::ModelId::new(std::sync::Arc::from("grok-4.5"));
+    let model_id = acp::ModelId::new(std::sync::Arc::from("intelekt-4.5"));
     app.agents.get_mut(&id).unwrap().session.session_id = None;
     let effects = dispatch(
         Action::SwitchModel {
@@ -803,7 +803,7 @@ fn switch_model_deferred_when_no_session_id() {
 fn deferred_model_switch_applied_on_session_created() {
     let mut app = test_app_with_agent();
     let id = AgentId(0);
-    let model_id = acp::ModelId::new(std::sync::Arc::from("grok-4.5"));
+    let model_id = acp::ModelId::new(std::sync::Arc::from("intelekt-4.5"));
     let session_id: acp::SessionId = "new-session".into();
     app.agents.get_mut(&id).unwrap().session.session_id = None;
     app.agents
@@ -832,7 +832,7 @@ fn deferred_model_switch_applied_on_session_created() {
 #[test]
 fn deferred_model_switch_applied_on_worktree_session_created() {
     let mut app = test_app_git();
-    let model_id = acp::ModelId::new(std::sync::Arc::from("grok-4.5"));
+    let model_id = acp::ModelId::new(std::sync::Arc::from("intelekt-4.5"));
     dispatch(
         Action::NewWorktreeSession {
             load_session_id: None,
@@ -924,13 +924,13 @@ fn finish_trust_resolves_and_replays_startup() {
     );
 }
 /// Accepting the trust question persists the grant to the store and resolves
-/// trust. GROK_HOME-isolated so the write hits a temp store, not the real one.
-#[serial_test::serial(GROK_HOME)]
+/// trust. INTELEKT_HOME-isolated so the write hits a temp store, not the real one.
+#[serial_test::serial(INTELEKT_HOME)]
 #[test]
 fn trust_folder_grants_and_resolves() {
-    use xai_grok_workspace::trust::{TrustStore, workspace_key};
+    use intelekt_workspace::trust::{TrustStore, workspace_key};
     let home = tempfile::tempdir().expect("home tempdir");
-    unsafe { std::env::set_var("GROK_HOME", home.path()) };
+    unsafe { std::env::set_var("INTELEKT_HOME", home.path()) };
     simulate_release_build();
     let repo = tempfile::tempdir().expect("repo tempdir");
     let workspace = workspace_key(repo.path());
@@ -1452,7 +1452,7 @@ fn dispatch_new_session_has_empty_scrollback() {
 #[test]
 fn translate_local_submit_always_returns_persist_always_for_new_session() {
     use crate::views::question_view::{LocalQuestionKind, QuestionViewState};
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         Question, QuestionOption,
     };
     let q = Question {
@@ -1494,7 +1494,7 @@ fn translate_local_submit_always_returns_persist_always_for_new_session() {
 #[test]
 fn translate_local_submit_never_returns_persist_never_for_new_session() {
     use crate::views::question_view::{LocalQuestionKind, QuestionViewState};
-    use xai_grok_tools::implementations::grok_build::ask_user_question::{
+    use intelekt_tools::implementations::grok_build::ask_user_question::{
         Question, QuestionOption,
     };
     let q = Question {
@@ -1622,7 +1622,7 @@ fn bg_task_killed_no_op_for_unknown_session() {
         Action::TaskComplete(TaskResult::BgTaskKilled {
             session_id: "nonexistent".into(),
             task_id: "task-B-1".into(),
-            outcome: Some(xai_grok_tools::types::KillOutcome::AlreadyExited),
+            outcome: Some(intelekt_tools::types::KillOutcome::AlreadyExited),
         }),
         &mut app,
     );
@@ -1694,7 +1694,7 @@ fn cycle_mode_pre_session_blocked_by_policy_pin() {
         let agent = app.agents.get_mut(&AgentId(0)).unwrap();
         agent.session.session_id = None;
         agent.plan_mode_pending = Some(true);
-        agent.deferred_session_mode = Some(xai_grok_tools::types::SessionMode::Plan);
+        agent.deferred_session_mode = Some(intelekt_tools::types::SessionMode::Plan);
     }
     let _ = dispatch(Action::CycleMode, &mut app);
     let agent = &app.agents[&AgentId(0)];
@@ -1725,7 +1725,7 @@ fn cycle_mode_pre_session_clears_stale_yolo_under_pin() {
         let agent = app.agents.get_mut(&AgentId(0)).unwrap();
         agent.session.session_id = None;
         agent.plan_mode_pending = Some(true);
-        agent.deferred_session_mode = Some(xai_grok_tools::types::SessionMode::Plan);
+        agent.deferred_session_mode = Some(intelekt_tools::types::SessionMode::Plan);
         agent.session.yolo_mode = true;
     }
     let _ = dispatch(Action::CycleMode, &mut app);
@@ -1760,7 +1760,7 @@ fn dispatch_cycle_mode_pre_session_cycles_locally_and_creates_session() {
     );
     assert_eq!(
         agent.deferred_session_mode,
-        Some(xai_grok_tools::types::SessionMode::Plan),
+        Some(intelekt_tools::types::SessionMode::Plan),
         "Plan must be deferred to SessionCreated"
     );
     assert!(

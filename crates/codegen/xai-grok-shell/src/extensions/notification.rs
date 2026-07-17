@@ -1,5 +1,5 @@
 use agent_client_protocol as acp;
-use xai_grok_tools::types::TaskSnapshot;
+use intelekt_tools::types::TaskSnapshot;
 
 use crate::session::feedback::FeedbackRequest as FeedbackRequestData;
 
@@ -1129,7 +1129,7 @@ pub struct CompactionCheckpointFile {
 /// the header/metadata embed), so the caller supplies the render inputs.
 #[derive(Debug, Clone)]
 pub struct CompactionSegmentFile {
-    pub items: Vec<xai_grok_sampling_types::ConversationItem>,
+    pub items: Vec<intelekt_sampling_types::ConversationItem>,
     /// Curated summary, analysis tags already stripped.
     pub summary: String,
     pub detail: xai_chat_state::CompactionDetail,
@@ -1160,7 +1160,7 @@ pub struct CompactionRequestFile {
     /// What kicked off the compaction: `"manual"` (user ran `/compact`) or `"auto"`.
     pub trigger: String,
     /// Which prompt template was used: `"short"` (concise self-summarization)
-    /// or `"detailed"` (10-section structured prompt for grok-build and similar agents).
+    /// or `"detailed"` (10-section structured prompt for intelekt-cli and similar agents).
     pub prompt_variant: String,
     /// The model id that ran the summarization.
     pub model: String,
@@ -1563,7 +1563,7 @@ mod tests {
     fn memory_flush_completed_with_path_roundtrips() {
         let update = SessionUpdate::MemoryFlushCompleted {
             result: "written".into(),
-            path: Some("/home/user/.grok/memory/ws/sessions/log.md".into()),
+            path: Some("/home/user/.intelekt/memory/ws/sessions/log.md".into()),
         };
         let json_str = serde_json::to_string(&update).unwrap();
         let parsed: SessionUpdate = serde_json::from_str(&json_str).unwrap();
@@ -1588,7 +1588,7 @@ mod tests {
     fn memory_dream_completed_roundtrips() {
         let update = SessionUpdate::MemoryDreamCompleted {
             result: "written (500 chars)".into(),
-            path: Some("/home/user/.grok/memory/ws/MEMORY.md".into()),
+            path: Some("/home/user/.intelekt/memory/ws/MEMORY.md".into()),
         };
         let json_str = serde_json::to_string(&update).unwrap();
         let parsed: SessionUpdate = serde_json::from_str(&json_str).unwrap();
@@ -1598,7 +1598,7 @@ mod tests {
     #[test]
     fn memory_session_saved_roundtrips() {
         let update = SessionUpdate::MemorySessionSaved {
-            path: "/home/user/.grok/memory/ws/sessions/2026-01-15-fix-auth-abc12345.md".into(),
+            path: "/home/user/.intelekt/memory/ws/sessions/2026-01-15-fix-auth-abc12345.md".into(),
         };
         let json_str = serde_json::to_string(&update).unwrap();
         let parsed: SessionUpdate = serde_json::from_str(&json_str).unwrap();
@@ -1623,13 +1623,13 @@ mod tests {
         let update = SessionUpdate::MemoryFiles {
             files: vec![
                 MemoryFileInfo {
-                    path: "/home/user/.grok/memory/MEMORY.md".into(),
+                    path: "/home/user/.intelekt/memory/MEMORY.md".into(),
                     source: "global".into(),
                     size_bytes: 1024,
                     modified_epoch_secs: Some(1_700_000_000),
                 },
                 MemoryFileInfo {
-                    path: "/project/.grok/memory/MEMORY.md".into(),
+                    path: "/project/.intelekt/memory/MEMORY.md".into(),
                     source: "workspace".into(),
                     size_bytes: 512,
                     modified_epoch_secs: None,
@@ -1772,7 +1772,7 @@ mod tests {
             total_worker_rounds: 4,
             total_verify_rounds: 2,
             live_subagent_tokens: Some(10_000),
-            live_tokens_by_model: vec![("grok-4".into(), 6_000), ("grok-3".into(), 4_000)],
+            live_tokens_by_model: vec![("intelekt-4".into(), 6_000), ("intelekt-3".into(), 4_000)],
             live_context_pct: Some(35),
             live_turn_count: Some(3),
             live_tool_call_count: Some(8),
@@ -1846,7 +1846,7 @@ mod tests {
         assert_eq!(json["total_worker_rounds"], 4);
         assert_eq!(json["total_verify_rounds"], 2);
         assert_eq!(json["live_subagent_tokens"], 10_000);
-        assert_eq!(json["live_tokens_by_model"][0][0], "grok-4");
+        assert_eq!(json["live_tokens_by_model"][0][0], "intelekt-4");
         assert_eq!(json["live_tokens_by_model"][0][1], 6_000);
         assert_eq!(json["live_context_pct"], 35);
         assert_eq!(json["last_event"], "worker_completed");
@@ -2021,21 +2021,21 @@ mod tests {
     #[test]
     fn model_changed_serializes_snake_case_with_optional_effort() {
         let with_effort = SessionUpdate::ModelChanged {
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             reasoning_effort: Some("high".into()),
         };
         let json = serde_json::to_value(&with_effort).unwrap();
         assert_eq!(json["sessionUpdate"], "model_changed");
-        assert_eq!(json["model_id"], "grok-4");
+        assert_eq!(json["model_id"], "intelekt-4");
         assert_eq!(json["reasoning_effort"], "high");
 
         let without_effort = SessionUpdate::ModelChanged {
-            model_id: "grok-3".into(),
+            model_id: "intelekt-3".into(),
             reasoning_effort: None,
         };
         let json = serde_json::to_value(&without_effort).unwrap();
         assert_eq!(json["sessionUpdate"], "model_changed");
-        assert_eq!(json["model_id"], "grok-3");
+        assert_eq!(json["model_id"], "intelekt-3");
         assert!(
             json.get("reasoning_effort").is_none(),
             "reasoning_effort: None must be skipped on the wire so old pagers \
@@ -2051,7 +2051,7 @@ mod tests {
     #[test]
     fn model_changed_roundtrips_through_json() {
         let original = SessionUpdate::ModelChanged {
-            model_id: "grok-4".into(),
+            model_id: "intelekt-4".into(),
             reasoning_effort: Some("medium".into()),
         };
         let json_str = serde_json::to_string(&original).unwrap();
@@ -2072,7 +2072,7 @@ mod tests {
         let notif = SessionNotification {
             session_id: acp::SessionId::new("sess-abc"),
             update: SessionUpdate::ModelChanged {
-                model_id: "grok-4".into(),
+                model_id: "intelekt-4".into(),
                 reasoning_effort: None,
             },
             meta: None,
@@ -2080,7 +2080,7 @@ mod tests {
         let json = serde_json::to_value(&notif).unwrap();
         assert_eq!(json["sessionId"], "sess-abc");
         assert_eq!(json["update"]["sessionUpdate"], "model_changed");
-        assert_eq!(json["update"]["model_id"], "grok-4");
+        assert_eq!(json["update"]["model_id"], "intelekt-4");
     }
 
     // ── TurnCompleted (durable, replayable turn-end signal) ──

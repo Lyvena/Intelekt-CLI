@@ -128,7 +128,7 @@ impl AgentView {
                     && !self.pos_occluded(mouse.column, mouse.row)
                 {
                     return InputOutcome::Action(Action::AnnouncementsOpenCta(
-                        xai_grok_telemetry::events::AnnouncementCtaSurface::Banner,
+                        intelekt_telemetry::events::AnnouncementCtaSurface::Banner,
                     ));
                 }
                 if self
@@ -139,14 +139,14 @@ impl AgentView {
                         &self.plugin_cta.phase
                 {
                     let plugin_id = name.clone();
-                    if let Err(e) = xai_grok_shell::config::add_dismissed_plugin_cta(&plugin_id) {
+                    if let Err(e) = intelekt_shell::config::add_dismissed_plugin_cta(&plugin_id) {
                         tracing::warn!(
                             error = % e, "couldn't persist plugin CTA dismissal"
                         );
                     }
                     self.plugin_cta.dismissed.insert(plugin_id.clone());
-                    xai_grok_telemetry::session_ctx::log_event(
-                        xai_grok_telemetry::events::PluginCtaDismissed {
+                    intelekt_telemetry::session_ctx::log_event(
+                        intelekt_telemetry::events::PluginCtaDismissed {
                             plugin_name: plugin_id,
                         },
                     );
@@ -183,7 +183,7 @@ impl AgentView {
                     && !self.pos_occluded(mouse.column, mouse.row)
                 {
                     return InputOutcome::Action(Action::AnnouncementsOpenCta(
-                        xai_grok_telemetry::events::AnnouncementCtaSurface::Header,
+                        intelekt_telemetry::events::AnnouncementCtaSurface::Header,
                     ));
                 }
                 if self.hit_cwd.contains(mouse.column, mouse.row) {
@@ -767,11 +767,11 @@ impl AgentView {
                                         use crate::scrollback::blocks::CreditLimitCardAction;
                                         let choice = match blk.action {
                                             CreditLimitCardAction::PurchaseCredits => {
-                                                xai_grok_telemetry::events::CreditLimitChoice::PurchaseCredits
+                                                intelekt_telemetry::events::CreditLimitChoice::PurchaseCredits
                                             }
                                             CreditLimitCardAction::EnablePayg
                                             | CreditLimitCardAction::IncreasePaygLimit => {
-                                                xai_grok_telemetry::events::CreditLimitChoice::PayAsYouGo
+                                                intelekt_telemetry::events::CreditLimitChoice::PayAsYouGo
                                             }
                                         };
                                         Some((blk.url.clone(), choice))
@@ -787,8 +787,8 @@ impl AgentView {
                                 let url_row = area.y + area.height.saturating_sub(2);
                                 if click_row >= url_row {
                                     self.scrollback.set_selected(Some(idx));
-                                    xai_grok_telemetry::session_ctx::log_event(xai_grok_telemetry::events::CreditLimitUpsellClicked {
-                                        surface: xai_grok_telemetry::events::CreditLimitUpsellSurface::InlineCard,
+                                    intelekt_telemetry::session_ctx::log_event(intelekt_telemetry::events::CreditLimitUpsellClicked {
+                                        surface: intelekt_telemetry::events::CreditLimitUpsellSurface::InlineCard,
                                         choice,
                                     });
                                     self.open_url_or_show(&url);

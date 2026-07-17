@@ -1,6 +1,6 @@
 //! Sampling error types.
 //!
-//! TODO: Move from xai-grok-shell/src/sampling/error.rs
+//! TODO: Move from intelekt-shell/src/sampling/error.rs
 
 use std::fmt;
 

@@ -70,7 +70,7 @@ fn try_direnv_export(dir: &Path) -> Option<HashMap<String, String>> {
     cmd.args(["export", "json"])
         .current_dir(dir)
         .stdin(std::process::Stdio::null());
-    xai_grok_tools::util::detach_std_command(&mut cmd);
+    intelekt_tools::util::detach_std_command(&mut cmd);
     let output = cmd.output().ok()?;
 
     if !output.status.success() {
@@ -150,7 +150,7 @@ env -0
         .arg(&script)
         .current_dir(dir)
         .stdin(std::process::Stdio::null());
-    xai_grok_tools::util::detach_std_command(&mut bash_cmd);
+    intelekt_tools::util::detach_std_command(&mut bash_cmd);
     let output = bash_cmd.output();
 
     let output = match output {

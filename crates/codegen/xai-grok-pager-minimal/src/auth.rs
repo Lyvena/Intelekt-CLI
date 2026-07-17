@@ -14,8 +14,8 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 
-use xai_grok_pager::app::app_view::{AuthState, TrustState};
-use xai_grok_pager::theme::Theme;
+use intelekt_pager::app::app_view::{AuthState, TrustState};
+use intelekt_pager::theme::Theme;
 
 /// What the minimal live region shows when there is no active agent yet: the
 /// in-region sign-in flow (device or external-command), a sign-in error, the
@@ -313,7 +313,7 @@ pub(super) fn render_auth(buf: &mut Buffer, area: Rect, theme: &Theme, hint: &Mi
                 y,
                 bottom,
                 Line::from(Span::styled(
-                    "Grok Build may run or modify contents in this directory,",
+                    "Intelekt CLI may run or modify contents in this directory,",
                     gray,
                 )),
             );
@@ -391,7 +391,7 @@ mod tests {
 
     #[test]
     fn auth_hint_maps_auth_state() {
-        use xai_grok_pager::app::app_view::AuthMode;
+        use intelekt_pager::app::app_view::AuthMode;
 
         let trust_done = TrustState::Done;
 

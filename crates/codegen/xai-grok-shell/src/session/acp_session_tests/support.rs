@@ -19,35 +19,35 @@ pub(crate) fn noop_observability_bridge() -> xai_computer_hub_sdk::Observability
     )
 }
 #[cfg(test)]
-pub(crate) async fn test_agent_default() -> xai_grok_agent::Agent {
+pub(crate) async fn test_agent_default() -> intelekt_agent::Agent {
     test_agent_with_tools(vec![]).await
 }
 /// Like [`test_agent_default`] but registers the `update_goal` tool so
 /// `command_availability().goal` is satisfied and `/goal …` slash commands
 /// resolve to their builtins when a turn is driven through `handle_prompt`.
 #[cfg(test)]
-pub(crate) async fn test_agent_with_goal_tool() -> xai_grok_agent::Agent {
-    use xai_grok_tools::implementations::grok_build::update_goal::UpdateGoalTool;
-    use xai_grok_tools::registry::types::ToolConfig;
+pub(crate) async fn test_agent_with_goal_tool() -> intelekt_agent::Agent {
+    use intelekt_tools::implementations::grok_build::update_goal::UpdateGoalTool;
+    use intelekt_tools::registry::types::ToolConfig;
     test_agent_with_tools(vec![ToolConfig::for_tool::<UpdateGoalTool>()]).await
 }
 /// Grok-build agent with the real `TodoWriteTool` (id `todo_write`, kind
 /// `Plan`) registered, so `tool_for_kind(ToolKind::Plan)` resolves through the
 /// live toolset instead of the literal fallback.
 #[cfg(test)]
-pub(crate) async fn test_grok_build_agent_with_todo() -> xai_grok_agent::Agent {
-    use xai_grok_tools::implementations::grok_build::todo::TodoWriteTool;
-    use xai_grok_tools::registry::types::ToolConfig;
+pub(crate) async fn test_grok_build_agent_with_todo() -> intelekt_agent::Agent {
+    use intelekt_tools::implementations::grok_build::todo::TodoWriteTool;
+    use intelekt_tools::registry::types::ToolConfig;
     test_agent_with_tools(vec![ToolConfig::for_tool::<TodoWriteTool>()]).await
 }
 /// Agent with the real `enter_plan_mode` + `exit_plan_mode` tools registered so
 /// `prepare_tool_call` can parse a genuine `exit_plan_mode` call.
 /// `exit_plan_mode` only finalizes when `enter_plan_mode` is also present.
 #[cfg(test)]
-pub(crate) async fn test_agent_with_plan_tools() -> xai_grok_agent::Agent {
-    use xai_grok_tools::implementations::grok_build::enter_plan_mode::EnterPlanModeTool;
-    use xai_grok_tools::implementations::grok_build::exit_plan_mode::ExitPlanModeTool;
-    use xai_grok_tools::registry::types::ToolConfig;
+pub(crate) async fn test_agent_with_plan_tools() -> intelekt_agent::Agent {
+    use intelekt_tools::implementations::grok_build::enter_plan_mode::EnterPlanModeTool;
+    use intelekt_tools::implementations::grok_build::exit_plan_mode::ExitPlanModeTool;
+    use intelekt_tools::registry::types::ToolConfig;
     test_agent_with_tools(vec![
         ToolConfig::for_tool::<EnterPlanModeTool>(),
         ToolConfig::for_tool::<ExitPlanModeTool>(),
@@ -56,28 +56,28 @@ pub(crate) async fn test_agent_with_plan_tools() -> xai_grok_agent::Agent {
 }
 #[cfg(test)]
 pub(crate) async fn test_agent_with_tools(
-    tools: Vec<xai_grok_tools::registry::types::ToolConfig>,
-) -> xai_grok_agent::Agent {
+    tools: Vec<intelekt_tools::registry::types::ToolConfig>,
+) -> intelekt_agent::Agent {
     test_agent_from_config(
-        xai_grok_tools::registry::types::ToolServerConfig {
+        intelekt_tools::registry::types::ToolServerConfig {
             tools,
             behavior_preset: None,
         },
-        xai_grok_agent::AgentDefinition::default_grok_build(),
-        std::sync::Arc::new(xai_grok_tools::computer::local::LocalTerminalBackend::new()),
+        intelekt_agent::AgentDefinition::default_grok_build(),
+        std::sync::Arc::new(intelekt_tools::computer::local::LocalTerminalBackend::new()),
     )
     .await
 }
 #[cfg(test)]
 async fn test_agent_from_config(
-    config: xai_grok_tools::registry::types::ToolServerConfig,
-    definition: xai_grok_agent::AgentDefinition,
-    backend: std::sync::Arc<dyn xai_grok_tools::computer::types::TerminalBackend>,
-) -> xai_grok_agent::Agent {
-    use xai_grok_tools::computer::local::LocalFs;
-    use xai_grok_tools::computer::types::AsyncFileSystem;
-    use xai_grok_tools::notification::ToolNotificationHandle;
-    use xai_grok_tools::registry::types::SessionContext;
+    config: intelekt_tools::registry::types::ToolServerConfig,
+    definition: intelekt_agent::AgentDefinition,
+    backend: std::sync::Arc<dyn intelekt_tools::computer::types::TerminalBackend>,
+) -> intelekt_agent::Agent {
+    use intelekt_tools::computer::local::LocalFs;
+    use intelekt_tools::computer::types::AsyncFileSystem;
+    use intelekt_tools::notification::ToolNotificationHandle;
+    use intelekt_tools::registry::types::SessionContext;
     let builder = crate::tools::bridge::ToolBridge::get_builder();
     let fs: std::sync::Arc<dyn AsyncFileSystem> = std::sync::Arc::new(LocalFs);
     let ctx = SessionContext {
@@ -101,20 +101,20 @@ async fn test_agent_from_config(
         api_key_provider: None,
         auth_provider: None,
         attribution_callback: None,
-        system_reminder_tag: xai_grok_tools::reminders::DEFAULT_REMINDER_TAG,
+        system_reminder_tag: intelekt_tools::reminders::DEFAULT_REMINDER_TAG,
     };
     let tool_bridge = crate::tools::bridge::ToolBridge::finalize_builder(builder, config, ctx)
         .await
         .expect("finalize_builder should succeed for tests");
     #[allow(clippy::arc_with_non_send_sync)]
     let tool_bridge = std::sync::Arc::new(tool_bridge);
-    xai_grok_agent::Agent::new(
+    intelekt_agent::Agent::new(
         definition,
-        xai_grok_agent::PromptContext::default(),
+        intelekt_agent::PromptContext::default(),
         String::new(),
         tool_bridge,
-        xai_grok_agent::ReminderPolicy::default(),
-        xai_grok_agent::CompactionPolicy::default(),
+        intelekt_agent::ReminderPolicy::default(),
+        intelekt_agent::CompactionPolicy::default(),
         vec![],
         false,
     )
@@ -146,8 +146,8 @@ pub(crate) async fn create_test_actor_ex(
     SessionActor,
     tokio::sync::mpsc::UnboundedReceiver<SessionEvent>,
 ) {
-    let cwd = xai_grok_paths::AbsPathBuf::new(std::path::PathBuf::from("/tmp")).unwrap();
-    let fs = Arc::new(xai_grok_workspace::file_system::MockFs::new(
+    let cwd = intelekt_paths::AbsPathBuf::new(std::path::PathBuf::from("/tmp")).unwrap();
+    let fs = Arc::new(intelekt_workspace::file_system::MockFs::new(
         cwd.to_path_buf(),
     ));
     let terminal = Arc::new(DummyTerminal {});
@@ -172,7 +172,7 @@ pub(crate) async fn create_test_actor_ex(
     let (event_tx, event_rx) = tokio::sync::mpsc::unbounded_channel::<SessionEvent>();
     let chat_state_handle = xai_chat_state::ChatStateActor::spawn(
         vec![],
-        xai_grok_sampling_types::SamplingConfig {
+        intelekt_sampling_types::SamplingConfig {
             base_url: "http://localhost".to_string(),
             model: "test".to_string(),
             max_completion_tokens: None,
@@ -206,7 +206,7 @@ pub(crate) async fn create_test_actor_ex(
             gateway_enabled: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true)),
             persistence_tx,
         },
-        permissions: xai_grok_workspace::permission::PermissionHandle::allow_all(),
+        permissions: intelekt_workspace::permission::PermissionHandle::allow_all(),
         tool_context,
         deny_read_globs: Vec::new(),
         mcp_state: Arc::new(TokioMutex::new(McpState::new(vec![]))),
@@ -336,7 +336,7 @@ pub(crate) async fn create_test_actor_ex(
         hook_registry: std::cell::RefCell::new(None),
         client_hooks: Default::default(),
         hook_resolved_workspace_root: String::new(),
-        vcs_kind: xai_grok_workspace::session::git::VcsKind::Git,
+        vcs_kind: intelekt_workspace::session::git::VcsKind::Git,
         hook_load_errors: std::cell::RefCell::new(Vec::new()),
         plugin_registry: std::cell::RefCell::new(None),
         plugin_registry_handle: None,
@@ -349,13 +349,13 @@ pub(crate) async fn create_test_actor_ex(
         session_turn_active: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
         streaming_turn_capture: parking_lot::Mutex::new(StreamingTurnCapture::default()),
         turn_stream_drained: parking_lot::Mutex::new(None),
-        sampler_handle: xai_grok_sampler::SamplerHandle::noop(),
+        sampler_handle: intelekt_sampler::SamplerHandle::noop(),
         rebuild_spec: crate::session::agent_rebuild::test_rebuild_spec_default(),
         image_description_model: crate::test_support::TEST_MODEL.to_owned(),
         image_describe_cache: Arc::new(crate::session::image_describe::ImageDescribeCache::new()),
         subagent_spawn_info: parking_lot::Mutex::new(HashMap::new()),
         subagent_token_records: parking_lot::Mutex::new(HashMap::new()),
-        workspace_ops: xai_grok_workspace::WorkspaceOps::for_test(),
+        workspace_ops: intelekt_workspace::WorkspaceOps::for_test(),
         trace_config_template: std::cell::RefCell::new(None),
     };
     (actor, event_rx)

@@ -12,18 +12,18 @@
 mod common;
 
 use common::{create_test_client, test_sampler_config};
-use xai_grok_sampler::RetryPolicy;
-use xai_grok_sampling_types::doom_loop::{DoomLoopSignalKind, SAMPLE_CHECK_EVENT_DATA_CUMULATIVE};
-use xai_grok_shell::sampling::{
+use intelekt_sampler::RetryPolicy;
+use intelekt_sampling_types::doom_loop::{DoomLoopSignalKind, SAMPLE_CHECK_EVENT_DATA_CUMULATIVE};
+use intelekt_shell::sampling::{
     ApiBackend, Client, ConversationItem, ConversationRequest, RequestId, SamplerActor,
     SamplerHandle,
 };
-use xai_grok_test_support::sse::{
+use intelekt_test_support::sse::{
     responses_api_doom_loop_check_events, responses_api_doom_loop_terminal_only_events,
     responses_api_reasoning_and_text_events, responses_api_reasoning_only_events,
     responses_api_with_doom_loop_frame,
 };
-use xai_grok_test_support::{MockInferenceServer, MockModelEntry, ScriptedResponse};
+use intelekt_test_support::{MockInferenceServer, MockModelEntry, ScriptedResponse};
 
 const MODEL: &str = "test-model";
 
@@ -526,7 +526,7 @@ async fn doomed_then_reasoning_only_empty_coexist() {
 ///
 /// `#[ignore]` (needs a built binary). Run locally (auto-builds the pager):
 /// ```bash
-/// cargo test -p xai-grok-shell --test test_doom_loop_recovery -- --ignored
+/// cargo test -p intelekt-shell --test test_doom_loop_recovery -- --ignored
 /// ```
 #[tokio::test]
 #[ignore] // requires pre-built binary; run with --ignored
@@ -535,10 +535,10 @@ async fn headless_config_enables_doom_loop_check_header() {
     let server = MockInferenceServer::start_with_models(models)
         .await
         .expect("start mock server");
-    let workdir = xai_grok_test_support::git_workdir();
+    let workdir = intelekt_test_support::git_workdir();
     let home = tempfile::TempDir::new().unwrap();
 
-    let grok_home = home.path().join(".grok");
+    let grok_home = home.path().join(".intelekt");
     std::fs::create_dir_all(&grok_home).expect("create .grok home");
     std::fs::write(
         grok_home.join("config.toml"),
@@ -546,7 +546,7 @@ async fn headless_config_enables_doom_loop_check_header() {
     )
     .expect("write config.toml");
 
-    let mut cmd = tokio::process::Command::new(xai_grok_test_support::grok_binary());
+    let mut cmd = tokio::process::Command::new(intelekt_test_support::grok_binary());
     cmd.args(["-p", "say hi", "--yolo", "--output-format", "json"])
         .arg("--cwd")
         .arg(workdir.path())
@@ -555,13 +555,13 @@ async fn headless_config_enables_doom_loop_check_header() {
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .kill_on_drop(true);
-    xai_grok_test_support::env::test_env_cmd_tokio(&mut cmd, &server.url(), home.path());
-    cmd.env("GROK_HOME", grok_home);
+    intelekt_test_support::env::test_env_cmd_tokio(&mut cmd, &server.url(), home.path());
+    cmd.env("INTELEKT_HOME", grok_home);
     // Don't attach to a developer's ambient leader; spawn fresh against the mock.
     cmd.env_remove("GROK_LEADER_SOCKET");
 
-    let result = xai_grok_test_support::run_headless_with_cmd(cmd).await;
-    xai_grok_test_support::assert_headless_success(&result, "doom-loop header e2e", Some(&server));
+    let result = intelekt_test_support::run_headless_with_cmd(cmd).await;
+    intelekt_test_support::assert_headless_success(&result, "doom-loop header e2e", Some(&server));
 
     let requests = server.requests();
     let responses_posts: Vec<_> = requests

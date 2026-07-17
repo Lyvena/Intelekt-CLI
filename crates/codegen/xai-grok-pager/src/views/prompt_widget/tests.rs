@@ -1687,7 +1687,7 @@
 
         let mut pw = PromptWidget::new();
         let mut models = crate::acp::model_state::ModelState::default();
-        let model_id = agent_client_protocol::ModelId::new(Arc::from("grok-4.5"));
+        let model_id = agent_client_protocol::ModelId::new(Arc::from("intelekt-4.5"));
         models.available.insert(
             model_id.clone(),
             agent_client_protocol::ModelInfo::new(model_id, "Grok 4.5".to_string()),
@@ -3345,8 +3345,8 @@
     // ── File search Right Arrow (drill-down) ────────────────────────────
 
     /// Build a `FuzzyMatchResult` for use in test fixtures.
-    fn fuzzy_result(path: &str, is_dir: bool) -> xai_grok_workspace::file_system::FuzzyMatchResult {
-        xai_grok_workspace::file_system::FuzzyMatchResult {
+    fn fuzzy_result(path: &str, is_dir: bool) -> intelekt_workspace::file_system::FuzzyMatchResult {
+        intelekt_workspace::file_system::FuzzyMatchResult {
             path: nucleo::Utf32String::from(path),
             score: 100,
             indices: Vec::new(),

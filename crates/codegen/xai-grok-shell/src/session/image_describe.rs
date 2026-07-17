@@ -25,8 +25,8 @@ use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use xai_chat_state::compaction_utils::{extract_real_user_queries, extract_user_query};
-use xai_grok_sampling_types::conversation::{ContentPart, ConversationItem, UserItem};
-use xai_grok_tools::util::truncate::truncate_middle;
+use intelekt_sampling_types::conversation::{ContentPart, ConversationItem, UserItem};
+use intelekt_tools::util::truncate::truncate_middle;
 /// Per-entry character cap for the conversation outline sent to the
 /// vision model. Mirrors the compat-harness behavior.
 pub const OUTLINE_PER_ENTRY_CAP: usize = 1_500;
@@ -292,7 +292,7 @@ impl ImageDescribeCache {
     /// model, stores the result, and returns it.
     pub async fn get_or_describe(
         &self,
-        client: xai_grok_sampler::SamplingClient,
+        client: intelekt_sampler::SamplingClient,
         model: &str,
         raw_bytes: &[u8],
         mime_type: &str,
@@ -523,7 +523,7 @@ pub fn persist_and_prepend_image_files(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use xai_grok_sampling_types::conversation::{ConversationItem, UserItem};
+    use intelekt_sampling_types::conversation::{ConversationItem, UserItem};
     #[test]
     fn persist_and_prepend_image_files_writes_assets_and_lists_paths() {
         let dir = tempfile::tempdir().unwrap();
@@ -544,7 +544,7 @@ mod tests {
     }
     fn user(text: &str) -> ConversationItem {
         ConversationItem::User(UserItem {
-            content: vec![xai_grok_sampling_types::conversation::ContentPart::Text {
+            content: vec![intelekt_sampling_types::conversation::ContentPart::Text {
                 text: text.into(),
             }],
             synthetic_reason: None,

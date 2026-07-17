@@ -380,7 +380,7 @@ impl PendingDump {
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_secs())
             .unwrap_or(0);
-        let version = xai_grok_version::installed();
+        let version = intelekt_version::installed();
 
         tracing::warn!(
             threshold,

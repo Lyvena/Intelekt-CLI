@@ -10,9 +10,9 @@ use std::path::PathBuf;
 
 // ── Grok state directory ────────────────────────────────────────────────────
 
-/// Grok state directory — always writable (`$GROK_HOME` or `~/.grok`).
+/// Grok state directory — always writable (`$INTELEKT_HOME` or `~/.intelekt`).
 pub(crate) fn grok_home() -> PathBuf {
-    xai_grok_config::grok_home()
+    intelekt_config::grok_home()
 }
 
 // ── Device files & directories ──────────────────────────────────────────────
@@ -88,7 +88,7 @@ pub(crate) fn essential_writable_paths(workspace: &Path) -> Vec<PathBuf> {
     paths
 }
 
-/// Writable directory paths for the read-only profile (minimal: just ~/.grok + temp).
+/// Writable directory paths for the read-only profile (minimal: just ~/.intelekt + temp).
 /// Device files are handled separately via `allow_file` in `to_capability_set_with_config`.
 #[cfg(all(feature = "enforce", unix))]
 pub(crate) fn essential_writable_paths_minimal() -> Vec<PathBuf> {

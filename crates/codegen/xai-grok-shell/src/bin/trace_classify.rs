@@ -25,7 +25,7 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use xai_grok_shell::trace_classifier::{RunArgs, run, validate_min_confidence};
+use intelekt_shell::trace_classifier::{RunArgs, run, validate_min_confidence};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -44,7 +44,7 @@ struct Cli {
 
     /// Model the classifier sampler calls. Must be a model the API key
     /// has access to.
-    #[arg(long, default_value = "grok-4.5")]
+    #[arg(long, default_value = "intelekt-4.5")]
     model: String,
 
     /// Sampler base URL.
@@ -75,7 +75,7 @@ struct Cli {
 
     /// Override the directory containing `auth.json` for the
     /// third-tier API-key fallback. Defaults to the same path the
-    /// shell uses (`$GROK_HOME` or `~/.grok`). Exposed primarily for
+    /// shell uses (`$INTELEKT_HOME` or `~/.intelekt`). Exposed primarily for
     /// tests / sandboxed invocations.
     #[arg(long)]
     grok_home: Option<PathBuf>,
@@ -186,7 +186,7 @@ mod tests {
                 .map(|v| v.to_string_lossy().into_owned())
                 .collect::<Vec<_>>()
         };
-        assert_eq!(by_id("model"), vec!["grok-4.5"]);
+        assert_eq!(by_id("model"), vec!["intelekt-4.5"]);
         assert_eq!(by_id("api_base_url"), vec!["https://api.x.ai/v1"]);
         assert!(by_id("min_confidence").is_empty(), "no default");
         assert!(by_id("include_reasoning").is_empty(), "no default");

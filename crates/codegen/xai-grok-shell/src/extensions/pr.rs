@@ -82,8 +82,8 @@ async fn gh_pr_view_by_branch(cwd: &str, branch: &str) -> Option<PrData> {
     ])
     .current_dir(cwd)
     .stdin(std::process::Stdio::null());
-    xai_grok_tools::util::detach_command(&mut cmd);
-    cmd.envs(xai_grok_tools::util::pager_env());
+    intelekt_tools::util::detach_command(&mut cmd);
+    cmd.envs(intelekt_tools::util::pager_env());
     let output = cmd.output().await.ok()?;
 
     if !output.status.success() {
@@ -129,8 +129,8 @@ async fn gh_pr_is_in_merge_queue(cwd: &str, pr_url: &str) -> bool {
     ])
     .current_dir(cwd)
     .stdin(std::process::Stdio::null());
-    xai_grok_tools::util::detach_command(&mut cmd);
-    cmd.envs(xai_grok_tools::util::pager_env());
+    intelekt_tools::util::detach_command(&mut cmd);
+    cmd.envs(intelekt_tools::util::pager_env());
     cmd.env("NO_COLOR", "1");
     let output = match cmd.output().await {
         Ok(output) => output,

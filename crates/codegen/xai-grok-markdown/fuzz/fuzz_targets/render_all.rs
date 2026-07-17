@@ -1,8 +1,8 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use xai_grok_markdown::style::test_style::STYLE;
-use xai_grok_markdown::{render_markdown_ratatui_full, StreamingMarkdownRenderer};
+use intelekt_markdown::style::test_style::STYLE;
+use intelekt_markdown::{render_markdown_ratatui_full, StreamingMarkdownRenderer};
 
 const CHUNK_SIZES: [usize; 3] = [1, 16, 32];
 

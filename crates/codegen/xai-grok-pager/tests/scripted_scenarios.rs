@@ -1,12 +1,12 @@
 //! Declarative end-to-end TUI scenario tests.
 //!
-//! These tests exercise the real `xai-grok-pager` binary through a PTY using
+//! These tests exercise the real `intelekt-pager` binary through a PTY using
 //! YAML scenarios under `tests/scenarios/`. They are ignored by default because
 //! they build/spawn the pager and stream through a mock inference server.
 
 use std::path::PathBuf;
 
-use xai_grok_pager_pty_harness::{
+use intelekt_pager_pty_harness::{
     ScriptedRunConfig, ScriptedRunStatus, ScriptedScenario, ScriptedScenarioRunner, pager_binary,
 };
 

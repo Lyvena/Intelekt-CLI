@@ -88,7 +88,7 @@ async fn subagent_usage_fold_attribution_gate() {
 #[test]
 fn usage_drain_outcome_policy_matches_freeze_and_cancel() {
     use super::turn::UsageDrainOutcome;
-    use xai_grok_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
+    use intelekt_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
 
     let none = UsageDrainOutcome::from_outstanding_reply(None);
     assert!(none.fail_closed);
@@ -156,7 +156,7 @@ fn project_from_ledger_never_drops_incomplete_flag() {
     let mut ledger = xai_chat_state::UsageLedger::default();
     ledger.record_main_loop_call(
         "m",
-        &xai_grok_sampling_types::TokenUsage {
+        &intelekt_sampling_types::TokenUsage {
             prompt_tokens: 3,
             completion_tokens: 1,
             total_tokens: 4,
@@ -220,7 +220,7 @@ fn for_error_path_shared_policy() {
     let mut ledger = xai_chat_state::UsageLedger::default();
     ledger.record_main_loop_call(
         "m",
-        &xai_grok_sampling_types::TokenUsage {
+        &intelekt_sampling_types::TokenUsage {
             prompt_tokens: 5,
             completion_tokens: 1,
             total_tokens: 6,
@@ -252,7 +252,7 @@ async fn error_path_marks_incomplete_when_ledger_open() {
             let actor = make_actor().await;
             actor.chat_state_handle.record_model_call_usage(
                 Some("m".into()),
-                xai_grok_sampling_types::TokenUsage {
+                intelekt_sampling_types::TokenUsage {
                     prompt_tokens: 10,
                     completion_tokens: 2,
                     total_tokens: 12,
@@ -278,7 +278,7 @@ async fn session_only_incomplete_does_not_stain_live_open_prompt() {
             // Open a live prompt ledger via a main-loop call.
             actor.chat_state_handle.record_model_call_usage(
                 Some("m".into()),
-                xai_grok_sampling_types::TokenUsage {
+                intelekt_sampling_types::TokenUsage {
                     prompt_tokens: 7,
                     completion_tokens: 1,
                     total_tokens: 8,
@@ -342,12 +342,12 @@ async fn snapshot_ors_ledger_incomplete_even_when_reply_complete() {
 /// queued reply, repeating the last one; other events are ignored.
 fn scripted_outstanding_responder(
     replies: Vec<
-        xai_grok_tools::implementations::grok_build::task::types::SubagentOutstandingReply,
+        intelekt_tools::implementations::grok_build::task::types::SubagentOutstandingReply,
     >,
 ) -> tokio::sync::mpsc::UnboundedSender<
-    xai_grok_tools::implementations::grok_build::task::types::SubagentEvent,
+    intelekt_tools::implementations::grok_build::task::types::SubagentEvent,
 > {
-    use xai_grok_tools::implementations::grok_build::task::types::SubagentEvent;
+    use intelekt_tools::implementations::grok_build::task::types::SubagentEvent;
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<SubagentEvent>();
     tokio::task::spawn_local(async move {
         let mut queue = replies.into_iter();
@@ -367,7 +367,7 @@ fn scripted_outstanding_responder(
 /// ledgers are marked incomplete.
 #[tokio::test(flavor = "current_thread")]
 async fn freeze_timeout_marks_report_and_both_ledgers() {
-    use xai_grok_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
+    use intelekt_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
     tokio::task::LocalSet::new()
         .run_until(async {
             let mut actor = make_actor().await;
@@ -406,7 +406,7 @@ async fn freeze_timeout_marks_report_and_both_ledgers() {
 /// because its fold still lands on the session ledger at completion.
 #[tokio::test(flavor = "current_thread")]
 async fn freeze_background_only_flags_report_not_ledgers() {
-    use xai_grok_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
+    use intelekt_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
     tokio::task::LocalSet::new()
         .run_until(async {
             let mut actor = make_actor().await;
@@ -448,14 +448,14 @@ async fn freeze_background_only_flags_report_not_ledgers() {
 #[tokio::test(flavor = "current_thread")]
 async fn finalize_background_only_flags_report_not_ledgers() {
     use super::turn::UsageDrainOutcome;
-    use xai_grok_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
+    use intelekt_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
 
     tokio::task::LocalSet::new()
         .run_until(async {
             let actor = make_actor().await;
             actor.chat_state_handle.record_model_call_usage(
                 Some("m".into()),
-                xai_grok_sampling_types::TokenUsage {
+                intelekt_sampling_types::TokenUsage {
                     prompt_tokens: 4,
                     completion_tokens: 1,
                     total_tokens: 5,
@@ -507,7 +507,7 @@ async fn apply_miss_mismatched_pin_does_not_stain_live_prompt() {
             *actor.current_prompt_id.lock().unwrap() = Some("p-live".into());
             actor.chat_state_handle.record_model_call_usage(
                 Some("m".into()),
-                xai_grok_sampling_types::TokenUsage {
+                intelekt_sampling_types::TokenUsage {
                     prompt_tokens: 11,
                     completion_tokens: 1,
                     total_tokens: 12,
@@ -550,7 +550,7 @@ async fn apply_miss_matching_pin_stains_prompt_and_session() {
             *actor.current_prompt_id.lock().unwrap() = Some("p-1".into());
             actor.chat_state_handle.record_model_call_usage(
                 Some("m".into()),
-                xai_grok_sampling_types::TokenUsage {
+                intelekt_sampling_types::TokenUsage {
                     prompt_tokens: 3,
                     completion_tokens: 1,
                     total_tokens: 4,
@@ -585,13 +585,13 @@ async fn apply_miss_matching_pin_stains_prompt_and_session() {
 /// Sticky (session-only) is report-only on freeze: session ledger stays complete.
 #[tokio::test(flavor = "current_thread")]
 async fn freeze_sticky_only_flags_report_not_ledgers() {
-    use xai_grok_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
+    use intelekt_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
     tokio::task::LocalSet::new()
         .run_until(async {
             let mut actor = make_actor().await;
             actor.chat_state_handle.record_model_call_usage(
                 Some("m".into()),
-                xai_grok_sampling_types::TokenUsage {
+                intelekt_sampling_types::TokenUsage {
                     prompt_tokens: 9,
                     completion_tokens: 1,
                     total_tokens: 10,
@@ -639,13 +639,13 @@ async fn freeze_sticky_only_flags_report_not_ledgers() {
 /// A fold landing mid-drain completes cleanly: no incomplete flag anywhere.
 #[tokio::test(flavor = "current_thread")]
 async fn freeze_completes_when_fold_lands_mid_drain() {
-    use xai_grok_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
+    use intelekt_tools::implementations::grok_build::task::types::SubagentOutstandingReply;
     tokio::task::LocalSet::new()
         .run_until(async {
             let mut actor = make_actor().await;
             actor.chat_state_handle.record_model_call_usage(
                 Some("m".into()),
-                xai_grok_sampling_types::TokenUsage {
+                intelekt_sampling_types::TokenUsage {
                     prompt_tokens: 10,
                     completion_tokens: 2,
                     total_tokens: 12,

@@ -1,10 +1,10 @@
-//! Unified PTY harness for xai-grok-pager.
+//! Unified PTY harness for intelekt-pager.
 //!
 //! The same layered API serves three consumers:
 //!
 //! 1. **Regression scenarios** (e.g. `scenarios::plan_approval_resume`,
 //!    exercised via `tests/` in this crate and `pty-scenario` YAML under
-//!    `xai-grok-pager/tests/scenarios/`) — assert screen contents and
+//!    `intelekt-pager/tests/scenarios/`) — assert screen contents and
 //!    multi-process resume behavior.
 //! 2. **Benchmarks** (`benches/pty_bench.rs`) — run timing scenarios, collect
 //!    per-frame timings, emit JSON / compare against baselines.
@@ -163,7 +163,7 @@ impl PtyHarness {
     ///
     /// ```no_run
     /// # use std::time::Duration;
-    /// # use xai_grok_pager_pty_harness::{PtyHarness, ContentController, pager_binary};
+    /// # use intelekt_pager_pty_harness::{PtyHarness, ContentController, pager_binary};
     /// # async fn example() -> anyhow::Result<()> {
     /// let content = ContentController::start().await?;
     /// content.set_response("# Hello\n\nAgent said hi.");

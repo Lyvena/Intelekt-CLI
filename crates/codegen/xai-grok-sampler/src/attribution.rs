@@ -6,7 +6,7 @@
 //! the live token from its auth source and the server still rejected
 //! it" buckets.
 //!
-//! `xai-grok-sampler` is intentionally decoupled from `xai-grok-shell`
+//! `intelekt-sampler` is intentionally decoupled from `intelekt-shell`
 //! (no shell types, no logging crate, no auth-manager dependency). The
 //! caller wires an implementation of [`Auth401AttributionCallback`]
 //! into [`crate::SamplerConfig::attribution_callback`]; the sampler
@@ -30,10 +30,10 @@ use std::sync::Arc;
 /// `SamplingClient` (chat completions, responses, messages -- each in
 /// streaming and non-streaming form). It does *not* cover image
 /// generation, video generation, web search, or embedding -- those
-/// tools live in `xai-grok-tools`
-/// (`crates/codegen/xai-grok-tools/src/implementations/`), have their
+/// tools live in `intelekt-tools`
+/// (`crates/codegen/intelekt-tools/src/implementations/`), have their
 /// own HTTP clients that do not flow through `SamplingClient`, and
-/// hook into the `xai_grok_tools::ApiKeyProvider` trait rather than
+/// hook into the `intelekt_tools::ApiKeyProvider` trait rather than
 /// this enum.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SamplingConsumer {
@@ -70,13 +70,13 @@ impl SamplingConsumer {
 
 /// Maximum prefix length the sampler shares with attribution
 /// callbacks across the crate boundary. Mirrors
-/// `xai_grok_shell::auth::token_suffix` (which truncates to 12 chars
+/// `intelekt_shell::auth::token_suffix` (which truncates to 12 chars
 /// before any sink) so the two crates stay in lock-step on the
 /// "bearers leaving the sampler are 12-char prefixes only" invariant.
 ///
 /// The cross-crate boundary is the only place this constant is
 /// load-bearing -- changing it requires updating `token_suffix` in
-/// `xai-grok-shell/src/auth/manager.rs` to match, otherwise the
+/// `intelekt-shell/src/auth/manager.rs` to match, otherwise the
 /// shell's local-log payload and the sampler's callback argument
 /// will disagree on prefix length.
 pub const SENT_BEARER_PREFIX_LEN: usize = 12;

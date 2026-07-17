@@ -4,7 +4,7 @@ use std::hint::black_box;
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 
-use xai_grok_markdown::{
+use intelekt_markdown::{
     MarkdownStyle, StreamingMarkdownRenderer, Syntect, render_markdown_ratatui_full,
 };
 

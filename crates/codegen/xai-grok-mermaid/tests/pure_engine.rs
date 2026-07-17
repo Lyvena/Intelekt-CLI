@@ -3,7 +3,7 @@
 //! These use only the public API (`default_engine` + `render_checked`) so they
 //! exercise the real, always-compiled dagre-based engine end to end.
 
-use xai_grok_mermaid::{
+use intelekt_mermaid::{
     MermaidError, MermaidTheme, RenderLimits, RenderParams, default_engine, render_checked,
 };
 

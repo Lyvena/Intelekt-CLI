@@ -1,4 +1,4 @@
-//! `paste-latency` — clipboard paste latency benchmark for `xai-grok-pager`.
+//! `paste-latency` — clipboard paste latency benchmark for `intelekt-pager`.
 //!
 //! Spawns the real pager binary in a PTY and measures the Ctrl+V (raw 0x16)
 //! paste path against the REAL macOS pasteboard (`pbcopy` / `osascript`):
@@ -22,10 +22,10 @@
 //! ## Typical use
 //!
 //! ```bash
-//! cargo bench -p xai-grok-pager-pty-harness --bench paste_latency -- --iterations 10
+//! cargo bench -p intelekt-pager-pty-harness --bench paste_latency -- --iterations 10
 //!
 //! # Compare an old release artifact, text mode only, JSON to a file:
-//! cargo bench -p xai-grok-pager-pty-harness --bench paste_latency -- \
+//! cargo bench -p intelekt-pager-pty-harness --bench paste_latency -- \
 //!   --binary ~/Downloads/grok-old --mode text --json /tmp/paste-old.json
 //! ```
 
@@ -35,7 +35,7 @@ use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, bail};
 use clap::Parser as ClapParser;
-use xai_grok_pager_pty_harness::{
+use intelekt_pager_pty_harness::{
     ContentController, PtyHarness,
     host_clipboard::{HostClipboardTextGuard, pbcopy, set_clipboard_png, write_fixture_png},
     pager_binary,
@@ -54,7 +54,7 @@ const TURN_SENTINEL: &str = "PASTEBENCHTURNDONE";
 #[derive(ClapParser, Debug)]
 #[command(
     name = "paste-latency",
-    about = "Clipboard paste latency benchmark for xai-grok-pager (macOS, real pasteboard)",
+    about = "Clipboard paste latency benchmark for intelekt-pager (macOS, real pasteboard)",
     long_about = None,
 )]
 struct Cli {

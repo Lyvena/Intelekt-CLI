@@ -1,16 +1,16 @@
-//! grok-build's session-level summarization prompt.
+//! intelekt-cli's session-level summarization prompt.
 //!
-//! Split out of the crate-root `prompt` module so grok-build's full-replace
+//! Split out of the crate-root `prompt` module so intelekt-cli's full-replace
 //! prompt lives alongside the rest of its [`code_compaction`](crate::code_compaction)
 //! subsystem. The Grok chat's step-level intra prompt
 //! ([`format_compaction_prompt`](crate::prompt::format_compaction_prompt))
 //! stays at the crate root.
 
-/// Build grok-build's session-level summarization prompt (no chat history).
+/// Build intelekt-cli's session-level summarization prompt (no chat history).
 ///
 /// `user_context` is the optional `/compact <text>` user-provided context,
 /// spliced inline into the structured prompt. Ported verbatim from
-/// `xai-grok-shell::session::helpers::session_compact::build_compaction_prompt`
+/// `intelekt-shell::session::helpers::session_compact::build_compaction_prompt`
 /// (the `use_short_prompt == false` branch).
 pub fn build_summary_prompt(user_context: Option<&str>) -> String {
     let user_context_section = match user_context {
@@ -26,7 +26,7 @@ pub fn build_summary_prompt(user_context: Option<&str>) -> String {
 }
 
 /// The short "self-summarization" prompt variant
-/// (mirrors `xai-grok-shell`'s `SELF_SUMMARIZATION_PROMPT`). Framed
+/// (mirrors `intelekt-shell`'s `SELF_SUMMARIZATION_PROMPT`). Framed
 /// as "summarize for a successor assistant that only sees the user's original
 /// query plus this summary." Kept here so every harness (the shell and the
 /// harness crate) shares one definition instead of each carrying a
@@ -49,11 +49,11 @@ your response.
 /// The prompt is owned by the harness's [`CompactionSampler`] impl (it appends
 /// the prompt as the final user message before sampling), not by the shared
 /// orchestrator. This enum lets each harness select the right one in one place
-/// so the structured (grok-build) and short self-summary prompts stay
+/// so the structured (intelekt-cli) and short self-summary prompts stay
 /// shared instead of duplicated per harness.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum SummaryPromptKind {
-    /// grok-build's detailed, numbered-section summary prompt.
+    /// intelekt-cli's detailed, numbered-section summary prompt.
     #[default]
     Structured,
     /// The short self-summarization prompt.
@@ -106,7 +106,7 @@ mod tests {
     #[test]
     fn kind_structured_matches_build_summary_prompt() {
         // The Structured kind must be byte-identical to the legacy entry point
-        // so routing through the selector never changes grok-build's prompt.
+        // so routing through the selector never changes intelekt-cli's prompt.
         assert_eq!(
             build_summary_prompt_kind(SummaryPromptKind::Structured, None),
             build_summary_prompt(None)

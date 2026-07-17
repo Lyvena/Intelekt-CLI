@@ -5,7 +5,7 @@ use crate::app::actions::Effect;
 use crate::app::agent::AgentId;
 use crate::app::app_view::AppView;
 use agent_client_protocol as acp;
-use xai_grok_telemetry::session_ctx::log_event;
+use intelekt_telemetry::session_ctx::log_event;
 
 /// Max post-install MCP-list re-probes while waiting for a just-installed
 /// plugin's MCP servers to reach a terminal state. Probes are ~1s apart
@@ -49,8 +49,8 @@ pub(super) fn plugin_cta_candidates(
     let mut candidates = Vec::new();
     let mut official_source_present = false;
     for source in response.sources {
-        let is_official = source.source_name == xai_grok_plugin_marketplace::OFFICIAL_SOURCE_NAME
-            || xai_grok_plugin_marketplace::is_official_source_url(&source.source_url_or_path);
+        let is_official = source.source_name == intelekt_plugin_marketplace::OFFICIAL_SOURCE_NAME
+            || intelekt_plugin_marketplace::is_official_source_url(&source.source_url_or_path);
         if !is_official {
             continue;
         }
@@ -108,7 +108,7 @@ pub(super) fn plugin_cta_phase_for(
     is_dismissed: impl Fn(&str) -> bool,
 ) -> crate::app::agent_view::CtaPhase {
     use crate::app::agent_view::CtaPhase;
-    use xai_grok_plugin_marketplace::matcher::{KeywordCandidate, match_plugin_keyword};
+    use intelekt_plugin_marketplace::matcher::{KeywordCandidate, match_plugin_keyword};
 
     if !(enabled && official_source_present) {
         return CtaPhase::Hidden;
@@ -180,7 +180,7 @@ pub(super) fn handle_cta_plugin_install_done(
     let name = name.clone();
     let session_id = agent.session.session_id.clone();
     let error_category = cta_install_error_category(&result);
-    log_event(xai_grok_telemetry::events::PluginCtaInstalled {
+    log_event(intelekt_telemetry::events::PluginCtaInstalled {
         plugin_name: name.clone(),
         success: error_category.is_none(),
         error_category,
@@ -362,8 +362,8 @@ pub(super) fn handle_plugin_cta_mcps_loaded(
                 modal.mcps_data = TabDataState::Loaded(servers);
                 agent.agents_modal = None;
                 agent.extensions_modal = Some(modal);
-                log_event(xai_grok_telemetry::events::ExtensionsModalOpened {
-                    trigger: xai_grok_telemetry::events::ExtensionsModalTrigger::AuthHandoff,
+                log_event(intelekt_telemetry::events::ExtensionsModalOpened {
+                    trigger: intelekt_telemetry::events::ExtensionsModalTrigger::AuthHandoff,
                     tab: ExtensionsTab::McpServers.telemetry_tab(),
                 });
                 agent.plugin_cta.phase = CtaPhase::Hidden;
@@ -439,7 +439,7 @@ pub(super) fn handle_plugin_cta_catalog_loaded(
                 // Only needed when enabled (the matcher short-circuits to
                 // Hidden before consulting it otherwise).
                 if enabled {
-                    agent.plugin_cta.dismissed = xai_grok_shell::config::dismissed_plugin_ctas();
+                    agent.plugin_cta.dismissed = intelekt_shell::config::dismissed_plugin_ctas();
                 }
                 // Recompute the matcher-driven phase now that the catalog
                 // landed: a type-and-pause before the async catalog arrived
@@ -462,7 +462,7 @@ pub(super) fn handle_plugin_cta_catalog_loaded(
                     if let Some(plugin_name) =
                         cta_impression_plugin_name(&agent.plugin_cta.phase, &new_phase)
                     {
-                        log_event(xai_grok_telemetry::events::PluginCtaImpression {
+                        log_event(intelekt_telemetry::events::PluginCtaImpression {
                             plugin_name: plugin_name.to_string(),
                         });
                     }
@@ -519,7 +519,7 @@ pub(super) fn handle_plugin_cta_debounce_expired(
         |name| agent.plugin_cta.dismissed.contains(name),
     );
     if let Some(plugin_name) = cta_impression_plugin_name(&agent.plugin_cta.phase, &new_phase) {
-        log_event(xai_grok_telemetry::events::PluginCtaImpression {
+        log_event(intelekt_telemetry::events::PluginCtaImpression {
             plugin_name: plugin_name.to_string(),
         });
     }
