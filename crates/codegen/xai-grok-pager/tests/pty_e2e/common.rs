@@ -215,7 +215,7 @@ pub(crate) fn git_repo_with_mcp_json() -> tempfile::TempDir {
 
 /// Env for a folder-trust run: the mock-server env plus a simulated release stamp
 /// (`GROK_TEST_VERSION`) and an explicit `GROK_FOLDER_TRUST` — `1` when `feature_on`,
-/// else `0` (an explicit opt-out that overrides the now-on default). HOME/INTELEKT_HOME
+/// else `0` (an explicit opt-out that overrides the now-on default). HOME/GROK_HOME
 /// point at the isolated temp home, so the trust store starts empty.
 pub(crate) fn trust_env(content: &ContentController, feature_on: bool) -> Vec<(String, String)> {
     let mut env = content.env_for_pager();
@@ -235,7 +235,7 @@ pub(crate) fn trust_env(content: &ContentController, feature_on: bool) -> Vec<(S
 pub(crate) fn folder_is_trusted(content: &ContentController, repo: &std::path::Path) -> bool {
     let store_path = content
         .home()
-        .join(".intelekt")
+        .join(".grok")
         .join(intelekt_workspace::trust::TRUST_FILE_NAME);
     let store = intelekt_workspace::trust::TrustStore::load_from(store_path);
     store.is_trusted(&intelekt_workspace::trust::workspace_key(repo))
@@ -271,8 +271,8 @@ pub(crate) fn seed_mcp_server_config(content: &ContentController) {
     #[cfg(windows)]
     let command = "cmd.exe";
 
-    let grok_home = content.home().join(".intelekt");
-    std::fs::create_dir_all(&grok_home).expect("create fake INTELEKT_HOME");
+    let grok_home = content.home().join(".grok");
+    std::fs::create_dir_all(&grok_home).expect("create fake GROK_HOME");
     let config = format!(
         "[mcp_servers.{MCP_TEST_SERVER}]\ncommand = \"{command}\"\nargs = []\nstartup_timeout_sec = 2\n"
     );
@@ -394,7 +394,7 @@ pub(crate) const SEND_NOW_TIP_SENTINEL: &str = "to send now";
 // The core fix (deduplication in load_hooks_from_sources) is verified by
 // unit tests in intelekt-hooks::discovery::tests. The PTY E2E test requires
 // careful environment variable setup to avoid static caching issues with
-// INTELEKT_HOME.
+// GROK_HOME.
 
 // ── Mouse reporting toggle (opt-in scrollback Ctrl+R) ───────────────────
 
@@ -406,20 +406,20 @@ pub(crate) const MOUSE_OFF_STICKY: &str =
 pub(crate) const MOUSE_OFF_HINT_PROMPT: &str =
     "/toggle-mouse-reporting to enable mouse reporting and restore TUI features";
 
-/// Seed `~/.intelekt/config.toml` with a `[ui]` section body (e.g.
-/// `"vim_mode = true"`). Same `{INTELEKT_HOME|HOME}/.intelekt/config.toml` location
+/// Seed `~/.grok/config.toml` with a `[ui]` section body (e.g.
+/// `"vim_mode = true"`). Same `{GROK_HOME|HOME}/.grok/config.toml` location
 /// `seed_mouse_reporting_toggle_config` uses; call before spawning the pager.
 pub(crate) fn seed_ui_config(content: &ContentController, ui_body: &str) {
-    let grok_home = content.home().join(".intelekt");
-    std::fs::create_dir_all(&grok_home).expect("create .intelekt");
+    let grok_home = content.home().join(".grok");
+    std::fs::create_dir_all(&grok_home).expect("create .grok");
     let config = format!("[ui]\n{ui_body}\n");
     std::fs::write(grok_home.join("config.toml"), config).expect("write config.toml");
 }
 
 pub(crate) fn seed_mouse_reporting_toggle_config(content: &ContentController, enabled: bool) {
-    let grok_home = content.home().join(".intelekt");
-    std::fs::create_dir_all(&grok_home).expect("create .intelekt");
-    // Minimal opt-in only — matches load_config's `{INTELEKT_HOME|HOME}/.intelekt/config.toml`.
+    let grok_home = content.home().join(".grok");
+    std::fs::create_dir_all(&grok_home).expect("create .grok");
+    // Minimal opt-in only — matches load_config's `{GROK_HOME|HOME}/.grok/config.toml`.
     let config = if enabled {
         "[ui]\nmouse_reporting_toggle = true\n"
     } else {
@@ -431,8 +431,8 @@ pub(crate) fn seed_mouse_reporting_toggle_config(content: &ContentController, en
 
 /// Seed `[ui] keep_text_selection = "hold"` under the content controller's home.
 pub(crate) fn seed_keep_text_selection_config(content: &ContentController) {
-    let grok_home = content.home().join(".intelekt");
-    std::fs::create_dir_all(&grok_home).expect("create .intelekt");
+    let grok_home = content.home().join(".grok");
+    std::fs::create_dir_all(&grok_home).expect("create .grok");
     std::fs::write(
         grok_home.join("config.toml"),
         "[ui]\nkeep_text_selection = \"hold\"\n",
@@ -1110,7 +1110,7 @@ pub(crate) const WRAP_TIMEOUT: Duration = Duration::from_secs(120);
 const WRAP_DRAIN_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Run `grok wrap <wrap_args...>` to completion inside a PTY with an isolated
-/// `INTELEKT_HOME`, returning the exit code (`None` if it never exited within
+/// `GROK_HOME`, returning the exit code (`None` if it never exited within
 /// [`WRAP_TIMEOUT`]) and everything the wrap PTY emitted. `extra_env` is where
 /// tests pin `SHELL`; wrap needs no mock content — it dispatches in `main`
 /// before auth/network/sandbox.
@@ -1122,7 +1122,7 @@ pub(crate) fn run_wrap(wrap_args: &[&str], extra_env: &[(&str, &str)]) -> (Optio
 
     let mut args = vec!["wrap"];
     args.extend_from_slice(wrap_args);
-    let mut env: Vec<(&str, &str)> = vec![("INTELEKT_HOME", &home_str), ("NO_COLOR", "1")];
+    let mut env: Vec<(&str, &str)> = vec![("GROK_HOME", &home_str), ("NO_COLOR", "1")];
     env.extend_from_slice(extra_env);
 
     let mut harness =

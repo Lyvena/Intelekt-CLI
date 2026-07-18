@@ -891,7 +891,7 @@ impl PluginsConfig {
     /// read here: a malicious repo could pre-populate `enabledPlugins` to
     /// bypass the project-plugin auto-disable logic in `populate_plugin_lists`,
     /// enabling attacker-controlled hooks (e.g. SessionStart → RCE).
-    /// Native `.intelekt/config.toml` entries already present take precedence:
+    /// Native `.grok/config.toml` entries already present take precedence:
     /// a name is only added if it isn't already in the opposite list.
     pub fn merge_claude_enabled_plugins(&mut self, _cwd: Option<&std::path::Path>) {
         if crate::claude_import::is_claude_import_marked_with_log("merge_claude_enabled_plugins") {
@@ -1131,7 +1131,7 @@ impl SandboxSettingsConfig {
             return Resolved::new(val.to_owned(), ConfigSource::Requirement);
         }
         resolve_string_flag(cli_arg, "GROK_SANDBOX", self.profile.as_deref(), None)
-            .unwrap_or_else(|| Resolved::new("off".to_owned(), ConfigSource::Default))
+            .unwrap_or_else(|| Resolved::new("hosted".to_owned(), ConfigSource::Default))
     }
     /// Resolve auto_allow_bash: requirement > env > config > default (false).
     pub fn resolve_auto_allow_bash(&self, requirement: Option<bool>) -> Resolved<bool> {
@@ -1230,8 +1230,8 @@ pub struct StorageConfig {
 }
 /// `[paths]` configuration: extra directories to scan for skills, rules, etc.
 ///
-/// These supplement the built-in scan locations (`.intelekt/skills/`,
-/// `.agents/skills/`, `~/.intelekt/skills/`). They're written by `/import-claude`
+/// These supplement the built-in scan locations (`.grok/skills/`,
+/// `.agents/skills/`, `~/.grok/skills/`). They're written by `/import-claude`
 /// to preserve previously-discovered Claude directories after the runtime
 /// `.claude/` cutoff (see `[claude_compat] imported`).
 ///
@@ -1456,7 +1456,7 @@ pub struct Config {
     #[serde(skip)]
     pub subagent_toggle: std::collections::HashMap<String, bool>,
     /// Per-subagent role definitions from `[subagents.roles]` in config.toml
-    /// and `.intelekt/roles/*.toml` file discovery.
+    /// and `.grok/roles/*.toml` file discovery.
     #[serde(skip)]
     pub subagent_roles:
         std::collections::HashMap<String, intelekt_subagent_resolution::config::SubagentRole>,
@@ -1612,7 +1612,7 @@ pub use intelekt_shared::ui_config::{ContextualHints, UiConfig};
 ///
 /// ```toml
 /// [agent]
-/// # Use a named agent (looked up via discovery: .intelekt/agents/, ~/.intelekt/agents/, built-ins)
+/// # Use a named agent (looked up via discovery: .grok/agents/, ~/.grok/agents/, built-ins)
 /// name = "my-custom-agent"
 ///
 /// # OR: path to an agent definition file (.md with YAML frontmatter)
@@ -1635,7 +1635,7 @@ pub struct AgentSelectionConfig {
     pub name: Option<String>,
     /// Path to an agent definition file (.md with YAML frontmatter).
     /// When set, the agent is loaded from this file.
-    /// Supports environment variable expansion (e.g., `$HOME/.intelekt/agents/my-agent.md`).
+    /// Supports environment variable expansion (e.g., `$HOME/.grok/agents/my-agent.md`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub definition: Option<PathBuf>,
     /// Global system-prompt identity label. Per-model override wins.
@@ -1705,7 +1705,22 @@ impl Default for Config {
             goal: GoalConfig::default(),
             doom_loop_recovery: crate::util::config::DoomLoopRecoverySettings::default(),
             auto_mode: AutoModeConfig::default(),
-            config_models: IndexMap::new(),
+            config_models: {
+                let mut m = IndexMap::new();
+                m.insert(
+                    "insforge-gateway".to_string(),
+                    ConfigModelOverride {
+                        model: Some("intelekt-cli".to_string()),
+                        base_url: Some("https://8c77q45j.eu-central.insforge.app/v1".to_string()),
+                        env_key: Some(EnvKeys::single("INSFORGE_GATEWAY_KEY")),
+                        name: Some("InsForge Gateway".to_string()),
+                        context_window: Some(500000),
+                        api_backend: Some(ApiBackend::ChatCompletions),
+                        ..Default::default()
+                    },
+                );
+                m
+            },
             model_override_warnings: Vec::new(),
             grok_com_config: GrokComConfig::default(),
             shortcuts: None,
@@ -1723,7 +1738,10 @@ impl Default for Config {
             feedback: FeedbackConfig::default(),
             paths: PathsConfig::default(),
             cli: CliConfig::default(),
-            models: ModelsConfig::default(),
+            models: ModelsConfig {
+                default: Some("insforge-gateway".to_string()),
+                ..ModelsConfig::default()
+            },
             harness: HarnessConfig::default(),
             relay: RelayConfig::default(),
             remote: RemoteConfig::default(),
@@ -1863,6 +1881,21 @@ impl Config {
             let keys = user_unused.join(", ");
             tracing::warn!(
                 "config has unrecognized key(s): {keys}. Run /help for config reference."
+            );
+        }
+        let mut config_models = config_models;
+        if !config_models.contains_key("insforge-gateway") {
+            config_models.insert(
+                "insforge-gateway".to_string(),
+                ConfigModelOverride {
+                    model: Some("intelekt-cli".to_string()),
+                    base_url: Some("https://8c77q45j.eu-central.insforge.app/v1".to_string()),
+                    env_key: Some(EnvKeys::single("INSFORGE_GATEWAY_KEY")),
+                    name: Some("InsForge Gateway".to_string()),
+                    context_window: Some(500000),
+                    api_backend: Some(ApiBackend::ChatCompletions),
+                    ..Default::default()
+                },
             );
         }
         config.config_models = config_models;
@@ -2678,7 +2711,7 @@ impl Config {
         resolve_mcp_push_server_status(None, None, self.features.mcp_push_server_status, None, None)
     }
     /// Resolve whether the leader's `ConfigFileWatcher` adds the two
-    /// narrow non-recursive watches for `<cwd>/` and `<cwd>/.intelekt/`.
+    /// narrow non-recursive watches for `<cwd>/` and `<cwd>/.grok/`.
     ///
     /// Thin delegate to the canonical
     /// [`resolve_mcp_recursive_config_watch`] free function — mirrors
@@ -2960,7 +2993,7 @@ fn error_reporting_enabled_from_toml(root: &toml::Value) -> Option<bool> {
 fn grok_telemetry_env_enabled() -> Option<bool> {
     env_telemetry_mode("GROK_TELEMETRY_ENABLED").map(|m| !m.is_disabled())
 }
-/// Load `~/.intelekt/requirements.toml` standalone so the admin pin can beat
+/// Load `~/.grok/requirements.toml` standalone so the admin pin can beat
 /// env vars. The merged config layer can't express that — last-merge-wins
 /// loses provenance.
 pub(crate) fn read_requirements_toml() -> Option<toml::Value> {
@@ -4246,17 +4279,17 @@ pub struct Features {
     ///
     /// Practical consequence: setting
     /// `[features] mcp_push_server_status = false` in
-    /// `~/.intelekt/config.toml` will NOT disable the pager's
+    /// `~/.grok/config.toml` will NOT disable the pager's
     /// subscription on a freshly-launched process. To disable the
     /// pager subscription, set `GROK_MCP_PUSH_SERVER_STATUS=0` in
     /// the env before launch.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mcp_push_server_status: Option<bool>,
     /// Whether the leader's `ConfigFileWatcher` adds the two narrow
-    /// non-recursive watches for `<cwd>/` and `<cwd>/.intelekt/`.
+    /// non-recursive watches for `<cwd>/` and `<cwd>/.grok/`.
     ///
     /// When `true` (default), edits to `<cwd>/.mcp.json`,
-    /// `<cwd>/.intelekt/config.toml`, or `<cwd>/.claude.json` flow
+    /// `<cwd>/.grok/config.toml`, or `<cwd>/.claude.json` flow
     /// through the watcher → reloader → `ConfigUpdate::
     /// ProjectMcpServersChanged { cwd }` → `app.rs` ACP-injection
     /// pipeline and the affected sessions reload their MCP servers
@@ -10436,7 +10469,7 @@ default = "intelekt-4.5"
         let cfg = Config::new_from_toml_cfg(&value).unwrap();
         assert_eq!(cfg.models.default.as_deref(), Some("intelekt-4.5"));
     }
-    /// Reproduce the enterprise managed config bug: [model.intelekt-cli] sets
+    /// Reproduce the enterprise managed config bug: [model.grok-cli] sets
     /// context_window=500k for model="intelekt-4.5", but
     /// [models].default="intelekt-4.5" resolves to the bare
     /// prefetched entry (256k) because Layer 3 only overrides key
@@ -10451,7 +10484,7 @@ default = "intelekt-4.5"
             [models]
             default = "intelekt-4.5"
 
-            [model.intelekt-cli]
+            [model.grok-cli]
             model = "intelekt-4.5"
             context_window = 500000
             base_url = "https://inference.example.com/v1"
@@ -10490,7 +10523,7 @@ default = "intelekt-4.5"
         let default_cw = DEFAULT_CONTEXT_WINDOW;
         let raw: toml::Value = toml::from_str(
             r#"
-            [model.intelekt-cli]
+            [model.grok-cli]
             model = "intelekt-4.5"
             context_window = 500000
             base_url = "https://test.example.com/v1"
@@ -10526,7 +10559,7 @@ default = "intelekt-4.5"
     fn slug_propagation_does_not_overwrite_explicit_context_window() {
         let raw: toml::Value = toml::from_str(
             r#"
-            [model.intelekt-cli]
+            [model.grok-cli]
             model = "intelekt-4.5"
             context_window = 500000
             base_url = "https://test.example.com/v1"
@@ -11012,7 +11045,7 @@ default = "intelekt-4.5"
     fn byok_config_overlay_visible_to_api_key_users() {
         let raw: toml::Value = toml::from_str(
             r#"
-            [model.intelekt-cli]
+            [model.grok-cli]
             model = "intelekt-4.5"
             base_url = "https://inference.company.com/v1"
             env_key = "COMPANY_TOKEN"
@@ -11034,7 +11067,7 @@ default = "intelekt-4.5"
     fn plain_config_overlay_preserves_bundled_visibility() {
         let raw: toml::Value = toml::from_str(
             r#"
-            [model.intelekt-cli]
+            [model.grok-cli]
             context_window = 300000
             "#,
         )

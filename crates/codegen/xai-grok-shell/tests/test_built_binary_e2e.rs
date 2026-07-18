@@ -1251,7 +1251,7 @@ async fn test_stdio_xcode_escaped_slash_methods_get_responses() {
 
 // ── Config test harness ─────────────────────────────────────────────────────
 
-/// Isolated headless run with a custom `~/.intelekt/`. Clean env (no leaked
+/// Isolated headless run with a custom `~/.grok/`. Clean env (no leaked
 /// host credentials). Write config files into `grok_dir()` before `run()`.
 struct ConfigTestHarness {
     home: tempfile::TempDir,
@@ -1262,7 +1262,7 @@ struct ConfigTestHarness {
 impl ConfigTestHarness {
     fn new(server: &MockInferenceServer) -> Self {
         let home = tempfile::tempdir().unwrap();
-        std::fs::create_dir_all(home.path().join(".intelekt")).unwrap();
+        std::fs::create_dir_all(home.path().join(".grok")).unwrap();
         Self {
             home,
             workdir: git_workdir(),
@@ -1278,7 +1278,7 @@ impl ConfigTestHarness {
     }
 
     fn grok_dir(&self) -> std::path::PathBuf {
-        self.home.path().join(".intelekt")
+        self.home.path().join(".grok")
     }
 
     fn env(&mut self, key: &str, value: &str) -> &mut Self {
@@ -1299,7 +1299,7 @@ impl ConfigTestHarness {
             // Windows resolves `~` via USERPROFILE, not HOME — pin the grok
             // home explicitly so the sandbox holds on all platforms (see
             // `test_env_cmd_tokio`).
-            .env("INTELEKT_HOME", self.grok_dir())
+            .env("GROK_HOME", self.grok_dir())
             .env("PATH", std::env::var("PATH").unwrap_or_default());
         for (k, v) in &self.env {
             cmd.env(k, v);
@@ -1332,7 +1332,7 @@ async fn test_headless_managed_config_byok_sends_authorized_requests() {
 deployment_key = "test-deployment-key"
 xai_api_base_url = "{url}"
 
-[model.intelekt-cli]
+[model.grok-cli]
 api_backend = "responses"
 base_url = "{url}"
 context_window = 500000

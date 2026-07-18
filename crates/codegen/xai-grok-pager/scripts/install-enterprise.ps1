@@ -4,7 +4,7 @@
 # Standalone installer for the enterprise channel. Intentionally a full copy of
 # the install logic so changes to the stable installer cannot break enterprise.
 #
-# Auth: INTELEKT_DEPLOYMENT_KEY env var (takes precedence) or ~/.intelekt/auth.json from `intelekt login`.
+# Auth: INTELEKT_DEPLOYMENT_KEY env var (takes precedence) or ~/.grok/auth.json from `intelekt login`.
 # Env: INTELEKT_BIN_DIR, INTELEKT_PROXY_URL
 #
 # Usage:
@@ -38,7 +38,7 @@ if ($PSVersionTable.Platform -and $PSVersionTable.Platform -ne 'Win32NT') {
     exit 1
 }
 
-$IntelektDir = Join-Path $env:USERPROFILE '.intelekt'
+$IntelektDir = Join-Path $env:USERPROFILE '.grok'
 
 # --- Helpers ---
 
@@ -125,10 +125,10 @@ if ($env:INTELEKT_DEPLOYMENT_KEY) {
     $legacyToken = Read-GrokToken $LegacyScope
     if ($oidcToken) {
         $AuthSource = 'auth.json (oidc)'
-        Write-Host 'Auth: using OIDC token from ~/.intelekt/auth.json.' -ForegroundColor DarkGray
+        Write-Host 'Auth: using OIDC token from ~/.grok/auth.json.' -ForegroundColor DarkGray
     } elseif ($legacyToken) {
         $AuthSource = 'auth.json (legacy)'
-        Write-Host 'Auth: using legacy token from ~/.intelekt/auth.json.' -ForegroundColor DarkGray
+        Write-Host 'Auth: using legacy token from ~/.grok/auth.json.' -ForegroundColor DarkGray
     }
 }
 

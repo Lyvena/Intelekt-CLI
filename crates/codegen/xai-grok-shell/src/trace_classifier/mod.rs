@@ -1126,7 +1126,7 @@ async fn build_sampler_client(
         base_url,
         model,
         max_completion_tokens: Some(LAZINESS_MAX_OUTPUT_TOKENS),
-        ..intelekt_sampler::SamplerConfig::default()
+        ..grok_sampler::SamplerConfig::default()
     };
     intelekt_sampler::SamplingClient::new(config).map_err(|e| anyhow!("build SamplingClient: {e}"))
 }
@@ -2447,7 +2447,7 @@ mod tests {
     /// * `GROK_AUTH` — inline-JSON credentials override that bypasses
     ///   the on-disk read entirely (`AuthManager::new`).
     /// * `GROK_AUTH_PATH` — overrides the auth.json path; if set to
-    ///   the operator's real `~/.intelekt/auth.json`, the test would read
+    ///   the operator's real `~/.grok/auth.json`, the test would read
     ///   live OIDC credentials instead of the scratch fixture.
     /// * `GROK_AUTH_PROVIDER_COMMAND` — selects an external
     ///   refresher that could mint credentials independent of the

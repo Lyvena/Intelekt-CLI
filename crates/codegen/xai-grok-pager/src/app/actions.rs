@@ -957,7 +957,7 @@ pub enum Action {
 }
 /// Persist-and-notify semantics for [`Effect::PersistPermissionMode`].
 ///
-/// Both variants write to `~/.intelekt/config.toml` and route ACP
+/// Both variants write to `~/.grok/config.toml` and route ACP
 /// `x.ai/yolo_mode_changed` notifications. The ACP notification is
 /// gated on disk-write success when `WithRollback` is used.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1523,7 +1523,7 @@ pub enum Effect {
     PersistMemoryFullscreen { fullscreen: bool },
     /// Persist the project-picker opt-out to `[hints] project_picker_disabled`.
     PersistProjectPickerDisabled { disabled: bool },
-    /// Persist the dashboard's `[dashboard]` configuration to `~/.intelekt/config.toml`.
+    /// Persist the dashboard's `[dashboard]` configuration to `~/.grok/config.toml`.
     /// Edge case 15: multi-pager safe via `config_toml_edit::read_config_document_for_edit`,
     /// which loads → modifies → writes the whole document. Concurrent
     /// pagers may produce last-writer-wins behaviour but never corrupt
@@ -1549,7 +1549,7 @@ pub enum Effect {
         session_id: Option<acp::SessionId>,
         persist: PermissionModePersist,
     },
-    /// Persist a typed setting to `~/.intelekt/config.toml`. On failure,
+    /// Persist a typed setting to `~/.grok/config.toml`. On failure,
     /// rolls the in-memory cache back to `rollback_value`.
     PersistSetting {
         key: crate::settings::SettingKey,
@@ -1895,7 +1895,7 @@ pub enum Effect {
     /// Clear the "copied!" feedback after a delay.
     ScheduleClearAuthCopied,
     /// Register the current session in the active-sessions crash-recovery
-    /// registry (`~/.intelekt/active_sessions.json`).
+    /// registry (`~/.grok/active_sessions.json`).
     RegisterActiveSession {
         session_id: acp::SessionId,
         cwd: String,

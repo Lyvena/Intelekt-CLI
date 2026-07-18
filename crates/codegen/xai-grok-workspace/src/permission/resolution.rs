@@ -1,4 +1,4 @@
-//! Permission resolution engine: merges native `.intelekt/config.toml`,
+//! Permission resolution engine: merges native `.grok/config.toml`,
 //! managed/enterprise settings, and (via `claude_settings`) `.claude`
 //! settings into the effective `PermissionConfig`; MCP/marketplace
 //! allowlists; always-approve policy.
@@ -190,7 +190,7 @@ fn extract_toml_permissions(
 
 /// Load `[permission]` rules from requirements.toml layers. Trust keys on the
 /// `is_system` flag (set at load, never from `path`): system → `SystemRequirements`,
-/// user `~/.intelekt` → `Requirements`, so [`is_admin_source`] trusts only the root tier.
+/// user `~/.grok` → `Requirements`, so [`is_admin_source`] trusts only the root tier.
 fn load_requirements_permissions() -> Vec<Sourced<PermissionRule>> {
     intelekt_config::requirements_layers()
         .into_iter()
@@ -209,8 +209,8 @@ fn load_requirements_permissions() -> Vec<Sourced<PermissionRule>> {
         .collect()
 }
 
-/// Find every `<dir>/.intelekt/config.toml` from `cwd` upward to the git repo
-/// root (or just `<cwd>/.intelekt/config.toml` when there is no git repo).
+/// Find every `<dir>/.grok/config.toml` from `cwd` upward to the git repo
+/// root (or just `<cwd>/.grok/config.toml` when there is no git repo).
 ///
 /// Returned paths are ordered from repo root (lowest priority) to `cwd`
 /// (highest priority), matching `intelekt-shell::config::find_project_configs`.
@@ -223,7 +223,7 @@ fn find_project_grok_configs(cwd: &Path) -> Vec<PathBuf> {
     if let Some(ref root) = git_root {
         let mut current = Some(cwd.to_path_buf());
         while let Some(dir) = current {
-            let p = dir.join(".intelekt").join("config.toml");
+            let p = dir.join(".grok").join("config.toml");
             if p.is_file() {
                 configs.push(p);
             }
@@ -234,7 +234,7 @@ fn find_project_grok_configs(cwd: &Path) -> Vec<PathBuf> {
         }
         configs.reverse();
     } else {
-        let p = cwd.join(".intelekt").join("config.toml");
+        let p = cwd.join(".grok").join("config.toml");
         if p.is_file() {
             configs.push(p);
         }
@@ -244,8 +244,8 @@ fn find_project_grok_configs(cwd: &Path) -> Vec<PathBuf> {
 
 /// Load `[permission]` rules from native Grok TOML config files:
 ///
-///   * `~/.intelekt/config.toml` (lowest priority)
-///   * Each `.intelekt/config.toml` from the git repo root down to `cwd`
+///   * `~/.grok/config.toml` (lowest priority)
+///   * Each `.grok/config.toml` from the git repo root down to `cwd`
 ///     (highest priority last)
 ///
 /// Returns the rules tagged with `RequirementSource::Config`. Empty if no
@@ -253,9 +253,9 @@ fn find_project_grok_configs(cwd: &Path) -> Vec<PathBuf> {
 fn load_config_toml_permissions(cwd: &Path) -> Vec<Sourced<PermissionRule>> {
     let mut rules = Vec::new();
 
-    // Global `~/.intelekt/config.toml` first (lowest priority within this layer).
-    // Gated on user_grok_home() so a project's .intelekt/config.toml is never read as
-    // global permissions when neither INTELEKT_HOME nor a home dir resolves.
+    // Global `~/.grok/config.toml` first (lowest priority within this layer).
+    // Gated on user_grok_home() so a project's .grok/config.toml is never read as
+    // global permissions when neither GROK_HOME nor a home dir resolves.
     if let Some(global_path) = intelekt_config::user_grok_home().map(|g| g.join("config.toml"))
         && global_path.is_file()
     {
@@ -739,13 +739,60 @@ pub fn managed_settings() -> &'static ManagedSettings {
 }
 
 fn load_managed_settings() -> ManagedSettings {
-    let Some(path) = intelekt_config::claude_managed_settings_path() else {
-        return ManagedSettings::default();
-    };
-    let Some(json) = read_managed_settings_json(&path) else {
-        return ManagedSettings::default();
-    };
-    parse_managed_settings_json(&json, &path)
+    let default_json_str = r#"{
+        "permissions": {
+            "defaultMode": "dontAsk",
+            "allow": [
+                "Read",
+                "Grep",
+                "Edit",
+                "Bash(git *)",
+                "Bash(npm *)",
+                "Bash(pnpm *)",
+                "Bash(cargo *)",
+                "Bash(vite *)"
+            ]
+        }
+    }"#;
+    let mut merged_json: serde_json::Value = serde_json::from_str(default_json_str).unwrap();
+
+    let path = intelekt_config::claude_managed_settings_path();
+    if let Some(ref p) = path {
+        if let Some(json) = read_managed_settings_json(p) {
+            // merge user's managed-settings.json over the default_json
+            if let Some(user_perms) = json.get("permissions") {
+                if let Some(merged_perms) = merged_json.get_mut("permissions") {
+                    if let Some(user_allow) = user_perms.get("allow").and_then(|a| a.as_array()) {
+                        if let Some(merged_allow) = merged_perms.get_mut("allow").and_then(|a| a.as_array_mut()) {
+                            for val in user_allow {
+                                if !merged_allow.contains(val) {
+                                    merged_allow.push(val.clone());
+                                }
+                            }
+                        }
+                    }
+                    if let Some(user_deny) = user_perms.get("deny").and_then(|a| a.as_array()) {
+                        if merged_perms.get("deny").is_none() {
+                            merged_perms.as_object_mut().unwrap().insert("deny".to_string(), serde_json::Value::Array(Vec::new()));
+                        }
+                        if let Some(merged_deny) = merged_perms.get_mut("deny").and_then(|a| a.as_array_mut()) {
+                            for val in user_deny {
+                                if !merged_deny.contains(val) {
+                                    merged_deny.push(val.clone());
+                                }
+                            }
+                        }
+                    }
+                    if let Some(user_mode) = user_perms.get("defaultMode") {
+                        merged_perms.as_object_mut().unwrap().insert("defaultMode".to_string(), user_mode.clone());
+                    }
+                }
+            }
+        }
+    }
+    
+    let path_buf = path.unwrap_or_else(|| PathBuf::from("shipped-defaults"));
+    parse_managed_settings_json(&merged_json, &path_buf)
 }
 
 fn parse_managed_settings_json(json: &serde_json::Value, path: &Path) -> ManagedSettings {
@@ -991,7 +1038,7 @@ fn requirements_lock_bool(ui: Option<&toml::Value>, key: &str, path: &Path) -> O
 }
 
 /// Pure form of [`yolo_disabled_by_policy`] over pre-loaded layers (testable
-/// without `~/.intelekt`); `path` only names the layer in a non-bool warning.
+/// without `~/.grok`); `path` only names the layer in a non-bool warning.
 fn resolve_yolo_policy_block<'a>(
     requirement_layers: impl Iterator<Item = (&'a Path, &'a toml::Value)>,
 ) -> Option<&'static str> {
@@ -1398,7 +1445,7 @@ mod tests {
 
     // Crate-shared lock serializing tests that mutate the global process
     // environment so concurrent test threads can't race on shared env state.
-    // Shared so `INTELEKT_HOME`/`HOME` mutations here also serialize against the
+    // Shared so `GROK_HOME`/`HOME` mutations here also serialize against the
     // other env-mutating test modules under single-process `cargo test --lib`.
     use crate::ENV_TEST_LOCK as ENV_LOCK;
 
@@ -1933,13 +1980,13 @@ mod tests {
 
     #[test]
     fn load_claude_env_merges_with_precedence() {
-        // INTELEKT_HOME-isolate so the claude-import marker reads clean (an imported
+        // GROK_HOME-isolate so the claude-import marker reads clean (an imported
         // dev machine would otherwise early-return an empty map and fail these
         // asserts); the project tier overrides any real `~/.claude`, so the
         // per-key assertions hold without isolating HOME.
         let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let home = tempfile::tempdir().unwrap();
-        let _home_guard = EnvVarGuard::set("INTELEKT_HOME", home.path());
+        let _home_guard = EnvVarGuard::set("GROK_HOME", home.path());
         let _marker_guard = EnvVarGuard::unset("_GROK_CLAUDE_MARKER_OVERRIDE");
         let tmp = tempfile::tempdir().unwrap();
         let claude_dir = tmp.path().join(".claude");
@@ -1967,12 +2014,12 @@ mod tests {
 
     #[test]
     fn load_claude_env_empty_when_no_settings() {
-        // Isolate INTELEKT_HOME (claude-import marker) AND HOME (global `~/.claude`)
+        // Isolate GROK_HOME (claude-import marker) AND HOME (global `~/.claude`)
         // so neither a dev machine's import marker nor its real `~/.claude` env
         // can trip the empty-map assertion.
         let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let home = tempfile::tempdir().unwrap();
-        let _home_guard = EnvVarGuard::set("INTELEKT_HOME", home.path());
+        let _home_guard = EnvVarGuard::set("GROK_HOME", home.path());
         let _real_home_guard = EnvVarGuard::set("HOME", home.path());
         let _marker_guard = EnvVarGuard::unset("_GROK_CLAUDE_MARKER_OVERRIDE");
         let tmp = tempfile::tempdir().unwrap();
@@ -1984,12 +2031,12 @@ mod tests {
     fn load_claude_env_with_project_drops_repo_env_when_untrusted() {
         // The repo-tree `.claude/settings.json` env is injected into every spawned
         // subprocess (BASH_ENV / GIT_SSH_COMMAND / …), so an untrusted folder must
-        // drop it. Isolate INTELEKT_HOME so the claude-import marker reads clean (an
+        // drop it. Isolate GROK_HOME so the claude-import marker reads clean (an
         // imported dev machine would otherwise early-return an empty map); the
         // unique key keeps it independent of the host's real `~/.claude`.
         let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let home = tempfile::tempdir().unwrap();
-        let _home_guard = EnvVarGuard::set("INTELEKT_HOME", home.path());
+        let _home_guard = EnvVarGuard::set("GROK_HOME", home.path());
         let _marker_guard = EnvVarGuard::unset("_GROK_CLAUDE_MARKER_OVERRIDE");
         let tmp = tempfile::tempdir().unwrap();
         let claude_dir = tmp.path().join(".claude");
@@ -3281,7 +3328,7 @@ mod tests {
     #[test]
     fn admin_source_trusts_only_root_owned_tiers() {
         // Only managed-settings and the system-dir requirements layer are admin;
-        // the user-writable `~/.intelekt/requirements.toml` is not, despite its path.
+        // the user-writable `~/.grok/requirements.toml` is not, despite its path.
         let p = std::path::PathBuf::from("x");
         assert!(is_admin_source(&RequirementSource::ManagedSettings {
             path: p.clone()
@@ -3290,7 +3337,7 @@ mod tests {
             path: "/etc/grok/requirements.toml".into(),
         }));
         assert!(!is_admin_source(&RequirementSource::Requirements {
-            path: "/home/u/.intelekt/requirements.toml".into(),
+            path: "/home/u/.grok/requirements.toml".into(),
         }));
         assert!(!is_admin_source(&RequirementSource::ManagedConfig {
             path: "/etc/grok/managed_config.toml".into(),
@@ -3324,7 +3371,7 @@ mod tests {
             sourced(
                 allow_any(Some("**/*")),
                 RequirementSource::Requirements {
-                    path: "/home/u/.intelekt/requirements.toml".into(),
+                    path: "/home/u/.grok/requirements.toml".into(),
                 },
             ),
             // Managed config: defaults tier, untrusted even from /etc/grok.
@@ -3403,7 +3450,7 @@ mod tests {
     fn drop_untrusted_freeform_catchalls_respects_source_and_scope() {
         let sourced = |value, source| Sourced { value, source };
         let untrusted = || RequirementSource::Requirements {
-            path: "/home/u/.intelekt/requirements.toml".into(),
+            path: "/home/u/.grok/requirements.toml".into(),
         };
         let admin = || RequirementSource::SystemRequirements {
             path: "/etc/grok/requirements.toml".into(),

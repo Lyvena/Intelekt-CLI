@@ -16,7 +16,7 @@ Three entry points, all opening the same view:
 - **`/dashboard`** (aliases **`/agents-dashboard`**, **`/sessions`**) — open
   from inside an active session.
 - **Ctrl+\\** — same as the slash command, two keystrokes. Configurable
-  in `~/.intelekt/config.toml` under `[keybindings]` like every other shortcut.
+  in `~/.grok/config.toml` under `[keybindings]` like every other shortcut.
 
 ---
 
@@ -145,7 +145,7 @@ guide here is intentionally short and cross-references the plan as
 the source of truth.
 
 All shortcuts are registered under `When::DashboardFocused` and can be
-rebound via `~/.intelekt/config.toml`.
+rebound via `~/.grok/config.toml`.
 
 ---
 
@@ -323,7 +323,7 @@ The query supports the same prefixes as before (they are only honoured
 ## Persistence
 
 Per-user dashboard preferences live under `[dashboard]` in
-`~/.intelekt/config.toml`:
+`~/.grok/config.toml`:
 
 ```toml
 [dashboard]

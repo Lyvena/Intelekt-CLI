@@ -6,7 +6,9 @@ Grok connects to custom model endpoints for alternative providers, self-hosted m
 
 ## Default Models
 
-By default, Grok uses models hosted by SpaceXAI, and new sessions start with `intelekt-cli`. Default models require no configuration. Authenticate with `grok login` or an API key, then start a session.
+By default, Intelekt uses the `insforge-gateway` custom model, which routes requests through the InsForge model gateway. This model is configured by default to read its API key from the `INSFORGE_GATEWAY_KEY` environment variable injected per session by the Next.js backend, meaning it requires no manual configuration under normal operations.
+
+You can switch to other models via the Model Chooser UI or command options.
 
 List all available models:
 
@@ -44,11 +46,17 @@ Press `Ctrl+M` from the scrollback pane to open the model picker. It lists all a
 
 ### Config Default
 
-Set a persistent default in `~/.intelekt/config.toml`:
+By default, the shipped configuration defaults to the `insforge-gateway` custom model:
 
 ```toml
 [models]
-default = "intelekt-cli"
+default = "insforge-gateway"
+
+[model.insforge-gateway]
+model = "intelekt-cli"
+base_url = "https://8c77q45j.eu-central.insforge.app/v1"
+env_key = "INSFORGE_GATEWAY_KEY"
+name = "InsForge Gateway"
 ```
 
 ---
@@ -71,7 +79,7 @@ To send provider-specific authentication or version headers -- for example, Anth
 
 ## Configuring Custom Models
 
-Add custom model endpoints in `~/.intelekt/config.toml` under `[model.<name>]` sections:
+Add custom model endpoints in `~/.grok/config.toml` under `[model.<name>]` sections:
 
 ```toml
 [model.my-model]
@@ -139,11 +147,11 @@ You can override specific fields of built-in models without redefining everythin
 
 ```toml
 # Override only the API key for a default model
-[model.intelekt-cli]
+[model.grok-cli]
 api_key = "my-api-key"
 
 # Override temperature and add a custom API key
-[model.intelekt-cli]
+[model.grok-cli]
 temperature = 0.5
 api_key = "sk-custom"
 ```
@@ -265,7 +273,7 @@ grok
 models_base_url = "https://api.acme.com/v1"
 
 # Override only the API key for a specific model
-[model.intelekt-cli]
+[model.grok-cli]
 api_key = "my-api-key"
 ```
 

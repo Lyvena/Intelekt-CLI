@@ -18,6 +18,7 @@ tracing = { workspace = true }
 url = { workspace = true }
 intelekt-config = { workspace = true }
 intelekt-tools = { workspace = true }
+intelekt-sandbox = { path = "../intelekt-sandbox", default-features = false }
 
 [dev-dependencies]
 tempfile = { workspace = true }

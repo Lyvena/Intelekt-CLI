@@ -1,6 +1,6 @@
 //! Sampling log — emits `tracing` events with `target: "sampling_log"`.
 //! A dedicated layer in `intelekt-telemetry` routes these to
-//! `~/.intelekt/logs/sampling.jsonl`. Enable with `--log-sampling`.
+//! `~/.grok/logs/sampling.jsonl`. Enable with `--log-sampling`.
 
 use crate::types::RequestId;
 

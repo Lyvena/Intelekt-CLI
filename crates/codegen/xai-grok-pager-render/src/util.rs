@@ -6,24 +6,24 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 pub use intelekt_config::grok_home;
 
-/// Path to `$INTELEKT_HOME/pager.toml`.
+/// Path to `$GROK_HOME/pager.toml`.
 pub fn pager_toml_path() -> PathBuf {
     grok_home().join("pager.toml")
 }
 
-/// User-facing label for the user grok directory (``~/.intelekt`` or ``$INTELEKT_HOME``).
+/// User-facing label for the user grok directory (``~/.grok`` or ``$GROK_HOME``).
 ///
 /// Derived from resolved [`grok_home()`] vs `intelekt_config::default_grok_home()`,
-/// not from whether `INTELEKT_HOME` is set in the environment.
+/// not from whether `GROK_HOME` is set in the environment.
 pub fn display_grok_home_prefix() -> String {
     if grok_home() == intelekt_config::default_grok_home() {
-        "~/.intelekt".to_string()
+        "~/.grok".to_string()
     } else {
-        "$INTELEKT_HOME".to_string()
+        "$GROK_HOME".to_string()
     }
 }
 
-/// User-facing path under [`grok_home()`], e.g. ``~/.intelekt/config.toml``.
+/// User-facing path under [`grok_home()`], e.g. ``~/.grok/config.toml``.
 pub fn display_user_grok_path(relative: impl AsRef<Path>) -> String {
     let rel = relative.as_ref();
     let prefix = display_grok_home_prefix();
@@ -397,17 +397,17 @@ mod tests {
 
     #[test]
     fn display_grok_home_prefix_default_install() {
-        if std::env::var("INTELEKT_HOME").is_ok() {
+        if std::env::var("GROK_HOME").is_ok() {
             return;
         }
-        assert_eq!(display_grok_home_prefix(), "~/.intelekt");
+        assert_eq!(display_grok_home_prefix(), "~/.grok");
     }
 
     #[test]
     fn display_user_grok_path_joins_relative() {
         let path = display_user_grok_path("config.toml");
         assert!(path.ends_with("/config.toml") || path.ends_with("\\config.toml"));
-        assert!(path.contains(".intelekt") || path.contains("$INTELEKT_HOME"));
+        assert!(path.contains(".grok") || path.contains("$GROK_HOME"));
     }
 
     #[test]
@@ -416,7 +416,7 @@ mod tests {
             if home.is_empty() {
                 return;
             }
-            let full = format!("{home}/.intelekt/memory/MEMORY.md");
+            let full = format!("{home}/.grok/memory/MEMORY.md");
             let abbreviated = abbreviate_path(&full);
             assert!(
                 abbreviated.contains("memory/MEMORY.md"),

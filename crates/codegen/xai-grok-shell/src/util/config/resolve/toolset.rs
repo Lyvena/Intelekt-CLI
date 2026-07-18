@@ -11,7 +11,7 @@ use intelekt_tools::implementations::grok_build::ask_user_question;
 ///
 /// Pass the **merged** requirements ([`crate::config::load_merged_requirements`])
 /// so an org policy in any requirements layer — not only
-/// `~/.intelekt/requirements.toml` — is honored. Returns `(find_bfs, grep_ugrep)`,
+/// `~/.grok/requirements.toml` — is honored. Returns `(find_bfs, grep_ugrep)`,
 /// which the caller bakes into a
 /// [`intelekt_tools::computer::local::SearchShadowConfig`] on the local terminal
 /// backend.

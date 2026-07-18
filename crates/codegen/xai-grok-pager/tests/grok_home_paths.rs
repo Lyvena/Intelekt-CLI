@@ -1,4 +1,4 @@
-//! `INTELEKT_HOME` override tests in an isolated binary so `grok_home()`'s
+//! `GROK_HOME` override tests in an isolated binary so `grok_home()`'s
 //! process-wide `OnceLock` initializes from the overridden env var.
 
 use std::path::PathBuf;
@@ -8,7 +8,7 @@ fn grok_home_override_path_helpers() {
     let tmp = tempfile::tempdir().expect("tempdir");
     let grok_home = tmp.path().to_path_buf();
     unsafe {
-        std::env::set_var("INTELEKT_HOME", &grok_home);
+        std::env::set_var("GROK_HOME", &grok_home);
     }
 
     assert_eq!(
@@ -17,17 +17,17 @@ fn grok_home_override_path_helpers() {
     );
     assert_eq!(
         intelekt_pager::util::display_grok_home_prefix(),
-        "$INTELEKT_HOME"
+        "$GROK_HOME"
     );
     assert_eq!(
         intelekt_pager::util::display_user_grok_path("config.toml"),
-        "$INTELEKT_HOME/config.toml"
+        "$GROK_HOME/config.toml"
     );
 
     let memory_path = grok_home.join("memory/MEMORY.md");
     assert_eq!(
         intelekt_pager::util::abbreviate_path(&memory_path.display().to_string()),
-        "$INTELEKT_HOME/memory/MEMORY.md"
+        "$GROK_HOME/memory/MEMORY.md"
     );
 
     assert!(intelekt_pager::util::is_under_user_grok_home(&memory_path));

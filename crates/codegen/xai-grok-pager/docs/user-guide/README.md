@@ -50,3 +50,7 @@ Automate, script, and integrate Intelekt CLI with other systems.
 | 20 | [Background Tasks and Monitoring](20-background-tasks.md) | `background: true`, `/loop`, `monitor`, and `Ctrl+G` to demote |
 | 21 | [Terminal Support and Troubleshooting](21-terminal-support.md) | tmux, SSH, truecolor, clipboard, and OSC 52 |
 | 22 | [Permissions and Safety Controls](22-permissions-and-safety.md) | `dontAsk` mode, auto-approved tools, the safe-bash list, and restrictive PreToolUse hooks (such as git/gh-only) |
+| 23 | [Dashboard](23-dashboard.md) | Chapter covering dashboard options and custom TUI panes |
+| 24 | [Monitoring Usage](24-monitoring-usage.md) | Chapter covering usage analytics and metrics logging |
+| 25 | [Intelekt Hosted Profile](25-intelekt-hosted-profile.md) | Shipped sandbox configuration, dontAsk permission mode, and safety hook for hosted, unattended environments |
+

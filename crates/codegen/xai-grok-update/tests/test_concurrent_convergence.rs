@@ -45,7 +45,7 @@ use common::{
 use intelekt_update::auto_update::{ensure_latest_on_disk, install_internal_from_base, run_update};
 use intelekt_update::version::installed_on_disk_version;
 
-/// Assert the active `~/.intelekt/bin/grok` resolves to the expected versioned
+/// Assert the active `~/.grok/bin/grok` resolves to the expected versioned
 /// binary, actually runs, and has exactly the expected content (the content
 /// check is what catches a cross-racer temp-file corruption).
 fn assert_active_binary(home: &Path, version: &str, platform: &str, expected_content: &[u8]) {
@@ -75,7 +75,7 @@ fn assert_active_binary(home: &Path, version: &str, platform: &str, expected_con
     assert!(ran_ok, "active grok must pass the smoke-test");
 }
 
-/// Lay down a managed-install layout in the test INTELEKT_HOME:
+/// Lay down a managed-install layout in the test GROK_HOME:
 /// `bin/grok -> ../downloads/grok-<version>-<platform>` (what
 /// `install_internal_from_base` produces).
 fn fake_managed_install(version: &str) {
@@ -242,7 +242,7 @@ async fn run_update_force_still_redownloads_when_disk_current() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Installer gating: the disk-version probe must only be trusted for
-// installers that actually maintain the managed `~/.intelekt/bin/grok` symlink
+// installers that actually maintain the managed `~/.grok/bin/grok` symlink
 // (internal, gh-release). For npm, a symlink left over from a previous
 // internal install LIES about the npm install's version — and in the worst
 // direction (leftover "newer" than the registry) it would silently suppress
@@ -335,7 +335,7 @@ async fn disk_probe_preserves_prerelease_versions() {
 #[serial]
 async fn disk_probe_rejects_dangling_symlink() {
     // If the symlink survives but its target binary was deleted (manual
-    // ~/.intelekt/downloads cleanup), the probe must report None — otherwise
+    // ~/.grok/downloads cleanup), the probe must report None — otherwise
     // every updater would claim "already up to date" forever while no
     // runnable binary exists, and nothing would ever repair the install.
     let home = test_home();

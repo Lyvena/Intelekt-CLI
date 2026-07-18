@@ -1342,7 +1342,7 @@ async fn swap_managed_bin_links(
     binary_path: &std::path::Path,
     bin_dir: &std::path::Path,
 ) -> Result<std::path::PathBuf> {
-    let grok_name = if cfg!(windows) { "intelekt.exe" } else { "intelekt" };
+    let grok_name = if cfg!(windows) { "grok.exe" } else { "grok" };
     let agent_name = if cfg!(windows) { "agent.exe" } else { "agent" };
     let grok_link = bin_dir.join(grok_name);
     let agent_link = bin_dir.join(agent_name);
@@ -2719,7 +2719,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
 
         // Create alice's layout
-        let alice = dir.path().join("alice").join(".intelekt");
+        let alice = dir.path().join("alice").join(".grok");
         let alice_downloads = alice.join("downloads");
         let alice_bin = alice.join("bin");
         std::fs::create_dir_all(&alice_downloads).unwrap();
@@ -2737,7 +2737,7 @@ mod tests {
         // "Bind-mount" to bob: copy the entire .grok tree
         let bob_home = dir.path().join("bob");
         std::fs::create_dir_all(&bob_home).unwrap();
-        let bob = bob_home.join(".intelekt");
+        let bob = bob_home.join(".grok");
         let copy_status = std::process::Command::new("cp")
             .args(["-a", alice.to_str().unwrap(), bob.to_str().unwrap()])
             .status()

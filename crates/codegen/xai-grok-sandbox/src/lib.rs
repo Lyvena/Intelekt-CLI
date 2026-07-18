@@ -339,7 +339,7 @@ fn bwrap_blocked_placeholder(name: &str, want_dir: bool) -> Option<PathBuf> {
 #[cfg(target_os = "linux")]
 fn is_devbox_based(profile: &ProfileName, config: &SandboxConfig) -> bool {
     match profile {
-        ProfileName::Devbox => true,
+        ProfileName::Devbox | ProfileName::Hosted => true,
         ProfileName::Custom(name) => {
             config.profiles.get(name).and_then(|p| p.extends.as_deref()) == Some("devbox")
         }
@@ -358,6 +358,7 @@ fn is_devbox_based(profile: &ProfileName, config: &SandboxConfig) -> bool {
 #[cfg(all(feature = "enforce", unix))]
 pub fn requires_read_deny(profile: &ProfileName, workspace: &Path) -> bool {
     match profile {
+        ProfileName::Hosted => true,
         ProfileName::Custom(name) => {
             let config = profiles::load_sandbox_config(workspace);
             config
@@ -612,7 +613,7 @@ mod tests {
         set_configured_profile("read-only");
         assert_eq!(configured_profile_name(), Some("read-only"));
     }
-    /// Create a temp workspace whose `.intelekt/sandbox.toml` contains `toml_body`.
+    /// Create a temp workspace whose `.grok/sandbox.toml` contains `toml_body`.
     /// Returns the workspace path (caller removes it).
     #[cfg(all(feature = "enforce", unix))]
     fn temp_workspace_with_sandbox_toml(tag: &str, toml_body: &str) -> PathBuf {
@@ -621,7 +622,7 @@ mod tests {
             .unwrap()
             .as_nanos();
         let ws = std::env::temp_dir().join(format!("grok-{tag}-{}-{nanos}", std::process::id()));
-        let grok = ws.join(".intelekt");
+        let grok = ws.join(".grok");
         std::fs::create_dir_all(&grok).unwrap();
         std::fs::write(grok.join("sandbox.toml"), toml_body).unwrap();
         ws
@@ -652,6 +653,7 @@ mod tests {
         assert!(!requires_read_deny(&ProfileName::Strict, &ws));
         assert!(!requires_read_deny(&ProfileName::Devbox, &ws));
         assert!(!requires_read_deny(&ProfileName::Off, &ws));
+        assert!(requires_read_deny(&ProfileName::Hosted, &ws));
         let _ = std::fs::remove_dir_all(&ws);
     }
     #[test]

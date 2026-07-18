@@ -1,7 +1,7 @@
 //! End-to-end test for the global `[models]` defaults.
 //!
 //! Runs the built grok binary against the mock inference server with a
-//! caller-owned `$INTELEKT_HOME` whose `config.toml` sets every global `[models]`
+//! caller-owned `$GROK_HOME` whose `config.toml` sets every global `[models]`
 //! default. Asserts the turn succeeds with all of them set and that the
 //! wire-observable one — `extra_headers` — reaches the `/v1/chat/completions`
 //! request header, for a model with no per-model `[model.<id>]` override.
@@ -31,7 +31,7 @@ async fn global_models_config_reaches_inference_request() {
     let workdir = git_workdir();
     let home = tempfile::TempDir::new().unwrap();
 
-    let grok_home = home.path().join(".intelekt");
+    let grok_home = home.path().join(".grok");
     std::fs::create_dir_all(&grok_home).expect("create .grok home");
     std::fs::write(
         grok_home.join("config.toml"),
@@ -57,7 +57,7 @@ stream_tool_calls = true
         .stderr(std::process::Stdio::piped())
         .kill_on_drop(true);
     intelekt_test_support::env::test_env_cmd_tokio(&mut cmd, &server.url(), home.path());
-    cmd.env("INTELEKT_HOME", grok_home);
+    cmd.env("GROK_HOME", grok_home);
     // Don't attach to a developer's ambient leader; spawn fresh against the mock.
     cmd.env_remove("GROK_LEADER_SOCKET");
 

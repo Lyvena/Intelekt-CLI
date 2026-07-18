@@ -156,6 +156,21 @@ pub static USER_GUIDE: &[Doc] = &[
         "Permissions and Safety",
         "Tool approval, sandbox, security"
     ),
+    guide!(
+        "23-dashboard.md",
+        "Dashboard",
+        "Dashboard options and custom TUI panes"
+    ),
+    guide!(
+        "24-monitoring-usage.md",
+        "Monitoring Usage",
+        "Usage analytics and metrics logging"
+    ),
+    guide!(
+        "25-intelekt-hosted-profile.md",
+        "Intelekt Hosted Profile",
+        "Shipped sandbox configuration, dontAsk permission mode, and safety hook"
+    ),
 ];
 
 /// Non-user-guide reference docs. Separate from USER_GUIDE because they

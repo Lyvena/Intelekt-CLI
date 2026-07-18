@@ -1,6 +1,6 @@
 //! Standalone workspace ToolServer for remote sandboxes.
 //!
-//! Reads OIDC credentials from `~/.intelekt/auth.json`, connects to a
+//! Reads OIDC credentials from `~/.grok/auth.json`, connects to a
 //! server, exposes workspace tools, and refreshes tokens
 //! automatically.
 use clap::Parser;
@@ -243,15 +243,15 @@ async fn run(args: Args, cwd: PathBuf) -> anyhow::Result<()> {
                 if matches!(parsed, ProfileName::Custom(_)) {
                     tracing::warn!(
                         value = % val,
-                        "Unrecognized GROK_SANDBOX_PROFILE, defaulting to workspace"
+                        "Unrecognized GROK_SANDBOX_PROFILE, defaulting to hosted"
                     );
-                    ProfileName::Workspace
+                    ProfileName::Hosted
                 } else {
                     parsed
                 }
             }
             None if intelekt_sandbox::trust_bwrap_marker_for_devbox() => ProfileName::Devbox,
-            None => ProfileName::Workspace,
+            None => ProfileName::Hosted,
         };
         let profile_name = profile.to_string();
         if profile == ProfileName::Off {

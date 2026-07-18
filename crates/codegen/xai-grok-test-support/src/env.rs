@@ -158,12 +158,12 @@ pub fn test_env_cmd_tokio(
     cmd.env("HOME", home)
         // HOME alone does not sandbox grok on Windows: the product resolves
         // `~` via `USERPROFILE`/Known Folders (`std::env::home_dir()`), so
-        // without an explicit INTELEKT_HOME every spawned child shares the real
+        // without an explicit GROK_HOME every spawned child shares the real
         // `%USERPROFILE%\.grok` — test 1's models_cache.json (which embeds
         // its per-test mock-server URL) then poisons every later test's
         // prompt (the windows-x86_64 lifecycle "prompt timed out" failure).
         // Mirrors `leader.rs` and the pty-harness `env_for_pager`.
-        .env("INTELEKT_HOME", home.join(".intelekt"))
+        .env("GROK_HOME", home.join(".grok"))
         .env("GROK_CLI_CHAT_PROXY_BASE_URL", mock_url)
         .env("GROK_XAI_API_BASE_URL", mock_url)
         .env("XAI_API_KEY", "test-key-for-ci")

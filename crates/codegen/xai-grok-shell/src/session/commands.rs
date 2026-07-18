@@ -241,7 +241,7 @@ pub enum SessionCommand {
     ReloadPlugins {
         registry: Option<std::sync::Arc<intelekt_agent::plugins::PluginRegistry>>,
     },
-    /// Re-discover the session's own project hooks (`.intelekt/hooks`,
+    /// Re-discover the session's own project hooks (`.grok/hooks`,
     /// `.cursor/hooks.json`, …) mid-session, re-evaluating folder trust. Used by
     /// the interactive folder-trust grant so a granted folder's repo-local hooks
     /// start without a session restart (plugin-contributed hooks are handled by

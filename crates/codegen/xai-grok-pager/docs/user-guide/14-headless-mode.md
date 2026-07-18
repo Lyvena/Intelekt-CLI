@@ -454,7 +454,7 @@ Key environment variables that affect headless mode:
 | Variable                        | Description                                                   |
 | ------------------------------- | ------------------------------------------------------------- |
 | `XAI_API_KEY`        | API key for authentication (required when no browser login)   |
-| `INTELEKT_HOME`                    | Override config directory (default: `~/.intelekt`)                |
+| `GROK_HOME`                    | Override config directory (default: `~/.grok`)                |
 | `INTELEKT_LOG_FILE`                | Path to a log file (used verbatim as the path; works in headless and TUI, honors `RUST_LOG`) |
 | `RUST_LOG`                     | Log level filter (e.g. `debug`). Headless logs to stderr.     |
 
@@ -514,7 +514,7 @@ the scope small.
 
 ## File Locations
 
-Grok stores data in `~/.intelekt` (override with `INTELEKT_HOME`; see [Environment Variables for Headless](#environment-variables-for-headless)):
+Grok stores data in `~/.grok` (override with `GROK_HOME`; see [Environment Variables for Headless](#environment-variables-for-headless)):
 
 | Path                     | Contents                              |
 | ------------------------ | ------------------------------------- |
@@ -531,9 +531,9 @@ Grok stores data in `~/.intelekt` (override with `INTELEKT_HOME`; see [Environme
 | `trace-exports/`         | Session trace exports                 |
 | `worktrees/`             | Git worktree metadata                 |
 
-### Read-Only `~/.intelekt`
+### Read-Only `~/.grok`
 
-For containers or CI, mount `~/.intelekt` read-only:
+For containers or CI, mount `~/.grok` read-only:
 
 - Pre-populate `auth.json` or use `XAI_API_KEY`
 - Session persistence fails silently (ephemeral)
@@ -560,7 +560,7 @@ grok -p "..." --no-auto-update
 case) counts as not set. The agent SDKs
 inject `GROK_DISABLE_AUTOUPDATER=1` for the non-leader agents they spawn (a falsy value in
 the SDK's isolation env keeps updates on), and the stdio agent skips its background update
-unless it runs from the managed install (`$INTELEKT_HOME/bin/grok`).
+unless it runs from the managed install (`$GROK_HOME/bin/grok`).
 
 Update messages go to **stderr**. Stdout stays clean for `--output-format json`. See also [Environment Variables for Headless](#environment-variables-for-headless).
 

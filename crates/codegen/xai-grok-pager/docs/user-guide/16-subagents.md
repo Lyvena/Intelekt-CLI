@@ -14,7 +14,7 @@ Agents and personas both customize behavior, but they operate at different level
 |---|---|---|
 | **What they configure** | The whole session: model, tools, prompt mode, system prompt | A behavioral overlay added to a subagent's prompt |
 | **Scope** | Primary session or subagent | Subagents only |
-| **How you set them** | At startup, or with agent definitions (`.md` files in `.intelekt/agents/` or `~/.intelekt/agents/`) | In `config.toml` (`[subagents.personas]`) or `.toml` files under `.intelekt/personas/`; applied during subagent resolution |
+| **How you set them** | At startup, or with agent definitions (`.md` files in `.grok/agents/` or `~/.grok/agents/`) | In `config.toml` (`[subagents.personas]`) or `.toml` files under `.grok/personas/`; applied during subagent resolution |
 | **What they control** | Model, tool availability, prompt body, skills | Tone, output format, task focus, and input/output contracts |
 | **Who edits them** | You -- create, delete, or toggle them in the agents modal or by editing files | You -- define custom personas in config or files; bundled personas are read-only |
 | **Examples** | `intelekt-cli`, `explore`, `plan` | `researcher`, `concise` |
@@ -34,7 +34,7 @@ export GROK_SUBAGENTS=0              # Environment variable
 ```
 
 ```toml
-# ~/.intelekt/config.toml
+# ~/.grok/config.toml
 [subagents]
 enabled = false
 ```
@@ -81,8 +81,8 @@ description = "Deep investigator."
 
 Intelekt CLI discovers file-based personas from these locations, in priority order:
 
-- `.intelekt/personas/*.toml` (project)
-- `~/.intelekt/personas/*.toml` (user)
+- `.grok/personas/*.toml` (project)
+- `~/.grok/personas/*.toml` (user)
 - The bundled personas directory (lowest priority)
 
 Each file defines one persona, and the file name (without the extension) becomes the persona name. Inline `config.toml` personas take precedence over files. Only `.toml` files are discovered.
@@ -223,7 +223,7 @@ Define custom roles with their own capability and model defaults:
 description = "Deep research agent"
 default_capability_mode = "read-only"
 model = "intelekt-cli"
-prompt_file = ".intelekt/prompts/researcher.md"
+prompt_file = ".grok/prompts/researcher.md"
 ```
 
 Define custom personas with behavioral instructions:
@@ -231,10 +231,10 @@ Define custom personas with behavioral instructions:
 ```toml
 [subagents.personas.concise]
 instructions = "Be concise. No filler words."
-# instructions_file = ".intelekt/personas/concise.md"  # or load from a file
+# instructions_file = ".grok/personas/concise.md"  # or load from a file
 ```
 
-Intelekt CLI also discovers roles from `.intelekt/roles/*.toml` and personas from `.intelekt/personas/*.toml`. Inline `config.toml` definitions take precedence over files.
+Intelekt CLI also discovers roles from `.grok/roles/*.toml` and personas from `.grok/personas/*.toml`. Inline `config.toml` definitions take precedence over files.
 
 ---
 

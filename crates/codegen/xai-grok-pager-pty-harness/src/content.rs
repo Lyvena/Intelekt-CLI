@@ -66,7 +66,7 @@ impl ContentController {
         self.server.url()
     }
 
-    /// Isolated `$HOME` directory that the pager should use (keeps its ~/.intelekt
+    /// Isolated `$HOME` directory that the pager should use (keeps its ~/.grok
     /// cache/state out of the real home during tests).
     pub fn home(&self) -> &Path {
         self.home.path()
@@ -81,15 +81,15 @@ impl ContentController {
         let grok_home = self
             .home
             .path()
-            .join(".intelekt")
+            .join(".grok")
             .to_string_lossy()
             .into_owned();
         vec![
             ("HOME".into(), home),
-            // Explicit INTELEKT_HOME prevents leaking the real user's
+            // Explicit GROK_HOME prevents leaking the real user's
             // config.toml when $HOME alone isn't sufficient (e.g. if
-            // INTELEKT_HOME is set in the test runner's env).
-            ("INTELEKT_HOME".into(), grok_home),
+            // GROK_HOME is set in the test runner's env).
+            ("GROK_HOME".into(), grok_home),
             ("GROK_CLI_CHAT_PROXY_BASE_URL".into(), self.url()),
             ("GROK_XAI_API_BASE_URL".into(), self.url()),
             ("XAI_API_KEY".into(), "test-key-for-ci".into()),
@@ -275,8 +275,8 @@ mod tests {
 
         assert_eq!(get("HOME").as_deref(), content.home().to_str());
         assert_eq!(
-            get("INTELEKT_HOME").as_deref(),
-            content.home().join(".intelekt").to_str()
+            get("GROK_HOME").as_deref(),
+            content.home().join(".grok").to_str()
         );
         assert_eq!(get("GROK_CLI_CHAT_PROXY_BASE_URL"), Some(content.url()));
         assert_eq!(get("GROK_XAI_API_BASE_URL"), Some(content.url()));

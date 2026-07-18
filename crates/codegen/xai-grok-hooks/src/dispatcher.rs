@@ -33,6 +33,39 @@ pub async fn dispatch_pre_tool_use(
     envelope: &HookEventEnvelope,
     ctx: &RunContext<'_>,
 ) -> PreToolUseResult {
+    // Intelekt hosted profile safety hook
+    let is_hosted = intelekt_sandbox::profile_name() == Some("hosted");
+    let is_dont_ask = if let crate::event::HookPayload::PreToolUse { permission_mode, .. } = &envelope.payload {
+        permission_mode.as_deref() == Some("dontAsk")
+    } else {
+        false
+    };
+    
+    if is_hosted || is_dont_ask {
+        if let crate::event::HookPayload::PreToolUse { tool_name, tool_input, .. } = &envelope.payload {
+            if tool_name == "run_terminal_command" || tool_name == "Bash" {
+                if let Some(cmd) = tool_input.get("command").and_then(|c| c.as_str()) {
+                    let normalized = cmd.replace("&&", ";").replace("||", ";").replace("|", ";");
+                    for segment in normalized.split(';') {
+                        let trimmed = segment.trim();
+                        if trimmed.is_empty() {
+                            continue;
+                        }
+                        if !is_allowed_hosted_command(trimmed) {
+                            return PreToolUseResult {
+                                decision: HookDecision::Deny {
+                                    reason: format!("Command segment not permitted in Intelekt hosted profile: {}", trimmed),
+                                    hook_name: "intelekt-hosted-safety-hook".to_string(),
+                                },
+                                results: vec![],
+                            };
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     let hooks = registry.hooks_for(HookEventName::PreToolUse);
     if hooks.is_empty() {
         return PreToolUseResult {
@@ -321,6 +354,93 @@ pub fn extract_tool_name(envelope: &HookEventEnvelope) -> Option<String> {
         } => Some(notification_type.clone()),
         _ => None,
     }
+}
+
+fn is_allowed_hosted_command(segment: &str) -> bool {
+    let segment = segment.trim();
+    if segment.is_empty() {
+        return true;
+    }
+    
+    // Block command substitution to prevent bypasses
+    if segment.contains("$(") || segment.contains('`') {
+        return false;
+    }
+    
+    // Split the segment into words.
+    let words: Vec<&str> = segment.split_whitespace().collect();
+    if words.is_empty() {
+        return true;
+    }
+    
+    // Unwrap common shell wrappers like "timeout", "env", "nice", etc.
+    let mut words_iter = words.iter().copied();
+    let mut cmd_name = None;
+    while let Some(word) = words_iter.next() {
+        if word == "env" || word == "timeout" || word == "nice" || word == "ionice" || word == "chrt" || word == "stdbuf" {
+            // skip the wrapper
+            // if next word is an env assignment like VAR=val, skip it
+            while let Some(peek) = words_iter.clone().next() {
+                if peek.contains('=') {
+                    words_iter.next(); // consume the env assignment
+                } else {
+                    break;
+                }
+            }
+        } else {
+            cmd_name = Some(word);
+            break;
+        }
+    }
+    
+    let Some(cmd) = cmd_name else {
+        return false;
+    };
+    
+    let remaining_args: Vec<&str> = words_iter.collect();
+    
+    // Deny rules check:
+    // 1. rm -rf
+    if cmd == "rm" {
+        let mut has_r = false;
+        let mut has_f = false;
+        for arg in &remaining_args {
+            if arg.starts_with('-') && !arg.starts_with("--") {
+                if arg.contains('r') || arg.contains('R') {
+                    has_r = true;
+                }
+                if arg.contains('f') {
+                    has_f = true;
+                }
+            } else if *arg == "--recursive" || *arg == "-r" || *arg == "-R" {
+                has_r = true;
+            } else if *arg == "--force" || *arg == "-f" {
+                has_f = true;
+            }
+        }
+        if has_r && has_f {
+            return false; // Deny rm -rf
+        }
+    }
+    
+    // 2. git push --force
+    if cmd == "git" {
+        if !remaining_args.is_empty() && remaining_args[0] == "push" {
+            for arg in remaining_args.iter().skip(1) {
+                if *arg == "--force" || *arg == "-f" || *arg == "--force-with-lease" {
+                    return false; // Deny git push --force
+                }
+            }
+        }
+    }
+    
+    // Allow rules check:
+    let allowed = [
+        "git", "npm", "pnpm", "cargo", "vite", "cd",
+        "ls", "cat", "pwd", "date", "whoami", "hostname", "uptime", "ps",
+        "head", "tail", "wc", "sort", "uniq", "tr", "cut", "grep", "rg"
+    ];
+    allowed.contains(&cmd)
 }
 
 #[cfg(test)]
@@ -891,5 +1011,38 @@ mod tests {
                 "hub_hook_kind wrong for {event:?}"
             );
         }
+    }
+
+    #[test]
+    fn test_is_allowed_hosted_command() {
+        // Allowed commands
+        assert!(is_allowed_hosted_command("git status"));
+        assert!(is_allowed_hosted_command("npm install"));
+        assert!(is_allowed_hosted_command("pnpm build"));
+        assert!(is_allowed_hosted_command("cargo test"));
+        assert!(is_allowed_hosted_command("vite"));
+        assert!(is_allowed_hosted_command("ls -la"));
+        assert!(is_allowed_hosted_command("pwd"));
+        assert!(is_allowed_hosted_command("cd .."));
+        assert!(is_allowed_hosted_command("timeout 10 npm install"));
+        assert!(is_allowed_hosted_command("env NODE_ENV=production npm run build"));
+        
+        // Denied commands (not on allow list)
+        assert!(!is_allowed_hosted_command("apt-get update"));
+        assert!(!is_allowed_hosted_command("curl https://google.com"));
+        assert!(!is_allowed_hosted_command("python3 script.py"));
+        
+        // Explicitly denied destructive commands
+        assert!(!is_allowed_hosted_command("rm -rf /"));
+        assert!(!is_allowed_hosted_command("rm -r -f /"));
+        assert!(!is_allowed_hosted_command("rm -f -r /"));
+        assert!(!is_allowed_hosted_command("rm --recursive --force /"));
+        assert!(!is_allowed_hosted_command("git push --force"));
+        assert!(!is_allowed_hosted_command("git push -f"));
+        assert!(!is_allowed_hosted_command("git push --force-with-lease"));
+        
+        // Bypasses via command substitution
+        assert!(!is_allowed_hosted_command("git $(rm -rf)"));
+        assert!(!is_allowed_hosted_command("git `rm -rf`"));
     }
 }

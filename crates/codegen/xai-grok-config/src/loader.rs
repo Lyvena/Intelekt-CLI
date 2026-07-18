@@ -96,7 +96,7 @@ pub fn load_managed_config() -> std::io::Result<toml::Value> {
 
 /// Load a user-tier config layer from `<home>/<filename>`. With no resolvable
 /// user home, returns an empty table rather than reading a cwd-relative
-/// `.intelekt/<filename>` (the cwd-fallback would silently promote an untrusted
+/// `.grok/<filename>` (the cwd-fallback would silently promote an untrusted
 /// project `.grok` to the user tier).
 fn load_user_config_layer(home: Option<&Path>, filename: &str) -> std::io::Result<toml::Value> {
     match home {
@@ -380,12 +380,12 @@ pub struct CampaignsState {
     pub dismissed_ids: Vec<String>,
 }
 
-/// Path to `$INTELEKT_HOME/campaigns_state.json` under `home`.
+/// Path to `$GROK_HOME/campaigns_state.json` under `home`.
 pub fn campaigns_state_path(home: &std::path::Path) -> std::path::PathBuf {
     home.join(CAMPAIGNS_STATE_FILE)
 }
 
-/// Fail-open dismissed ids from `$INTELEKT_HOME/campaigns_state.json`.
+/// Fail-open dismissed ids from `$GROK_HOME/campaigns_state.json`.
 pub fn load_dismissed_ids_from_home() -> std::collections::HashSet<String> {
     let Some(home) = crate::user_grok_home() else {
         return std::collections::HashSet::new();

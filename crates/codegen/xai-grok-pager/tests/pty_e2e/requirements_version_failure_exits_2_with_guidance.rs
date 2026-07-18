@@ -24,7 +24,7 @@ async fn requirements_version_failure_exits_2_with_guidance() {
         DEFAULT_ROWS,
         DEFAULT_COLS,
         &["--no-auto-update"],
-        &[("INTELEKT_HOME", home_str), ("NO_COLOR", "1")],
+        &[("GROK_HOME", home_str), ("NO_COLOR", "1")],
     )
     .expect("spawn pager");
 

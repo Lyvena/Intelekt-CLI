@@ -5,7 +5,7 @@ use toml::Value as TomlValue;
 use toml::map::Map as TomlMap;
 use intelekt_agent::prompt::skills::SkillsConfig;
 
-/// Process-wide write lock for `~/.intelekt/config.toml`.
+/// Process-wide write lock for `~/.grok/config.toml`.
 ///
 /// Serializes the read-modify-write in `save_config` so two rapid
 /// settings toggles can't interleave and clobber each other.

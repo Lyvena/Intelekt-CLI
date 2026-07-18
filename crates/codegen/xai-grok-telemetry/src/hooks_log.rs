@@ -1,7 +1,7 @@
 //! Hooks and plugins tracing target and optional file-based logging layer.
 //!
 //! A dedicated tracing target for hooks and plugins subsystems with an optional
-//! file logger that writes to `~/.intelekt/logs/hooks.log`.
+//! file logger that writes to `~/.grok/logs/hooks.log`.
 //!
 //! ## When to use
 //!
@@ -12,10 +12,10 @@
 //! ## Enabling
 //!
 //! ```bash
-//! INTELEKT_HOOKS_LOG=1 grok              # enable, write to ~/.intelekt/logs/hooks.log
+//! INTELEKT_HOOKS_LOG=1 grok              # enable, write to ~/.grok/logs/hooks.log
 //! INTELEKT_HOOKS_LOG=/tmp/h.log grok     # write to custom path
 //! INTELEKT_HOOKS_LOG=0 grok              # explicitly disable
-//! tail -f ~/.intelekt/logs/hooks.log     # watch in another terminal
+//! tail -f ~/.grok/logs/hooks.log     # watch in another terminal
 //! ```
 
 use std::fmt;
@@ -59,7 +59,7 @@ impl FormatTime for UptimeTimer {
 
 /// Build the hooks/plugins log layer.
 ///
-/// Writes to `~/.intelekt/logs/hooks.log` (or custom path via `INTELEKT_HOOKS_LOG`).
+/// Writes to `~/.grok/logs/hooks.log` (or custom path via `INTELEKT_HOOKS_LOG`).
 /// Filters to hooks (`intelekt_hooks`) and plugins (`intelekt_agent::plugins`) targets.
 /// Set `INTELEKT_HOOKS_LOG=0` to disable, `INTELEKT_HOOKS_LOG=/path` to redirect.
 pub fn layer<S>() -> Option<impl Layer<S>>

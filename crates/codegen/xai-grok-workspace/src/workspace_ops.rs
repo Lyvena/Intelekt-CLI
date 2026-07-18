@@ -1761,7 +1761,7 @@ mod tests {
             url: None,
             url_raw: None,
             timeout_ms: 5000,
-            source_dir: std::path::PathBuf::from("/home/u/.intelekt/hooks"),
+            source_dir: std::path::PathBuf::from("/home/u/.grok/hooks"),
             extra_env: std::collections::HashMap::from([("FOO".to_string(), "bar".to_string())]),
         };
         let mut registry = intelekt_hooks::discovery::HookRegistry::default();
@@ -1886,7 +1886,7 @@ mod tests {
             url: None,
             url_raw: None,
             timeout_ms: 5000,
-            source_dir: std::path::PathBuf::from("/home/u/.intelekt/hooks"),
+            source_dir: std::path::PathBuf::from("/home/u/.grok/hooks"),
             extra_env: std::collections::HashMap::from([("FOO".to_string(), "bar".to_string())]),
         };
         assert_eq!(
