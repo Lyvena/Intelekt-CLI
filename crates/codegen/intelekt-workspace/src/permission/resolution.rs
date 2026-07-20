@@ -745,12 +745,31 @@ fn load_managed_settings() -> ManagedSettings {
             "allow": [
                 "Read",
                 "Grep",
+                "Glob",
                 "Edit",
+                "Write",
+                "WebSearch",
+                "WebFetch",
                 "Bash(git *)",
                 "Bash(npm *)",
                 "Bash(pnpm *)",
                 "Bash(cargo *)",
-                "Bash(vite *)"
+                "Bash(vite *)",
+                "Bash(node *)",
+                "Bash(npx *)",
+                "Bash(bun *)",
+                "Bash(tsc *)",
+                "Bash(mkdir *)",
+                "Bash(touch *)",
+                "Bash(cp *)",
+                "Bash(mv *)",
+                "Bash(echo *)",
+                "Bash(tee *)",
+                "Bash(cat *)",
+                "Bash(ls *)",
+                "Bash(sed *)",
+                "Bash(find *)",
+                "Bash(curl *)"
             ]
         }
     }"#;

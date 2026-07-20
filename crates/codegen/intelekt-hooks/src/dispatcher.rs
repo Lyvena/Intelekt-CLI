@@ -45,7 +45,27 @@ pub async fn dispatch_pre_tool_use(
         if let crate::event::HookPayload::PreToolUse { tool_name, tool_input, .. } = &envelope.payload {
             if tool_name == "run_terminal_command" || tool_name == "Bash" {
                 if let Some(cmd) = tool_input.get("command").and_then(|c| c.as_str()) {
-                    let normalized = cmd.replace("&&", ";").replace("||", ";").replace("|", ";");
+                    // Process substitution smuggles a subshell past word-level checks.
+                    if cmd.contains("<(") || cmd.contains(">(") {
+                        return PreToolUseResult {
+                            decision: HookDecision::Deny {
+                                reason: "Process substitution is not permitted in Intelekt hosted profile".to_string(),
+                                hook_name: "intelekt-hosted-safety-hook".to_string(),
+                            },
+                            results: vec![],
+                        };
+                    }
+                    // Every command separator must produce a checked segment:
+                    // &&, ||, |, newlines, CR, and & (backgrounding). Without
+                    // newline handling, "ls\nrm -rf /" would only have its
+                    // first word checked.
+                    let normalized = cmd
+                        .replace("&&", ";")
+                        .replace("||", ";")
+                        .replace('|', ";")
+                        .replace('\r', ";")
+                        .replace('\n', ";")
+                        .replace('&', ";");
                     for segment in normalized.split(';') {
                         let trimmed = segment.trim();
                         if trimmed.is_empty() {
@@ -432,11 +452,26 @@ fn is_allowed_hosted_command(segment: &str) -> bool {
                 }
             }
         }
+        // git config core.fsmonitor/core.hooksPath (and -c equivalents) let an
+        // allowed binary execute arbitrary commands on the next git invocation.
+        for arg in &remaining_args {
+            let lower = arg.to_ascii_lowercase();
+            if lower.contains("core.fsmonitor") || lower.contains("core.hookspath") {
+                return false;
+            }
+        }
     }
     
-    // Allow rules check:
+    // Allow rules check. The sandbox (Landlock + deny globs) is the real
+    // security boundary; this list is defense-in-depth sized for the
+    // web-app-builder workload (node/npx/vite/package managers/file ops).
     let allowed = [
         "git", "npm", "pnpm", "cargo", "vite", "cd",
+        "node", "npx", "bun", "deno", "tsc", "python3", "pip3",
+        "mkdir", "touch", "cp", "mv", "echo", "tee", "ln",
+        "sed", "awk", "find", "diff", "which", "xargs",
+        "tar", "unzip", "chmod", "curl", "wget",
+        "test", "true", "false", "sleep",
         "ls", "cat", "pwd", "date", "whoami", "hostname", "uptime", "ps",
         "head", "tail", "wc", "sort", "uniq", "tr", "cut", "grep", "rg"
     ];

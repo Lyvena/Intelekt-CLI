@@ -1126,7 +1126,7 @@ async fn build_sampler_client(
         base_url,
         model,
         max_completion_tokens: Some(LAZINESS_MAX_OUTPUT_TOKENS),
-        ..grok_sampler::SamplerConfig::default()
+        ..intelekt_sampler::SamplerConfig::default()
     };
     intelekt_sampler::SamplingClient::new(config).map_err(|e| anyhow!("build SamplingClient: {e}"))
 }

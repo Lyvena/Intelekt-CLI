@@ -68,3 +68,20 @@ Even within allowed commands, destructive operations are explicitly denied:
 ## Auditability
 
 The hosted profile features are implemented natively in Rust within the `intelekt-sandbox`, `intelekt-workspace`, and `intelekt-hooks` crates to guarantee high performance, security, and immunity to project-level overrides.
+
+
+## Deployment requirement: pin always-approve off
+
+The hosted profile's `dontAsk` baseline can still be bypassed at runtime with
+`--always-approve` unless it is pinned off by a requirements layer. The sandbox
+machine image MUST ship a root-owned requirements file:
+
+```toml
+# /etc/grok/requirements.toml  (root-owned, not writable by the agent user)
+[ui]
+disable_bypass_permissions_mode = true
+```
+
+`requirements.toml` is loaded from system paths (`/etc/grok/requirements.toml`,
+`$GROK_HOME/requirements.toml`), not from the repository — bake it into the
+container image, outside any path the sandbox profile allows the agent to write.

@@ -5394,6 +5394,1172 @@ dependencies = [
 ]
 
 [[package]]
+name = "intelekt-agent"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "dirs 6.0.0",
+ "dunce",
+ "git2",
+ "ignore",
+ "intelekt-config",
+ "intelekt-hooks",
+ "intelekt-sampling-types",
+ "intelekt-tools",
+ "minijinja",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "serial_test",
+ "sha2 0.10.9",
+ "strum 0.27.2",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "xai-token-estimation",
+ "xai-tool-types",
+ "zeroize",
+]
+
+[[package]]
+name = "intelekt-announcements"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "intelekt-tools",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "ts-rs",
+]
+
+[[package]]
+name = "intelekt-auth"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "http 1.4.0",
+ "mockito",
+ "reqwest 0.12.24",
+ "reqwest-middleware 0.4.2",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "intelekt-compaction"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "intelekt-config"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "blake3",
+ "core-foundation",
+ "dunce",
+ "intelekt-version",
+ "prod-mc-cli-chat-proxy-types",
+ "ring",
+ "semver",
+ "serde",
+ "serde_json",
+ "shellexpand",
+ "tempfile",
+ "thiserror 2.0.18",
+ "toml",
+ "tracing",
+ "urlencoding",
+ "which",
+ "xai-tty-utils",
+]
+
+[[package]]
+name = "intelekt-config-types"
+version = "0.1.0"
+dependencies = [
+ "agent-client-protocol",
+ "indexmap",
+ "intelekt-announcements",
+ "intelekt-config",
+ "intelekt-mcp",
+ "serde",
+ "serde_json",
+ "strum 0.27.2",
+ "tracing",
+]
+
+[[package]]
+name = "intelekt-env"
+version = "0.1.0"
+dependencies = [
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "intelekt-hooks"
+version = "0.1.0"
+dependencies = [
+ "fastrand",
+ "intelekt-config",
+ "intelekt-sandbox",
+ "intelekt-tools",
+ "regex",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "shellexpand",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "intelekt-http"
+version = "0.1.0"
+dependencies = [
+ "intelekt-auth",
+ "intelekt-sampler",
+ "intelekt-telemetry",
+ "intelekt-version",
+ "intelekt-workspace",
+ "reqwest 0.12.24",
+ "reqwest-middleware 0.4.2",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "intelekt-markdown"
+version = "0.1.0"
+dependencies = [
+ "anstyle",
+ "anstyle-lossy",
+ "anstyle-syntect",
+ "criterion",
+ "crossterm",
+ "html-escape",
+ "intelekt-markdown-core",
+ "linkify",
+ "pretty_assertions",
+ "pulldown-cmark",
+ "ratatui",
+ "supports-color",
+ "syntect",
+ "textwrap",
+ "two-face",
+ "unicode-width 0.2.0",
+ "url",
+ "xai-ratatui-textarea",
+]
+
+[[package]]
+name = "intelekt-markdown-core"
+version = "0.1.0"
+dependencies = [
+ "pulldown-cmark",
+]
+
+[[package]]
+name = "intelekt-mcp"
+version = "0.1.0"
+dependencies = [
+ "agent-client-protocol",
+ "async-trait",
+ "axum",
+ "futures",
+ "http 1.4.0",
+ "intelekt-config",
+ "intelekt-telemetry",
+ "intelekt-tools",
+ "intelekt-version",
+ "intelekt-workspace-types",
+ "libc",
+ "oauth2",
+ "parking_lot",
+ "regex",
+ "reqwest 0.13.4",
+ "rmcp",
+ "serde",
+ "serde_json",
+ "sse-stream",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "url",
+ "webbrowser",
+ "which",
+ "xai-computer-hub-sdk",
+ "xai-file-utils",
+ "xai-tool-protocol",
+ "xai-tool-runtime",
+ "xai-tool-types",
+]
+
+[[package]]
+name = "intelekt-memory"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "async-trait",
+ "blake3",
+ "chrono",
+ "dunce",
+ "filetime",
+ "flate2",
+ "git2",
+ "intelekt-auth",
+ "intelekt-config-types",
+ "intelekt-http",
+ "intelekt-telemetry",
+ "intelekt-tools",
+ "intelekt-version",
+ "nix 0.30.1",
+ "notify",
+ "reqwest 0.12.24",
+ "reqwest-middleware 0.4.2",
+ "rusqlite",
+ "serde_json",
+ "sqlite-vec",
+ "tar",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "windows 0.61.3",
+ "xai-sqlite-journal",
+]
+
+[[package]]
+name = "intelekt-mermaid"
+version = "0.1.0"
+dependencies = [
+ "fontdb",
+ "image",
+ "libc",
+ "mermaid-to-svg",
+ "resvg",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tiny-skia",
+ "tracing",
+ "wait-timeout",
+ "which",
+ "xai-tty-utils",
+]
+
+[[package]]
+name = "intelekt-models"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "intelekt-pager"
+version = "0.2.101"
+dependencies = [
+ "agent-client-protocol",
+ "ansi-to-tui",
+ "anyhow",
+ "backon",
+ "base64",
+ "blake3",
+ "chrono",
+ "clap",
+ "clap_complete",
+ "core-foundation",
+ "criterion",
+ "crossterm",
+ "derive_more 2.1.1",
+ "dirs 5.0.1",
+ "dunce",
+ "enum_delegate",
+ "flate2",
+ "git2",
+ "image",
+ "indexmap",
+ "insta",
+ "intelekt-agent",
+ "intelekt-announcements",
+ "intelekt-config",
+ "intelekt-markdown",
+ "intelekt-mermaid",
+ "intelekt-pager-pty-harness",
+ "intelekt-pager-render",
+ "intelekt-plugin-marketplace",
+ "intelekt-sandbox",
+ "intelekt-shell",
+ "intelekt-telemetry",
+ "intelekt-test-support",
+ "intelekt-tools",
+ "intelekt-update",
+ "intelekt-version",
+ "intelekt-voice",
+ "intelekt-workspace",
+ "libc",
+ "nix 0.30.1",
+ "nucleo",
+ "obfstr",
+ "parking_lot",
+ "portable-pty",
+ "pretty_assertions",
+ "rand 0.9.2",
+ "ratatui",
+ "regex",
+ "rustls",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "shellexpand",
+ "signal-hook 0.3.18",
+ "similar",
+ "strip-ansi-escapes",
+ "syntect",
+ "tar",
+ "tempfile",
+ "textwrap",
+ "tokio",
+ "tokio-util",
+ "toml",
+ "toml_edit 0.22.27",
+ "tracing",
+ "tracing-subscriber",
+ "unicode-segmentation",
+ "unicode-width 0.2.0",
+ "url",
+ "urlencoding",
+ "uuid",
+ "wait-timeout",
+ "windows-sys 0.59.0",
+ "xai-acp-lib",
+ "xai-crash-handler",
+ "xai-fast-worktree",
+ "xai-file-utils",
+ "xai-hooks-plugins-types",
+ "xai-prompt-queue",
+ "xai-ratatui-inline",
+ "xai-ratatui-textarea",
+ "xai-token-estimation",
+ "xai-tty-utils",
+]
+
+[[package]]
+name = "intelekt-pager-bin"
+version = "0.2.101"
+dependencies = [
+ "anyhow",
+ "clap",
+ "cryptify",
+ "dunce",
+ "intelekt-config",
+ "intelekt-pager",
+ "intelekt-pager-minimal",
+ "intelekt-sandbox",
+ "intelekt-shell",
+ "intelekt-telemetry",
+ "intelekt-update",
+ "intelekt-version",
+ "intelekt-workspace",
+ "libc",
+ "obfstr",
+ "rustls",
+ "semver",
+ "serde_json",
+ "serial_test",
+ "tikv-jemalloc-ctl",
+ "tikv-jemalloc-sys",
+ "tikv-jemallocator",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "xai-acp-lib",
+ "xai-crash-handler",
+ "xai-tty-utils",
+]
+
+[[package]]
+name = "intelekt-pager-minimal"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "crossterm",
+ "intelekt-pager",
+ "intelekt-shell",
+ "intelekt-version",
+ "ratatui",
+ "similar",
+ "tracing",
+ "uuid",
+ "xai-ratatui-inline",
+ "xai-token-estimation",
+]
+
+[[package]]
+name = "intelekt-pager-pty-harness"
+version = "0.1.0"
+dependencies = [
+ "alacritty_terminal",
+ "anyhow",
+ "base64",
+ "clap",
+ "dunce",
+ "image",
+ "intelekt-test-support",
+ "libc",
+ "portable-pty",
+ "ptyctl",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "xai-tty-utils",
+]
+
+[[package]]
+name = "intelekt-pager-render"
+version = "0.1.0"
+dependencies = [
+ "agent-client-protocol",
+ "anstyle",
+ "anyhow",
+ "base64",
+ "crossterm",
+ "dark-light",
+ "dirs 5.0.1",
+ "documented",
+ "dunce",
+ "image",
+ "intelekt-config",
+ "intelekt-markdown",
+ "intelekt-paths",
+ "intelekt-shared",
+ "intelekt-telemetry",
+ "intelekt-tools",
+ "intelekt-workspace",
+ "libc",
+ "linkify",
+ "notify",
+ "pretty_assertions",
+ "ratatui",
+ "ratatui-core",
+ "regex",
+ "serde",
+ "serial_test",
+ "shellexpand",
+ "strum 0.27.2",
+ "supports-color",
+ "syntect",
+ "tempfile",
+ "textwrap",
+ "tokio",
+ "toml",
+ "toml_edit 0.22.27",
+ "tracing",
+ "tui-scrollbar",
+ "unicode-segmentation",
+ "unicode-width 0.2.0",
+ "url",
+ "uuid",
+ "vte 0.15.0",
+ "windows-sys 0.59.0",
+ "xai-ratatui-inline",
+ "xai-ratatui-textarea",
+ "xai-tty-utils",
+]
+
+[[package]]
+name = "intelekt-paths"
+version = "0.1.0"
+dependencies = [
+ "camino",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "intelekt-plugin-marketplace"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "dirs 5.0.1",
+ "dunce",
+ "fs2",
+ "git2",
+ "intelekt-agent",
+ "intelekt-config",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "toml",
+ "tracing",
+ "xai-hooks-plugins-types",
+ "xai-tty-utils",
+]
+
+[[package]]
+name = "intelekt-sampler"
+version = "0.1.0"
+dependencies = [
+ "async-openai",
+ "async-stream",
+ "axum",
+ "chrono",
+ "eventsource-stream",
+ "futures-util",
+ "indexmap",
+ "intelekt-sampling-types",
+ "intelekt-test-support",
+ "intelekt-version",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "intelekt-sampling-types"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "async-openai",
+ "indexmap",
+ "intelekt-compaction",
+ "intelekt-tools",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tracing",
+]
+
+[[package]]
+name = "intelekt-sandbox"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "dirs 5.0.1",
+ "dunce",
+ "globset",
+ "ignore",
+ "intelekt-config",
+ "libc",
+ "nono",
+ "regex",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "toml",
+ "tracing",
+]
+
+[[package]]
+name = "intelekt-secrets"
+version = "0.1.0"
+dependencies = [
+ "regex",
+ "serde_json",
+ "url",
+]
+
+[[package]]
+name = "intelekt-shared"
+version = "0.0.0"
+dependencies = [
+ "agent-client-protocol",
+ "anyhow",
+ "arboard",
+ "base64",
+ "dirs 6.0.0",
+ "dunce",
+ "image",
+ "intelekt-config-types",
+ "intelekt-models",
+ "intelekt-tools",
+ "libc",
+ "objc2 0.6.3",
+ "parking_lot",
+ "prod-mc-cli-chat-proxy-types",
+ "regex",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tracing",
+ "urlencoding",
+ "uuid",
+ "wl-clipboard-rs",
+ "xai-tty-utils",
+]
+
+[[package]]
+name = "intelekt-shell"
+version = "0.2.101"
+dependencies = [
+ "agent-client-protocol",
+ "anyhow",
+ "arc-swap",
+ "async-openai",
+ "async-trait",
+ "axum",
+ "backon",
+ "base64",
+ "blake3",
+ "bm25",
+ "bytes",
+ "chrono",
+ "clap",
+ "criterion",
+ "dashmap",
+ "dirs 6.0.0",
+ "dunce",
+ "filetime",
+ "flate2",
+ "fs2",
+ "futures",
+ "futures-util",
+ "gcloud-storage",
+ "gethostname",
+ "git2",
+ "glob",
+ "globset",
+ "ignore",
+ "image",
+ "indexmap",
+ "infer 0.15.0",
+ "intelekt-agent",
+ "intelekt-announcements",
+ "intelekt-auth",
+ "intelekt-compaction",
+ "intelekt-config",
+ "intelekt-config-types",
+ "intelekt-hooks",
+ "intelekt-http",
+ "intelekt-mcp",
+ "intelekt-memory",
+ "intelekt-models",
+ "intelekt-paths",
+ "intelekt-plugin-marketplace",
+ "intelekt-sampler",
+ "intelekt-sampling-types",
+ "intelekt-sandbox",
+ "intelekt-shared",
+ "intelekt-shell-base",
+ "intelekt-shell-session-support",
+ "intelekt-subagent-resolution",
+ "intelekt-telemetry",
+ "intelekt-test-support",
+ "intelekt-tools",
+ "intelekt-version",
+ "intelekt-workspace",
+ "jsonschema",
+ "jsonwebtoken",
+ "kanal",
+ "libc",
+ "moka",
+ "nix 0.30.1",
+ "notify",
+ "notify-debouncer-mini",
+ "nucleo",
+ "obfstr",
+ "parking_lot",
+ "portable-pty",
+ "process-wrap",
+ "prod-mc-cli-chat-proxy-types",
+ "prost",
+ "rand 0.9.2",
+ "regex",
+ "reqwest 0.12.24",
+ "reqwest-middleware 0.4.2",
+ "ring",
+ "rsa",
+ "rusqlite",
+ "rustls",
+ "rustls-native-certs",
+ "semver",
+ "serde",
+ "serde_ignored",
+ "serde_json",
+ "serial_test",
+ "sha2 0.10.9",
+ "shlex",
+ "similar",
+ "siphasher",
+ "strum 0.27.2",
+ "tar",
+ "tdigests",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-retry",
+ "tokio-rustls",
+ "tokio-stream",
+ "tokio-tungstenite 0.27.0",
+ "tokio-util",
+ "toml",
+ "toml_edit 0.22.27",
+ "tonic",
+ "tonic-prost",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "urlencoding",
+ "uuid",
+ "walkdir",
+ "webbrowser",
+ "windows 0.61.3",
+ "xai-acp-lib",
+ "xai-agent-lifecycle",
+ "xai-chat-state",
+ "xai-codebase-graph",
+ "xai-computer-hub-sdk",
+ "xai-fast-worktree",
+ "xai-file-utils",
+ "xai-fsnotify",
+ "xai-hooks-plugins-types",
+ "xai-hunk-tracker",
+ "xai-interjection-core",
+ "xai-prompt-queue",
+ "xai-sqlite-journal",
+ "xai-system-power",
+ "xai-test-utils",
+ "xai-token-estimation",
+ "xai-tool-protocol",
+ "xai-tool-runtime",
+ "xai-tool-types",
+ "xai-tracing-macros",
+ "xai-tty-utils",
+ "zstd",
+]
+
+[[package]]
+name = "intelekt-shell-base"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "intelekt-config",
+ "intelekt-env",
+ "intelekt-shared",
+ "intelekt-version",
+ "libc",
+ "nix 0.30.1",
+ "pprof",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "url",
+ "windows 0.61.3",
+ "xai-tty-utils",
+]
+
+[[package]]
+name = "intelekt-shell-session-support"
+version = "0.1.0"
+dependencies = [
+ "agent-client-protocol",
+ "axum",
+ "chrono",
+ "intelekt-http",
+ "intelekt-shell-base",
+ "intelekt-version",
+ "intelekt-workspace",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "xai-file-utils",
+]
+
+[[package]]
+name = "intelekt-subagent-resolution"
+version = "0.1.0"
+dependencies = [
+ "intelekt-sampling-types",
+ "intelekt-tools",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "toml",
+ "tracing",
+ "xai-tool-types",
+]
+
+[[package]]
+name = "intelekt-telemetry"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "bytes",
+ "chrono",
+ "dirs 5.0.1",
+ "filetime",
+ "futures-executor",
+ "git2",
+ "http 1.4.0",
+ "intelekt-auth",
+ "intelekt-config",
+ "intelekt-env",
+ "intelekt-sampler",
+ "intelekt-secrets",
+ "mid",
+ "obfstr",
+ "opentelemetry",
+ "opentelemetry-http",
+ "opentelemetry-otlp",
+ "opentelemetry-proto",
+ "opentelemetry_sdk",
+ "parking_lot",
+ "prost",
+ "reqwest 0.12.24",
+ "sentry",
+ "serde",
+ "serde_json",
+ "strum 0.27.2",
+ "tempfile",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tracing",
+ "tracing-appender",
+ "tracing-chrome",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+ "url",
+ "uuid",
+ "whoami",
+ "xai-file-utils",
+ "xai-mixpanel",
+ "xai-token-estimation",
+]
+
+[[package]]
+name = "intelekt-test-support"
+version = "0.1.0"
+dependencies = [
+ "agent-client-protocol",
+ "anyhow",
+ "async-trait",
+ "axum",
+ "clap",
+ "futures-util",
+ "libc",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tokio-tungstenite 0.27.0",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "xai-acp-lib",
+]
+
+[[package]]
+name = "intelekt-tools"
+version = "0.1.220-alpha.4"
+dependencies = [
+ "anyhow",
+ "arc-swap",
+ "async-lsp",
+ "async-openai",
+ "async-stream",
+ "async-trait",
+ "base64",
+ "chrono",
+ "command-fds",
+ "crc32fast",
+ "derive_more 2.1.1",
+ "dirs 5.0.1",
+ "dunce",
+ "educe",
+ "flate2",
+ "fs2",
+ "futures",
+ "futures-util",
+ "globset",
+ "htmd",
+ "ignore",
+ "image",
+ "indexmap",
+ "infer 0.19.0",
+ "intelekt-config",
+ "intelekt-env",
+ "intelekt-sandbox",
+ "intelekt-tools-api",
+ "intelekt-version",
+ "intelekt-workspace-types",
+ "libc",
+ "minijinja",
+ "nix 0.30.1",
+ "parking_lot",
+ "pdf_oxide",
+ "pulldown-cmark",
+ "quick-xml 0.38.3",
+ "regex",
+ "reqwest 0.12.24",
+ "schemars 1.0.4",
+ "scraper",
+ "serde",
+ "serde_json",
+ "serde_path_to_error",
+ "serde_yaml",
+ "shellexpand",
+ "similar",
+ "strip-ansi-escapes",
+ "strum 0.26.3",
+ "tar",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "uuid",
+ "which",
+ "windows 0.61.3",
+ "wiremock",
+ "xai-computer-hub-core",
+ "xai-computer-hub-sdk",
+ "xai-file-utils",
+ "xai-interjection-core",
+ "xai-test-utils",
+ "xai-token-estimation",
+ "xai-tool-protocol",
+ "xai-tool-runtime",
+ "xai-tool-types",
+ "xai-tty-utils",
+ "zip",
+]
+
+[[package]]
+name = "intelekt-tools-api"
+version = "0.1.220-alpha.4"
+dependencies = [
+ "prost",
+ "serde",
+ "serde_json",
+ "tonic",
+ "tonic-prost",
+ "xai-proto-build",
+ "xai-tool-protocol",
+]
+
+[[package]]
+name = "intelekt-update"
+version = "0.1.220-alpha.4"
+dependencies = [
+ "anyhow",
+ "dunce",
+ "futures",
+ "indicatif",
+ "intelekt-shell",
+ "intelekt-tools",
+ "intelekt-version",
+ "reqwest 0.12.24",
+ "semver",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tempfile",
+ "thiserror 2.0.18",
+ "time",
+ "tokio",
+ "tracing",
+ "wiremock",
+]
+
+[[package]]
+name = "intelekt-version"
+version = "0.2.101"
+dependencies = [
+ "semver",
+]
+
+[[package]]
+name = "intelekt-voice"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cpal",
+ "futures-util",
+ "rustls",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-tungstenite 0.27.0",
+ "toml",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+]
+
+[[package]]
+name = "intelekt-workspace"
+version = "0.1.220-alpha.4"
+dependencies = [
+ "agent-client-protocol",
+ "anyhow",
+ "arc-swap",
+ "async-stream",
+ "async-trait",
+ "axum",
+ "base64",
+ "bstr",
+ "chrono",
+ "clap",
+ "dashmap",
+ "dirs 6.0.0",
+ "dunce",
+ "fastrace",
+ "filetime",
+ "flate2",
+ "fs2",
+ "futures",
+ "git2",
+ "glob",
+ "hashbrown 0.16.1",
+ "humantime-serde",
+ "ignore",
+ "indexmap",
+ "infer 0.19.0",
+ "intelekt-agent",
+ "intelekt-auth",
+ "intelekt-config",
+ "intelekt-config-types",
+ "intelekt-env",
+ "intelekt-hooks",
+ "intelekt-mcp",
+ "intelekt-paths",
+ "intelekt-sandbox",
+ "intelekt-telemetry",
+ "intelekt-tools",
+ "intelekt-tools-api",
+ "intelekt-version",
+ "intelekt-workspace-client",
+ "intelekt-workspace-types",
+ "libc",
+ "md5",
+ "nohash-hasher",
+ "nucleo",
+ "parking_lot",
+ "prometheus",
+ "regex",
+ "reqwest 0.12.24",
+ "rusqlite",
+ "rustc-hash",
+ "rustls",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "smallvec",
+ "tar",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-tungstenite 0.27.0",
+ "tokio-util",
+ "toml",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "tree-sitter",
+ "tree-sitter-bash",
+ "url",
+ "urlencoding",
+ "uuid",
+ "windows 0.61.3",
+ "xai-acp-lib",
+ "xai-codebase-graph",
+ "xai-computer-hub-mcp-adapter",
+ "xai-computer-hub-sdk",
+ "xai-fast-worktree",
+ "xai-file-utils",
+ "xai-fsnotify",
+ "xai-hunk-tracker",
+ "xai-sqlite-journal",
+ "xai-test-utils",
+ "xai-tool-protocol",
+ "xai-tool-runtime",
+ "xai-tool-types",
+ "xai-tracing",
+ "xai-tty-utils",
+ "zstd",
+]
+
+[[package]]
+name = "intelekt-workspace-client"
+version = "0.1.0"
+dependencies = [
+ "intelekt-workspace-types",
+ "schemars 1.0.4",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "xai-computer-hub-sdk",
+ "xai-tool-protocol",
+ "xai-tool-runtime",
+ "xai-tool-types",
+]
+
+[[package]]
+name = "intelekt-workspace-types"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "io-close"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12743,6 +13909,8 @@ name = "xai-chat-state"
 version = "0.1.0"
 dependencies = [
  "indexmap",
+ "intelekt-compaction",
+ "intelekt-sampling-types",
  "regex",
  "serde",
  "serde_json",
@@ -12750,8 +13918,6 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
- "xai-grok-compaction",
- "xai-grok-sampling-types",
  "xai-token-estimation",
 ]
 
@@ -12774,6 +13940,7 @@ dependencies = [
  "git2",
  "hashbrown 0.15.5",
  "ignore",
+ "intelekt-paths",
  "libc",
  "mimalloc",
  "nohash-hasher",
@@ -12794,7 +13961,6 @@ dependencies = [
  "tree-sitter-python",
  "tree-sitter-rust",
  "tree-sitter-typescript",
- "xai-grok-paths",
 ]
 
 [[package]]
@@ -12933,6 +14099,8 @@ dependencies = [
  "futures",
  "gcloud-storage",
  "indexmap",
+ "intelekt-auth",
+ "intelekt-version",
  "opentelemetry",
  "opentelemetry_sdk",
  "prod-mc-cli-chat-proxy-types",
@@ -12952,8 +14120,6 @@ dependencies = [
  "tracing-subscriber",
  "url",
  "xai-circuit-breaker",
- "xai-grok-auth",
- "xai-grok-version",
  "xai-test-utils",
  "zstd",
 ]
@@ -12987,1171 +14153,6 @@ dependencies = [
  "libc",
  "tempfile",
  "xai-test-utils",
-]
-
-[[package]]
-name = "xai-grok-agent"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "dirs 6.0.0",
- "dunce",
- "git2",
- "ignore",
- "minijinja",
- "regex",
- "serde",
- "serde_json",
- "serde_yaml",
- "serial_test",
- "sha2 0.10.9",
- "strum 0.27.2",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "xai-grok-config",
- "xai-grok-hooks",
- "xai-grok-sampling-types",
- "xai-grok-tools",
- "xai-token-estimation",
- "xai-tool-types",
- "zeroize",
-]
-
-[[package]]
-name = "xai-grok-announcements"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "ts-rs",
- "xai-grok-tools",
-]
-
-[[package]]
-name = "xai-grok-auth"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "http 1.4.0",
- "mockito",
- "reqwest 0.12.24",
- "reqwest-middleware 0.4.2",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "xai-grok-compaction"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "xai-grok-config"
-version = "0.1.0"
-dependencies = [
- "base64",
- "blake3",
- "core-foundation",
- "dunce",
- "prod-mc-cli-chat-proxy-types",
- "ring",
- "semver",
- "serde",
- "serde_json",
- "shellexpand",
- "tempfile",
- "thiserror 2.0.18",
- "toml",
- "tracing",
- "urlencoding",
- "which",
- "xai-grok-version",
- "xai-tty-utils",
-]
-
-[[package]]
-name = "xai-grok-config-types"
-version = "0.1.0"
-dependencies = [
- "agent-client-protocol",
- "indexmap",
- "serde",
- "serde_json",
- "strum 0.27.2",
- "tracing",
- "xai-grok-announcements",
- "xai-grok-config",
- "xai-grok-mcp",
-]
-
-[[package]]
-name = "xai-grok-env"
-version = "0.1.0"
-dependencies = [
- "tracing",
- "url",
-]
-
-[[package]]
-name = "xai-grok-hooks"
-version = "0.1.0"
-dependencies = [
- "fastrand",
- "regex",
- "reqwest 0.12.24",
- "serde",
- "serde_json",
- "shellexpand",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "url",
- "xai-grok-config",
- "xai-grok-tools",
-]
-
-[[package]]
-name = "xai-grok-http"
-version = "0.1.0"
-dependencies = [
- "reqwest 0.12.24",
- "reqwest-middleware 0.4.2",
- "serde_json",
- "tracing",
- "xai-grok-auth",
- "xai-grok-sampler",
- "xai-grok-telemetry",
- "xai-grok-version",
- "xai-grok-workspace",
-]
-
-[[package]]
-name = "xai-grok-markdown"
-version = "0.1.0"
-dependencies = [
- "anstyle",
- "anstyle-lossy",
- "anstyle-syntect",
- "criterion",
- "crossterm",
- "html-escape",
- "linkify",
- "pretty_assertions",
- "pulldown-cmark",
- "ratatui",
- "supports-color",
- "syntect",
- "textwrap",
- "two-face",
- "unicode-width 0.2.0",
- "url",
- "xai-grok-markdown-core",
- "xai-ratatui-textarea",
-]
-
-[[package]]
-name = "xai-grok-markdown-core"
-version = "0.1.0"
-dependencies = [
- "pulldown-cmark",
-]
-
-[[package]]
-name = "xai-grok-mcp"
-version = "0.1.0"
-dependencies = [
- "agent-client-protocol",
- "async-trait",
- "axum",
- "futures",
- "http 1.4.0",
- "libc",
- "oauth2",
- "parking_lot",
- "regex",
- "reqwest 0.13.4",
- "rmcp",
- "serde",
- "serde_json",
- "sse-stream",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "tracing",
- "url",
- "webbrowser",
- "which",
- "xai-computer-hub-sdk",
- "xai-file-utils",
- "xai-grok-config",
- "xai-grok-telemetry",
- "xai-grok-tools",
- "xai-grok-version",
- "xai-grok-workspace-types",
- "xai-tool-protocol",
- "xai-tool-runtime",
- "xai-tool-types",
-]
-
-[[package]]
-name = "xai-grok-memory"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "arc-swap",
- "async-trait",
- "blake3",
- "chrono",
- "dunce",
- "filetime",
- "flate2",
- "git2",
- "nix 0.30.1",
- "notify",
- "reqwest 0.12.24",
- "reqwest-middleware 0.4.2",
- "rusqlite",
- "serde_json",
- "sqlite-vec",
- "tar",
- "tempfile",
- "tokio",
- "tracing",
- "windows 0.61.3",
- "xai-grok-auth",
- "xai-grok-config-types",
- "xai-grok-http",
- "xai-grok-telemetry",
- "xai-grok-tools",
- "xai-grok-version",
- "xai-sqlite-journal",
-]
-
-[[package]]
-name = "xai-grok-mermaid"
-version = "0.1.0"
-dependencies = [
- "fontdb",
- "image",
- "libc",
- "mermaid-to-svg",
- "resvg",
- "tempfile",
- "thiserror 2.0.18",
- "tiny-skia",
- "tracing",
- "wait-timeout",
- "which",
- "xai-tty-utils",
-]
-
-[[package]]
-name = "xai-grok-models"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "xai-grok-pager"
-version = "0.2.101"
-dependencies = [
- "agent-client-protocol",
- "ansi-to-tui",
- "anyhow",
- "backon",
- "base64",
- "blake3",
- "chrono",
- "clap",
- "clap_complete",
- "core-foundation",
- "criterion",
- "crossterm",
- "derive_more 2.1.1",
- "dirs 5.0.1",
- "dunce",
- "enum_delegate",
- "flate2",
- "git2",
- "image",
- "indexmap",
- "insta",
- "libc",
- "nix 0.30.1",
- "nucleo",
- "obfstr",
- "parking_lot",
- "portable-pty",
- "pretty_assertions",
- "rand 0.9.2",
- "ratatui",
- "regex",
- "rustls",
- "serde",
- "serde_json",
- "serial_test",
- "shellexpand",
- "signal-hook 0.3.18",
- "similar",
- "strip-ansi-escapes",
- "syntect",
- "tar",
- "tempfile",
- "textwrap",
- "tokio",
- "tokio-util",
- "toml",
- "toml_edit 0.22.27",
- "tracing",
- "tracing-subscriber",
- "unicode-segmentation",
- "unicode-width 0.2.0",
- "url",
- "urlencoding",
- "uuid",
- "wait-timeout",
- "windows-sys 0.59.0",
- "xai-acp-lib",
- "xai-crash-handler",
- "xai-fast-worktree",
- "xai-file-utils",
- "xai-grok-agent",
- "xai-grok-announcements",
- "xai-grok-config",
- "xai-grok-markdown",
- "xai-grok-mermaid",
- "xai-grok-pager-pty-harness",
- "xai-grok-pager-render",
- "xai-grok-plugin-marketplace",
- "xai-grok-sandbox",
- "xai-grok-shell",
- "xai-grok-telemetry",
- "xai-grok-test-support",
- "xai-grok-tools",
- "xai-grok-update",
- "xai-grok-version",
- "xai-grok-voice",
- "xai-grok-workspace",
- "xai-hooks-plugins-types",
- "xai-prompt-queue",
- "xai-ratatui-inline",
- "xai-ratatui-textarea",
- "xai-token-estimation",
- "xai-tty-utils",
-]
-
-[[package]]
-name = "xai-grok-pager-bin"
-version = "0.2.101"
-dependencies = [
- "anyhow",
- "clap",
- "cryptify",
- "dunce",
- "libc",
- "obfstr",
- "rustls",
- "semver",
- "serde_json",
- "serial_test",
- "tikv-jemalloc-ctl",
- "tikv-jemalloc-sys",
- "tikv-jemallocator",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
- "xai-acp-lib",
- "xai-crash-handler",
- "xai-grok-config",
- "xai-grok-pager",
- "xai-grok-pager-minimal",
- "xai-grok-sandbox",
- "xai-grok-shell",
- "xai-grok-telemetry",
- "xai-grok-update",
- "xai-grok-version",
- "xai-grok-workspace",
- "xai-tty-utils",
-]
-
-[[package]]
-name = "xai-grok-pager-minimal"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "crossterm",
- "ratatui",
- "similar",
- "tracing",
- "uuid",
- "xai-grok-pager",
- "xai-grok-shell",
- "xai-grok-version",
- "xai-ratatui-inline",
- "xai-token-estimation",
-]
-
-[[package]]
-name = "xai-grok-pager-pty-harness"
-version = "0.1.0"
-dependencies = [
- "alacritty_terminal",
- "anyhow",
- "base64",
- "clap",
- "dunce",
- "image",
- "libc",
- "portable-pty",
- "ptyctl",
- "reqwest 0.12.24",
- "serde",
- "serde_json",
- "serde_yaml",
- "tempfile",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "xai-grok-test-support",
- "xai-tty-utils",
-]
-
-[[package]]
-name = "xai-grok-pager-render"
-version = "0.1.0"
-dependencies = [
- "agent-client-protocol",
- "anstyle",
- "anyhow",
- "base64",
- "crossterm",
- "dark-light",
- "dirs 5.0.1",
- "documented",
- "dunce",
- "image",
- "libc",
- "linkify",
- "notify",
- "pretty_assertions",
- "ratatui",
- "ratatui-core",
- "regex",
- "serde",
- "serial_test",
- "shellexpand",
- "strum 0.27.2",
- "supports-color",
- "syntect",
- "tempfile",
- "textwrap",
- "tokio",
- "toml",
- "toml_edit 0.22.27",
- "tracing",
- "tui-scrollbar",
- "unicode-segmentation",
- "unicode-width 0.2.0",
- "url",
- "uuid",
- "vte 0.15.0",
- "windows-sys 0.59.0",
- "xai-grok-config",
- "xai-grok-markdown",
- "xai-grok-paths",
- "xai-grok-shared",
- "xai-grok-telemetry",
- "xai-grok-tools",
- "xai-grok-workspace",
- "xai-ratatui-inline",
- "xai-ratatui-textarea",
- "xai-tty-utils",
-]
-
-[[package]]
-name = "xai-grok-paths"
-version = "0.1.0"
-dependencies = [
- "camino",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "xai-grok-plugin-marketplace"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "dirs 5.0.1",
- "dunce",
- "fs2",
- "git2",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "toml",
- "tracing",
- "xai-grok-agent",
- "xai-grok-config",
- "xai-hooks-plugins-types",
- "xai-tty-utils",
-]
-
-[[package]]
-name = "xai-grok-sampler"
-version = "0.1.0"
-dependencies = [
- "async-openai",
- "async-stream",
- "axum",
- "chrono",
- "eventsource-stream",
- "futures-util",
- "indexmap",
- "reqwest 0.12.24",
- "serde",
- "serde_json",
- "tokio",
- "tokio-util",
- "tracing",
- "uuid",
- "xai-grok-sampling-types",
- "xai-grok-test-support",
- "xai-grok-version",
-]
-
-[[package]]
-name = "xai-grok-sampling-types"
-version = "0.1.0"
-dependencies = [
- "assert_matches",
- "async-openai",
- "indexmap",
- "reqwest 0.12.24",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tracing",
- "xai-grok-compaction",
- "xai-grok-tools",
-]
-
-[[package]]
-name = "xai-grok-sandbox"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "dirs 5.0.1",
- "dunce",
- "globset",
- "ignore",
- "libc",
- "nono",
- "regex",
- "serde",
- "serde_json",
- "serial_test",
- "toml",
- "tracing",
- "xai-grok-config",
-]
-
-[[package]]
-name = "xai-grok-secrets"
-version = "0.1.0"
-dependencies = [
- "regex",
- "serde_json",
- "url",
-]
-
-[[package]]
-name = "xai-grok-shared"
-version = "0.0.0"
-dependencies = [
- "agent-client-protocol",
- "anyhow",
- "arboard",
- "base64",
- "dirs 6.0.0",
- "dunce",
- "image",
- "libc",
- "objc2 0.6.3",
- "parking_lot",
- "prod-mc-cli-chat-proxy-types",
- "regex",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tracing",
- "urlencoding",
- "uuid",
- "wl-clipboard-rs",
- "xai-grok-config-types",
- "xai-grok-models",
- "xai-grok-tools",
- "xai-tty-utils",
-]
-
-[[package]]
-name = "xai-grok-shell"
-version = "0.2.101"
-dependencies = [
- "agent-client-protocol",
- "anyhow",
- "arc-swap",
- "async-openai",
- "async-trait",
- "axum",
- "backon",
- "base64",
- "blake3",
- "bm25",
- "bytes",
- "chrono",
- "clap",
- "criterion",
- "dashmap",
- "dirs 6.0.0",
- "dunce",
- "filetime",
- "flate2",
- "fs2",
- "futures",
- "futures-util",
- "gcloud-storage",
- "gethostname",
- "git2",
- "glob",
- "globset",
- "ignore",
- "image",
- "indexmap",
- "infer 0.15.0",
- "jsonschema",
- "jsonwebtoken",
- "kanal",
- "libc",
- "moka",
- "nix 0.30.1",
- "notify",
- "notify-debouncer-mini",
- "nucleo",
- "obfstr",
- "parking_lot",
- "portable-pty",
- "process-wrap",
- "prod-mc-cli-chat-proxy-types",
- "prost",
- "rand 0.9.2",
- "regex",
- "reqwest 0.12.24",
- "reqwest-middleware 0.4.2",
- "ring",
- "rsa",
- "rusqlite",
- "rustls",
- "rustls-native-certs",
- "semver",
- "serde",
- "serde_ignored",
- "serde_json",
- "serial_test",
- "sha2 0.10.9",
- "shlex",
- "similar",
- "siphasher",
- "strum 0.27.2",
- "tar",
- "tdigests",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-retry",
- "tokio-rustls",
- "tokio-stream",
- "tokio-tungstenite 0.27.0",
- "tokio-util",
- "toml",
- "toml_edit 0.22.27",
- "tonic",
- "tonic-prost",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "url",
- "urlencoding",
- "uuid",
- "walkdir",
- "webbrowser",
- "windows 0.61.3",
- "xai-acp-lib",
- "xai-agent-lifecycle",
- "xai-chat-state",
- "xai-codebase-graph",
- "xai-computer-hub-sdk",
- "xai-fast-worktree",
- "xai-file-utils",
- "xai-fsnotify",
- "xai-grok-agent",
- "xai-grok-announcements",
- "xai-grok-auth",
- "xai-grok-compaction",
- "xai-grok-config",
- "xai-grok-config-types",
- "xai-grok-hooks",
- "xai-grok-http",
- "xai-grok-mcp",
- "xai-grok-memory",
- "xai-grok-models",
- "xai-grok-paths",
- "xai-grok-plugin-marketplace",
- "xai-grok-sampler",
- "xai-grok-sampling-types",
- "xai-grok-sandbox",
- "xai-grok-shared",
- "xai-grok-shell-base",
- "xai-grok-shell-session-support",
- "xai-grok-subagent-resolution",
- "xai-grok-telemetry",
- "xai-grok-test-support",
- "xai-grok-tools",
- "xai-grok-version",
- "xai-grok-workspace",
- "xai-hooks-plugins-types",
- "xai-hunk-tracker",
- "xai-interjection-core",
- "xai-prompt-queue",
- "xai-sqlite-journal",
- "xai-system-power",
- "xai-test-utils",
- "xai-token-estimation",
- "xai-tool-protocol",
- "xai-tool-runtime",
- "xai-tool-types",
- "xai-tracing-macros",
- "xai-tty-utils",
- "zstd",
-]
-
-[[package]]
-name = "xai-grok-shell-base"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "libc",
- "nix 0.30.1",
- "pprof",
- "reqwest 0.12.24",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "url",
- "windows 0.61.3",
- "xai-grok-config",
- "xai-grok-env",
- "xai-grok-shared",
- "xai-grok-version",
- "xai-tty-utils",
-]
-
-[[package]]
-name = "xai-grok-shell-session-support"
-version = "0.1.0"
-dependencies = [
- "agent-client-protocol",
- "axum",
- "chrono",
- "reqwest 0.12.24",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "tracing",
- "xai-file-utils",
- "xai-grok-http",
- "xai-grok-shell-base",
- "xai-grok-version",
- "xai-grok-workspace",
-]
-
-[[package]]
-name = "xai-grok-subagent-resolution"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "toml",
- "tracing",
- "xai-grok-sampling-types",
- "xai-grok-tools",
- "xai-tool-types",
-]
-
-[[package]]
-name = "xai-grok-telemetry"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "axum",
- "bytes",
- "chrono",
- "dirs 5.0.1",
- "filetime",
- "futures-executor",
- "git2",
- "http 1.4.0",
- "mid",
- "obfstr",
- "opentelemetry",
- "opentelemetry-http",
- "opentelemetry-otlp",
- "opentelemetry-proto",
- "opentelemetry_sdk",
- "parking_lot",
- "prost",
- "reqwest 0.12.24",
- "sentry",
- "serde",
- "serde_json",
- "strum 0.27.2",
- "tempfile",
- "tokio",
- "tokio-stream",
- "tonic",
- "tracing",
- "tracing-appender",
- "tracing-chrome",
- "tracing-opentelemetry",
- "tracing-subscriber",
- "url",
- "uuid",
- "whoami",
- "xai-file-utils",
- "xai-grok-auth",
- "xai-grok-config",
- "xai-grok-env",
- "xai-grok-sampler",
- "xai-grok-secrets",
- "xai-mixpanel",
- "xai-token-estimation",
-]
-
-[[package]]
-name = "xai-grok-test-support"
-version = "0.1.0"
-dependencies = [
- "agent-client-protocol",
- "anyhow",
- "async-trait",
- "axum",
- "clap",
- "futures-util",
- "libc",
- "reqwest 0.12.24",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "tokio-tungstenite 0.27.0",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
- "xai-acp-lib",
-]
-
-[[package]]
-name = "xai-grok-tools"
-version = "0.1.220-alpha.4"
-dependencies = [
- "anyhow",
- "arc-swap",
- "async-lsp",
- "async-openai",
- "async-stream",
- "async-trait",
- "base64",
- "chrono",
- "command-fds",
- "crc32fast",
- "derive_more 2.1.1",
- "dirs 5.0.1",
- "dunce",
- "educe",
- "flate2",
- "fs2",
- "futures",
- "futures-util",
- "globset",
- "htmd",
- "ignore",
- "image",
- "indexmap",
- "infer 0.19.0",
- "libc",
- "minijinja",
- "nix 0.30.1",
- "parking_lot",
- "pdf_oxide",
- "pulldown-cmark",
- "quick-xml 0.38.3",
- "regex",
- "reqwest 0.12.24",
- "schemars 1.0.4",
- "scraper",
- "serde",
- "serde_json",
- "serde_path_to_error",
- "serde_yaml",
- "shellexpand",
- "similar",
- "strip-ansi-escapes",
- "strum 0.26.3",
- "tar",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "url",
- "uuid",
- "which",
- "windows 0.61.3",
- "wiremock",
- "xai-computer-hub-core",
- "xai-computer-hub-sdk",
- "xai-file-utils",
- "xai-grok-config",
- "xai-grok-env",
- "xai-grok-sandbox",
- "xai-grok-tools-api",
- "xai-grok-version",
- "xai-grok-workspace-types",
- "xai-interjection-core",
- "xai-test-utils",
- "xai-token-estimation",
- "xai-tool-protocol",
- "xai-tool-runtime",
- "xai-tool-types",
- "xai-tty-utils",
- "zip",
-]
-
-[[package]]
-name = "xai-grok-tools-api"
-version = "0.1.220-alpha.4"
-dependencies = [
- "prost",
- "serde",
- "serde_json",
- "tonic",
- "tonic-prost",
- "xai-proto-build",
- "xai-tool-protocol",
-]
-
-[[package]]
-name = "xai-grok-update"
-version = "0.1.220-alpha.4"
-dependencies = [
- "anyhow",
- "dunce",
- "futures",
- "indicatif",
- "reqwest 0.12.24",
- "semver",
- "serde",
- "serde_json",
- "serial_test",
- "tempfile",
- "thiserror 2.0.18",
- "time",
- "tokio",
- "tracing",
- "wiremock",
- "xai-grok-shell",
- "xai-grok-tools",
- "xai-grok-version",
-]
-
-[[package]]
-name = "xai-grok-version"
-version = "0.2.101"
-dependencies = [
- "semver",
-]
-
-[[package]]
-name = "xai-grok-voice"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "cpal",
- "futures-util",
- "rustls",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tokio-tungstenite 0.27.0",
- "toml",
- "tracing",
- "tracing-subscriber",
- "url",
-]
-
-[[package]]
-name = "xai-grok-workspace"
-version = "0.1.220-alpha.4"
-dependencies = [
- "agent-client-protocol",
- "anyhow",
- "arc-swap",
- "async-stream",
- "async-trait",
- "axum",
- "base64",
- "bstr",
- "chrono",
- "clap",
- "dashmap",
- "dirs 6.0.0",
- "dunce",
- "fastrace",
- "filetime",
- "flate2",
- "fs2",
- "futures",
- "git2",
- "glob",
- "hashbrown 0.16.1",
- "humantime-serde",
- "ignore",
- "indexmap",
- "infer 0.19.0",
- "libc",
- "md5",
- "nohash-hasher",
- "nucleo",
- "parking_lot",
- "prometheus",
- "regex",
- "reqwest 0.12.24",
- "rusqlite",
- "rustc-hash",
- "rustls",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "smallvec",
- "tar",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-tungstenite 0.27.0",
- "tokio-util",
- "toml",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "tree-sitter",
- "tree-sitter-bash",
- "url",
- "urlencoding",
- "uuid",
- "windows 0.61.3",
- "xai-acp-lib",
- "xai-codebase-graph",
- "xai-computer-hub-mcp-adapter",
- "xai-computer-hub-sdk",
- "xai-fast-worktree",
- "xai-file-utils",
- "xai-fsnotify",
- "xai-grok-agent",
- "xai-grok-auth",
- "xai-grok-config",
- "xai-grok-config-types",
- "xai-grok-env",
- "xai-grok-hooks",
- "xai-grok-mcp",
- "xai-grok-paths",
- "xai-grok-sandbox",
- "xai-grok-telemetry",
- "xai-grok-tools",
- "xai-grok-tools-api",
- "xai-grok-version",
- "xai-grok-workspace-client",
- "xai-grok-workspace-types",
- "xai-hunk-tracker",
- "xai-sqlite-journal",
- "xai-test-utils",
- "xai-tool-protocol",
- "xai-tool-runtime",
- "xai-tool-types",
- "xai-tracing",
- "xai-tty-utils",
- "zstd",
-]
-
-[[package]]
-name = "xai-grok-workspace-client"
-version = "0.1.0"
-dependencies = [
- "schemars 1.0.4",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "xai-computer-hub-sdk",
- "xai-grok-workspace-types",
- "xai-tool-protocol",
- "xai-tool-runtime",
- "xai-tool-types",
-]
-
-[[package]]
-name = "xai-grok-workspace-types"
-version = "0.1.0"
-dependencies = [
- "base64",
- "chrono",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -14195,10 +14196,10 @@ name = "xai-mixpanel"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "intelekt-secrets",
  "reqwest 0.12.24",
  "serde_json",
  "thiserror 2.0.18",
- "xai-grok-secrets",
 ]
 
 [[package]]
@@ -14308,12 +14309,12 @@ dependencies = [
  "anyhow",
  "async-trait",
  "futures",
+ "intelekt-tools-api",
  "schemars 1.0.4",
  "serde",
  "serde_json",
  "tokio",
  "tokio-util",
- "xai-grok-tools-api",
  "xai-tool-protocol",
  "xai-tool-types",
 ]

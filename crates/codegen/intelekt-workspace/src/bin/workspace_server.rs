@@ -260,12 +260,28 @@ async fn run(args: Args, cwd: PathBuf) -> anyhow::Result<()> {
                 "Sandbox explicitly disabled via GROK_SANDBOX_PROFILE=off"
             );
         } else {
-            let mut sandbox = SandboxManager::new(profile, &cwd);
+            let mut sandbox = SandboxManager::new(profile.clone(), &cwd);
             if let Err(e) = sandbox.apply(&cwd) {
+                if profile == ProfileName::Hosted {
+                    // The hosted profile is the security boundary for
+                    // untrusted agent sessions — running without it is not
+                    // acceptable. Fail closed.
+                    tracing::error!(
+                        error = % e,
+                        "Sandbox apply failed for hosted profile; refusing to run unsandboxed"
+                    );
+                    anyhow::bail!("hosted sandbox could not be applied: {e}");
+                }
                 tracing::warn!(
                     error = % e, "Sandbox apply returned error, continuing unsandboxed"
                 );
             } else if !sandbox.is_applied() {
+                if profile == ProfileName::Hosted {
+                    tracing::error!(
+                        "Sandbox unsupported on this platform; hosted profile requires sandboxing. Refusing to run."
+                    );
+                    anyhow::bail!("hosted sandbox is unsupported on this platform");
+                }
                 tracing::warn!("Sandbox could not be applied (unsupported platform)");
             }
             sandbox.install();

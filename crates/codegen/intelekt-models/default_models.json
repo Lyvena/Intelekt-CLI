@@ -1,12 +1,12 @@
 {
-  "default": "intelekt-cli",
+  "default": "grok-build",
   "web_search": "grok-4.20-multi-agent",
-  "image_description": "intelekt-cli",
-  "session_summary": "intelekt-cli",
+  "image_description": "grok-build",
+  "session_summary": "grok-build",
   "models": [
     {
-      "model": "intelekt-cli",
-      "name": "Intelekt CLI",
+      "model": "grok-build",
+      "name": "Grok Build",
       "description": "Best for advanced coding tasks",
       "context_window": 500000,
       "temperature": 0.7,

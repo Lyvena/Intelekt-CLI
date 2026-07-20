@@ -357,6 +357,7 @@ impl ProfileName {
                 profile.name = "hosted".to_string();
                 profile.deny = vec![
                     PathBuf::from("**/.env"),
+                    PathBuf::from("**/.env.*"),
                     PathBuf::from("**/*.pem"),
                     PathBuf::from("**/id_rsa"),
                     PathBuf::from("**/id_dsa"),
@@ -368,6 +369,12 @@ impl ProfileName {
                     PathBuf::from("**/*.pkcs12"),
                     PathBuf::from("**/*.pfx"),
                     PathBuf::from("**/*.p12"),
+                    PathBuf::from("**/.ssh/**"),
+                    PathBuf::from("**/.netrc"),
+                    PathBuf::from("**/.npmrc"),
+                    PathBuf::from("**/.aws/**"),
+                    PathBuf::from("**/.kube/**"),
+                    PathBuf::from("**/.config/gcloud/**"),
                 ];
                 Ok(profile)
             }

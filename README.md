@@ -78,8 +78,7 @@ cargo build -p intelekt-pager-bin --release  # release binary: target/release/in
 cargo check -p intelekt-pager-bin            # fast validation
 ```
 
-The binary artifact is named `intelekt-pager`; official installs ship it as
-`intelekt`. On first launch it opens your browser to authenticate — see the
+The binary artifact is named `intelekt`. On first launch it opens your browser to authenticate — see the
 [authentication guide](crates/codegen/intelekt-pager/docs/user-guide/02-authentication.md).
 
 ## Documentation
