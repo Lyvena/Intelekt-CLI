@@ -1,0 +1,45 @@
+# Weekly upstream freshness check against xai-org/grok-build.
+#
+# Intelekt-CLI is maintained as a renamed snapshot of upstream (see
+# SOURCE_REV), not a mergeable git fork, so this can't auto-merge — instead
+# it opens/updates an issue when upstream's default branch moves past the
+# recorded SOURCE_REV, so a manual re-sync can be scheduled.
+name: Upstream check (grok-build)
+
+on:
+  schedule:
+    - cron: "41 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    if: github.repository == 'Lyvena/Intelekt-CLI'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compare upstream HEAD with SOURCE_REV
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          LOCAL_REV=$(tr -d '[:space:]' < SOURCE_REV)
+          UPSTREAM_REV=$(gh api repos/xai-org/grok-build/commits/HEAD --jq .sha)
+          echo "local:    $LOCAL_REV"
+          echo "upstream: $UPSTREAM_REV"
+          if [ "$LOCAL_REV" = "$UPSTREAM_REV" ]; then
+            echo "Snapshot is current."
+            exit 0
+          fi
+          TITLE="Upstream grok-build has moved past SOURCE_REV"
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' || true)
+          BODY="Upstream xai-org/grok-build HEAD is \`$UPSTREAM_REV\` but this fork's SOURCE_REV is \`$LOCAL_REV\`. Schedule a re-sync: import the new snapshot, replay the Intelekt branding/integration commits, and update SOURCE_REV. Compare: https://github.com/xai-org/grok-build/compare/$LOCAL_REV...$UPSTREAM_REV"
+          if [ -n "$EXISTING" ] && [ "$EXISTING" != "null" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi
