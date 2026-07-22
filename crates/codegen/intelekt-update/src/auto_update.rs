@@ -14,8 +14,8 @@ use crate::version::{
     UpdateConfig, fetch_latest_version, get_installed_grok_version, get_latest_version,
     is_version_cache_fresh, try_fetch_stable_pointer, write_version_cache,
 };
-use xai_grok_shell::util::config;
-use xai_grok_shell::util::grok_home::{grok_application, grok_home};
+use intelekt_shell::util::config;
+use intelekt_shell::util::grok_home::{grok_application, grok_home};
 
 #[derive(Clone, Copy, Debug)]
 pub enum UpdateRunMode {
@@ -627,7 +627,7 @@ async fn run_update_subcommand(run_mode: UpdateRunMode) -> Result<Option<tokio::
                 .stderr(Stdio::null());
             // Detach = new session (Ctrl+C isolation), not handle abandonment:
             // the child is still ours to wait() on.
-            xai_grok_tools::util::detach_command(&mut cmd);
+            intelekt_tools::util::detach_command(&mut cmd);
             let child = cmd.spawn()?;
             Ok(Some(child))
         }
@@ -1038,7 +1038,7 @@ async fn remove_stale_models_cache() {
     let cache = grok_home().join("models_cache.json");
     match tokio::fs::remove_file(&cache).await {
         Ok(()) => tracing::debug!("removed stale models_cache.json after update"),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(ref e) if e.kind() == std::io::ErrorKind::NotFound => {}
         Err(e) => tracing::debug!("failed to remove stale models cache: {e}"),
     }
 }
@@ -1136,7 +1136,7 @@ async fn smoke_test_binary(binary_path: &std::path::Path) -> bool {
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null());
-    xai_grok_tools::util::detach_command(&mut cmd);
+    intelekt_tools::util::detach_command(&mut cmd);
     match tokio::time::timeout(SMOKE_TEST_TIMEOUT, cmd.status()).await {
         Ok(Ok(status)) => status.success(),
         _ => false,
@@ -1235,7 +1235,7 @@ async fn activate_verified_download(download: &VerifiedDownload) -> Result<()> {
     eprintln!();
 
     // Clean up old versioned binaries (keeps current + 1 previous).
-    cleanup_old_downloads(cleanup_old_downloads(&download_dir, "grok"download_dir, "intelekt", &download.version).await;
+    cleanup_old_downloads(&download_dir, "intelekt", &download.version).await;
     cleanup_old_downloads(&download_dir, "grok-pager", &download.version).await;
 
     // Persist installer to config.toml so future runs auto-detect internal.
@@ -1278,7 +1278,7 @@ async fn regenerate_completions(binary: &std::path::Path, grok_home: &std::path:
             .stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::null());
-        xai_grok_tools::util::detach_command(&mut cmd);
+        intelekt_tools::util::detach_command(&mut cmd);
         let Ok(output) = cmd.output().await else {
             continue;
         };
@@ -1882,8 +1882,8 @@ async fn gh_release_download(tag: &str, pattern: &str, dest: &std::path::Path) -
     .stdin(Stdio::null())
     .stdout(Stdio::null())
     .stderr(Stdio::piped());
-    xai_grok_tools::util::detach_command(&mut cmd);
-    cmd.envs(xai_grok_tools::util::pager_env());
+    intelekt_tools::util::detach_command(&mut cmd);
+    cmd.envs(intelekt_tools::util::pager_env());
     let output = cmd.output().await?;
 
     pb.finish_and_clear();
@@ -1974,7 +1974,7 @@ async fn install_gh_release(target: Option<&str>) -> Result<()> {
     eprintln!();
 
     // Clean up old versioned binaries (keeps current + 1 previous).
-    cleanup_old_downloads(cleanup_old_downloads(&download_dir, "grok"download_dir, "intelekt", &version).await;
+    cleanup_old_downloads(&download_dir, "intelekt", &version).await;
     cleanup_old_downloads(&download_dir, "grok-pager", &version).await;
 
     // Persist installer to config.toml so future runs auto-detect gh-release.
@@ -2034,7 +2034,7 @@ fn warn_if_other_grok_processes_running() {
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null());
-    xai_grok_tools::util::detach_std_command(&mut cmd);
+    intelekt_tools::util::detach_std_command(&mut cmd);
     if let Ok(output) = cmd.output() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         let other_pids: Vec<&str> = stdout
@@ -2117,7 +2117,7 @@ fn install_npm(target: Option<&str>, channel: &str, npm_registry: Option<&str>) 
         .stdout(Stdio::null())
         // inherit, not piped — same rationale as run_update_subcommand.
         .stderr(Stdio::inherit());
-    xai_grok_tools::util::detach_std_command(&mut cmd);
+    intelekt_tools::util::detach_std_command(&mut cmd);
     let status = cmd.status()?;
 
     if let Some(path) = temp_npmrc
@@ -2327,25 +2327,25 @@ pub async fn run_update(
 /// Refresh managed config post-update (best-effort, staleness-gated), for
 /// deployment-key and team principals alike.
 async fn refresh_deployment_config() {
-    if !xai_grok_shell::managed_config::has_principal() {
+    if !intelekt_shell::managed_config::has_principal() {
         return;
     }
-    if !xai_grok_shell::managed_config::is_fetch_enabled() {
+    if !intelekt_shell::managed_config::is_fetch_enabled() {
         return;
     }
     // Clear a logged-out team's files before deciding to fetch (mirrors the loop).
-    xai_grok_shell::managed_config::clear_orphan();
-    if !xai_grok_shell::config::is_managed_config_stale_for(
-        &xai_grok_shell::managed_config::current_serving_identity(),
+    intelekt_shell::managed_config::clear_orphan();
+    if !intelekt_shell::config::is_managed_config_stale_for(
+        &intelekt_shell::managed_config::current_serving_identity(),
     ) {
         return;
     }
-    match xai_grok_shell::managed_config::sync().await {
+    match intelekt_shell::managed_config::sync().await {
         Ok(true) => eprintln!("  Applied managed configuration."),
         Ok(false) => tracing::debug!("no managed configuration to apply"),
         // Auth issues aren't actionable mid-update: quiet here, loud on `grok setup`.
-        Err(e) if e.is_auth_rejection() => tracing::debug!("managed config not applied: {e}"),
-        Err(e) if e.is_retryable() => {
+        Err(ref e) if e.is_auth_rejection() => tracing::debug!("managed config not applied: {e}"),
+        Err(ref e) if e.is_retryable() => {
             tracing::debug!("managed config refresh failed: {e}");
             eprintln!("  Couldn't apply managed configuration. Run `grok setup` to retry.");
         }
@@ -3760,7 +3760,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let missing = dir.path().join("does-not-exist");
         // Must not panic when the directory doesn't exist.
-        cleanup_old_downloads(cleanup_old_downloads(&missing, "grok"missing, "intelekt", "0.1.141").await;
+        cleanup_old_downloads(&missing, "intelekt", "0.1.141").await;
     }
 
     #[tokio::test]

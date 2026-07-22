@@ -466,7 +466,7 @@ mod tests {
     fn strips_session_id_flag() {
         let out = build_screen_mode_relaunch_args(
             args(&[
-                intelekt",
+                "intelekt",
                 "--session-id",
                 "11111111-1111-1111-1111-111111111111",
                 "--no-leader",
@@ -494,7 +494,7 @@ mod tests {
     fn strips_worktree_and_restore_code() {
         let out = build_screen_mode_relaunch_args(
             args(&[
-                intelekt",
+                "intelekt",
                 "-w",
                 "feature-x",
                 "--worktree-ref",
@@ -518,7 +518,7 @@ mod tests {
     fn strips_eq_forms_of_one_shot_flags() {
         let out = build_screen_mode_relaunch_args(
             args(&[
-                intelekt",
+                "intelekt",
                 "--session-id=u1",
                 "--worktree=wt",
                 "--worktree-ref=main",
@@ -644,7 +644,7 @@ mod tests {
         // as the bare positional prompt (regression: relaunch argv drops flag values).
         let out = build_screen_mode_relaunch_args(
             args(&[
-                intelekt",
+                "intelekt",
                 "--model",
                 "intelekt-4",
                 "--cwd",

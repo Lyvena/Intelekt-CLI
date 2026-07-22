@@ -14,12 +14,12 @@ pub fn run(shell: Shell) {
     // behavior and what the installers + docs expect).
     let mut cmd = PagerArgs::command().name("intelekt");
     if shell != Shell::Zsh {
-        generate(shell, &mut cmd, "intelekt", "grok", &mut std::io::stdoutmut std::io::stdout());
+        generate(shell, &mut cmd, "intelekt", &mut std::io::stdout());
         return;
     }
     // zsh needs post-processing (see fix_zsh_root_prompt_positional).
     let mut buf = Vec::new();
-    generate(shell, &mut cmd, "intelekt", "grok", &mut bufmut buf);
+    generate(shell, &mut cmd, "intelekt", &mut buf);
     match String::from_utf8(buf) {
         Ok(script) => print!("{}", fix_zsh_root_prompt_positional(&script)),
         // clap_complete output is generated from Rust strings, so this arm is
@@ -82,7 +82,7 @@ mod tests {
     fn zsh_script() -> String {
         let mut cmd = PagerArgs::command().name("intelekt");
         let mut buf = Vec::new();
-        generate(Shell::Zsh, &mut cmd, "intelekt", "grok", &mut bufmut buf);
+        generate(Shell::Zsh, &mut cmd, "intelekt", &mut buf);
         String::from_utf8(buf).expect("completion script is UTF-8")
     }
 

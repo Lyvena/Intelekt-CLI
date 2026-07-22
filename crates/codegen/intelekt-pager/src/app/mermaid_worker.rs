@@ -1768,11 +1768,11 @@ mod tests {
     fn is_render_subcommand_matches_only_argv1() {
         let argv = |v: &[&str]| v.iter().map(std::ffi::OsString::from).collect::<Vec<_>>();
         assert!(is_render_subcommand(&argv(&[
-            intelekt",
+            "intelekt",
             MERMAID_RENDER_SUBCOMMAND
         ])));
         assert!(is_render_subcommand(&argv(&[
-            intelekt",
+            "intelekt",
             MERMAID_RENDER_SUBCOMMAND,
             "--out",
             "/tmp/x.png",
@@ -1783,7 +1783,7 @@ mod tests {
         assert!(!is_render_subcommand(&argv(&[])));
         // The subcommand only counts as argv[1], not deeper in the args.
         assert!(!is_render_subcommand(&argv(&[
-            intelekt",
+            "intelekt",
             "chat",
             MERMAID_RENDER_SUBCOMMAND,
         ])));
